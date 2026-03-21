@@ -1,0 +1,14 @@
+# Node
+node_modules/
+.env
+
+# Next.js
+.next/
+out/
+
+# Java
+target/
+*.log
+
+# OS
+.DS_Store
