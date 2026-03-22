@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Public files
+public/
+
+# Generated files
+.next/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Next.js specific
+.vercel/
+*.tsbuildinfo
+
+# Your compiled files (if any)
+src/**/*.js
+src/**/*.d.ts
