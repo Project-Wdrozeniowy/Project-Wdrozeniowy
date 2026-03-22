@@ -1,7 +1,10 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Turbopack configuration at root level (not in experimental)
+  turbopack: {
+    root: process.cwd(),
+  },
 };
 
 export default nextConfig;
