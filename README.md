@@ -149,11 +149,92 @@ cd backend
 
 ---
 
+## 🗄️ Database Schema
+
+```mermaid
+erDiagram
+    users {
+        bigserial id PK
+        varchar(50) username UK
+        varchar(100) email UK
+        varchar(255) password_hash
+        user_role role
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    refresh_tokens {
+        bigserial id PK
+        bigint user_id FK
+        varchar(64) token UK
+        timestamptz expires_at
+        timestamptz created_at
+    }
+
+    posts {
+        bigserial id PK
+        bigint user_id FK
+        varchar(255) title
+        text content
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    comments {
+        bigserial id PK
+        bigint post_id FK
+        bigint user_id FK
+        text content
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    tags {
+        bigserial id PK
+        varchar(50) name UK
+        varchar(50) slug UK
+    }
+
+    post_tags {
+        bigint post_id FK
+        bigint tag_id FK
+    }
+
+    votes {
+        bigserial id PK
+        bigint user_id FK
+        bigint post_id FK
+        bigint comment_id FK
+        vote_type vote_type
+        timestamptz created_at
+    }
+
+    user_activity_events {
+        bigserial id PK
+        bigint user_id FK
+        varchar(50) event_type
+        varchar(50) entity_type
+        bigint entity_id
+        jsonb metadata
+        timestamptz created_at
+    }
+
+    users ||--o{ refresh_tokens : "has"
+    users ||--o{ posts : "creates"
+    users ||--o{ comments : "writes"
+    users ||--o{ votes : "casts"
+    users ||--o{ user_activity_events : "generates"
+    posts ||--o{ comments : "has"
+    posts ||--o{ post_tags : "tagged with"
+    tags ||--o{ post_tags : "applied to"
+    posts ||--o{ votes : "receives"
+    comments ||--o{ votes : "receives"
+```
+
+---
+
 ## 📦 Future Improvements
 
-* Add authentication (JWT)
-* Add database (PostgreSQL)
-* Dockerize services
 * CI/CD pipeline (GitHub Actions)
 * API documentation (Swagger)
 
