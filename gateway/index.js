@@ -12,13 +12,18 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-const INTERNAL_SECRET = process.env.INTERNAL_SECRET || 'change_me_internal_secret';
+if (!process.env.INTERNAL_SECRET) {
+  console.error('FATAL: INTERNAL_SECRET environment variable is not set');
+  process.exit(1);
+}
+const INTERNAL_SECRET = process.env.INTERNAL_SECRET;
 
 // JWT secret is Base64-encoded (matches Java's Decoders.BASE64.decode())
-const JWT_SECRET = Buffer.from(
-  process.env.JWT_SECRET || '404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970',
-  'base64'
-);
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set');
+  process.exit(1);
+}
+const JWT_SECRET = Buffer.from(process.env.JWT_SECRET, 'base64');
 
 // ---------------------------------------------------------------------------
 // Express + HTTP server
