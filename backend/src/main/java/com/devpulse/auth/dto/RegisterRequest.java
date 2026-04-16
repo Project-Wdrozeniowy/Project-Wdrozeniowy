@@ -6,12 +6,12 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
- * DTO запроса на регистрацию нового аккаунта пользователя.
+ * DTO for a new user registration request.
  *
- * <p>Используется в {@code POST /auth/register}. Все поля обязательны
- * и валидируются через Bean Validation перед передачей в сервис.
+ * <p>Used by {@code POST /auth/register}. All fields are required
+ * and validated via Bean Validation before being passed to the service.
  *
- * <p>Пример JSON-запроса:
+ * <p>Example JSON request:
  * <pre>
  * {
  *   "username": "ivan_petrov",
@@ -24,16 +24,16 @@ import lombok.Data;
 public class RegisterRequest {
 
     /**
-     * Имя пользователя — уникальное в системе, публично видимое.
-     * Допустимая длина: 3–50 символов.
+     * Username — unique in the system, publicly visible.
+     * Allowed length: 3–50 characters.
      */
     @NotBlank
     @Size(min = 3, max = 50)
     private String username;
 
     /**
-     * Адрес электронной почты — уникальный в системе.
-     * Проверяется на корректность формата через {@link Email}.
+     * Email address — unique in the system.
+     * Format is validated via {@link Email}.
      */
     @NotBlank
     @Email
@@ -41,8 +41,8 @@ public class RegisterRequest {
     private String email;
 
     /**
-     * Пароль в открытом виде — хэшируется BCrypt перед сохранением в базу.
-     * Требуемая длина: 8–128 символов.
+     * Plain-text password — hashed with BCrypt before being stored.
+     * Required length: 8–128 characters.
      */
     @NotBlank
     @Size(min = 8, max = 128)

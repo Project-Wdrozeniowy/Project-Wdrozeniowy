@@ -4,11 +4,11 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * DTO запроса на вход пользователя в систему.
+ * DTO for a user login request.
  *
- * <p>Используется в {@code POST /auth/login}. Оба поля обязательны.
+ * <p>Used by {@code POST /auth/login}. Both fields are required.
  *
- * <p>Пример JSON-запроса:
+ * <p>Example JSON request:
  * <pre>
  * {
  *   "username": "ivan_petrov",
@@ -19,11 +19,11 @@ import lombok.Data;
 @Data
 public class AuthRequest {
 
-    /** Имя пользователя, зарегистрированное в системе. */
+    /** Username registered in the system. */
     @NotBlank
     private String username;
 
-    /** Пароль в открытом виде — проверяется через BCrypt. */
+    /** Plain-text password — verified via BCrypt. */
     @NotBlank
     private String password;
 }

@@ -11,27 +11,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Глобальный обработчик исключений для всех REST-контроллеров.
+ * Global exception handler for all REST controllers.
  *
- * <p>Преобразует исключения приложения в унифицированный формат HTTP-ответа
- * согласно RFC 9457 (Problem Details for HTTP APIs), нативно поддерживаемый
- * Spring 6+ через класс {@link ProblemDetail}.
+ * <p>Converts application exceptions into a unified HTTP response format
+ * conforming to RFC 9457 (Problem Details for HTTP APIs), natively supported
+ * by Spring 6+ via the {@link ProblemDetail} class.
  *
- * <p>Обрабатываемые случаи:
+ * <p>Handled cases:
  * <ul>
- *   <li>{@link AppException} — доменные ошибки (409, 401, 404 и т.д.)</li>
- *   <li>{@link MethodArgumentNotValidException} — ошибки валидации Bean Validation (@Valid)</li>
- *   <li>{@link Exception} — непредвиденные ошибки (500 Internal Server Error)</li>
+ *   <li>{@link AppException} — domain errors (409, 401, 404, etc.)</li>
+ *   <li>{@link MethodArgumentNotValidException} — Bean Validation errors ({@code @Valid})</li>
+ *   <li>{@link Exception} — unexpected errors (500 Internal Server Error)</li>
  * </ul>
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
-     * Обрабатывает доменные ошибки, выброшенные сервисами приложения.
+     * Handles domain errors thrown by application services.
      *
-     * @param ex доменное исключение с HTTP-статусом и сообщением
-     * @return {@link ProblemDetail} с соответствующим статусом и сообщением
+     * @param ex the domain exception with an HTTP status and message
+     * @return a {@link ProblemDetail} with the appropriate status and message
      */
     @ExceptionHandler(AppException.class)
     public ProblemDetail handleAppException(AppException ex) {
@@ -41,13 +41,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает ошибки валидации полей в HTTP-запросах ({@code @Valid}).
+     * Handles field validation errors in HTTP requests ({@code @Valid}).
      *
-     * <p>Ответ содержит карту {@code errors} с именами полей и сообщениями
-     * нарушенных ограничений (например, {@code "username": "size must be between 3 and 50"}).
+     * <p>The response contains an {@code errors} map with field names and
+     * constraint violation messages (e.g. {@code "username": "size must be between 3 and 50"}).
      *
-     * @param ex исключение со списком ошибок валидации
-     * @return {@link ProblemDetail} 400 с картой ошибок по полям
+     * @param ex the exception containing the list of validation errors
+     * @return a {@link ProblemDetail} 400 with a map of field-level errors
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
@@ -62,11 +62,11 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Резервный обработчик для всех необработанных исключений.
-     * Возвращает 500 без раскрытия деталей реализации клиенту.
+     * Fallback handler for all unhandled exceptions.
+     * Returns 500 without exposing implementation details to the client.
      *
-     * @param ex необработанное исключение
-     * @return {@link ProblemDetail} 500 с общим сообщением
+     * @param ex the unhandled exception
+     * @return a {@link ProblemDetail} 500 with a generic message
      */
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneric(Exception ex) {

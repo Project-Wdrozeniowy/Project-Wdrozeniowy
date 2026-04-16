@@ -3,27 +3,27 @@ package com.devpulse.exception;
 import org.springframework.http.HttpStatus;
 
 /**
- * Доменное исключение приложения с привязанным HTTP-статусом.
+ * Domain exception with an associated HTTP status.
  *
- * <p>Выбрасывается сервисами в бизнес-ситуациях (например, дублирование
- * пользователя, недействительный токен). Перехватывается {@link GlobalExceptionHandler},
- * который преобразует его в ответ RFC 9457 (Problem Details).
+ * <p>Thrown by services in business-level error situations (e.g. duplicate user,
+ * invalid token). Caught by {@link GlobalExceptionHandler},
+ * which converts it into an RFC 9457 (Problem Details) response.
  *
- * <p>Пример использования:
+ * <p>Usage example:
  * <pre>
  * throw new AppException("Username already taken", HttpStatus.CONFLICT);
  * </pre>
  */
 public class AppException extends RuntimeException {
 
-    /** HTTP-статус, возвращаемый клиенту в ответе на ошибку. */
+    /** HTTP status returned to the client in the error response. */
     private final HttpStatus status;
 
     /**
-     * Создаёт исключение с сообщением и HTTP-статусом.
+     * Creates an exception with a message and an HTTP status.
      *
-     * @param message текст ошибки, возвращаемый в поле {@code detail} ответа
-     * @param status  HTTP-статус ответа (например, 409 CONFLICT, 401 UNAUTHORIZED)
+     * @param message the error message returned in the {@code detail} field of the response
+     * @param status  the HTTP status of the response (e.g. 409 CONFLICT, 401 UNAUTHORIZED)
      */
     public AppException(String message, HttpStatus status) {
         super(message);
@@ -31,9 +31,9 @@ public class AppException extends RuntimeException {
     }
 
     /**
-     * Возвращает HTTP-статус, связанный с этим исключением.
+     * Returns the HTTP status associated with this exception.
      *
-     * @return HTTP-статус
+     * @return the HTTP status
      */
     public HttpStatus getStatus() {
         return status;

@@ -1,6 +1,6 @@
 package com.devpulse.config;
 
-import com.orbit.auth.filter.JwtAuthenticationFilter;
+import com.devpulse.auth.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,13 +20,13 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Основная конфигурация Spring Security.
+ * Main Spring Security configuration.
  *
- * <p>Приложение работает без состояния (REST API + JWT), поэтому:
+ * <p>The application is stateless (REST API + JWT), therefore:
  * <ul>
- *   <li>CSRF отключён — сессионные cookie не используются.</li>
- *   <li>Управление сессиями установлено в STATELESS — Spring не создаёт HttpSession.</li>
- *   <li>Каждый запрос аутентифицируется через {@link JwtAuthenticationFilter}.</li>
+ *   <li>CSRF is disabled — session cookies are not used.</li>
+ *   <li>Session management is set to STATELESS — Spring does not create an HttpSession.</li>
+ *   <li>Every request is authenticated via {@link JwtAuthenticationFilter}.</li>
  * </ul>
  */
 @Configuration
@@ -35,22 +35,22 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    /** Фильтр, считывающий и валидирующий JWT из заголовка Authorization. */
+    /** Filter that reads and validates the JWT from the Authorization header. */
     private final JwtAuthenticationFilter jwtAuthFilter;
 
-    /** Сервис, загружающий пользователя из базы данных по имени. */
+    /** Service that loads a user from the database by username. */
     private final UserDetailsService userDetailsService;
 
     /**
-     * Определяет цепочку фильтров безопасности HTTP.
+     * Defines the HTTP security filter chain.
      *
      * <ul>
-     *   <li>{@code /auth/**} — публичные эндпоинты (регистрация, вход, обновление токена).</li>
-     *   <li>Остальные эндпоинты требуют действительного JWT.</li>
+     *   <li>{@code /auth/**} — public endpoints (registration, login, token refresh).</li>
+     *   <li>All other endpoints require a valid JWT.</li>
      * </ul>
      *
-     * @param http объект конфигурации Spring Security
-     * @return настроенный {@link SecurityFilterChain}
+     * @param http the Spring Security configuration object
+     * @return the configured {@link SecurityFilterChain}
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -68,13 +68,13 @@ public class SecurityConfig {
     }
 
     /**
-     * Провайдер аутентификации на основе базы данных.
+     * Database-backed authentication provider.
      *
-     * <p>В Spring Security 6.3+ конструктор {@code DaoAuthenticationProvider}
-     * принимает {@link UserDetailsService} напрямую — метод
-     * {@code setUserDetailsService} был удалён из API.
+     * <p>In Spring Security 6.3+ the {@code DaoAuthenticationProvider} constructor
+     * accepts {@link UserDetailsService} directly — the
+     * {@code setUserDetailsService} method was removed from the API.
      *
-     * @return настроенный {@link DaoAuthenticationProvider}
+     * @return the configured {@link DaoAuthenticationProvider}
      */
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -85,12 +85,12 @@ public class SecurityConfig {
     }
 
     /**
-     * Предоставляет {@link AuthenticationManager} как бин Spring.
-     * Используется в {@link com.orbit.auth.service.AuthService}
-     * для проверки учётных данных при входе.
+     * Exposes the {@link AuthenticationManager} as a Spring bean.
+     * Used in {@link com.devpulse.auth.service.AuthService}
+     * to verify credentials during login.
      *
-     * @param config конфигурация аутентификации, предоставляемая Spring
-     * @return глобальный {@link AuthenticationManager}
+     * @param config the authentication configuration provided by Spring
+     * @return the global {@link AuthenticationManager}
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
@@ -99,10 +99,10 @@ public class SecurityConfig {
     }
 
     /**
-     * Кодировщик паролей на основе алгоритма BCrypt.
-     * Используется при регистрации (хэширование) и входе (верификация).
+     * BCrypt-based password encoder.
+     * Used during registration (hashing) and login (verification).
      *
-     * @return экземпляр {@link BCryptPasswordEncoder}
+     * @return an instance of {@link BCryptPasswordEncoder}
      */
     @Bean
     public PasswordEncoder passwordEncoder() {

@@ -1,6 +1,6 @@
 package com.devpulse.auth.filter;
 
-import com.orbit.security.JwtUtil;
+import com.devpulse.security.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,38 +18,38 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * HTTP-фильтр, выполняемый один раз за запрос, отвечающий за JWT-аутентификацию.
+ * HTTP filter executed once per request, responsible for JWT authentication.
  *
- * <p>Логика работы:
+ * <p>Processing logic:
  * <ol>
- *   <li>Считывает заголовок {@code Authorization: Bearer <token>}.</li>
- *   <li>Если заголовок отсутствует или не начинается с {@code "Bearer "},
- *       запрос пропускается дальше без аутентификации.</li>
- *   <li>Извлекает имя пользователя из токена через {@link JwtUtil#extractUsername}.</li>
- *   <li>Если пользователь ещё не аутентифицирован в текущем контексте,
- *       загружает его данные из базы и верифицирует токен.</li>
- *   <li>После успешной верификации устанавливает {@link UsernamePasswordAuthenticationToken}
- *       в {@link SecurityContextHolder} — Spring Security считает запрос аутентифицированным.</li>
+ *   <li>Reads the {@code Authorization: Bearer <token>} header.</li>
+ *   <li>If the header is absent or does not start with {@code "Bearer "},
+ *       the request is passed through without authentication.</li>
+ *   <li>Extracts the username from the token via {@link JwtUtil#extractUsername}.</li>
+ *   <li>If the user is not yet authenticated in the current context,
+ *       loads their details from the database and verifies the token.</li>
+ *   <li>On successful verification, sets a {@link UsernamePasswordAuthenticationToken}
+ *       in the {@link SecurityContextHolder} — Spring Security treats the request as authenticated.</li>
  * </ol>
  */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    /** Утилита для валидации и парсинга JWT-токенов. */
+    /** Utility for validating and parsing JWT tokens. */
     private final JwtUtil jwtUtil;
 
-    /** Сервис для загрузки данных пользователя из базы данных. */
+    /** Service for loading user data from the database. */
     private final UserDetailsService userDetailsService;
 
     /**
-     * Основная логика фильтра — выполняется для каждого входящего HTTP-запроса.
+     * Core filter logic — executed for every incoming HTTP request.
      *
-     * @param request     текущий HTTP-запрос
-     * @param response    текущий HTTP-ответ
-     * @param filterChain цепочка фильтров — вызов {@code doFilter} передаёт запрос дальше
-     * @throws ServletException при ошибке фильтрации
-     * @throws IOException      при ошибке ввода/вывода
+     * @param request     the current HTTP request
+     * @param response    the current HTTP response
+     * @param filterChain the filter chain — calling {@code doFilter} passes the request along
+     * @throws ServletException on a filter error
+     * @throws IOException      on an I/O error
      */
     @Override
     protected void doFilterInternal(

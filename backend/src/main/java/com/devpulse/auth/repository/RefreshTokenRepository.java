@@ -1,7 +1,7 @@
 package com.devpulse.auth.repository;
 
-import com.orbit.auth.entity.RefreshToken;
-import com.orbit.auth.entity.User;
+import com.devpulse.auth.entity.RefreshToken;
+import com.devpulse.auth.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,27 +9,27 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 
 /**
- * JPA-репозиторий для сущности {@link RefreshToken}.
+ * JPA repository for the {@link RefreshToken} entity.
  */
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
     /**
-     * Ищет refresh token по его значению.
-     * Используется при обновлении access token и проверке срока действия.
+     * Finds a refresh token by its value.
+     * Used when refreshing the access token and checking token expiry.
      *
-     * @param token значение refresh token, переданное клиентом
-     * @return {@link Optional} с токеном или пустой, если не существует в базе
+     * @param token the refresh token value provided by the client
+     * @return an {@link Optional} containing the token, or empty if it does not exist in the database
      */
     Optional<RefreshToken> findByToken(String token);
 
     /**
-     * Удаляет все refresh токены, принадлежащие указанному пользователю.
+     * Deletes all refresh tokens belonging to the specified user.
      *
-     * <p>Вызывается при каждом входе, чтобы избежать накопления токенов
-     * в базе и обеспечить использование только последнего.
-     * Аннотация {@link Modifying} обязательна для запросов, изменяющих данные.
+     * <p>Called on every login to prevent token accumulation in the database
+     * and to ensure only the most recent token is active.
+     * The {@link Modifying} annotation is required for data-modifying queries.
      *
-     * @param user пользователь, чьи токены нужно удалить
+     * @param user the user whose tokens should be deleted
      */
     @Modifying
     @Query("DELETE FROM RefreshToken rt WHERE rt.user = :user")

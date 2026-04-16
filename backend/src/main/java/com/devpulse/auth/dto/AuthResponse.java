@@ -4,12 +4,12 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * DTO ответа, возвращаемого после успешной аутентификации.
+ * DTO returned after successful authentication.
  *
- * <p>Возвращается из {@code POST /auth/register}, {@code POST /auth/login}
- * и {@code POST /auth/refresh}.
+ * <p>Returned by {@code POST /auth/register}, {@code POST /auth/login},
+ * and {@code POST /auth/refresh}.
  *
- * <p>Пример JSON-ответа:
+ * <p>Example JSON response:
  * <pre>
  * {
  *   "accessToken":  "eyJhbGciOiJIUzI1NiJ9...",
@@ -24,27 +24,27 @@ import lombok.Data;
 public class AuthResponse {
 
     /**
-     * Подписанный JWT для аутентификации запросов.
-     * Передаётся в заголовке {@code Authorization: Bearer <accessToken>}.
+     * Signed JWT for authenticating requests.
+     * Sent in the {@code Authorization: Bearer <accessToken>} header.
      */
     private String accessToken;
 
     /**
-     * Непрозрачный токен для обновления access token.
-     * Передаётся в {@code POST /auth/refresh} после истечения access token.
+     * Opaque token used to refresh the access token.
+     * Sent to {@code POST /auth/refresh} after the access token expires.
      */
     private String refreshToken;
 
     /**
-     * Тип токена согласно спецификации OAuth 2.0.
-     * Всегда {@code "Bearer"}.
+     * Token type per OAuth 2.0 specification.
+     * Always {@code "Bearer"}.
      */
     @Builder.Default
     private String tokenType = "Bearer";
 
     /**
-     * Время жизни access token в секундах с момента выпуска.
-     * По умолчанию 900 с (15 минут).
+     * Access token lifetime in seconds from issuance.
+     * Default: 900 s (15 minutes).
      */
     private long expiresIn;
 }

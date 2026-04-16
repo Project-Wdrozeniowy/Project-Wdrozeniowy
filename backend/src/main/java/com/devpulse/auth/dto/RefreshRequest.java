@@ -4,12 +4,12 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * DTO запроса на обновление access token.
+ * DTO for an access token refresh request.
  *
- * <p>Используется в {@code POST /auth/refresh}.
- * Клиент передаёт refresh token, полученный при входе или регистрации.
+ * <p>Used by {@code POST /auth/refresh}.
+ * The client sends the refresh token received during login or registration.
  *
- * <p>Пример JSON-запроса:
+ * <p>Example JSON request:
  * <pre>
  * {
  *   "refreshToken": "a1b2c3d4e5f6..."
@@ -20,8 +20,8 @@ import lombok.Data;
 public class RefreshRequest {
 
     /**
-     * Значение refresh token — должно совпадать с токеном, сохранённым в базе данных.
-     * Непустая строка; валидируется через {@link NotBlank}.
+     * Refresh token value — must match the token stored in the database.
+     * Non-blank string; validated via {@link NotBlank}.
      */
     @NotBlank
     private String refreshToken;

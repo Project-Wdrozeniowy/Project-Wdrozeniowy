@@ -1,7 +1,7 @@
 package com.devpulse.auth.service;
 
-import com.orbit.auth.entity.User;
-import com.orbit.auth.repository.UserRepository;
+import com.devpulse.auth.entity.User;
+import com.devpulse.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,18 +12,18 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Реализация {@link UserDetailsService}, загружающая пользователя из базы данных.
+ * Implementation of {@link UserDetailsService} that loads users from the database.
  *
- * <p>Spring Security вызывает этот метод в двух местах:
+ * <p>Spring Security calls this method in two places:
  * <ul>
- *   <li>{@link com.orbit.auth.filter.JwtAuthenticationFilter} —
- *       после декодирования имени пользователя из JWT.</li>
- *   <li>{@link com.orbit.config.SecurityConfig#authenticationProvider()} —
- *       при проверке пароля во время входа.</li>
+ *   <li>{@link com.devpulse.auth.filter.JwtAuthenticationFilter} —
+ *       after decoding the username from a JWT.</li>
+ *   <li>{@link com.devpulse.config.SecurityConfig#authenticationProvider()} —
+ *       when verifying the password during login.</li>
  * </ul>
  *
- * <p>Сознательно <b>не</b> реализуем {@link UserDetails} непосредственно на сущности {@link User},
- * чтобы разделить доменный слой и механизмы Spring Security.
+ * <p>Intentionally <b>not</b> implementing {@link UserDetails} directly on the {@link User} entity
+ * in order to keep the domain layer separate from Spring Security internals.
  */
 @Service
 @RequiredArgsConstructor
@@ -32,14 +32,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private final UserRepository userRepository;
 
     /**
-     * Загружает пользователя из базы данных и оборачивает его в {@link UserDetails}.
+     * Loads a user from the database and wraps them in a {@link UserDetails} object.
      *
-     * <p>Роль пользователя маппится на авторитет Spring Security
-     * в формате {@code "ROLE_USER"} / {@code "ROLE_ADMIN"}.
+     * <p>The user's role is mapped to a Spring Security authority
+     * in the format {@code "ROLE_USER"} / {@code "ROLE_ADMIN"}.
      *
-     * @param username имя пользователя
-     * @return объект {@link UserDetails} с данными пользователя
-     * @throws UsernameNotFoundException если пользователь не существует в базе
+     * @param username the username to look up
+     * @return a {@link UserDetails} object containing the user's data
+     * @throws UsernameNotFoundException if the user does not exist in the database
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

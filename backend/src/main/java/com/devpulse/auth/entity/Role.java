@@ -1,19 +1,19 @@
 package com.devpulse.auth.entity;
 
 /**
- * Роли пользователей в системе Orbit.
+ * User roles in the DevPulse system.
  *
- * <p>Значения маппятся на PostgreSQL тип {@code user_role}
- * и на авторитеты Spring Security в формате {@code "ROLE_USER"} / {@code "ROLE_ADMIN"}.
+ * <p>Values are stored as strings in the {@code users.role} column
+ * and mapped to Spring Security authorities as {@code "ROLE_USER"} / {@code "ROLE_ADMIN"}.
  *
- * <p>Роль назначается при регистрации — по умолчанию {@link #USER}.
- * Изменение роли на {@link #ADMIN} требует вмешательства через административные инструменты.
+ * <p>Roles are assigned at registration — default is {@link #USER}.
+ * Changing a role to {@link #ADMIN} requires administrative action.
  */
 public enum Role {
 
-    /** Стандартный пользователь — создание постов, комментариев и голосование. */
+    /** Standard user — can create posts, comments, and vote. */
     USER,
 
-    /** Администратор — полный доступ, модерация контента и управление пользователями. */
+    /** Administrator — full access, content moderation, user management. */
     ADMIN
 }

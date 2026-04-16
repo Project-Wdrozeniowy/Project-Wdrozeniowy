@@ -1,14 +1,14 @@
 package com.devpulse.auth.service;
 
-import com.orbit.auth.dto.AuthRequest;
-import com.orbit.auth.dto.AuthResponse;
-import com.orbit.auth.dto.RegisterRequest;
-import com.orbit.auth.entity.RefreshToken;
-import com.orbit.auth.entity.User;
-import com.orbit.auth.repository.RefreshTokenRepository;
-import com.orbit.auth.repository.UserRepository;
-import com.orbit.exception.AppException;
-import com.orbit.security.JwtUtil;
+import com.devpulse.auth.dto.AuthRequest;
+import com.devpulse.auth.dto.AuthResponse;
+import com.devpulse.auth.dto.RegisterRequest;
+import com.devpulse.auth.entity.RefreshToken;
+import com.devpulse.auth.entity.User;
+import com.devpulse.auth.repository.RefreshTokenRepository;
+import com.devpulse.auth.repository.UserRepository;
+import com.devpulse.exception.AppException;
+import com.devpulse.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -23,13 +23,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 
 /**
- * Сервис, отвечающий за регистрацию, вход и обновление JWT-токенов.
+ * Service responsible for user registration, login, and JWT token refresh.
  *
- * <p>Схема аутентификации:
+ * <p>Authentication flow:
  * <pre>
- * Регистрация:  RegisterRequest → проверка уникальности → BCrypt хэш → сохранение User → токены
- * Вход:         AuthRequest → AuthenticationManager → аннулирование старых refresh → токены
- * Обновление:   refresh token → поиск в БД → проверка срока → новый access token
+ * Registration:  RegisterRequest → uniqueness check → BCrypt hash → save User → tokens
+ * Login:         AuthRequest → AuthenticationManager → invalidate old refresh tokens → tokens
+ * Refresh:       refresh token → look up in DB → check expiry → new access token
  * </pre>
  */
 @Service
@@ -41,26 +41,26 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    /** Используется для проверки пароля при входе. */
+    /** Used to verify the password during login. */
     private final AuthenticationManager authenticationManager;
 
-    /** Используется для загрузки UserDetails при генерации токена. */
+    /** Used to load UserDetails when generating a token. */
     private final UserDetailsService userDetailsService;
 
-    /** Время жизни access token (с), по умолчанию 900 с = 15 минут. */
+    /** Access token lifetime in seconds; default 900 s = 15 minutes. */
     @Value("${jwt.access-expiry:900}")
     private long accessExpirySeconds;
 
-    /** Время жизни refresh token (с), по умолчанию 604800 с = 7 дней. */
+    /** Refresh token lifetime in seconds; default 604800 s = 7 days. */
     @Value("${jwt.refresh-expiry:604800}")
     private long refreshExpirySeconds;
 
     /**
-     * Регистрирует нового пользователя и возвращает пару токенов.
+     * Registers a new user and returns a token pair.
      *
-     * @param request данные регистрации (username, email, password)
-     * @return {@link AuthResponse} с access и refresh токенами
-     * @throws AppException HTTP 409 если username или email уже занят
+     * @param request registration data (username, email, password)
+     * @return {@link AuthResponse} containing access and refresh tokens
+     * @throws AppException HTTP 409 if the username or email is already taken
      */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -82,14 +82,14 @@ public class AuthService {
     }
 
     /**
-     * Выполняет вход пользователя и возвращает пару токенов.
+     * Logs in a user and returns a token pair.
      *
-     * <p>Перед генерацией новых токенов аннулирует все предыдущие refresh токены
-     * пользователя (стратегия «один активный refresh token»).
+     * <p>Before generating new tokens, all previous refresh tokens for the user
+     * are invalidated (single active refresh token strategy).
      *
-     * @param request данные входа (username, password)
-     * @return {@link AuthResponse} с access и refresh токенами
-     * @throws org.springframework.security.core.AuthenticationException если данные некорректны
+     * @param request login credentials (username, password)
+     * @return {@link AuthResponse} containing access and refresh tokens
+     * @throws org.springframework.security.core.AuthenticationException if the credentials are invalid
      */
     @Transactional
     public AuthResponse login(AuthRequest request) {
@@ -105,14 +105,14 @@ public class AuthService {
     }
 
     /**
-     * Обновляет access token на основе действующего refresh token.
+     * Refreshes the access token using a valid refresh token.
      *
-     * <p>Refresh token остаётся прежним — при обновлении не ротируется.
-     * Истёкший refresh token удаляется из базы.
+     * <p>The refresh token remains unchanged — it is not rotated on refresh.
+     * An expired refresh token is deleted from the database.
      *
-     * @param rawRefreshToken значение refresh token из запроса клиента
-     * @return {@link AuthResponse} с новым access token и тем же refresh token
-     * @throws AppException HTTP 401 если токен не найден или истёк
+     * @param rawRefreshToken the refresh token value from the client request
+     * @return {@link AuthResponse} with a new access token and the same refresh token
+     * @throws AppException HTTP 401 if the token is not found or has expired
      */
     @Transactional
     public AuthResponse refresh(String rawRefreshToken) {
@@ -136,11 +136,11 @@ public class AuthService {
     }
 
     /**
-     * Вспомогательный метод, создающий новую пару токенов (access + refresh) для пользователя.
-     * Сохраняет refresh token в базе данных.
+     * Helper method that creates a new token pair (access + refresh) for a user
+     * and saves the refresh token to the database.
      *
-     * @param user сущность пользователя
-     * @return {@link AuthResponse}, готовый к отправке клиенту
+     * @param user the user entity
+     * @return {@link AuthResponse} ready to be sent to the client
      */
     private AuthResponse buildAuthResponse(User user) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());

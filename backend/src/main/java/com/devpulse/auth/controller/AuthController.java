@@ -1,26 +1,26 @@
 package com.devpulse.auth.controller;
 
-import com.orbit.auth.dto.AuthRequest;
-import com.orbit.auth.dto.AuthResponse;
-import com.orbit.auth.dto.RefreshRequest;
-import com.orbit.auth.dto.RegisterRequest;
-import com.orbit.auth.service.AuthService;
+import com.devpulse.auth.dto.AuthRequest;
+import com.devpulse.auth.dto.AuthResponse;
+import com.devpulse.auth.dto.RefreshRequest;
+import com.devpulse.auth.dto.RegisterRequest;
+import com.devpulse.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST-контроллер, обрабатывающий эндпоинты аутентификации.
+ * REST controller handling authentication endpoints.
  *
- * <p>Все эндпоинты этого контроллера публичны (конфигурация
- * в {@link com.orbit.config.SecurityConfig}).
+ * <p>All endpoints in this controller are public (configured
+ * in {@link com.devpulse.config.SecurityConfig}).
  *
- * <p>Доступные маршруты:
+ * <p>Available routes:
  * <ul>
- *   <li>{@code POST /auth/register} — регистрация нового аккаунта</li>
- *   <li>{@code POST /auth/login}    — вход в систему, возвращает пару токенов</li>
- *   <li>{@code POST /auth/refresh}  — обновление access token</li>
+ *   <li>{@code POST /auth/register} — register a new account</li>
+ *   <li>{@code POST /auth/login}    — log in and receive a token pair</li>
+ *   <li>{@code POST /auth/refresh}  — refresh the access token</li>
  * </ul>
  */
 @RestController
@@ -31,10 +31,10 @@ public class AuthController {
     private final AuthService authService;
 
     /**
-     * Регистрирует нового пользователя.
+     * Registers a new user.
      *
-     * @param request валидированные данные регистрации
-     * @return {@link AuthResponse} с access и refresh токенами; HTTP 201
+     * @param request validated registration data
+     * @return {@link AuthResponse} containing access and refresh tokens; HTTP 201
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -43,10 +43,10 @@ public class AuthController {
     }
 
     /**
-     * Выполняет вход пользователя и возвращает пару JWT-токенов.
+     * Logs in a user and returns a pair of JWT tokens.
      *
-     * @param request данные входа (username, password)
-     * @return {@link AuthResponse} с access и refresh токенами; HTTP 200
+     * @param request login credentials (username, password)
+     * @return {@link AuthResponse} containing access and refresh tokens; HTTP 200
      */
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody AuthRequest request) {
@@ -54,10 +54,10 @@ public class AuthController {
     }
 
     /**
-     * Обновляет access token на основе действующего refresh token.
+     * Refreshes the access token using a valid refresh token.
      *
-     * @param request объект, содержащий refresh token
-     * @return {@link AuthResponse} с новым access token; HTTP 200
+     * @param request object containing the refresh token
+     * @return {@link AuthResponse} with a new access token; HTTP 200
      */
     @PostMapping("/refresh")
     public AuthResponse refresh(@Valid @RequestBody RefreshRequest request) {
