@@ -1,4 +1,4 @@
--- V3: Analytics tables (user activity events)
+-- V4: Analytics (user activity events)
 
 CREATE TABLE user_activity_events (
     id          BIGSERIAL   PRIMARY KEY,
@@ -7,11 +7,12 @@ CREATE TABLE user_activity_events (
     entity_type VARCHAR(50),
     entity_id   BIGINT,
     metadata    JSONB,
+    ip_address  INET,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-COMMENT ON COLUMN user_activity_events.event_type  IS 'e.g. POST_CREATED, COMMENT_ADDED, VOTE_CAST, USER_REGISTERED';
-COMMENT ON COLUMN user_activity_events.entity_type IS 'e.g. POST, COMMENT';
+COMMENT ON COLUMN user_activity_events.event_type  IS 'e.g. POST_CREATED, COMMENT_ADDED, VOTE_CAST, USER_REGISTERED, POST_VIEWED';
+COMMENT ON COLUMN user_activity_events.entity_type IS 'e.g. POST, COMMENT, USER';
 COMMENT ON COLUMN user_activity_events.metadata    IS 'Arbitrary JSON payload for the event';
 
 CREATE INDEX idx_activity_user_id    ON user_activity_events(user_id);
