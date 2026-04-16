@@ -1,21 +1,21 @@
-package com.orbit;
+package com.devpulse;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Главный класс запуска приложения Orbit Backend.
+ * Main entry point for the DevPulse Backend application.
  *
- * <p>Запускает контейнер Spring Boot, который автоматически сканирует
- * все компоненты в пакете {@code com.orbit} и подпакетах.
+ * <p>Starts the Spring Boot container and auto-scans all components
+ * in the {@code com.devpulse} package and sub-packages.
  */
 @SpringBootApplication
 public class BackendApplication {
 
     /**
-     * Точка входа в приложение.
+     * Application entry point.
      *
-     * @param args аргументы командной строки, передаваемые в Spring
+     * @param args command-line arguments passed to Spring
      */
     public static void main(String[] args) {
         SpringApplication.run(BackendApplication.class, args);

@@ -9,24 +9,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Конфигурация OpenAPI (Swagger) для документирования REST API.
+ * OpenAPI (Swagger) configuration for REST API documentation.
  *
- * <p>Настраивает:
+ * <p>Configures:
  * <ul>
- *   <li>Метаданные API: название, версия, описание.</li>
- *   <li>Схему аутентификации Bearer JWT — позволяет выполнять запросы
- *       к защищённым эндпоинтам прямо из Swagger UI.</li>
+ *   <li>API metadata: title, version, description.</li>
+ *   <li>Bearer JWT authentication scheme — allows requests to secured
+ *       endpoints directly from Swagger UI.</li>
  * </ul>
  *
- * <p>Swagger UI доступен по адресу {@code /swagger-ui/index.html} после запуска приложения.
+ * <p>Swagger UI is available at {@code /swagger-ui/index.html} after startup.
  */
 @Configuration
 public class OpenApiConfig {
 
     /**
-     * Создаёт объект {@link OpenAPI} с описанием проекта и схемой JWT-аутентификации.
+     * Creates an {@link OpenAPI} instance with project metadata and JWT auth scheme.
      *
-     * @return настроенный экземпляр {@link OpenAPI}
+     * @return configured {@link OpenAPI} instance
      */
     @Bean
     public OpenAPI openAPI() {
@@ -34,9 +34,9 @@ public class OpenApiConfig {
 
         return new OpenAPI()
                 .info(new Info()
-                        .title("Orbit API")
+                        .title("DevPulse API")
                         .version("1.0.0")
-                        .description("REST API социальной платформы Orbit"))
+                        .description("REST API for the DevPulse platform"))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName, new SecurityScheme()
