@@ -106,7 +106,7 @@ erDiagram
         timestamptz created_at
     }
 
-    user_activity_events {
+    activity_events {
         bigserial id PK
         bigint user_id FK
         varchar_50 event_type
@@ -124,7 +124,7 @@ erDiagram
     users ||--o{ notifications : "receives"
     users ||--o{ notifications : "sends"
     users ||--o{ post_subscriptions : "subscribes"
-    users ||--o{ user_activity_events : "generates"
+    users ||--o{ activity_events : "generates"
     categories ||--o{ posts : "contains"
     posts ||--o{ comments : "has"
     posts ||--o{ post_tags : "tagged with"
