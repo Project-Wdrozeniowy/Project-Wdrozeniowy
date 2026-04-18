@@ -1,156 +1,309 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import type { CategoryKey } from '@/shared/types';
-import { CATEGORIES } from '@/constants/categories';
-import OrbitaLogo from '@/components/ui/OrbitaLogo';
-import FormField from '@/components/ui/FormField';
+import { useForm, Controller, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { registerSchema } from '@/lib/validations/auth';
+import type { RegisterFormData } from '@/lib/validations/auth';
+import { authService } from '@/services/authService';
+import { useStore } from '@/store';
+
+const INTERESTS = [
+  { key: 'ai', label: 'AI / Tech', color: 'bg-blue-500' },
+  { key: 'gaming', label: 'Gaming', color: 'bg-green-500' },
+  { key: 'politics', label: 'Politics', color: 'bg-red-500' },
+  { key: 'science', label: 'Science', color: 'bg-violet-500' },
+  { key: 'business', label: 'Business', color: 'bg-amber-500' },
+  { key: 'education', label: 'Education', color: 'bg-teal-500' },
+  { key: 'news', label: 'News', color: 'bg-gray-500' },
+];
 
 export default function RegisterPage() {
-  const [selected, setSelected] = useState<Set<CategoryKey>>(new Set());
+  const router = useRouter();
+  const { setUser } = useStore();
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  function toggleInterest(key: CategoryKey) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { interests: [] },
+  });
+
+  const selectedInterests = useWatch({ control, name: 'interests' }) ?? [];
+
+  async function onSubmit(data: RegisterFormData) {
+    setServerError(null);
+    try {
+      const response = await authService.register({
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        displayName: data.displayName,
+        interests: data.interests,
+      });
+      const { user, token, refreshToken } = response.data;
+      setUser(user, token, refreshToken);
+      router.push('/');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Registration failed. Please try again.';
+      setServerError(message);
+    }
   }
 
   return (
     <div className="w-full max-w-2xl">
+      {/* Logo + heading */}
       <div className="flex flex-col items-center gap-2 mb-6">
-        <OrbitaLogo size={85} />
-        <h1 className="text-gray-900 font-bold text-4xl text-center mt-2">Join Our Community</h1>
+        <OrbitaLogo />
+        <h1 className="text-gray-900 font-bold text-4xl text-center mt-2">
+          Join Our Community
+        </h1>
         <p className="text-gray-500 text-base text-center">
           Create your account and start sharing your ideas
         </p>
       </div>
 
-      <div className="bg-white rounded-xl p-8 flex flex-col gap-5">
-        <FormField label="Username" hint="This will be your public display name" id="username">
+      {/* Card */}
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="bg-white rounded-xl p-8 flex flex-col gap-5"
+      >
+        {/* Server error */}
+        {serverError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded">
+            {serverError}
+          </div>
+        )}
+
+        {/* Username */}
+        <FormField label="Username" error={errors.username?.message} hint="This will be your public display name">
           <input
-            id="username"
+            {...register('username')}
             type="text"
             placeholder="Choose a unique username"
-            className="input"
+            autoComplete="username"
+            className={`input ${errors.username ? 'ring-2 ring-red-500' : ''}`}
           />
         </FormField>
 
-        <FormField label="Email" id="email">
-          <input id="email" type="email" placeholder="your.email@example.com" className="input" />
+        {/* Display name */}
+        <FormField label="Display Name" error={errors.displayName?.message}>
+          <input
+            {...register('displayName')}
+            type="text"
+            placeholder="Your full name or nickname"
+            autoComplete="name"
+            className={`input ${errors.displayName ? 'ring-2 ring-red-500' : ''}`}
+          />
         </FormField>
 
+        {/* Email */}
+        <FormField label="Email" error={errors.email?.message}>
+          <input
+            {...register('email')}
+            type="email"
+            placeholder="your.email@example.com"
+            autoComplete="email"
+            className={`input ${errors.email ? 'ring-2 ring-red-500' : ''}`}
+          />
+        </FormField>
+
+        {/* Password */}
         <FormField
           label="Password"
+          error={errors.password?.message}
           hint="Minimum 8 characters with letters and numbers"
-          id="password"
         >
           <input
-            id="password"
+            {...register('password')}
             type="password"
             placeholder="Create a strong password"
-            className="input"
+            autoComplete="new-password"
+            className={`input ${errors.password ? 'ring-2 ring-red-500' : ''}`}
           />
         </FormField>
 
-        <FormField label="Confirm Password" id="confirm-password">
+        {/* Confirm password */}
+        <FormField label="Confirm Password" error={errors.confirmPassword?.message}>
           <input
-            id="confirm-password"
+            {...register('confirmPassword')}
             type="password"
             placeholder="Re-enter your password"
-            className="input"
+            autoComplete="new-password"
+            className={`input ${errors.confirmPassword ? 'ring-2 ring-red-500' : ''}`}
           />
         </FormField>
 
+        {/* Interests */}
         <div className="flex flex-col gap-3">
           <div>
-            <p className="text-gray-900 font-semibold text-base">Select Your Interests</p>
+            <p className="text-gray-900 font-semibold text-base">
+              Select Your Interests
+            </p>
             <p className="text-gray-500 text-xs mt-0.5">
               Choose topics you&apos;re interested in to personalize your feed
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            {CATEGORIES.map(({ key, label, color }) => {
-              const active = selected.has(key);
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => toggleInterest(key)}
-                  className={`flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
-                    active
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-transparent bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  <div
-                    className={`w-10 h-10 rounded-full ${color} flex items-center justify-center shrink-0`}
-                  >
-                    <span className="text-white font-bold text-lg">{label[0]}</span>
-                  </div>
-                  <span className="text-gray-900 font-semibold text-sm">{label}</span>
-                </button>
-              );
-            })}
-          </div>
+          <Controller
+            name="interests"
+            control={control}
+            render={({ field }) => (
+              <div className="grid grid-cols-2 gap-2">
+                {INTERESTS.map(({ key, label, color }) => {
+                  const active = (field.value ?? []).includes(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        const current = field.value ?? [];
+                        field.onChange(
+                          active
+                            ? current.filter((k) => k !== key)
+                            : [...current, key],
+                        );
+                      }}
+                      className={`flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
+                        active
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-transparent bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <div
+                        className={`w-10 h-10 rounded-full ${color} flex items-center justify-center shrink-0`}
+                      >
+                        <span className="text-white font-bold text-lg">
+                          {label[0]}
+                        </span>
+                      </div>
+                      <span className="text-gray-900 font-semibold text-sm">
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          />
 
           <p className="text-gray-500 text-xs">
-            Selected {selected.size} topic{selected.size !== 1 ? 's' : ''}
+            Selected {selectedInterests.length} topic
+            {selectedInterests.length !== 1 ? 's' : ''}
           </p>
         </div>
 
-        <label className="flex items-center gap-3 bg-gray-100 rounded-lg px-4 py-3 cursor-pointer">
-          <input type="checkbox" className="w-4 h-4 rounded accent-blue-600" />
-          <span className="text-gray-900 font-semibold text-sm">
-            I agree to the Terms of Service and Privacy Policy
-          </span>
-        </label>
+        {/* Terms */}
+        <div className="flex flex-col gap-1.5">
+          <label
+            className={`flex items-center gap-3 rounded-lg px-4 py-3 cursor-pointer ${
+              errors.terms ? 'bg-red-50' : 'bg-gray-100'
+            }`}
+          >
+            <input
+              {...register('terms')}
+              type="checkbox"
+              className="w-4 h-4 rounded accent-blue-600"
+            />
+            <span className="text-gray-900 font-semibold text-sm">
+              I agree to the Terms of Service and Privacy Policy
+            </span>
+          </label>
+          {errors.terms && (
+            <p className="text-red-500 text-xs">{errors.terms.message}</p>
+          )}
+        </div>
 
+        {/* Submit */}
         <button
-          type="button"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded transition-colors"
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-sm py-2.5 rounded transition-colors"
         >
-          Create Account
+          {isSubmitting ? 'Creating account…' : 'Create Account'}
         </button>
 
+        {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-gray-200" />
           <span className="text-gray-500 text-xs">Or continue with</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
+        {/* Social */}
         <div className="grid grid-cols-3 gap-2">
           {['Google', 'GitHub', 'Discord'].map((provider) => (
             <button
               key={provider}
               type="button"
-              className="flex items-center justify-center py-2.5 rounded bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
+              className="flex items-center justify-center py-2.5 rounded bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200 text-xs text-gray-700 font-medium"
             >
-              <span className="text-xs text-gray-700 font-medium">{provider}</span>
+              {provider}
             </button>
           ))}
         </div>
 
+        {/* Sign in link */}
         <p className="text-gray-500 text-sm text-center">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline font-semibold">
+          <Link
+            href="/login"
+            className="text-blue-600 hover:underline font-semibold"
+          >
             Sign In
           </Link>
         </p>
-      </div>
+      </form>
 
       <p className="text-gray-500 text-xs text-center mt-4">
         By signing up, you agree to our community guidelines and terms.
       </p>
     </div>
+  );
+}
+
+function FormField({
+  label,
+  error,
+  hint,
+  children,
+}: {
+  label: string;
+  error?: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-gray-900 font-semibold text-sm">{label}</label>
+      {children}
+      {hint && !error && <p className="text-gray-500 text-xs">{hint}</p>}
+      {error && <p className="text-red-500 text-xs">{error}</p>}
+    </div>
+  );
+}
+
+function OrbitaLogo() {
+  return (
+    <svg width="85" height="85" viewBox="0 0 85 85" fill="none" aria-hidden>
+      <circle cx="42.5" cy="42.5" r="35" stroke="#6366f1" strokeWidth="1" opacity="0.15" />
+      <circle cx="42.5" cy="42.5" r="27" stroke="#6366f1" strokeWidth="1.2" opacity="0.25" />
+      <circle cx="42.5" cy="42.5" r="18" fill="#6366f1" opacity="0.2" />
+      <circle cx="42.5" cy="42.5" r="11" fill="#6366f1" opacity="0.4" />
+      <circle cx="42.5" cy="42.5" r="6" fill="#6366f1" />
+      <circle cx="42.5" cy="18" r="4" fill="#3b82f6" />
+      <circle cx="62" cy="30" r="2.5" fill="#60a5fa" />
+      <circle cx="62" cy="56" r="3.5" fill="#8b5cf6" />
+      <circle cx="42.5" cy="67" r="2.5" fill="#a78bfa" />
+      <circle cx="23" cy="56" r="3" fill="#ec4899" />
+      <circle cx="23" cy="30" r="2.5" fill="#f97316" />
+    </svg>
   );
 }
