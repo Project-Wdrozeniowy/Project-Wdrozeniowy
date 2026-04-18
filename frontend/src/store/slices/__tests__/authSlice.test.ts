@@ -4,9 +4,9 @@ import type { User } from '@/types';
 
 const mockUser: User = {
   id: '1',
+  username: 'testuser',
   email: 'test@example.com',
-  name: 'Test User',
-  role: 'user',
+  displayName: 'Test User',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
