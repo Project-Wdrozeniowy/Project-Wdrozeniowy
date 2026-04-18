@@ -10,9 +10,25 @@ type RequestBody = Record<string, unknown> | FormData | null;
 class ApiClient {
   private client: AxiosInstance;
 
+  private static resolveBaseURL(): string {
+    const envURL = process.env.NEXT_PUBLIC_API_URL;
+    if (envURL) return envURL;
+
+    if (typeof window !== 'undefined') {
+      return '/api';
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('NEXT_PUBLIC_API_URL is not set in production environment');
+    }
+
+    return 'http://localhost:3000/api';
+  }
+
   constructor() {
+    const baseURL = ApiClient.resolveBaseURL();
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+      baseURL,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',

@@ -13,7 +13,6 @@ build/
 public/
 
 # Generated files
-.next/
 *.log
 
 # Environment files
