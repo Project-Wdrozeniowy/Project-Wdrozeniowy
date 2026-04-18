@@ -2,11 +2,13 @@ export default function FormField({
   label,
   hint,
   id,
+  error,
   children,
 }: {
   label: string;
   hint?: string;
   id?: string;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -16,6 +18,7 @@ export default function FormField({
       </label>
       {children}
       {hint && <p className="text-gray-500 text-xs">{hint}</p>}
+      {error && <p className="text-red-500 text-xs">{error}</p>}
     </div>
   );
 }
