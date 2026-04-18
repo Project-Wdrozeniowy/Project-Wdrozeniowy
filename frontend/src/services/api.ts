@@ -18,7 +18,6 @@ class ApiClient {
       throw new Error('NEXT_PUBLIC_API_URL must be set in production');
     }
 
-    // Server-side in development: hit the local gateway directly
     return 'http://localhost:3000/api';
   }
 

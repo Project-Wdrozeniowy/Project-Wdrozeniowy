@@ -19,6 +19,10 @@ const mockUser: User = {
   username: 'userone',
   email: 'user@example.com',
   displayName: 'User One',
+  role: 'user',
+  status: 'active',
+  postCount: 0,
+  commentCount: 0,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
@@ -54,7 +58,15 @@ describe('userService.getUser', () => {
 
 describe('userService.createUser', () => {
   it('calls apiClient.post with /users and data', async () => {
-    const newUserData = { email: 'new@example.com', username: 'newuser', displayName: 'New User' };
+    const newUserData = {
+      email: 'new@example.com',
+      username: 'newuser',
+      displayName: 'New User',
+      role: 'user' as const,
+      status: 'active' as const,
+      postCount: 0,
+      commentCount: 0,
+    };
     mockApiClient.post.mockResolvedValue(mockResponse(mockUser));
     const result = await userService.createUser(newUserData);
     expect(mockApiClient.post).toHaveBeenCalledWith('/users', newUserData);

@@ -6,13 +6,23 @@ const mockUser: User = {
   username: 'combineduser',
   email: 'combined@example.com',
   displayName: 'Combined User',
+  role: 'user',
+  status: 'active',
+  postCount: 0,
+  commentCount: 0,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
 
 beforeEach(() => {
   localStorage.clear();
-  useStore.setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
+  useStore.setState({
+    user: null,
+    token: null,
+    refreshToken: null,
+    isAuthenticated: false,
+    isLoading: false,
+  });
 });
 
 describe('Combined store', () => {

@@ -7,6 +7,10 @@ const mockUser: User = {
   username: 'testuser',
   email: 'test@example.com',
   displayName: 'Test User',
+  role: 'user',
+  status: 'active',
+  postCount: 0,
+  commentCount: 0,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
