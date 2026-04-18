@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import type { User, ApiResponse } from '../types';
+import type { User, ApiResponse } from '@/shared/types';
 
 export const userService = {
   // Specify the return type

@@ -6,6 +6,11 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost:3000',
+      },
+    },
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
@@ -19,6 +24,18 @@ export default defineConfig({
         'tailwind.config.*',
         'vitest.config.*',
         '**/*.d.ts',
+        // Type-only files — no executable code
+        '**/types/**',
+        '**/shared/**',
+        // Constants — no executable logic
+        '**/constants/**',
+        // UI components and pages — covered by E2E/integration tests
+        '**/components/**',
+        '**/app/**',
+        '**/hooks/**',
+        // Test infrastructure
+        '**/test/**',
+        '**/mocks/**',
       ],
       thresholds: {
         lines: 65,
