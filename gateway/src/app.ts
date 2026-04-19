@@ -1,4 +1,5 @@
 import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import corsMiddleware from './middleware/cors';
 import rateLimiter from './middleware/rateLimiter';
@@ -18,6 +19,10 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api', authMiddleware);
-app.use('/api', proxyMiddleware);
+app.use(proxyMiddleware);
+
+app.use((_err: Error, _req: Request, res: Response, _next: NextFunction): void => {
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 export default app;

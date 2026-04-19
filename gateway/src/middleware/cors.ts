@@ -6,7 +6,7 @@ const corsMiddleware = cors({
     if (!origin || config.cors.origins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error(`CORS: origin '${origin}' not allowed`));
+      callback(null, false);
     }
   },
   credentials: true,

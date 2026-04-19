@@ -13,16 +13,32 @@ function getEnv(key: string, fallback: string): string {
   return process.env[key] ?? fallback;
 }
 
+function getIntEnv(key: string, fallback: string): number {
+  const raw = getEnv(key, fallback);
+  const value = parseInt(raw, 10);
+  if (isNaN(value)) {
+    throw new Error(`Environment variable ${key} must be an integer, got: "${raw}"`);
+  }
+  return value;
+}
+
+function parseOrigins(raw: string): string[] {
+  return raw
+    .split(',')
+    .map((o) => o.trim())
+    .filter((o) => o.length > 0);
+}
+
 const config: GatewayConfig = {
-  port: parseInt(getEnv('PORT', '3000'), 10),
+  port: getIntEnv('PORT', '3000'),
   backendUrl: getEnv('BACKEND_URL', 'http://localhost:8080'),
   jwtSecret: requireEnv('JWT_SECRET'),
   cors: {
-    origins: getEnv('CORS_ORIGINS', 'http://localhost:3001').split(','),
+    origins: parseOrigins(getEnv('CORS_ORIGINS', 'http://localhost:3001')),
   },
   rateLimit: {
-    windowMs: parseInt(getEnv('RATE_LIMIT_WINDOW_MS', '60000'), 10),
-    max: parseInt(getEnv('RATE_LIMIT_MAX', '100'), 10),
+    windowMs: getIntEnv('RATE_LIMIT_WINDOW_MS', '60000'),
+    max: getIntEnv('RATE_LIMIT_MAX', '100'),
   },
   publicRoutes: [
     { method: 'POST', path: '/api/auth/login' },
