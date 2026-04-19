@@ -1,5 +1,5 @@
 import { useStore } from '../index';
-import type { User } from '@/types';
+import type { User } from '@/shared/types';
 
 const mockUser: User = {
   id: '42',

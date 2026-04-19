@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { User } from '@/types';
+import type { User } from '@/shared/types';
 import { tokenStorage } from '@/services/authService';
 
 export interface AuthSlice {
