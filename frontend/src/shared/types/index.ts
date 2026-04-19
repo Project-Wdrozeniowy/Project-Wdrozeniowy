@@ -40,12 +40,12 @@ export interface User {
   displayName: string;
   avatarUrl?: string;
   bio?: string;
-  role?: UserRole;
-  status?: UserStatus;
+  role: UserRole;
+  status: UserStatus;
   banReason?: string;
   emailVerifiedAt?: string;
-  postCount?: number;
-  commentCount?: number;
+  postCount: number;
+  commentCount: number;
   createdAt: string;
   updatedAt: string;
 }

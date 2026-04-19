@@ -1,9 +1,17 @@
+'use client';
+
+import { useState } from 'react';
 import PostCardSkeleton from './_components/PostCardSkeleton';
+import PostCard from '@/app/_components/PostCard';
+import { usePosts } from '@/hooks/usePosts';
 import { cn } from '@/lib/cn';
 
 const SORT_TABS = ['Hot', 'New', 'Top'] as const;
 
 export default function HomePage() {
+  const [activeTab, setActiveTab] = useState(0);
+  const { data: posts, isLoading } = usePosts();
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
@@ -11,9 +19,10 @@ export default function HomePage() {
           {SORT_TABS.map((tab, i) => (
             <button
               key={tab}
+              onClick={() => setActiveTab(i)}
               className={cn(
                 'px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors',
-                i === 0 ? 'bg-white text-gray-900' : 'text-gray-50 hover:bg-slate-600'
+                i === activeTab ? 'bg-white text-gray-900' : 'text-gray-50 hover:bg-slate-600'
               )}
             >
               {tab}
@@ -28,9 +37,9 @@ export default function HomePage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <PostCardSkeleton key={i} />
-        ))}
+        {isLoading || !posts
+          ? Array.from({ length: 5 }).map((_, i) => <PostCardSkeleton key={i} />)
+          : posts.map((post) => <PostCard key={post.id} post={post} />)}
       </div>
     </div>
   );

@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
 import { CATEGORIES } from '@/constants/categories';
 import { cn } from '@/lib/cn';
 
 const ALL_LABEL = 'All';
 
-export default function CategoryFilter() {
-  const [active, setActive] = useState(ALL_LABEL);
+interface Props {
+  active: string;
+  onSelect: (label: string) => void;
+}
 
+export default function CategoryFilter({ active, onSelect }: Props) {
   const labels = [ALL_LABEL, ...CATEGORIES.map((c) => c.label)];
 
   return (
@@ -16,7 +18,7 @@ export default function CategoryFilter() {
       {labels.map((label) => (
         <button
           key={label}
-          onClick={() => setActive(label)}
+          onClick={() => onSelect(label)}
           className={cn(
             'px-3 py-1.5 rounded text-sm font-semibold transition-colors',
             active === label

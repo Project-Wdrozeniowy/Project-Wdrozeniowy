@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { ApiResponse, User } from '@/types';
+import type { ApiResponse, User } from '@/shared/types';
 
 const mockApiClient = {
   get: vi.fn(),

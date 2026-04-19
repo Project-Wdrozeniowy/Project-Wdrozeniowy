@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import type { AuthResponse, ApiResponse } from '@/types';
+import type { AuthResponse, ApiResponse } from '@/shared/types';
 import type { LoginFormData, RegisterFormData } from '@/lib/validations/auth';
 
 const TOKEN_KEY = 'token';
