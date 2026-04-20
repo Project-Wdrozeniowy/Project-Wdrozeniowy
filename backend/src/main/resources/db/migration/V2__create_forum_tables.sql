@@ -49,7 +49,7 @@ CREATE TABLE comments (
     depth      SMALLINT       NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ    NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ    NOT NULL DEFAULT now(),
-    CONSTRAINT comments_depth_check CHECK (depth <= 5)
+    CONSTRAINT comments_depth_check CHECK (depth >= 0 AND depth <= 5)
 );
 
 CREATE INDEX idx_comments_post_id    ON comments(post_id);
