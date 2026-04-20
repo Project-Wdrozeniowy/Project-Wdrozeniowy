@@ -64,7 +64,9 @@ io.on('connection', (socket) => {
   const username = socket.data.user?.sub;
 
   // Auto-join a private room for targeted notifications
-  socket.join(`user:${username}`);
+  if (username) {
+    socket.join(`user:${username}`);
+  }
 
   // Join a forum thread room
   socket.on('join_thread', ({ postId }) => {
