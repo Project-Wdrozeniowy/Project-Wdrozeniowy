@@ -4,14 +4,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
- * Базовый интеграционный тест, проверяющий корректную загрузку контекста Spring.
+ * Basic integration test verifying that the Spring context loads correctly.
  */
 @SpringBootTest
 class BackendApplicationTests {
 
     /**
-     * Проверяет, что контекст Spring Boot загружается без ошибок.
-     * Тест упадёт при неправильной конфигурации бинов.
+     * Verifies that the Spring Boot context starts without errors.
+     * Fails if any bean is misconfigured.
      */
     @Test
     void contextLoads() {
