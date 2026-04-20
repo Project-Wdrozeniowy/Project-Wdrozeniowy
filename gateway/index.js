@@ -52,7 +52,11 @@ io.use((socket, next) => {
   const token = raw.startsWith('Bearer ') ? raw.slice(7) : raw;
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    socket.data.user = payload; // { sub: username, iat, exp, ... }
+    const username = typeof payload?.sub === 'string' ? payload.sub.trim() : '';
+    if (!username) {
+      return next(new Error('AUTH_INVALID'));
+    }
+    socket.data.user = { ...payload, sub: username }; // { sub: username, iat, exp, ... }
     next();
   } catch {
     next(new Error('AUTH_INVALID'));
@@ -61,21 +65,19 @@ io.use((socket, next) => {
 
 // Connection handler
 io.on('connection', (socket) => {
-  const username = socket.data.user?.sub;
+  const username = socket.data.user.sub;
 
   // Auto-join a private room for targeted notifications
-  if (username) {
-    socket.join(`user:${username}`);
-  }
+  socket.join(`user:${username}`);
 
   // Join a forum thread room
-  socket.on('join_thread', ({ postId }) => {
+  socket.on('join_thread', ({ postId } = {}) => {
     if (!postId) return;
     socket.join(`thread:${postId}`);
   });
 
   // Leave a forum thread room
-  socket.on('leave_thread', ({ postId }) => {
+  socket.on('leave_thread', ({ postId } = {}) => {
     if (!postId) return;
     socket.leave(`thread:${postId}`);
   });
