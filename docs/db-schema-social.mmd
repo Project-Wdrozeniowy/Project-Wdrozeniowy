@@ -39,7 +39,7 @@ erDiagram
     }
 
     users ||--o{ notifications : "receives"
-    users ||--o{ notifications : "sends"
+    users o|--o{ notifications : "sends"
     users ||--o{ post_subscriptions : "subscribes"
-    users ||--o{ activity_events : "generates"
+    users o|--o{ activity_events : "generates"
     posts ||--o{ post_subscriptions : "subscribed by"
