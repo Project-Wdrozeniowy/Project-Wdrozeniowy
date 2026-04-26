@@ -1,0 +1,78 @@
+erDiagram
+    users {
+        bigserial id PK
+        varchar_50 username UK
+    }
+
+    categories {
+        bigserial id PK
+        varchar_100 name UK
+        varchar_100 slug UK
+        text description
+        int display_order
+        boolean is_visible
+        timestamptz created_at
+    }
+
+    posts {
+        bigserial id PK
+        bigint user_id FK
+        bigint category_id FK
+        varchar_255 title
+        varchar_300 slug UK
+        text content
+        post_status status
+        boolean is_pinned
+        int view_count
+        int vote_score
+        int comment_count
+        timestamptz last_activity_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    comments {
+        bigserial id PK
+        bigint post_id FK
+        bigint user_id FK
+        bigint parent_id FK
+        text content
+        comment_status status
+        int vote_score
+        smallint depth
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    tags {
+        bigserial id PK
+        varchar_50 name UK
+        varchar_50 slug UK
+        int post_count
+    }
+
+    post_tags {
+        bigint post_id FK
+        bigint tag_id FK
+        timestamptz created_at
+    }
+
+    votes {
+        bigserial id PK
+        bigint user_id FK
+        bigint post_id FK
+        bigint comment_id FK
+        vote_type vote_type
+        timestamptz created_at
+    }
+
+    users ||--o{ posts : "creates"
+    users ||--o{ comments : "writes"
+    users ||--o{ votes : "casts"
+    categories ||--o{ posts : "contains"
+    posts ||--o{ comments : "has"
+    posts ||--o{ post_tags : "tagged with"
+    posts ||--o{ votes : "receives"
+    tags ||--o{ post_tags : "applied to"
+    comments ||--o{ comments : "replied to"
+    comments ||--o{ votes : "receives"

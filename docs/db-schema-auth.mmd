@@ -1,0 +1,29 @@
+erDiagram
+    users {
+        bigserial id PK
+        varchar_50 username UK
+        varchar_100 email UK
+        varchar_255 password_hash
+        varchar_100 display_name
+        varchar_500 avatar_url
+        text bio
+        user_role role
+        user_status status
+        text ban_reason
+        timestamptz email_verified_at
+        int post_count
+        int comment_count
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    refresh_tokens {
+        bigserial id PK
+        bigint user_id FK
+        varchar_64 token UK
+        timestamptz expires_at
+        timestamptz revoked_at
+        timestamptz created_at
+    }
+
+    users ||--o{ refresh_tokens : "has"

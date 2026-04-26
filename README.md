@@ -149,11 +149,15 @@ cd backend
 
 ---
 
+## 🗄️ Database Schema
+
+See [`docs/db-schema.mmd`](docs/db-schema.mmd) for the full ER diagram.
+Focused sub-diagrams: [`db-schema-auth.mmd`](docs/db-schema-auth.mmd), [`db-schema-forum.mmd`](docs/db-schema-forum.mmd), [`db-schema-social.mmd`](docs/db-schema-social.mmd).
+
+---
+
 ## 📦 Future Improvements
 
-* Add authentication (JWT)
-* Add database (PostgreSQL)
-* Dockerize services
 * CI/CD pipeline (GitHub Actions)
 * API documentation (Swagger)
 
