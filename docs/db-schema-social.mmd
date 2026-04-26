@@ -1,0 +1,45 @@
+erDiagram
+    users {
+        bigserial id PK
+        varchar_50 username UK
+    }
+
+    posts {
+        bigserial id PK
+        varchar_255 title
+    }
+
+    notifications {
+        bigserial id PK
+        bigint recipient_id FK
+        bigint sender_id FK
+        notification_type type
+        varchar_50 entity_type
+        bigint entity_id
+        text message
+        boolean is_read
+        timestamptz created_at
+    }
+
+    post_subscriptions {
+        bigint user_id FK
+        bigint post_id FK
+        timestamptz created_at
+    }
+
+    activity_events {
+        bigserial id PK
+        bigint user_id FK
+        varchar_50 event_type
+        varchar_50 entity_type
+        bigint entity_id
+        jsonb metadata
+        inet ip_address
+        timestamptz created_at
+    }
+
+    users ||--o{ notifications : "receives"
+    users o|--o{ notifications : "sends"
+    users ||--o{ post_subscriptions : "subscribes"
+    users o|--o{ activity_events : "generates"
+    posts ||--o{ post_subscriptions : "subscribed by"
