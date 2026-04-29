@@ -87,6 +87,9 @@ jobs:
       - name: Run tests with coverage check
         working-directory: backend
         env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/devpulse
+          SPRING_DATASOURCE_USERNAME: devpulse
+          SPRING_DATASOURCE_PASSWORD: devpulse
           POSTGRES_DB: devpulse
           POSTGRES_USER: devpulse
           POSTGRES_PASSWORD: devpulse
