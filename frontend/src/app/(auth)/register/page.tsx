@@ -2,21 +2,22 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { CategoryKey } from '@/shared/types';
 
 const INTERESTS = [
-  { key: 'ai', label: 'AI / Tech', color: 'bg-blue-500' },
-  { key: 'gaming', label: 'Gaming', color: 'bg-green-500' },
-  { key: 'politics', label: 'Politics', color: 'bg-red-500' },
-  { key: 'science', label: 'Science', color: 'bg-violet-500' },
-  { key: 'business', label: 'Business', color: 'bg-amber-500' },
-  { key: 'education', label: 'Education', color: 'bg-teal-500' },
-  { key: 'news', label: 'News', color: 'bg-gray-500' },
+  { key: CategoryKey.AI, label: 'AI / Tech', color: 'bg-blue-500' },
+  { key: CategoryKey.GAMING, label: 'Gaming', color: 'bg-green-500' },
+  { key: CategoryKey.POLITICS, label: 'Politics', color: 'bg-red-500' },
+  { key: CategoryKey.SCIENCE, label: 'Science', color: 'bg-violet-500' },
+  { key: CategoryKey.BUSINESS, label: 'Business', color: 'bg-amber-500' },
+  { key: CategoryKey.EDUCATION, label: 'Education', color: 'bg-teal-500' },
+  { key: CategoryKey.NEWS, label: 'News', color: 'bg-gray-500' },
 ];
 
 export default function RegisterPage() {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<CategoryKey>>(new Set());
 
-  function toggleInterest(key: string) {
+  function toggleInterest(key: CategoryKey) {
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
@@ -44,11 +45,9 @@ export default function RegisterPage() {
       {/* Card */}
       <div className="bg-white rounded-xl p-8 flex flex-col gap-5">
         {/* Username */}
-        <FormField
-          label="Username"
-          hint="This will be your public display name"
-        >
+        <FormField label="Username" hint="This will be your public display name" id="username">
           <input
+            id="username"
             type="text"
             placeholder="Choose a unique username"
             className="input"
@@ -56,8 +55,9 @@ export default function RegisterPage() {
         </FormField>
 
         {/* Email */}
-        <FormField label="Email">
+        <FormField label="Email" id="email">
           <input
+            id="email"
             type="email"
             placeholder="your.email@example.com"
             className="input"
@@ -65,11 +65,9 @@ export default function RegisterPage() {
         </FormField>
 
         {/* Password */}
-        <FormField
-          label="Password"
-          hint="Minimum 8 characters with letters and numbers"
-        >
+        <FormField label="Password" hint="Minimum 8 characters with letters and numbers" id="password">
           <input
+            id="password"
             type="password"
             placeholder="Create a strong password"
             className="input"
@@ -77,8 +75,9 @@ export default function RegisterPage() {
         </FormField>
 
         {/* Confirm password */}
-        <FormField label="Confirm Password">
+        <FormField label="Confirm Password" id="confirm-password">
           <input
+            id="confirm-password"
             type="password"
             placeholder="Re-enter your password"
             className="input"
@@ -140,7 +139,7 @@ export default function RegisterPage() {
 
         {/* Submit */}
         <button
-          type="submit"
+          type="button"
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded transition-colors"
         >
           Create Account
@@ -190,15 +189,17 @@ export default function RegisterPage() {
 function FormField({
   label,
   hint,
+  id,
   children,
 }: {
   label: string;
   hint?: string;
+  id?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-gray-900 font-semibold text-sm">{label}</label>
+      <label htmlFor={id} className="text-gray-900 font-semibold text-sm">{label}</label>
       {children}
       {hint && <p className="text-gray-500 text-xs">{hint}</p>}
     </div>
