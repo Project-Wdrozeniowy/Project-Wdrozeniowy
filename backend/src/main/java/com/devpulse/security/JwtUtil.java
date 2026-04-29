@@ -54,6 +54,9 @@ public class JwtUtil {
         } catch (IllegalArgumentException ex) {
             keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         }
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("jwt.secret must be at least 32 bytes (256 bits) for HS256");
+        }
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessExpirySeconds = accessExpirySeconds;
     }
