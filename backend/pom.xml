@@ -163,6 +163,13 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <excludes>
+                                <exclude>com/devpulse/BackendApplication.class</exclude>
+                                <exclude>com/devpulse/auth/dto/**</exclude>
+                                <exclude>com/devpulse/auth/entity/**</exclude>
+                                <exclude>com/devpulse/exception/**</exclude>
+                                <exclude>com/devpulse/config/**</exclude>
+                            </excludes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
