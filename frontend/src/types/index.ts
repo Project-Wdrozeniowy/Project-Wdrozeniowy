@@ -1,3 +1,7 @@
+// ─── UI types ─────────────────────────────────────────────────────────────────
+
+export type SortTab = 'hot' | 'new' | 'top';
+
 // ─── API wrappers ─────────────────────────────────────────────────────────────
 
 export interface ApiResponse<T = unknown> {
