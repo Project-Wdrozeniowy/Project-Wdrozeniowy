@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { authService } from '@/services/authService';
 import { useStore } from '@/store';
 import OrbitaLogo from '@/components/ui/OrbitaLogo';
 import NavLinks from '@/components/layout/header/NavLinks';
@@ -12,6 +13,11 @@ import { NAV_LINKS } from '@/constants/header';
 export default function Header() {
   const pathname = usePathname();
   const { isAuthenticated, user, logout } = useStore();
+
+  function handleSignOut() {
+    authService.logout().catch(() => {});
+    logout();
+  }
 
   return (
     <header className="h-16 bg-slate-800 sticky top-0 z-50 flex items-center px-4 lg:px-6">
@@ -26,7 +32,7 @@ export default function Header() {
 
         <div className="flex items-center gap-2">
           <SearchBar />
-          <UserActions isAuthenticated={isAuthenticated} user={user} logout={logout} />
+          <UserActions isAuthenticated={isAuthenticated} user={user} logout={handleSignOut} />
         </div>
       </div>
     </header>

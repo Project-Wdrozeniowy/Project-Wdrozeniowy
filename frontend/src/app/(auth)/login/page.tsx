@@ -64,9 +64,10 @@ export default function LoginPage() {
 
         {/* Email */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-gray-900 font-semibold text-sm">Email</label>
+          <label htmlFor="login-email" className="text-gray-900 font-semibold text-sm">Email</label>
           <input
             {...register('email')}
+            id="login-email"
             type="email"
             placeholder="your.email@example.com"
             autoComplete="email"
@@ -80,7 +81,7 @@ export default function LoginPage() {
         {/* Password */}
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-gray-900 font-semibold text-sm">
+            <label htmlFor="login-password" className="text-gray-900 font-semibold text-sm">
               Password
             </label>
             <Link
@@ -92,6 +93,7 @@ export default function LoginPage() {
           </div>
           <input
             {...register('password')}
+            id="login-password"
             type="password"
             placeholder="Enter your password"
             autoComplete="current-password"

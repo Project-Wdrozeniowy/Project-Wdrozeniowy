@@ -8,12 +8,20 @@ const REFRESH_TOKEN_KEY = 'refreshToken';
 // The actual JWT is kept in localStorage; this cookie only signals "logged in".
 const SESSION_COOKIE = 'orbita_session';
 
+function sessionCookieAttributes(): string {
+  const secure =
+    typeof window !== 'undefined' && window.location.protocol === 'https:'
+      ? '; Secure'
+      : '';
+  return `path=/; SameSite=Lax${secure}`;
+}
+
 function setSessionCookie(value: string): void {
-  document.cookie = `${SESSION_COOKIE}=${value}; path=/; SameSite=Lax`;
+  document.cookie = `${SESSION_COOKIE}=${value}; ${sessionCookieAttributes()}`;
 }
 
 function clearSessionCookie(): void {
-  document.cookie = `${SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+  document.cookie = `${SESSION_COOKIE}=; max-age=0; ${sessionCookieAttributes()}`;
 }
 
 export const tokenStorage = {
@@ -30,8 +38,10 @@ export const tokenStorage = {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(TOKEN_KEY, token);
-      if (refreshToken) {
+      if (refreshToken !== undefined) {
         localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      } else {
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
       }
       setSessionCookie('1');
     } catch {

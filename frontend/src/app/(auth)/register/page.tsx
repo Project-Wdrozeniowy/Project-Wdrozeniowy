@@ -83,9 +83,10 @@ export default function RegisterPage() {
         )}
 
         {/* Username */}
-        <FormField label="Username" error={errors.username?.message} hint="This will be your public display name">
+        <FormField label="Username" error={errors.username?.message} hint="This will be your public display name" id="username">
           <input
             {...register('username')}
+            id="username"
             type="text"
             placeholder="Choose a unique username"
             autoComplete="username"
@@ -94,9 +95,10 @@ export default function RegisterPage() {
         </FormField>
 
         {/* Display name */}
-        <FormField label="Display Name" error={errors.displayName?.message}>
+        <FormField label="Display Name" error={errors.displayName?.message} id="displayName">
           <input
             {...register('displayName')}
+            id="displayName"
             type="text"
             placeholder="Your full name or nickname"
             autoComplete="name"
@@ -105,9 +107,10 @@ export default function RegisterPage() {
         </FormField>
 
         {/* Email */}
-        <FormField label="Email" error={errors.email?.message}>
+        <FormField label="Email" error={errors.email?.message} id="email">
           <input
             {...register('email')}
+            id="email"
             type="email"
             placeholder="your.email@example.com"
             autoComplete="email"
@@ -120,9 +123,11 @@ export default function RegisterPage() {
           label="Password"
           error={errors.password?.message}
           hint="Minimum 8 characters with letters and numbers"
+          id="password"
         >
           <input
             {...register('password')}
+            id="password"
             type="password"
             placeholder="Create a strong password"
             autoComplete="new-password"
@@ -131,9 +136,10 @@ export default function RegisterPage() {
         </FormField>
 
         {/* Confirm password */}
-        <FormField label="Confirm Password" error={errors.confirmPassword?.message}>
+        <FormField label="Confirm Password" error={errors.confirmPassword?.message} id="confirmPassword">
           <input
             {...register('confirmPassword')}
+            id="confirmPassword"
             type="password"
             placeholder="Re-enter your password"
             autoComplete="new-password"
@@ -273,16 +279,18 @@ function FormField({
   label,
   error,
   hint,
+  id,
   children,
 }: {
   label: string;
   error?: string;
   hint?: string;
+  id?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-gray-900 font-semibold text-sm">{label}</label>
+      <label htmlFor={id} className="text-gray-900 font-semibold text-sm">{label}</label>
       {children}
       {hint && !error && <p className="text-gray-500 text-xs">{hint}</p>}
       {error && <p className="text-red-500 text-xs">{error}</p>}
