@@ -15,7 +15,7 @@ export default function Header() {
 
   return (
     <header className="h-16 bg-slate-800 sticky top-0 z-50 flex items-center px-4 lg:px-6">
-      <div className="w-full max-w-[1130px] mx-auto flex items-center justify-between gap-4">
+      <div className="w-full max-w-282.5 mx-auto flex items-center justify-between gap-4">
         {/* Left: logo + nav */}
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2 shrink-0">

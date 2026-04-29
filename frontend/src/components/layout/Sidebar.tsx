@@ -30,7 +30,7 @@ export default function Sidebar() {
     : 'U';
 
   return (
-    <aside className="w-[344px] shrink-0 flex flex-col gap-3">
+    <aside className="w-86 shrink-0 flex flex-col gap-3">
       {/* User card */}
       {isAuthenticated && user ? (
         <div className="bg-slate-800 rounded-xl p-4 flex flex-col gap-4">

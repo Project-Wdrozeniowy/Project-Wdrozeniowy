@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default function LoginPage() {
   return (
-    <div className="w-full max-w-[480px]">
+    <div className="w-full max-w-120">
       {/* Logo + heading */}
       <div className="flex flex-col items-center gap-2 mb-6">
         <OrbitaLogo />
