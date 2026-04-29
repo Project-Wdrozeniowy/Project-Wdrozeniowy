@@ -6,12 +6,6 @@ import { useStore } from '@/store';
 
 const NAV_LINKS = [
   { href: '/profile', label: 'Profile', badge: null },
-  { href: '/notifications', label: 'Notifications', badge: 12 },
-  { href: '/messages', label: 'Messages', badge: 5 },
-  { href: '/saved', label: 'Saved Posts', badge: 24 },
-  { href: '/stats', label: 'Your Stats', badge: null },
-  { href: '/achievements', label: 'Achievements', badge: 8 },
-  { href: '/settings', label: 'Settings', badge: null },
 ];
 
 const TRENDING_TOPICS = [
@@ -81,7 +75,7 @@ export default function Sidebar() {
           {/* Stats row */}
           <div className="flex gap-2">
             {[
-              { value: user.postCount, label: 'Posts' },
+              { value: user.postCount ?? '—', label: 'Posts' },
               { value: '—', label: 'Followers' },
               { value: '—', label: 'Following' },
             ].map(({ value, label }) => (
@@ -157,7 +151,7 @@ export default function Sidebar() {
           {TRENDING_TOPICS.map(({ rank, name, color }) => (
             <Link
               key={name}
-              href={`/forum?topic=${name.toLowerCase().replace('/', '-').replace(' ', '-')}`}
+              href={`/forum?${new URLSearchParams({ topic: name }).toString()}`}
               className="flex items-center justify-between py-2 group"
             >
               <div className="flex items-center gap-3">

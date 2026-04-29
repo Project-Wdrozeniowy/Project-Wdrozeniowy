@@ -20,8 +20,9 @@ export default function LoginPage() {
       <div className="bg-white rounded-xl p-8 flex flex-col gap-5">
         {/* Email */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-gray-900 font-semibold text-sm">Email</label>
+          <label htmlFor="login-email" className="text-gray-900 font-semibold text-sm">Email</label>
           <input
+            id="login-email"
             type="email"
             placeholder="your.email@example.com"
             className="input"
@@ -31,17 +32,15 @@ export default function LoginPage() {
         {/* Password */}
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-gray-900 font-semibold text-sm">
+            <label htmlFor="login-password" className="text-gray-900 font-semibold text-sm">
               Password
             </label>
-            <Link
-              href="/forgot-password"
-              className="text-blue-600 hover:underline text-xs font-semibold"
-            >
+            <span className="text-blue-600 text-xs font-semibold">
               Forgot password?
-            </Link>
+            </span>
           </div>
           <input
+            id="login-password"
             type="password"
             placeholder="Enter your password"
             className="input"
@@ -50,7 +49,7 @@ export default function LoginPage() {
 
         {/* Submit */}
         <button
-          type="submit"
+          type="button"
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-2.5 rounded transition-colors"
         >
           Sign In
