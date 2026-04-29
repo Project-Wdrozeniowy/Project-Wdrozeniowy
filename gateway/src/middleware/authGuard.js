@@ -27,7 +27,7 @@ function authGuard(req, res, next) {
   }
 
   if (!isAuthenticated && isProtectedRoute) {
-    const from = encodeURIComponent(pathname);
+    const from = encodeURIComponent(req.originalUrl);
     return res.redirect(`/login?from=${from}`);
   }
 
