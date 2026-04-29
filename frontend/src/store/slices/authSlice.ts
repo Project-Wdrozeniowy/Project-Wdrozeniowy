@@ -1,5 +1,5 @@
-import { StateCreator } from 'zustand';
-import { User } from '@/types';
+import type { StateCreator } from 'zustand';
+import type { User } from '@/types';
 
 export interface AuthSlice {
   user: User | null;

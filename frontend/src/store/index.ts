@@ -1,6 +1,8 @@
 import { create } from 'zustand';
-import { createUISlice, UISlice } from './slices/uiSlice';
-import { createAuthSlice, AuthSlice } from './slices/authSlice';
+import type { UISlice } from './slices/uiSlice';
+import { createUISlice } from './slices/uiSlice';
+import type { AuthSlice } from './slices/authSlice';
+import { createAuthSlice } from './slices/authSlice';
 
 export type StoreState = UISlice & AuthSlice;
 
