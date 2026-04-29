@@ -1,19 +1,25 @@
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
+import express from 'express';
+import type { Request, Response, NextFunction, Express } from 'express';
+import helmet from 'helmet';
 import app from '../app';
 
 // Mock the proxy middleware so it doesn't try to forward requests to a real backend
 jest.mock('../routes/proxy', () => {
-  const express = require('express');
-  const router = express.Router();
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
+  const exp: typeof express = require('express');
+  const router = exp.Router();
   // Forward everything – let auth middleware decide
-  router.use((_req: any, _res: any, next: any) => next());
+  router.use((_req: Request, _res: Response, next: NextFunction): void => {
+    next();
+  });
   return router;
 });
 
 const JWT_SECRET_BUF = Buffer.from('dGVzdA==', 'base64');
 
-function makeToken(payload: object = { sub: 'user-1', role: 'user' }) {
+function makeToken(payload: object = { sub: 'user-1', role: 'user' }): string {
   return jwt.sign(payload, JWT_SECRET_BUF, {
     algorithm: 'HS256',
     expiresIn: '1h',
@@ -49,7 +55,7 @@ describe('Auth guard on /api routes', () => {
 
   it('returns 401 with "Missing or invalid Authorization header" message', async () => {
     const res = await request(app).get('/api/users');
-    expect(res.body.error).toBe('Missing or invalid Authorization header');
+    expect((res.body as { error: string }).error).toBe('Missing or invalid Authorization header');
   });
 
   it('passes auth guard with a valid Bearer token', async () => {
@@ -67,7 +73,7 @@ describe('Auth guard on /api routes', () => {
     } as jwt.SignOptions);
     const res = await request(app).get('/api/users').set('Authorization', `Bearer ${expiredToken}`);
     expect(res.status).toBe(401);
-    expect(res.body.error).toBe('Token expired');
+    expect((res.body as { error: string }).error).toBe('Token expired');
   });
 
   it('allows POST /api/auth/login without a token (public route)', async () => {
@@ -100,14 +106,12 @@ describe('CORS headers', () => {
 
 describe('Global error handler', () => {
   it('returns 500 JSON for unexpected errors', async () => {
-    // Mount a route that throws after the normal routes
-    const errorApp = require('express')();
-    errorApp.use(require('helmet')());
-    errorApp.get('/boom', (_req: any, _res: any, next: any) => {
+    const errorApp: Express = express();
+    errorApp.use(helmet());
+    errorApp.get('/boom', (_req: Request, _res: Response, next: NextFunction): void => {
       next(new Error('unexpected error'));
     });
-    // Copy the error handler from app
-    errorApp.use((_err: Error, _req: any, res: any, _next: any) => {
+    errorApp.use((_err: Error, _req: Request, res: Response, _next: NextFunction): void => {
       res.status(500).json({ error: 'Internal server error' });
     });
 
