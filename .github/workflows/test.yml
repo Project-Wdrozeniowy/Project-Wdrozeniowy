@@ -2,6 +2,9 @@ name: Tests
 
 on:
   push:
+    branches:
+      - main
+      - develop
   pull_request:
 
 jobs:
@@ -55,6 +58,21 @@ jobs:
     name: Backend Tests (≥50% coverage)
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: devpulse
+          POSTGRES_USER: devpulse
+          POSTGRES_PASSWORD: devpulse
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -68,4 +86,9 @@ jobs:
 
       - name: Run tests with coverage check
         working-directory: backend
+        env:
+          POSTGRES_DB: devpulse
+          POSTGRES_USER: devpulse
+          POSTGRES_PASSWORD: devpulse
+          JWT_SECRET: ci-test-secret-key-that-is-long-enough-for-hmac-sha256
         run: ./mvnw --batch-mode verify

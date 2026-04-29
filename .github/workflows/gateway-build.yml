@@ -2,6 +2,9 @@ name: Gateway Build
 
 on:
   push:
+    branches:
+      - main
+      - develop
     paths:
       - 'gateway/**'
   pull_request:
