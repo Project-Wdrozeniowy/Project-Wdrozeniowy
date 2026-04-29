@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-devpulse}
+      POSTGRES_USER: ${POSTGRES_USER:-devpulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-devpulse} -d ${POSTGRES_DB:-devpulse}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - devpulse-net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - devpulse-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-devpulse}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-devpulse}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-900}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-604800}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - devpulse-net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  devpulse-net:
+    driver: bridge
