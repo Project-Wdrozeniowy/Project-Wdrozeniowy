@@ -23,8 +23,12 @@ export interface GatewayConfig {
 }
 
 export interface PublicRoute {
+  /** HTTP method to match, or '*' to match any method */
   method: string;
-  path: string;
+  /** Exact path to match (used when pathPrefix is not set) */
+  path?: string;
+  /** Path prefix to match — any request starting with this prefix is treated as public */
+  pathPrefix?: string;
 }
 
 export type AuthenticatedUser = string | JwtPayload;

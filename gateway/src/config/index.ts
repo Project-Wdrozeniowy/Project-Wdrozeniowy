@@ -41,8 +41,28 @@ const config: GatewayConfig = {
     max: getIntEnv('RATE_LIMIT_MAX', '100'),
   },
   publicRoutes: [
+    // Auth — login, register, refresh, and logout are all public
+    // (logout revokes by refreshToken value, no access token needed)
     { method: 'POST', path: '/api/auth/login' },
     { method: 'POST', path: '/api/auth/register' },
+    { method: 'POST', path: '/api/auth/refresh' },
+    { method: 'POST', path: '/api/auth/logout' },
+
+    // Forum — browsing is public; mutations require auth (enforced by Spring Security)
+    { method: 'GET', pathPrefix: '/api/forum/categories' },
+    { method: 'GET', pathPrefix: '/api/forum/posts' },
+    { method: 'GET', pathPrefix: '/api/forum/tags' },
+    { method: 'GET', pathPrefix: '/api/forum/comments' },
+
+    // User profiles — public read
+    { method: 'GET', pathPrefix: '/api/users' },
+
+    // Recommendations — always public
+    { method: 'GET', pathPrefix: '/api/recommendations' },
+
+    // OpenAPI / Swagger UI
+    { method: 'GET', pathPrefix: '/api/swagger-ui' },
+    { method: 'GET', pathPrefix: '/api/v3/api-docs' },
   ],
 };
 
