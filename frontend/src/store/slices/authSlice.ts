@@ -1,34 +1,58 @@
 import type { StateCreator } from 'zustand';
-import type { User } from '@/shared/types';
-import { tokenStorage } from '@/services/authService';
+import type { UserProfile } from '@/types';
 
 export interface AuthSlice {
-  user: User | null;
-  token: string | null;
+  user: UserProfile | null;
+  accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  setUser: (user: User, token: string, refreshToken?: string) => void;
+  setAuth: (user: UserProfile, accessToken: string, refreshToken: string) => void;
   logout: () => void;
 }
 
+const getInitialToken = (): string | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return localStorage.getItem('accessToken');
+  } catch {
+    return null;
+  }
+};
+
 export const createAuthSlice: StateCreator<AuthSlice> = (set) => {
-  const token = tokenStorage.getToken();
-  const refreshToken = tokenStorage.getRefreshToken();
+  const accessToken = getInitialToken();
 
   return {
     user: null,
-    token,
-    refreshToken,
-    isAuthenticated: Boolean(token),
+    accessToken,
+    refreshToken: null,
+    isAuthenticated: Boolean(accessToken),
+    setAuth: (user, accessToken, refreshToken) => {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', refreshToken);
+        } catch {
+          // ignore storage errors (e.g. privacy mode)
+        }
+      }
 
-    setUser: (user, token, refreshToken) => {
-      tokenStorage.setTokens(token, refreshToken);
-      set({ user, token, refreshToken: refreshToken ?? null, isAuthenticated: Boolean(token) });
+      set({ user, accessToken, refreshToken, isAuthenticated: true });
     },
-
     logout: () => {
-      tokenStorage.clearTokens();
-      set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        } catch {
+          // ignore storage errors (e.g. privacy mode)
+        }
+      }
+
+      set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
     },
   };
 };
