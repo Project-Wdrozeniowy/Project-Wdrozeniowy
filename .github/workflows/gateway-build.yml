@@ -1,0 +1,40 @@
+name: Gateway Build
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'gateway/**'
+  pull_request:
+    paths:
+      - 'gateway/**'
+
+jobs:
+  build:
+    name: Build Gateway
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: gateway/package-lock.json
+
+      - name: Install dependencies
+        working-directory: gateway
+        run: npm ci
+
+      - name: Build
+        working-directory: gateway
+        run: npm run build
+
+      - name: Type check
+        working-directory: gateway
+        run: npm run typecheck

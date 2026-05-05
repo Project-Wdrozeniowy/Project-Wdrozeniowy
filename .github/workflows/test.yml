@@ -1,0 +1,100 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  frontend-test:
+    name: Frontend Tests (≥50% coverage)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run tests with coverage
+        working-directory: frontend
+        run: npm run test:coverage
+
+  gateway-test:
+    name: Gateway Tests (≥50% coverage)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: gateway/package-lock.json
+
+      - name: Install dependencies
+        working-directory: gateway
+        run: npm ci
+
+      - name: Run tests with coverage
+        working-directory: gateway
+        run: npm run test:coverage
+
+  backend-test:
+    name: Backend Tests (≥50% coverage)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: devpulse
+          POSTGRES_USER: devpulse
+          POSTGRES_PASSWORD: devpulse
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Verify Postgres is reachable
+        run: pg_isready -h localhost -p 5432 -U devpulse -d devpulse
+
+      - name: Run tests with coverage check
+        working-directory: backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/devpulse
+          SPRING_DATASOURCE_USERNAME: devpulse
+          SPRING_DATASOURCE_PASSWORD: devpulse
+          POSTGRES_DB: devpulse
+          POSTGRES_USER: devpulse
+          POSTGRES_PASSWORD: devpulse
+          JWT_SECRET: ci-test-secret-key-that-is-long-enough-for-hmac-sha256
+        run: ./mvnw --batch-mode verify

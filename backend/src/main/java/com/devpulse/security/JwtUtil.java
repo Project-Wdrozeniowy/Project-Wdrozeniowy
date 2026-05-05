@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 
@@ -47,7 +48,16 @@ public class JwtUtil {
     public JwtUtil(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-expiry:900}") long accessExpirySeconds) {
-        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secret);
+        } catch (RuntimeException ex) {
+            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        }
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("jwt.secret must be at least 32 bytes (256 bits) for HS256");
+        }
+        this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessExpirySeconds = accessExpirySeconds;
     }
 
