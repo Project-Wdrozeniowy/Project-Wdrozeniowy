@@ -11,7 +11,6 @@ const nextConfig: NextConfig = {
     '127.0.0.1',
     ...(process.env.NEXT_PUBLIC_DEV_ORIGIN ? [process.env.NEXT_PUBLIC_DEV_ORIGIN] : []),
   ],
-  
 };
 
 export default nextConfig;

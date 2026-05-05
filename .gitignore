@@ -2,9 +2,15 @@
 node_modules/
 .env
 
+# Coverage reports
+coverage/
+
 # Next.js
 .next/
 out/
+
+# TypeScript build output
+dist/
 
 # Java
 target/

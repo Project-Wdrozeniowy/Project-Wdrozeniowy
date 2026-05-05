@@ -5,7 +5,7 @@ import type { PublicRoute } from '../types';
 
 function isPublicRoute(method: string, path: string): boolean {
   return config.publicRoutes.some(
-    (route: PublicRoute) => route.method === method && route.path === path,
+    (route: PublicRoute) => route.method === method && route.path === path
   );
 }
 

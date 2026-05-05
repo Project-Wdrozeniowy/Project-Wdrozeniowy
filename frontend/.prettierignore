@@ -8,6 +8,7 @@ yarn.lock
 out/
 dist/
 build/
+coverage/
 
 # Public files
 public/
