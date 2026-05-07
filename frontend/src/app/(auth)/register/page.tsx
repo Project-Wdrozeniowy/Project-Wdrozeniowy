@@ -44,8 +44,7 @@ export default function RegisterPage() {
       setUser(user, token, refreshToken);
       router.push('/');
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Registration failed. Please try again.';
+      const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
       setServerError(message);
     }
   }
@@ -70,7 +69,12 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <FormField label="Username" error={errors.username?.message} hint="This will be your public display name" id="username">
+        <FormField
+          label="Username"
+          error={errors.username?.message}
+          hint="This will be your public display name"
+          id="username"
+        >
           <input
             {...register('username')}
             id="username"
@@ -119,7 +123,11 @@ export default function RegisterPage() {
           />
         </FormField>
 
-        <FormField label="Confirm Password" error={errors.confirmPassword?.message} id="confirmPassword">
+        <FormField
+          label="Confirm Password"
+          error={errors.confirmPassword?.message}
+          id="confirmPassword"
+        >
           <input
             {...register('confirmPassword')}
             id="confirmPassword"
@@ -152,9 +160,7 @@ export default function RegisterPage() {
                       onClick={() => {
                         const current = field.value ?? [];
                         field.onChange(
-                          active
-                            ? current.filter((k) => k !== key)
-                            : [...current, key],
+                          active ? current.filter((k) => k !== key) : [...current, key]
                         );
                       }}
                       className={`flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
@@ -163,7 +169,9 @@ export default function RegisterPage() {
                           : 'border-transparent bg-white hover:bg-gray-50'
                       }`}
                     >
-                      <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center shrink-0`}>
+                      <div
+                        className={`w-10 h-10 rounded-full ${color} flex items-center justify-center shrink-0`}
+                      >
                         <span className="text-white font-bold text-lg">{label[0]}</span>
                       </div>
                       <span className="text-gray-900 font-semibold text-sm">{label}</span>

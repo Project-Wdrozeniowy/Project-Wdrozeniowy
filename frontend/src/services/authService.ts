@@ -10,9 +10,7 @@ const SESSION_COOKIE = 'orbita_session';
 
 function sessionCookieAttributes(): string {
   const secure =
-    typeof window !== 'undefined' && window.location.protocol === 'https:'
-      ? '; Secure'
-      : '';
+    typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
   return `path=/; SameSite=Lax${secure}`;
 }
 
@@ -75,13 +73,12 @@ export const authService = {
     apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data),
 
   register: (
-    data: Omit<RegisterFormData, 'confirmPassword' | 'terms'>,
+    data: Omit<RegisterFormData, 'confirmPassword' | 'terms'>
   ): Promise<ApiResponse<AuthResponse>> =>
     apiClient.post<ApiResponse<AuthResponse>>('/auth/register', data),
 
   refresh: (refreshToken: string): Promise<ApiResponse<AuthResponse>> =>
     apiClient.post<ApiResponse<AuthResponse>>('/auth/refresh', { refreshToken }),
 
-  logout: (): Promise<ApiResponse<null>> =>
-    apiClient.post<ApiResponse<null>>('/auth/logout'),
+  logout: (): Promise<ApiResponse<null>> => apiClient.post<ApiResponse<null>>('/auth/logout'),
 };
