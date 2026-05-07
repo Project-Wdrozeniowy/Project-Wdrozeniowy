@@ -15,6 +15,7 @@ class ApiClient {
       return '/api';
     }
 
+
     return 'http://localhost:3000/api';
   }
 
