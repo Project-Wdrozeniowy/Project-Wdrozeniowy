@@ -12,7 +12,9 @@ export default function LiveActivity() {
         {ACTIVITY_ITEMS.map(({ color, label, value }) => (
           <div key={label} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full ${color} flex items-center justify-center shrink-0`}>
+              <div
+                className={`w-8 h-8 rounded-full ${color} flex items-center justify-center shrink-0`}
+              >
                 <span className="w-2 h-2 rounded-full bg-white opacity-80" />
               </div>
               <span className="text-gray-50 text-sm">{label}</span>

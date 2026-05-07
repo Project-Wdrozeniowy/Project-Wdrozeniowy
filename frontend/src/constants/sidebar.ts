@@ -1,6 +1,4 @@
-export const NAV_LINKS = [
-  { href: '/profile', label: 'Profile' },
-] as const;
+export const NAV_LINKS = [{ href: '/profile', label: 'Profile' }] as const;
 
 export const TRENDING_TOPICS = [
   { rank: 1, name: 'AI / Tech', color: 'bg-blue-500' },

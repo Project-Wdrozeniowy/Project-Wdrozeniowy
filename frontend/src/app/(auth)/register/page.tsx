@@ -43,12 +43,7 @@ export default function RegisterPage() {
         </FormField>
 
         <FormField label="Email" id="email">
-          <input
-            id="email"
-            type="email"
-            placeholder="your.email@example.com"
-            className="input"
-          />
+          <input id="email" type="email" placeholder="your.email@example.com" className="input" />
         </FormField>
 
         <FormField
@@ -90,7 +85,9 @@ export default function RegisterPage() {
                   type="button"
                   onClick={() => toggleInterest(key)}
                   className={`flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
-                    active ? 'border-blue-600 bg-blue-50' : 'border-transparent bg-white hover:bg-gray-50'
+                    active
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-transparent bg-white hover:bg-gray-50'
                   }`}
                 >
                   <div

@@ -17,5 +17,5 @@ export const CATEGORIES: CategoryMeta[] = [
 ];
 
 export const CATEGORY_COLOR: Record<CategoryKey, string> = Object.fromEntries(
-  CATEGORIES.map(({ key, color }) => [key, color]),
+  CATEGORIES.map(({ key, color }) => [key, color])
 ) as Record<CategoryKey, string>;
