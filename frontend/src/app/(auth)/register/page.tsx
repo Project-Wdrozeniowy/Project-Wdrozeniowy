@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { CategoryKey } from '@/shared/types';
+import type { CategoryKey } from '@/shared/types';
 import { CATEGORIES } from '@/constants/categories';
 import OrbitaLogo from '@/components/ui/OrbitaLogo';
 import FormField from '@/components/ui/FormField';
