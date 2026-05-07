@@ -1,4 +1,4 @@
-'use strict';
+import type { Request, Response, NextFunction } from 'express';
 
 const AUTH_ROUTES = ['/login', '/register', '/forgot-password'];
 const PROTECTED_ROUTES = [
@@ -14,24 +14,25 @@ const PROTECTED_ROUTES = [
   '/achievements',
 ];
 
-function authGuard(req, res, next) {
+export function authGuard(req: Request, res: Response, next: NextFunction): void {
   const pathname = req.path;
-  const isAuthenticated = Boolean(req.cookies?.orbita_session);
+  const cookies = req.cookies as Record<string, string | undefined>;
+  const isAuthenticated = Boolean(cookies.orbita_session);
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
   const isProtectedRoute = PROTECTED_ROUTES.some(
-    (r) => pathname === r || pathname.startsWith(r + '/'),
+    (r) => pathname === r || pathname.startsWith(r + '/')
   );
 
   if (isAuthenticated && isAuthRoute) {
-    return res.redirect('/');
+    res.redirect('/');
+    return;
   }
 
   if (!isAuthenticated && isProtectedRoute) {
     const from = encodeURIComponent(req.originalUrl);
-    return res.redirect(`/login?from=${from}`);
+    res.redirect(`/login?from=${from}`);
+    return;
   }
 
   next();
 }
-
-module.exports = { authGuard };
