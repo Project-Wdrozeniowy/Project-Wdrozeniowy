@@ -3,16 +3,15 @@ import type { User } from '@/types';
 
 const mockUser: User = {
   id: '42',
+  username: 'combineduser',
   email: 'combined@example.com',
-  name: 'Combined User',
-  role: 'user',
+  displayName: 'Combined User',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
 
 beforeEach(() => {
   localStorage.clear();
-  // Reset store state between tests
   useStore.setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
 });
 
