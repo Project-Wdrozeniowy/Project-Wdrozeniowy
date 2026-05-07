@@ -38,9 +38,7 @@ export const registerSchema = z
       .min(1, 'Display name is required')
       .max(100, 'Display name must be at most 100 characters'),
     interests: z.array(z.string()).optional(),
-    terms: z.literal(true, {
-      errorMap: () => ({ message: 'You must agree to the Terms of Service' }),
-    }),
+    terms: z.literal(true, 'You must agree to the Terms of Service'),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
