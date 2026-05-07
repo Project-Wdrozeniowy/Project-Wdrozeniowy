@@ -22,7 +22,9 @@ export default function LineChart({
     y: pad.top + ch - ((d - min) / range) * ch,
   }));
 
-  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const linePath = pts
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+    .join(' ');
   const areaPath = `${linePath} L${pts[pts.length - 1].x.toFixed(1)},${(pad.top + ch).toFixed(1)} L${pts[0].x.toFixed(1)},${(pad.top + ch).toFixed(1)} Z`;
   const gradientId = `area-${color.replace('#', '')}`;
   const gridYs = [0, 0.25, 0.5, 0.75, 1].map((t) => pad.top + t * ch);
@@ -30,7 +32,15 @@ export default function LineChart({
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full" aria-hidden>
       {gridYs.map((y) => (
-        <line key={y} x1={pad.left} y1={y} x2={pad.left + cw} y2={y} stroke="rgb(51 65 85)" strokeWidth="1" />
+        <line
+          key={y}
+          x1={pad.left}
+          y1={y}
+          x2={pad.left + cw}
+          y2={y}
+          stroke="rgb(51 65 85)"
+          strokeWidth="1"
+        />
       ))}
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -39,7 +49,14 @@ export default function LineChart({
         </linearGradient>
       </defs>
       <path d={areaPath} fill={`url(#${gradientId})`} />
-      <path d={linePath} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      <path
+        d={linePath}
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
       {pts.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.y} r="3" fill={color} />
       ))}

@@ -21,7 +21,15 @@ export default function BarChart({
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full" aria-hidden>
       {gridYs.map((y) => (
-        <line key={y} x1={pad.left} y1={y} x2={pad.left + cw} y2={y} stroke="rgb(51 65 85)" strokeWidth="1" />
+        <line
+          key={y}
+          x1={pad.left}
+          y1={y}
+          x2={pad.left + cw}
+          y2={y}
+          stroke="rgb(51 65 85)"
+          strokeWidth="1"
+        />
       ))}
       {data.map((d, i) => {
         const barH = (d / max) * ch;

@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import type { Post } from '@/types';
 import { CATEGORY_COLORS } from '@/constants/forum';
-import { ChevronUpVoteIcon, ChevronDownVoteIcon, CommentIcon, ShareIcon, SaveIcon } from '@/components/ui/icons';
+import {
+  ChevronUpVoteIcon,
+  ChevronDownVoteIcon,
+  CommentIcon,
+  ShareIcon,
+  SaveIcon,
+} from '@/components/ui/icons';
 
 export default function PostCard({ post }: { post: Post }) {
   const [votes, setVotes] = useState(post.votes);
@@ -37,7 +43,9 @@ export default function PostCard({ post }: { post: Post }) {
         >
           <ChevronUpVoteIcon />
         </button>
-        <span className={`font-semibold text-sm ${voted === 'up' ? 'text-blue-400' : voted === 'down' ? 'text-red-400' : 'text-white'}`}>
+        <span
+          className={`font-semibold text-sm ${voted === 'up' ? 'text-blue-400' : voted === 'down' ? 'text-red-400' : 'text-white'}`}
+        >
           {votes >= 1000 ? `${(votes / 1000).toFixed(1)}k` : votes}
         </span>
         <button
@@ -68,7 +76,9 @@ export default function PostCard({ post }: { post: Post }) {
 
         <div className="flex flex-col gap-1.5">
           <h2 className="text-gray-50 font-semibold text-xl leading-snug">{post.title}</h2>
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded border self-start ${categoryColor}`}>
+          <span
+            className={`text-xs font-semibold px-2 py-0.5 rounded border self-start ${categoryColor}`}
+          >
             {post.category}
           </span>
           <p className="text-slate-400 text-base leading-relaxed line-clamp-2">{post.excerpt}</p>

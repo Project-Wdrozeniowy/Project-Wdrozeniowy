@@ -10,7 +10,20 @@ export enum Topic {
 
 export const TOPIC_LABELS = Object.values(Topic);
 
-export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 export const STATS = [
   { label: 'Total Posts Today', value: '1,234', change: 12.5 },
@@ -34,7 +47,9 @@ export const POSTS_PER_MONTH = [40, 58, 45, 72, 65, 88, 74, 105, 92, 118, 98, 14
 export const ENGAGEMENT_PER_MONTH = [55, 62, 48, 70, 80, 75, 90, 85, 95, 88, 102, 110];
 
 // Hourly activity counts (0–23h) for the User Activity by Hour chart
-export const ACTIVITY_BY_HOUR = [5, 8, 12, 18, 25, 30, 42, 55, 60, 58, 50, 45, 40, 38, 42, 50, 60, 65, 58, 45, 32, 20, 12, 7];
+export const ACTIVITY_BY_HOUR = [
+  5, 8, 12, 18, 25, 30, 42, 55, 60, 58, 50, 45, 40, 38, 42, 50, 60, 65, 58, 45, 32, 20, 12, 7,
+];
 
 // Post volume per topic, ordered to match TOPIC_LABELS
 export const POSTS_BY_TOPIC = [88, 62, 45, 72, 55, 38, 30];

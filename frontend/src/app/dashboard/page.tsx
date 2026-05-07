@@ -47,7 +47,13 @@ export default function DashboardPage() {
         <h2 className="text-gray-50 font-semibold text-xl">Top Performing Posts</h2>
         <div className="flex flex-col gap-2">
           {TOP_POSTS.map(({ title, views, engagement }, i) => (
-            <TopPostRow key={title} rank={i + 1} title={title} views={views} engagement={engagement} />
+            <TopPostRow
+              key={title}
+              rank={i + 1}
+              title={title}
+              views={views}
+              engagement={engagement}
+            />
           ))}
         </div>
       </div>
