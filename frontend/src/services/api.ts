@@ -10,12 +10,9 @@ class ApiClient {
     const envURL = process.env.NEXT_PUBLIC_API_URL;
     if (envURL) return envURL;
 
-    if (typeof window !== 'undefined') {
+    // Client-side or SSR/build: fall back to relative /api path (handled by the gateway proxy)
+    if (typeof window !== 'undefined' || process.env.NODE_ENV !== 'development') {
       return '/api';
-    }
-
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('NEXT_PUBLIC_API_URL is not set in production environment');
     }
 
     return 'http://localhost:3000/api';
