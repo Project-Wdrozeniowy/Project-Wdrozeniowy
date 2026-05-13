@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import type { Post } from '@/types';
 import { CATEGORY_COLORS } from '@/constants/categories';
-import { CommentIcon, ShareIcon, SaveIcon, ChevronUpVoteIcon, ChevronDownVoteIcon } from '@/components/ui/icons';
+import {
+  CommentIcon,
+  ShareIcon,
+  SaveIcon,
+  ChevronUpVoteIcon,
+  ChevronDownVoteIcon,
+} from '@/components/ui/icons';
 import ActionButton from './ActionButton';
 import VoteButton from './VoteButton';
 
@@ -34,9 +40,11 @@ export default function PostCard({ post }: { post: Post }) {
         </VoteButton>
         <span
           className={
-            voted === 'up' ? 'font-semibold text-sm text-blue-400'
-            : voted === 'down' ? 'font-semibold text-sm text-red-400'
-            : 'font-semibold text-sm text-white'
+            voted === 'up'
+              ? 'font-semibold text-sm text-blue-400'
+              : voted === 'down'
+                ? 'font-semibold text-sm text-red-400'
+                : 'font-semibold text-sm text-white'
           }
         >
           {votes >= 1000 ? `${(votes / 1000).toFixed(1)}k` : votes}
