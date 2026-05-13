@@ -1,8 +1,4 @@
-const ACTIVITY_ITEMS = [
-  { color: 'bg-emerald-500', label: 'Online Users', value: '1,234' },
-  { color: 'bg-blue-600', label: 'Posts per minute', value: '42' },
-  { color: 'bg-amber-500', label: 'Trending Posts', value: '23' },
-] as const;
+import { ACTIVITY_ITEMS } from '@/constants/sidebar';
 
 export default function LiveActivity() {
   return (

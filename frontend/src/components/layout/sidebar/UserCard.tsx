@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { User } from '@/shared/types';
-import { NAV_LINKS } from '@/constants/sidebar';
+import { NAV_LINKS, USER_STATS } from '@/constants/sidebar';
 
 interface Props {
   user: User;
@@ -41,17 +41,15 @@ export default function UserCard({ user, initials, pathname }: Props) {
       </nav>
 
       <div className="flex gap-2">
-        {[
-          { value: user.postCount ?? '—', label: 'Posts' },
-          { value: '—', label: 'Followers' },
-          { value: '—', label: 'Following' },
-        ].map(({ value, label }) => (
+        {USER_STATS.map(({ label }, i) => (
           <Link
             key={label}
             href="/profile"
             className="flex-1 flex flex-col items-center py-3 rounded hover:bg-slate-700 transition-colors"
           >
-            <span className="text-white font-semibold text-lg leading-none">{value}</span>
+            <span className="text-white font-semibold text-lg leading-none">
+              {i === 0 ? (user.postCount ?? '—') : '—'}
+            </span>
             <span className="text-slate-300 text-xs mt-1">{label}</span>
           </Link>
         ))}

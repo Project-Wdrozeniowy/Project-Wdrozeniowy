@@ -7,11 +7,7 @@ import OrbitaLogo from '@/components/ui/OrbitaLogo';
 import NavLinks from '@/components/layout/header/NavLinks';
 import SearchBar from '@/components/layout/header/SearchBar';
 import UserActions from '@/components/layout/header/UserActions';
-
-const NAV_LINKS = [
-  { href: '/', label: 'Home' },
-  { href: '/dashboard', label: 'Analytics' },
-];
+import { NAV_LINKS } from '@/constants/header';
 
 export default function Header() {
   const pathname = usePathname();

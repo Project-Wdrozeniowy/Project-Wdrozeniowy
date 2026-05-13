@@ -5,7 +5,13 @@ interface NavLink {
   label: string;
 }
 
-export default function NavLinks({ links, pathname }: { links: NavLink[]; pathname: string }) {
+export default function NavLinks({
+  links,
+  pathname,
+}: {
+  links: readonly NavLink[];
+  pathname: string;
+}) {
   return (
     <nav className="hidden md:flex items-center gap-1">
       {links.map(({ href, label }) => {

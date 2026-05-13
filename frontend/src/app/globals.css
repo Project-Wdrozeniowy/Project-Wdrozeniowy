@@ -5,6 +5,15 @@
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  /* Category colors */
+  --color-cat-ai: var(--color-blue-500);
+  --color-cat-gaming: var(--color-green-500);
+  --color-cat-politics: var(--color-red-500);
+  --color-cat-science: var(--color-violet-500);
+  --color-cat-business: var(--color-amber-500);
+  --color-cat-education: var(--color-teal-500);
+  --color-cat-news: var(--color-gray-500);
 }
 
 :root {
