@@ -1,7 +1,19 @@
 import { Topic } from '@/constants/categories';
-import type { Post } from '@/types';
 
-export const MOCK_POSTS: Post[] = [
+export interface MockPost {
+  id: string;
+  username: string;
+  userInitial: string;
+  timeAgo: string;
+  badge: string | null;
+  category: Topic;
+  title: string;
+  excerpt: string;
+  votes: number;
+  comments: number;
+}
+
+export const MOCK_POSTS: MockPost[] = [
   {
     id: '1',
     username: 'u/johndoe',

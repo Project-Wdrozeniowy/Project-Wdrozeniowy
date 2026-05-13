@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Post } from '@/types';
+import type { MockPost } from '@/constants/posts';
 import { CATEGORY_COLORS } from '@/constants/categories';
 import {
   CommentIcon,
@@ -13,7 +13,7 @@ import {
 import ActionButton from './ActionButton';
 import VoteButton from './VoteButton';
 
-export default function PostCard({ post }: { post: Post }) {
+export default function PostCard({ post }: { post: MockPost }) {
   const [votes, setVotes] = useState(post.votes);
   const [voted, setVoted] = useState<'up' | 'down' | null>(null);
 
