@@ -1,3 +1,5 @@
+import { toPercent } from '@/utils/format';
+
 export default function TopPostRow({
   rank,
   title,
@@ -17,7 +19,7 @@ export default function TopPostRow({
         <p className="text-slate-400 text-xs">{views.toLocaleString()} views</p>
       </div>
       <div className="text-right shrink-0">
-        <p className="text-emerald-400 font-semibold text-sm">{(engagement * 100).toFixed(0)}%</p>
+        <p className="text-emerald-400 font-semibold text-sm">{toPercent(engagement)}</p>
         <p className="text-slate-400 text-xs">engagement</p>
       </div>
     </div>

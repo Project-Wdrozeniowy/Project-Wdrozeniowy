@@ -2,14 +2,10 @@
 
 import { useState } from 'react';
 import type { Post } from '@/types';
-import { CATEGORY_COLORS } from '@/constants/forum';
-import {
-  ChevronUpVoteIcon,
-  ChevronDownVoteIcon,
-  CommentIcon,
-  ShareIcon,
-  SaveIcon,
-} from '@/components/ui/icons';
+import { CATEGORY_COLORS } from '@/constants/categories';
+import { CommentIcon, ShareIcon, SaveIcon, ChevronUpVoteIcon, ChevronDownVoteIcon } from '@/components/ui/icons';
+import ActionButton from './ActionButton';
+import VoteButton from './VoteButton';
 
 export default function PostCard({ post }: { post: Post }) {
   const [votes, setVotes] = useState(post.votes);
@@ -33,31 +29,21 @@ export default function PostCard({ post }: { post: Post }) {
   return (
     <article className="bg-slate-800 rounded-xl p-5 flex gap-4 hover:bg-slate-800/80 transition-colors">
       <div className="flex flex-col items-center gap-1 pt-1 shrink-0">
-        <button
-          type="button"
-          onClick={() => handleVote('up')}
-          aria-label="Upvote"
-          className={`w-8 h-8 flex items-center justify-center rounded hover:bg-slate-700 transition-colors ${
-            voted === 'up' ? 'text-blue-400' : 'text-slate-400 hover:text-white'
-          }`}
-        >
+        <VoteButton direction="up" active={voted === 'up'} onClick={() => handleVote('up')}>
           <ChevronUpVoteIcon />
-        </button>
+        </VoteButton>
         <span
-          className={`font-semibold text-sm ${voted === 'up' ? 'text-blue-400' : voted === 'down' ? 'text-red-400' : 'text-white'}`}
+          className={
+            voted === 'up' ? 'font-semibold text-sm text-blue-400'
+            : voted === 'down' ? 'font-semibold text-sm text-red-400'
+            : 'font-semibold text-sm text-white'
+          }
         >
           {votes >= 1000 ? `${(votes / 1000).toFixed(1)}k` : votes}
         </span>
-        <button
-          type="button"
-          onClick={() => handleVote('down')}
-          aria-label="Downvote"
-          className={`w-8 h-8 flex items-center justify-center rounded hover:bg-slate-700 transition-colors ${
-            voted === 'down' ? 'text-red-400' : 'text-slate-400 hover:text-white'
-          }`}
-        >
+        <VoteButton direction="down" active={voted === 'down'} onClick={() => handleVote('down')}>
           <ChevronDownVoteIcon />
-        </button>
+        </VoteButton>
       </div>
 
       <div className="flex-1 min-w-0 flex flex-col gap-3">
@@ -91,17 +77,5 @@ export default function PostCard({ post }: { post: Post }) {
         </div>
       </div>
     </article>
-  );
-}
-
-function ActionButton({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <button
-      type="button"
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition-colors"
-    >
-      {icon}
-      {label}
-    </button>
   );
 }

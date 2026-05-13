@@ -1,16 +1,9 @@
-import {
-  STATS,
-  TOP_POSTS,
-  POSTS_PER_MONTH,
-  ENGAGEMENT_PER_MONTH,
-  ACTIVITY_BY_HOUR,
-  POSTS_BY_TOPIC,
-  TOPIC_LABELS,
-  MONTHS,
-} from '@/constants/dashboard';
+import { STATS, ENGAGEMENT_PER_MONTH, ACTIVITY_BY_HOUR, MONTHS } from '@/constants/dashboard';
+import { TOPIC_LABELS } from '@/constants/categories';
+import { POSTS_PER_MONTH, POSTS_BY_TOPIC } from '@/constants/posts';
 import StatCard from './_components/StatCard';
 import ChartCard from './_components/ChartCard';
-import TopPostRow from './_components/TopPostRow';
+import PostsCard from './_components/PostsCard';
 import LineChart from './_components/LineChart';
 import BarChart from './_components/BarChart';
 
@@ -43,20 +36,7 @@ export default function DashboardPage() {
         </ChartCard>
       </div>
 
-      <div className="bg-slate-800 rounded-xl p-5 flex flex-col gap-4">
-        <h2 className="text-gray-50 font-semibold text-xl">Top Performing Posts</h2>
-        <div className="flex flex-col gap-2">
-          {TOP_POSTS.map(({ title, views, engagement }, i) => (
-            <TopPostRow
-              key={title}
-              rank={i + 1}
-              title={title}
-              views={views}
-              engagement={engagement}
-            />
-          ))}
-        </div>
-      </div>
+      <PostsCard />
     </div>
   );
 }

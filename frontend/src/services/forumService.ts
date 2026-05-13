@@ -1,4 +1,4 @@
-import { MOCK_POSTS } from '@/constants/forum';
+import { MOCK_POSTS } from '@/constants/posts';
 import type { Post } from '@/types';
 
 export async function fetchPosts(): Promise<Post[]> {

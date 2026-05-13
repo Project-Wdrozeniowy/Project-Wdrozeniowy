@@ -1,17 +1,5 @@
-import { Topic } from '@/constants/dashboard';
+import { Topic } from '@/constants/categories';
 import type { Post } from '@/types';
-
-export const CATEGORIES = ['All', ...Object.values(Topic)];
-
-export const CATEGORY_COLORS: Record<string, string> = {
-  [Topic.AI]: 'border-blue-500 text-blue-400',
-  [Topic.Gaming]: 'border-green-500 text-green-400',
-  [Topic.Science]: 'border-violet-500 text-violet-400',
-  [Topic.Politics]: 'border-red-500 text-red-400',
-  [Topic.Business]: 'border-amber-500 text-amber-400',
-  [Topic.Education]: 'border-teal-500 text-teal-400',
-  [Topic.News]: 'border-gray-500 text-gray-400',
-};
 
 export const MOCK_POSTS: Post[] = [
   {
@@ -93,3 +81,15 @@ export const MOCK_POSTS: Post[] = [
     comments: 234,
   },
 ];
+
+export const TOP_POSTS = [
+  { title: 'Amazing new tech discovery', views: 12300, engagement: 0.89 },
+  { title: 'Senate reaches bipartisan infrastructure deal', views: 8700, engagement: 0.76 },
+  { title: 'Scientists develop efficient carbon capture', views: 7200, engagement: 0.82 },
+  { title: 'Gaming meta shift after patch 2.4', views: 5900, engagement: 0.71 },
+  { title: 'Free programming resources collection', views: 4800, engagement: 0.68 },
+];
+
+export const POSTS_PER_MONTH = [40, 58, 45, 72, 65, 88, 74, 105, 92, 118, 98, 140];
+
+export const POSTS_BY_TOPIC = [88, 62, 45, 72, 55, 38, 30];
