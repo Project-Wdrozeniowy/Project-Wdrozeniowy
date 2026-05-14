@@ -18,7 +18,12 @@ export default defineConfig({
         'postcss.config.*',
         'tailwind.config.*',
         'vitest.config.*',
+        'eslint.config.*',
         '**/*.d.ts',
+        // Next.js app-router pages and layouts — covered by E2E / integration tests
+        'src/app/**',
+        // Pure TypeScript type definitions — no executable runtime code
+        'src/types/**',
       ],
       thresholds: {
         lines: 65,
