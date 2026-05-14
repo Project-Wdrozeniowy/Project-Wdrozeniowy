@@ -22,9 +22,9 @@ public class CommentController {
 
     @Operation(summary = "List comments for a post (root comments include nested replies up to depth 5)")
     @ApiResponse(responseCode = "200", description = "Comments returned")
-    @GetMapping("/posts/{postId}/comments")
+    @GetMapping("/posts/{slug}/comments")
     public PagedResponse<CommentDto> listComments(
-            @Parameter(description = "Post ID", example = "101") @PathVariable Long postId,
+            @Parameter(description = "Post slug", example = "how-to-use-spring-boot-with-postgresql") @PathVariable String slug,
             @Parameter(description = "Page number (0-based)", example = "0") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size", example = "20") @RequestParam(defaultValue = "20") int size) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
@@ -38,10 +38,10 @@ public class CommentController {
         @ApiResponse(responseCode = "404", description = "Post not found"),
         @ApiResponse(responseCode = "422", description = "Maximum comment nesting depth (5) exceeded")
     })
-    @PostMapping("/posts/{postId}/comments")
+    @PostMapping("/posts/{slug}/comments")
     @ResponseStatus(HttpStatus.CREATED)
     public CommentDto createComment(
-            @Parameter(description = "Post ID", example = "101") @PathVariable Long postId,
+            @Parameter(description = "Post slug", example = "how-to-use-spring-boot-with-postgresql") @PathVariable String slug,
             @Valid @RequestBody CreateCommentRequest request) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
     }

@@ -60,6 +60,9 @@ const config: GatewayConfig = {
     // Recommendations — always public
     { method: 'GET', pathPrefix: '/api/recommendations' },
 
+    // Analytics trending posts — public (aggregate data, no PII)
+    { method: 'GET', path: '/api/analytics/trending-posts' },
+
     // OpenAPI / Swagger UI
     { method: 'GET', pathPrefix: '/api/swagger-ui' },
     { method: 'GET', pathPrefix: '/api/v3/api-docs' },

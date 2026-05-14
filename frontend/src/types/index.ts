@@ -281,3 +281,56 @@ export interface RecommendedPost {
   reason: RecommendationReason;
   createdAt: string;
 }
+
+// ─── Analytics – Time-series ──────────────────────────────────────────────────
+
+export interface TrendDataPoint {
+  date: string; // ISO date string, e.g. "2026-05-07"
+  count: number;
+}
+
+export type TrendMetric = 'posts' | 'comments' | 'votes' | 'users';
+export type TrendPeriod = '24h' | '7d' | '30d' | '90d';
+
+export interface ActivityTrend {
+  metric: TrendMetric;
+  period: TrendPeriod;
+  total: number;
+  data: TrendDataPoint[];
+}
+
+// ─── AI ───────────────────────────────────────────────────────────────────────
+
+export interface SuggestTagsRequest {
+  content: string;
+  title?: string;
+}
+
+export interface SuggestTagsResponse {
+  tags: string[];
+  aiGenerated: boolean;
+}
+
+// ─── WebSocket / STOMP ────────────────────────────────────────────────────────
+
+/** Pushed to /topic/posts/{postId}/comments */
+export interface NewCommentEvent {
+  commentId: number;
+  postId: number;
+  parentId: number | null;
+  authorUsername: string;
+  content: string;
+  depth: number;
+  createdAt: string;
+}
+
+/** Pushed to /topic/posts/{postId}/votes */
+export interface VoteScoreEvent {
+  entityType: 'POST' | 'COMMENT';
+  entityId: number;
+  newScore: number;
+}
+
+/** Pushed to /user/queue/notifications (unicast) */
+// Uses the existing Notification type from the Notifications section above
+

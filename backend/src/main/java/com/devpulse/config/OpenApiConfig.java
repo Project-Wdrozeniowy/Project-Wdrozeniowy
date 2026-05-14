@@ -50,7 +50,8 @@ public class OpenApiConfig {
                         new Tag().name("Forum \u2013 Votes").description("Cast and retract votes on posts and comments"),
                         new Tag().name("Notifications").description("Manage user notifications"),
                         new Tag().name("Analytics").description("Activity and engagement analytics"),
-                        new Tag().name("Recommendations").description("Content recommendations based on activity and trends")
+                        new Tag().name("Recommendations").description("Content recommendations based on activity and trends"),
+                        new Tag().name("AI").description("AI-powered features: automatic tag suggestions")
                 ))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName, new SecurityScheme()

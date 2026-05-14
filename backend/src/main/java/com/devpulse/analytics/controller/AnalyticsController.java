@@ -1,8 +1,10 @@
 package com.devpulse.analytics.controller;
 
+import com.devpulse.analytics.dto.ActivityTrendDto;
 import com.devpulse.analytics.dto.PostAnalyticsDto;
 import com.devpulse.analytics.dto.PlatformSummaryDto;
 import com.devpulse.analytics.dto.UserActivitySummaryDto;
+import com.devpulse.forum.dto.PostSummaryDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Tag(name = "Analytics", description = "Activity and engagement analytics")
 @RestController
@@ -51,6 +55,41 @@ public class AnalyticsController {
     @GetMapping("/summary")
     @PreAuthorize("hasRole('ADMIN')")
     public PlatformSummaryDto getPlatformSummary() {
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+    }
+
+    @Operation(summary = "Get activity trend for a metric over a period",
+            description = "Returns daily counts for the chosen metric. Useful for time-series charts on the admin dashboard.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Trend data returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid metric or period"),
+        @ApiResponse(responseCode = "403", description = "Admin role required")
+    })
+    @GetMapping("/trends")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ActivityTrendDto getActivityTrend(
+            @Parameter(description = "Metric to track", example = "posts",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"posts", "comments", "votes", "users"}))
+            @RequestParam(defaultValue = "posts") String metric,
+            @Parameter(description = "Time period", example = "7d",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"24h", "7d", "30d", "90d"}))
+            @RequestParam(defaultValue = "7d") String period) {
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+    }
+
+    @Operation(summary = "Get trending posts for a time window",
+            description = "Returns the top posts ranked by a combination of views, votes, and comment activity within the window.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Trending posts returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid period")
+    })
+    @GetMapping("/trending-posts")
+    public List<PostSummaryDto> getTrendingPosts(
+            @Parameter(description = "Time window", example = "24h",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"24h", "7d", "30d"}))
+            @RequestParam(defaultValue = "24h") String period,
+            @Parameter(description = "Maximum number of results (1–50)", example = "10")
+            @RequestParam(defaultValue = "10") int limit) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
     }
 }
