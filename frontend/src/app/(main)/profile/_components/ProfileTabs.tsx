@@ -17,7 +17,9 @@ export default function ProfileTabs() {
           onClick={() => setActive(tab)}
           className={cn(
             'px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors',
-            active === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
+            active === tab
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-900'
           )}
         >
           {tab}
