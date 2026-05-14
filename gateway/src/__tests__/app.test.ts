@@ -56,7 +56,9 @@ describe('Auth guard on /api routes', () => {
 
   it('returns 401 with "Missing or invalid Authorization header" message', async () => {
     const res = await request(app).get('/api/users');
-    expect((res.body as { message: string }).message).toBe('Missing or invalid Authorization header');
+    expect((res.body as { message: string }).message).toBe(
+      'Missing or invalid Authorization header'
+    );
   });
 
   it('passes auth guard with a valid Bearer token', async () => {

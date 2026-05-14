@@ -69,7 +69,11 @@ describe('authMiddleware – missing / invalid Authorization header', () => {
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 401, error: 'Unauthorized', message: 'Missing or invalid Authorization header' })
+      expect.objectContaining({
+        status: 401,
+        error: 'Unauthorized',
+        message: 'Missing or invalid Authorization header',
+      })
     );
     expect(next).not.toHaveBeenCalled();
   });
@@ -83,7 +87,11 @@ describe('authMiddleware – missing / invalid Authorization header', () => {
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 401, error: 'Unauthorized', message: 'Missing or invalid Authorization header' })
+      expect.objectContaining({
+        status: 401,
+        error: 'Unauthorized',
+        message: 'Missing or invalid Authorization header',
+      })
     );
   });
 });
