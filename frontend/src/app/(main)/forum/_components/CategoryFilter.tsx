@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CATEGORIES } from '@/constants/categories';
+import { cn } from '@/lib/cn';
 
 const ALL_LABEL = 'All';
 
@@ -16,11 +17,12 @@ export default function CategoryFilter() {
         <button
           key={label}
           onClick={() => setActive(label)}
-          className={`px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
+          className={cn(
+            'px-3 py-1.5 rounded text-sm font-semibold transition-colors',
             active === label
               ? 'bg-blue-600 text-white'
               : 'bg-slate-800 text-gray-50 hover:bg-slate-700'
-          }`}
+          )}
         >
           {label}
         </button>

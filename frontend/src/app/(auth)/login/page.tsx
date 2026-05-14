@@ -12,6 +12,7 @@ import type { LoginFormData } from '@/lib/validations/auth';
 import { authService } from '@/services/authService';
 import { useStore } from '@/store';
 import OrbitaLogo from '@/components/ui/OrbitaLogo';
+import { cn } from '@/lib/cn';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -67,7 +68,7 @@ export default function LoginPage() {
             type="email"
             placeholder="your.email@example.com"
             autoComplete="email"
-            className={`input ${errors.email ? 'ring-2 ring-red-500' : ''}`}
+            className={cn('input', errors.email && 'ring-2 ring-red-500')}
           />
           {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
         </div>
@@ -90,7 +91,7 @@ export default function LoginPage() {
             type="password"
             placeholder="Enter your password"
             autoComplete="current-password"
-            className={`input ${errors.password ? 'ring-2 ring-red-500' : ''}`}
+            className={cn('input', errors.password && 'ring-2 ring-red-500')}
           />
           {errors.password && <p className="text-red-500 text-xs">{errors.password.message}</p>}
         </div>

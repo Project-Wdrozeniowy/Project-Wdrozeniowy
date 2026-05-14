@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { User } from '@/shared/types';
 import { NAV_LINKS, USER_STATS } from '@/constants/sidebar';
+import { cn } from '@/lib/cn';
 
 interface Props {
   user: User;
@@ -30,9 +31,10 @@ export default function UserCard({ user, initials, pathname }: Props) {
             <Link
               key={href}
               href={href}
-              className={`flex items-center px-3 py-2.5 rounded text-sm transition-colors ${
+              className={cn(
+                'flex items-center px-3 py-2.5 rounded text-sm transition-colors',
                 active ? 'bg-slate-700 text-gray-50' : 'text-white hover:bg-slate-700'
-              }`}
+              )}
             >
               {label}
             </Link>
