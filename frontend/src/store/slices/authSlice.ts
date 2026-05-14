@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { User } from '@/types';
+import { toast } from '@/lib/toast';
 
 export interface AuthSlice {
   user: User | null;
@@ -49,6 +50,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => {
       }
 
       set({ user: null, token: null, isAuthenticated: false });
+      toast.success('You have been signed out.');
     },
   };
 };
