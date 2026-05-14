@@ -23,7 +23,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => {
 
     setUser: (user, token, refreshToken) => {
       tokenStorage.setTokens(token, refreshToken);
-      set({ user, token, refreshToken: refreshToken ?? null, isAuthenticated: true });
+      set({ user, token, refreshToken: refreshToken ?? null, isAuthenticated: Boolean(token) });
     },
 
     logout: () => {

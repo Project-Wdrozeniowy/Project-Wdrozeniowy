@@ -33,7 +33,7 @@ export enum Topic {
 
 export const TOPIC_LABELS = Object.values(Topic);
 
-export const CATEGORY_COLORS: Record<string, string> = {
+export const CATEGORY_COLORS: Record<Topic, string> = {
   [Topic.AI]: 'border-cat-ai text-cat-ai',
   [Topic.Gaming]: 'border-cat-gaming text-cat-gaming',
   [Topic.Politics]: 'border-cat-politics text-cat-politics',
