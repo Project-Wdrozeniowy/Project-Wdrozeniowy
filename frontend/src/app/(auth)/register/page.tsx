@@ -168,11 +168,16 @@ export default function RegisterPage() {
                       }}
                       className={cn(
                         'flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors',
-                        active ? 'border-blue-600 bg-blue-50' : 'border-transparent bg-white hover:bg-gray-50'
+                        active
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-transparent bg-white hover:bg-gray-50'
                       )}
                     >
                       <div
-                        className={cn('w-10 h-10 rounded-full flex items-center justify-center shrink-0', color)}
+                        className={cn(
+                          'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+                          color
+                        )}
                       >
                         <span className="text-white font-bold text-lg">{label[0]}</span>
                       </div>

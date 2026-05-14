@@ -72,7 +72,10 @@ export default function PostCard({ post }: { post: MockPost }) {
         <div className="flex flex-col gap-1.5">
           <h2 className="text-gray-50 font-semibold text-xl leading-snug">{post.title}</h2>
           <span
-            className={cn('text-xs font-semibold px-2 py-0.5 rounded border self-start', categoryColor)}
+            className={cn(
+              'text-xs font-semibold px-2 py-0.5 rounded border self-start',
+              categoryColor
+            )}
           >
             {post.category}
           </span>
