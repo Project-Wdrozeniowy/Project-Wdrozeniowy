@@ -37,3 +37,50 @@ export interface AuthResponse {
   token: string;
   refreshToken?: string;
 }
+
+// Forum Types
+export interface Post {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  status: string;
+  pinned: boolean;
+  viewCount: number;
+  voteScore: number;
+  commentCount: number;
+  lastActivityAt: string;
+  createdAt: string;
+  updatedAt: string;
+  author?: User;
+}
+
+export type CommentStatus = 'VISIBLE' | 'HIDDEN' | 'DELETED';
+
+export interface Comment {
+  id: string;
+  postId: string;
+  parentId: string | null;
+  content: string;
+  status: CommentStatus;
+  voteScore: number;
+  depth: number;
+  author: User;
+  replies: Comment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCommentPayload {
+  content: string;
+  parentId?: string | null;
+}
+
+export interface PaginatedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  last: boolean;
+}

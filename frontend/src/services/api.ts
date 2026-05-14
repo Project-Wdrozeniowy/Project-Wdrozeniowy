@@ -1,7 +1,7 @@
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import axios from 'axios';
 
-type RequestBody = Record<string, unknown> | FormData | null;
+type RequestBody = object | FormData | null;
 
 class ApiClient {
   private client: AxiosInstance;
