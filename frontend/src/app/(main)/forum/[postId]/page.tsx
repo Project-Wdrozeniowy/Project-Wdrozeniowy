@@ -1,4 +1,6 @@
-export default function PostPage({ params }: { params: { postId: string } }) {
+export default async function PostPage({ params }: { params: Promise<{ postId: string }> }) {
+  const { postId } = await params;
+
   return (
     <div className="flex flex-col gap-6">
       {/* Post content placeholder */}
@@ -17,7 +19,7 @@ export default function PostPage({ params }: { params: { postId: string } }) {
           <div className="h-3 w-16 bg-slate-700 rounded animate-pulse" />
           <div className="h-3 w-20 bg-slate-700 rounded animate-pulse" />
         </div>
-        <p className="text-slate-500 text-xs">Post ID: {params.postId}</p>
+        <p className="text-slate-500 text-xs">Post ID: {postId}</p>
       </div>
 
       {/* Comments placeholder */}
