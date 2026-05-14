@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { cn } from '@/lib/cn';
 
 interface NavLink {
   href: string;
@@ -20,9 +21,10 @@ export default function NavLinks({
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
+            className={cn(
+              'flex items-center gap-2 px-3 py-1.5 rounded text-sm font-semibold transition-colors',
               active ? 'bg-slate-700 text-gray-50' : 'text-gray-50 hover:bg-slate-700'
-            }`}
+            )}
           >
             {label}
           </Link>
