@@ -1,4 +1,5 @@
 import PostCardSkeleton from './_components/PostCardSkeleton';
+import { cn } from '@/lib/cn';
 
 const SORT_TABS = ['Hot', 'New', 'Top'] as const;
 
@@ -10,9 +11,10 @@ export default function HomePage() {
           {SORT_TABS.map((tab, i) => (
             <button
               key={tab}
-              className={`px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors ${
+              className={cn(
+                'px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors',
                 i === 0 ? 'bg-white text-gray-900' : 'text-gray-50 hover:bg-slate-600'
-              }`}
+              )}
             >
               {tab}
             </button>
