@@ -27,7 +27,7 @@ describe('AuthGuard – unauthenticated', () => {
     const { container } = render(
       <AuthGuard>
         <div>protected content</div>
-      </AuthGuard>,
+      </AuthGuard>
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -36,7 +36,7 @@ describe('AuthGuard – unauthenticated', () => {
     render(
       <AuthGuard>
         <div>protected content</div>
-      </AuthGuard>,
+      </AuthGuard>
     );
     expect(mockReplace).toHaveBeenCalledWith('/login');
   });
@@ -45,7 +45,7 @@ describe('AuthGuard – unauthenticated', () => {
     render(
       <AuthGuard>
         <div>protected content</div>
-      </AuthGuard>,
+      </AuthGuard>
     );
     expect(screen.queryByText('protected content')).not.toBeInTheDocument();
   });
@@ -60,7 +60,7 @@ describe('AuthGuard – authenticated', () => {
     render(
       <AuthGuard>
         <div>protected content</div>
-      </AuthGuard>,
+      </AuthGuard>
     );
     expect(screen.getByText('protected content')).toBeInTheDocument();
   });
@@ -69,7 +69,7 @@ describe('AuthGuard – authenticated', () => {
     render(
       <AuthGuard>
         <div>protected content</div>
-      </AuthGuard>,
+      </AuthGuard>
     );
     expect(mockReplace).not.toHaveBeenCalled();
   });

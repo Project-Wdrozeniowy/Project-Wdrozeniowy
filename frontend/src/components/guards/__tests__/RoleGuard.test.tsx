@@ -27,7 +27,7 @@ describe('RoleGuard – no user (unauthenticated)', () => {
     const { container } = render(
       <RoleGuard allowedRoles={['ADMIN']}>
         <div>admin content</div>
-      </RoleGuard>,
+      </RoleGuard>
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -36,7 +36,7 @@ describe('RoleGuard – no user (unauthenticated)', () => {
     render(
       <RoleGuard allowedRoles={['ADMIN']}>
         <div>admin content</div>
-      </RoleGuard>,
+      </RoleGuard>
     );
     expect(mockReplace).not.toHaveBeenCalled();
   });
@@ -51,7 +51,7 @@ describe('RoleGuard – user with correct role', () => {
     render(
       <RoleGuard allowedRoles={['ADMIN']}>
         <div>admin content</div>
-      </RoleGuard>,
+      </RoleGuard>
     );
     expect(screen.getByText('admin content')).toBeInTheDocument();
   });
@@ -60,7 +60,7 @@ describe('RoleGuard – user with correct role', () => {
     render(
       <RoleGuard allowedRoles={['ADMIN']}>
         <div>admin content</div>
-      </RoleGuard>,
+      </RoleGuard>
     );
     expect(mockReplace).not.toHaveBeenCalled();
   });
@@ -75,7 +75,7 @@ describe('RoleGuard – user with wrong role', () => {
     const { container } = render(
       <RoleGuard allowedRoles={['ADMIN']}>
         <div>admin content</div>
-      </RoleGuard>,
+      </RoleGuard>
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -84,7 +84,7 @@ describe('RoleGuard – user with wrong role', () => {
     render(
       <RoleGuard allowedRoles={['ADMIN']}>
         <div>admin content</div>
-      </RoleGuard>,
+      </RoleGuard>
     );
     expect(mockReplace).toHaveBeenCalledWith('/');
   });
@@ -93,7 +93,7 @@ describe('RoleGuard – user with wrong role', () => {
     render(
       <RoleGuard allowedRoles={['ADMIN']}>
         <div>admin content</div>
-      </RoleGuard>,
+      </RoleGuard>
     );
     expect(screen.queryByText('admin content')).not.toBeInTheDocument();
   });
@@ -105,7 +105,7 @@ describe('RoleGuard – multiple allowed roles', () => {
     render(
       <RoleGuard allowedRoles={['USER', 'ADMIN']}>
         <div>shared content</div>
-      </RoleGuard>,
+      </RoleGuard>
     );
     expect(screen.getByText('shared content')).toBeInTheDocument();
   });
