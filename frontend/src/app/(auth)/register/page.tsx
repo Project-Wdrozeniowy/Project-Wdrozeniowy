@@ -14,6 +14,7 @@ import { useStore } from '@/store';
 import { CATEGORIES } from '@/constants/categories';
 import OrbitaLogo from '@/components/ui/OrbitaLogo';
 import FormField from '@/components/ui/FormField';
+import { cn } from '@/lib/cn';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -83,7 +84,7 @@ export default function RegisterPage() {
             type="text"
             placeholder="Choose a unique username"
             autoComplete="username"
-            className={`input ${errors.username ? 'ring-2 ring-red-500' : ''}`}
+            className={cn('input', errors.username && 'ring-2 ring-red-500')}
           />
         </FormField>
 
@@ -94,7 +95,7 @@ export default function RegisterPage() {
             type="text"
             placeholder="Your full name or nickname"
             autoComplete="name"
-            className={`input ${errors.displayName ? 'ring-2 ring-red-500' : ''}`}
+            className={cn('input', errors.displayName && 'ring-2 ring-red-500')}
           />
         </FormField>
 
@@ -105,7 +106,7 @@ export default function RegisterPage() {
             type="email"
             placeholder="your.email@example.com"
             autoComplete="email"
-            className={`input ${errors.email ? 'ring-2 ring-red-500' : ''}`}
+            className={cn('input', errors.email && 'ring-2 ring-red-500')}
           />
         </FormField>
 
@@ -121,7 +122,7 @@ export default function RegisterPage() {
             type="password"
             placeholder="Create a strong password"
             autoComplete="new-password"
-            className={`input ${errors.password ? 'ring-2 ring-red-500' : ''}`}
+            className={cn('input', errors.password && 'ring-2 ring-red-500')}
           />
         </FormField>
 
@@ -136,7 +137,7 @@ export default function RegisterPage() {
             type="password"
             placeholder="Re-enter your password"
             autoComplete="new-password"
-            className={`input ${errors.confirmPassword ? 'ring-2 ring-red-500' : ''}`}
+            className={cn('input', errors.confirmPassword && 'ring-2 ring-red-500')}
           />
         </FormField>
 
@@ -165,14 +166,13 @@ export default function RegisterPage() {
                           active ? current.filter((k) => k !== key) : [...current, key]
                         );
                       }}
-                      className={`flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
-                        active
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-transparent bg-white hover:bg-gray-50'
-                      }`}
+                      className={cn(
+                        'flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors',
+                        active ? 'border-blue-600 bg-blue-50' : 'border-transparent bg-white hover:bg-gray-50'
+                      )}
                     >
                       <div
-                        className={`w-10 h-10 rounded-full ${color} flex items-center justify-center shrink-0`}
+                        className={cn('w-10 h-10 rounded-full flex items-center justify-center shrink-0', color)}
                       >
                         <span className="text-white font-bold text-lg">{label[0]}</span>
                       </div>
@@ -192,9 +192,10 @@ export default function RegisterPage() {
 
         <div className="flex flex-col gap-1.5">
           <label
-            className={`flex items-center gap-3 rounded-lg px-4 py-3 cursor-pointer ${
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-4 py-3 cursor-pointer',
               errors.terms ? 'bg-red-50' : 'bg-gray-100'
-            }`}
+            )}
           >
             <input
               {...register('terms')}
