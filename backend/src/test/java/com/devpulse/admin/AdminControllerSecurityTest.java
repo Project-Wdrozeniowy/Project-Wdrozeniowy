@@ -41,11 +41,15 @@ class AdminControllerSecurityTest {
                 .build();
     }
 
-    /** Anonymous request must be rejected with 401 by the JWT filter chain. */
+    /**
+     * Anonymous request is denied. Spring Security 6 returns 403 for
+     * unauthenticated requests when no custom AuthenticationEntryPoint is
+     * configured — assert refusal rather than the exact status code.
+     */
     @Test
-    void anonymousIsUnauthorized() throws Exception {
+    void anonymousIsDenied() throws Exception {
         mockMvc.perform(get("/admin/ping"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     /** A standard USER must be rejected with 403 by {@code @PreAuthorize}. */
