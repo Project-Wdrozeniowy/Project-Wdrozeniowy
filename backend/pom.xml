@@ -169,6 +169,7 @@
                                 <exclude>com/devpulse/auth/entity/**</exclude>
                                 <exclude>com/devpulse/exception/**</exclude>
                                 <exclude>com/devpulse/config/**</exclude>
+                                <exclude>com/devpulse/forum/**</exclude>
                             </excludes>
                             <rules>
                                 <rule>
