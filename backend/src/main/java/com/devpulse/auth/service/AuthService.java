@@ -81,12 +81,11 @@ public class AuthService {
             throw new AppException("Email already registered", HttpStatus.CONFLICT);
         }
 
-        User user = User.builder()
+        User user = userRepository.save(User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .build();
-        userRepository.save(user);
+                .build());
 
         return buildAuthResponse(user, response);
     }
