@@ -79,8 +79,8 @@ class AuthServiceRefreshTest {
         assertThat(response.getAccessToken()).isEqualTo("new-access");
         assertThat(response.getRefreshToken()).isEqualTo("new-refresh");
         assertThat(stored.getRevokedAt()).isNotNull();
-        verify(refreshTokenRepository).save(stored);
-        verify(refreshTokenRepository).save(any(RefreshToken.class));
+        // One save() revokes the presented token; a second save() persists the rotated one.
+        verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));
     }
 
     @Test
