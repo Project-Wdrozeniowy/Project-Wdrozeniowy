@@ -7,9 +7,9 @@ import { sendError } from './errorHandler';
 function isPublicRoute(method: string, path: string): boolean {
   return config.publicRoutes.some((route: PublicRoute) => {
     const methodMatches = route.method === '*' || route.method === method;
-    const pathMatches = route.pathPrefix
-      ? path.startsWith(route.pathPrefix)
-      : path === route.path;
+    const { pathPrefix } = route;
+    const pathMatches =
+      typeof pathPrefix === 'string' ? path.startsWith(pathPrefix) : path === route.path;
     return methodMatches && pathMatches;
   });
 }
