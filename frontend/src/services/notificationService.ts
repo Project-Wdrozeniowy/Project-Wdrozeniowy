@@ -14,9 +14,7 @@ export const notificationService = {
   markRead: (id: number): Promise<Notification> =>
     apiClient.patch<Notification>(`/notifications/${id}/read`, null),
 
-  markAllRead: (): Promise<void> =>
-    apiClient.patch<void>('/notifications/read-all', null),
+  markAllRead: (): Promise<void> => apiClient.patch<void>('/notifications/read-all', null),
 
-  delete: (id: number): Promise<void> =>
-    apiClient.delete<void>(`/notifications/${id}`),
+  delete: (id: number): Promise<void> => apiClient.delete<void>(`/notifications/${id}`),
 };

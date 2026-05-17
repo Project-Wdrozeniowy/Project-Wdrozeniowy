@@ -19,11 +19,9 @@ import type {
 // ─── Categories ───────────────────────────────────────────────────────────────
 
 export const categoryService = {
-  list: (): Promise<Category[]> =>
-    apiClient.get<Category[]>('/forum/categories'),
+  list: (): Promise<Category[]> => apiClient.get<Category[]>('/forum/categories'),
 
-  get: (slug: string): Promise<Category> =>
-    apiClient.get<Category>(`/forum/categories/${slug}`),
+  get: (slug: string): Promise<Category> => apiClient.get<Category>(`/forum/categories/${slug}`),
 
   create: (data: CreateCategoryRequest): Promise<Category> =>
     apiClient.post<Category>('/forum/categories', data),
@@ -31,8 +29,7 @@ export const categoryService = {
   update: (slug: string, data: UpdateCategoryRequest): Promise<Category> =>
     apiClient.patch<Category>(`/forum/categories/${slug}`, data),
 
-  delete: (slug: string): Promise<void> =>
-    apiClient.delete<void>(`/forum/categories/${slug}`),
+  delete: (slug: string): Promise<void> => apiClient.delete<void>(`/forum/categories/${slug}`),
 };
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
@@ -50,17 +47,14 @@ export const postService = {
   list: (params: ListPostsParams = {}): Promise<PagedResponse<PostSummary>> =>
     apiClient.get<PagedResponse<PostSummary>>('/forum/posts', { params }),
 
-  get: (slug: string): Promise<Post> =>
-    apiClient.get<Post>(`/forum/posts/${slug}`),
+  get: (slug: string): Promise<Post> => apiClient.get<Post>(`/forum/posts/${slug}`),
 
-  create: (data: CreatePostRequest): Promise<Post> =>
-    apiClient.post<Post>('/forum/posts', data),
+  create: (data: CreatePostRequest): Promise<Post> => apiClient.post<Post>('/forum/posts', data),
 
   update: (slug: string, data: UpdatePostRequest): Promise<Post> =>
     apiClient.patch<Post>(`/forum/posts/${slug}`, data),
 
-  delete: (slug: string): Promise<void> =>
-    apiClient.delete<void>(`/forum/posts/${slug}`),
+  delete: (slug: string): Promise<void> => apiClient.delete<void>(`/forum/posts/${slug}`),
 
   togglePin: (slug: string): Promise<Post> =>
     apiClient.patch<Post>(`/forum/posts/${slug}/pin`, null),
@@ -70,7 +64,9 @@ export const postService = {
 
 export const commentService = {
   list: (postSlug: string, page = 0, size = 20): Promise<PagedResponse<Comment>> =>
-    apiClient.get<PagedResponse<Comment>>(`/forum/posts/${postSlug}/comments`, { params: { page, size } }),
+    apiClient.get<PagedResponse<Comment>>(`/forum/posts/${postSlug}/comments`, {
+      params: { page, size },
+    }),
 
   create: (postSlug: string, data: CreateCommentRequest): Promise<Comment> =>
     apiClient.post<Comment>(`/forum/posts/${postSlug}/comments`, data),
@@ -78,18 +74,18 @@ export const commentService = {
   update: (id: number, data: UpdateCommentRequest): Promise<Comment> =>
     apiClient.patch<Comment>(`/forum/comments/${id}`, data),
 
-  delete: (id: number): Promise<void> =>
-    apiClient.delete<void>(`/forum/comments/${id}`),
+  delete: (id: number): Promise<void> => apiClient.delete<void>(`/forum/comments/${id}`),
 };
 
 // ─── Tags ─────────────────────────────────────────────────────────────────────
 
 export const tagService = {
-  list: (): Promise<Tag[]> =>
-    apiClient.get<Tag[]>('/forum/tags'),
+  list: (): Promise<Tag[]> => apiClient.get<Tag[]>('/forum/tags'),
 
   listPosts: (slug: string, page = 0, size = 20): Promise<PagedResponse<PostSummary>> =>
-    apiClient.get<PagedResponse<PostSummary>>(`/forum/tags/${slug}/posts`, { params: { page, size } }),
+    apiClient.get<PagedResponse<PostSummary>>(`/forum/tags/${slug}/posts`, {
+      params: { page, size },
+    }),
 };
 
 // ─── Votes ────────────────────────────────────────────────────────────────────
@@ -98,6 +94,5 @@ export const voteService = {
   cast: (data: VoteRequest): Promise<VoteResponse> =>
     apiClient.post<VoteResponse>('/forum/votes', data),
 
-  retract: (id: number): Promise<void> =>
-    apiClient.delete<void>(`/forum/votes/${id}`),
+  retract: (id: number): Promise<void> => apiClient.delete<void>(`/forum/votes/${id}`),
 };

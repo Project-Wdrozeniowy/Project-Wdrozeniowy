@@ -21,7 +21,10 @@ export const analyticsService = {
   getPlatformSummary: (): Promise<PlatformSummary> =>
     apiClient.get<PlatformSummary>('/analytics/summary'),
 
-  getActivityTrend: (metric: TrendMetric = 'posts', period: TrendPeriod = '7d'): Promise<ActivityTrend> =>
+  getActivityTrend: (
+    metric: TrendMetric = 'posts',
+    period: TrendPeriod = '7d'
+  ): Promise<ActivityTrend> =>
     apiClient.get<ActivityTrend>('/analytics/trends', { params: { metric, period } }),
 
   getTrendingPosts: (period: '24h' | '7d' | '30d' = '24h', limit = 10): Promise<PostSummary[]> =>

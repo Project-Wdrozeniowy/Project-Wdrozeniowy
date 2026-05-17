@@ -333,4 +333,3 @@ export interface VoteScoreEvent {
 
 /** Pushed to /user/queue/notifications (unicast) */
 // Uses the existing Notification type from the Notifications section above
-
