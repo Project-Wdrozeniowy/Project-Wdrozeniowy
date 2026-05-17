@@ -11,7 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
 
 /**
- * Entity representing a user account in the DevPulse system.
+ * Entity representing a user account in the Orbita Forum system.
  *
  * <p>Maps to the {@code users} table in PostgreSQL.
  * The password is stored exclusively as a BCrypt hash
@@ -19,9 +19,13 @@ import java.time.OffsetDateTime;
  *
  * <p>The user's {@link Role} determines their permissions:
  * <ul>
- *   <li>{@code USER}  — standard permissions (create posts, comments, vote)</li>
- *   <li>{@code ADMIN} — full access, including content moderation</li>
+ *   <li>{@code USER}      — standard permissions (create posts, comments, vote)</li>
+ *   <li>{@code MODERATOR} — content moderation across the forum</li>
+ *   <li>{@code ADMIN}     — full access, including user management</li>
  * </ul>
+ *
+ * <p>Profile fields ({@code displayName}, {@code avatarUrl}, {@code bio}) are optional
+ * and editable through the {@code /users/me} endpoints.
  */
 @Entity
 @Table(name = "users")
@@ -51,6 +55,18 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    /** Optional public display name (falls back to {@link #username} in the UI). */
+    @Column(name = "display_name", length = 100)
+    private String displayName;
+
+    /** Optional URL pointing to the user's avatar image. */
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
+    /** Optional short biography shown on the public profile page. */
+    @Column(columnDefinition = "text")
+    private String bio;
+
     /**
      * User role defining their permissions.
      * Default value: {@link Role#USER}.
@@ -59,6 +75,29 @@ public class User {
     @Column(nullable = false)
     @Builder.Default
     private Role role = Role.USER;
+
+    /**
+     * Account lifecycle status.
+     * Default value: {@link UserStatus#ACTIVE}.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
+
+    /** Reason recorded by a moderator when banning the account; {@code null} otherwise. */
+    @Column(name = "ban_reason", columnDefinition = "text")
+    private String banReason;
+
+    /** Aggregated count of posts authored by the user. Maintained by background jobs. */
+    @Column(name = "post_count", nullable = false)
+    @Builder.Default
+    private Integer postCount = 0;
+
+    /** Aggregated count of comments authored by the user. Maintained by background jobs. */
+    @Column(name = "comment_count", nullable = false)
+    @Builder.Default
+    private Integer commentCount = 0;
 
     /** Timestamp of account creation — set automatically, immutable. */
     @CreationTimestamp
