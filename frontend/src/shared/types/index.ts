@@ -65,10 +65,20 @@ export interface RegisterData {
   interests?: CategoryKey[];
 }
 
+/** Minimal user shape returned by auth endpoints (login, register, refresh, me). */
+export interface AuthUserInfo {
+  id: string;
+  username: string;
+  email: string;
+  role: UserRole;
+}
+
+/** Response from POST /auth/login, POST /auth/register, POST /auth/refresh, GET /auth/me. */
 export interface AuthResponse {
-  user: User;
-  token: string;
-  refreshToken?: string;
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
+  user: AuthUserInfo;
 }
 
 // ─── Categories ───────────────────────────────────────────────────────────────

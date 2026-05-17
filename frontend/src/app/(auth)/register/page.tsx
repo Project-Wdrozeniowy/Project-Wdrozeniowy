@@ -43,8 +43,7 @@ export default function RegisterPage() {
         displayName: data.displayName,
         interests: data.interests,
       });
-      const { user, token, refreshToken } = response.data;
-      setUser(user, token, refreshToken);
+      setUser(response.user, response.accessToken);
       router.push('/');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
