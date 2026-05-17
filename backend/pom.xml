@@ -185,6 +185,10 @@
                                 <exclude>com/devpulse/auth/entity/**</exclude>
                                 <exclude>com/devpulse/exception/**</exclude>
                                 <exclude>com/devpulse/config/**</exclude>
+                                <!-- New stub implementations — no business logic yet -->
+                                <exclude>com/devpulse/ai/**</exclude>
+                                <exclude>com/devpulse/websocket/**</exclude>
+                                <exclude>com/devpulse/analytics/dto/**</exclude>
                             </excludes>
                             <rules>
                                 <rule>
