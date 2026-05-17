@@ -33,6 +33,9 @@ export default defineConfig({
         '**/components/**',
         '**/app/**',
         '**/hooks/**',
+        // Utility helpers — no business logic
+        '**/utils/**',
+        '**/lib/**',
         // Test infrastructure
         '**/test/**',
         '**/mocks/**',
