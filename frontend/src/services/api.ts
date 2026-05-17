@@ -1,7 +1,8 @@
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import axios from 'axios';
+import { tokenMemory } from '@/lib/tokenMemory';
 
-type RequestBody = Record<string, unknown> | FormData | null;
+type RequestBody = object | FormData | null;
 
 class ApiClient {
   private client: AxiosInstance;
@@ -38,11 +39,9 @@ class ApiClient {
   private setupInterceptors() {
     this.client.interceptors.request.use(
       (config) => {
-        if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('token');
-          if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-          }
+        const token = tokenMemory.get();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },

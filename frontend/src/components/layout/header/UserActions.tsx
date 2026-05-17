@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { BellIcon, TrendingIcon } from '@/components/ui/icons';
-import type { User } from '@/shared/types';
+import type { AuthUserInfo } from '@/shared/types';
 
 interface Props {
   isAuthenticated: boolean;
-  user: User | null;
+  user: AuthUserInfo | null;
   logout: () => void;
 }
 
@@ -29,9 +29,7 @@ export default function UserActions({ isAuthenticated, user, logout }: Props) {
 
       {isAuthenticated ? (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-400 hidden sm:block">
-            {user?.displayName ?? user?.username}
-          </span>
+          <span className="text-sm text-slate-400 hidden sm:block">{user?.username}</span>
           <button
             onClick={logout}
             className="text-sm text-slate-400 hover:text-gray-50 transition-colors"

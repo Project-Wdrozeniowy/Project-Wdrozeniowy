@@ -31,8 +31,7 @@ export default function LoginPage() {
     setServerError(null);
     try {
       const response = await authService.login(data);
-      const { user, token, refreshToken } = response.data;
-      setUser(user, token, refreshToken);
+      setUser(response.user, response.accessToken);
       router.push('/');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid email or password';

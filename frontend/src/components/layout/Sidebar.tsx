@@ -11,14 +11,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { isAuthenticated, user } = useStore();
 
-  const initials = user
-    ? (user.displayName || user.username)
-        .split(' ')
-        .map((w) => w[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase()
-    : 'U';
+  const initials = user ? user.username.slice(0, 2).toUpperCase() : 'U';
 
   return (
     <aside className="w-86 shrink-0 flex flex-col gap-3">

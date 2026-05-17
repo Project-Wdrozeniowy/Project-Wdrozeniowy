@@ -98,9 +98,10 @@ describe('ApiClient – request interceptor (Authorization header)', () => {
     vi.resetModules();
   });
 
-  it('attaches Bearer token from localStorage when present', async () => {
-    localStorage.setItem('token', 'test-jwt-token');
+  it('attaches Bearer token from tokenMemory when present', async () => {
     vi.resetModules();
+    const { tokenMemory } = await import('@/lib/tokenMemory');
+    tokenMemory.set('test-jwt-token');
     const { apiClient } = await import('../api');
     const mock = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
 
@@ -115,9 +116,10 @@ describe('ApiClient – request interceptor (Authorization header)', () => {
     mock.restore();
   });
 
-  it('does not attach Authorization when no token in localStorage', async () => {
-    localStorage.removeItem('token');
+  it('does not attach Authorization when no token in memory', async () => {
     vi.resetModules();
+    const { tokenMemory } = await import('@/lib/tokenMemory');
+    tokenMemory.set(null);
     const { apiClient } = await import('../api');
     const mock = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
 

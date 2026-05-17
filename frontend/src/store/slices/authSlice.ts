@@ -1,34 +1,27 @@
 import type { StateCreator } from 'zustand';
-import type { User } from '@/shared/types';
-import { tokenStorage } from '@/services/authService';
+import type { AuthUserInfo } from '@/shared/types';
+import { tokenMemory } from '@/lib/tokenMemory';
 
 export interface AuthSlice {
-  user: User | null;
+  user: AuthUserInfo | null;
   token: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
-  setUser: (user: User, token: string, refreshToken?: string) => void;
+  setUser: (user: AuthUserInfo, token: string) => void;
   logout: () => void;
 }
 
-export const createAuthSlice: StateCreator<AuthSlice> = (set) => {
-  const token = tokenStorage.getToken();
-  const refreshToken = tokenStorage.getRefreshToken();
+export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
+  user: null,
+  token: null,
+  isAuthenticated: false,
 
-  return {
-    user: null,
-    token,
-    refreshToken,
-    isAuthenticated: Boolean(token),
+  setUser: (user, token) => {
+    tokenMemory.set(token);
+    set({ user, token, isAuthenticated: true });
+  },
 
-    setUser: (user, token, refreshToken) => {
-      tokenStorage.setTokens(token, refreshToken);
-      set({ user, token, refreshToken: refreshToken ?? null, isAuthenticated: Boolean(token) });
-    },
-
-    logout: () => {
-      tokenStorage.clearTokens();
-      set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
-    },
-  };
-};
+  logout: () => {
+    tokenMemory.set(null);
+    set({ user: null, token: null, isAuthenticated: false });
+  },
+});

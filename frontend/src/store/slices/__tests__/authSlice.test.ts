@@ -1,18 +1,13 @@
 import { createStore } from 'zustand';
 import { createAuthSlice, type AuthSlice } from '../authSlice';
-import type { User } from '@/shared/types';
+import type { AuthUserInfo } from '@/shared/types';
+import { tokenMemory } from '@/lib/tokenMemory';
 
-const mockUser: User = {
+const mockUser: AuthUserInfo = {
   id: '1',
   username: 'testuser',
   email: 'test@example.com',
-  displayName: 'Test User',
   role: 'user',
-  status: 'active',
-  postCount: 0,
-  commentCount: 0,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
 };
 
 function makeStore() {
@@ -20,7 +15,7 @@ function makeStore() {
 }
 
 beforeEach(() => {
-  localStorage.clear();
+  tokenMemory.set(null);
 });
 
 describe('authSlice – initial state', () => {
@@ -29,21 +24,14 @@ describe('authSlice – initial state', () => {
     expect(store.getState().user).toBeNull();
   });
 
-  it('token is null when localStorage is empty', () => {
+  it('token is null by default', () => {
     const store = makeStore();
     expect(store.getState().token).toBeNull();
   });
 
-  it('isAuthenticated is false when no token in localStorage', () => {
+  it('isAuthenticated is false by default', () => {
     const store = makeStore();
     expect(store.getState().isAuthenticated).toBe(false);
-  });
-
-  it('reads token from localStorage on initialisation', () => {
-    localStorage.setItem('token', 'stored-token');
-    const store = makeStore();
-    expect(store.getState().token).toBe('stored-token');
-    expect(store.getState().isAuthenticated).toBe(true);
   });
 });
 
@@ -57,10 +45,10 @@ describe('authSlice – setUser', () => {
     expect(isAuthenticated).toBe(true);
   });
 
-  it('writes token to localStorage', () => {
+  it('stores token in memory', () => {
     const store = makeStore();
     store.getState().setUser(mockUser, 'my-token');
-    expect(localStorage.getItem('token')).toBe('my-token');
+    expect(tokenMemory.get()).toBe('my-token');
   });
 });
 
@@ -75,10 +63,10 @@ describe('authSlice – logout', () => {
     expect(isAuthenticated).toBe(false);
   });
 
-  it('removes token from localStorage', () => {
+  it('clears token from memory', () => {
     const store = makeStore();
     store.getState().setUser(mockUser, 'my-token');
     store.getState().logout();
-    expect(localStorage.getItem('token')).toBeNull();
+    expect(tokenMemory.get()).toBeNull();
   });
 });
