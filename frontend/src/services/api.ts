@@ -57,7 +57,8 @@ class ApiClient {
           if (error.response?.status === 401) {
             window.location.href = '/login';
           } else {
-            const message = error.response?.data?.message ?? 'Something went wrong. Please try again.';
+            const message =
+              error.response?.data?.message ?? 'Something went wrong. Please try again.';
             toast.error(message);
           }
         }
