@@ -15,8 +15,8 @@ export interface ApiError {
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'user' | 'admin' | 'moderator';
-export type UserStatus = 'active' | 'banned' | 'suspended';
+export type UserRole = 'USER' | 'ADMIN' | 'MODERATOR';
+export type UserStatus = 'ACTIVE' | 'BANNED' | 'SUSPENDED';
 export type PostStatus = 'draft' | 'published' | 'archived' | 'removed';
 export type CommentStatus = 'active' | 'removed' | 'flagged';
 export type VoteType = 'up' | 'down';

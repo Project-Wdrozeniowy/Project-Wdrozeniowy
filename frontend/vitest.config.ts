@@ -23,6 +23,7 @@ export default defineConfig({
         'postcss.config.*',
         'tailwind.config.*',
         'vitest.config.*',
+        'eslint.config.*',
         '**/*.d.ts',
         // Type-only files — no executable code
         '**/types/**',
