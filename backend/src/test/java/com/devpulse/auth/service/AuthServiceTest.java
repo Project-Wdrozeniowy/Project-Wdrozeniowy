@@ -32,6 +32,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -164,7 +165,7 @@ class AuthServiceTest {
 
         assertThat(response.getAccessToken()).isEqualTo("access-token");
         assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
-        verify(refreshTokenRepository).deleteAllByUser(user);
+        verify(refreshTokenRepository).revokeAllActiveByUser(eq(user), any(OffsetDateTime.class));
     }
 
     @Test
@@ -185,7 +186,7 @@ class AuthServiceTest {
     // ───────────────────────── refresh ─────────────────────────
 
     @Test
-    void refresh_validToken_returnsNewAccessTokenAndSameRefreshToken() {
+    void refresh_validToken_rotatesAccessAndRefreshTokens() {
         User user = User.builder()
                 .id(1L).username("alice").passwordHash("hashed").role(Role.USER).build();
         RefreshToken stored = RefreshToken.builder()
@@ -200,12 +201,14 @@ class AuthServiceTest {
                 .withUsername("alice").password("hashed").authorities(Collections.emptyList()).build();
         when(userDetailsService.loadUserByUsername("alice")).thenReturn(ud);
         when(jwtUtil.generateAccessToken(ud)).thenReturn("new-access-token");
+        when(jwtUtil.generateRefreshToken()).thenReturn("rotated-refresh");
 
         AuthResponse response = authService.refresh("valid-refresh");
 
         assertThat(response.getAccessToken()).isEqualTo("new-access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("valid-refresh");
+        assertThat(response.getRefreshToken()).isEqualTo("rotated-refresh");
         assertThat(response.getExpiresIn()).isEqualTo(900L);
+        assertThat(stored.getRevokedAt()).isNotNull();
     }
 
     @Test
@@ -220,7 +223,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void refresh_expiredToken_deletesTokenAndThrowsUnauthorized() {
+    void refresh_expiredToken_throwsUnauthorized() {
         User user = User.builder()
                 .id(1L).username("alice").passwordHash("hashed").role(Role.USER).build();
         RefreshToken expired = RefreshToken.builder()
@@ -236,7 +239,5 @@ class AuthServiceTest {
                 .hasMessageContaining("expired")
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.UNAUTHORIZED));
-
-        verify(refreshTokenRepository).delete(expired);
     }
 }
