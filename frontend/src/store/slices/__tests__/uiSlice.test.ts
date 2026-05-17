@@ -5,7 +5,7 @@ function makeStore() {
   return createStore<UISlice>()(createUISlice);
 }
 
-describe('uiSlice', () => {
+describe('uiSlice >-65', () => {
   it('has isLoading false by default', () => {
     const store = makeStore();
     expect(store.getState().isLoading).toBe(false);

@@ -21,21 +21,25 @@ export default defineConfig({
         '.next/**',
         'next.config.*',
         'postcss.config.*',
+        'eslint.config.*',
         'tailwind.config.*',
         'vitest.config.*',
         '**/*.d.ts',
-        // Type-only files — no executable code
-        '**/types/**',
-        '**/shared/**',
+        // Type-only and shared files — no executable code
+        'src/types/**',
+        'src/shared/**',
         // Constants — no executable logic
-        '**/constants/**',
+        'src/constants/**',
         // UI components and pages — covered by E2E/integration tests
-        '**/components/**',
-        '**/app/**',
-        '**/hooks/**',
+        'src/components/**',
+        'src/app/**',
+        // Hooks — depend on React context, no unit tests
+        'src/hooks/**',
+        // Utility libraries
+        'src/lib/**',
+        'src/utils/**',
         // Test infrastructure
-        '**/test/**',
-        '**/mocks/**',
+        'src/test/**',
       ],
       thresholds: {
         lines: 65,

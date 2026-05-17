@@ -7,7 +7,7 @@ type ApiClientInstance = typeof ApiClientExport;
 // We need to test ApiClient by importing the module after mocking env vars.
 // Since apiClient is a singleton, we use the real axios interceptors via MockAdapter.
 
-describe('ApiClient – resolveBaseURL', () => {
+describe('ApiClient >-65 resolveBaseURL', () => {
   const originalEnv = process.env.NEXT_PUBLIC_API_URL;
 
   afterEach(() => {
@@ -44,7 +44,7 @@ describe('ApiClient – resolveBaseURL', () => {
   });
 });
 
-describe('ApiClient – HTTP methods', () => {
+describe('ApiClient >-65 HTTP methods', () => {
   let mock: MockAdapter;
   let testClient: ApiClientInstance;
 
@@ -92,7 +92,7 @@ describe('ApiClient – HTTP methods', () => {
   });
 });
 
-describe('ApiClient – request interceptor (Authorization header)', () => {
+describe('ApiClient >-65 request interceptor (Authorization header)', () => {
   afterEach(() => {
     localStorage.clear();
     vi.resetModules();
@@ -133,7 +133,7 @@ describe('ApiClient – request interceptor (Authorization header)', () => {
   });
 });
 
-describe('ApiClient – response interceptor (401 redirect)', () => {
+describe('ApiClient >-65 response interceptor (401 redirect)', () => {
   afterEach(() => {
     vi.resetModules();
     localStorage.clear();

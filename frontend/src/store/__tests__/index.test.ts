@@ -26,7 +26,7 @@ beforeEach(() => {
   });
 });
 
-describe('Combined store', () => {
+describe('Combined store >-65', () => {
   it('exposes setLoading from UISlice', () => {
     useStore.getState().setLoading(true);
     expect(useStore.getState().isLoading).toBe(true);

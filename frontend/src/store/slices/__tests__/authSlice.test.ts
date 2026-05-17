@@ -23,7 +23,7 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-describe('authSlice – initial state', () => {
+describe('authSlice >-65 initial state', () => {
   it('user is null by default', () => {
     const store = makeStore();
     expect(store.getState().user).toBeNull();
@@ -47,7 +47,7 @@ describe('authSlice – initial state', () => {
   });
 });
 
-describe('authSlice – setAuth', () => {
+describe('authSlice >-65 setAuth', () => {
   it('updates user, accessToken, refreshToken and isAuthenticated', () => {
     const store = makeStore();
     store.getState().setAuth(mockUser, 'access-token', 'refresh-token');
@@ -66,7 +66,7 @@ describe('authSlice – setAuth', () => {
   });
 });
 
-describe('authSlice – logout', () => {
+describe('authSlice >-65 logout', () => {
   it('resets user, tokens and isAuthenticated to defaults', () => {
     const store = makeStore();
     store.getState().setAuth(mockUser, 'access-token', 'refresh-token');

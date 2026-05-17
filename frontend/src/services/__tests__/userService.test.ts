@@ -33,7 +33,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('userService.getProfile', () => {
+describe('userService.getProfile >-65 GET /users/:username', () => {
   it('calls apiClient.get with /users/:username', async () => {
     mockApiClient.get.mockResolvedValue(mockProfile);
     const result = await userService.getProfile('johndoe');
@@ -42,7 +42,7 @@ describe('userService.getProfile', () => {
   });
 });
 
-describe('userService.getMyProfile', () => {
+describe('userService.getMyProfile >-65 GET /users/me', () => {
   it('calls apiClient.get with /users/me', async () => {
     mockApiClient.get.mockResolvedValue(mockProfile);
     const result = await userService.getMyProfile();
@@ -51,7 +51,7 @@ describe('userService.getMyProfile', () => {
   });
 });
 
-describe('userService.updateMyProfile', () => {
+describe('userService.updateMyProfile >-65 PATCH /users/me', () => {
   it('calls apiClient.patch with /users/me and data', async () => {
     const updateData = { displayName: 'Jane Doe' };
     const updated = { ...mockProfile, displayName: 'Jane Doe' };
