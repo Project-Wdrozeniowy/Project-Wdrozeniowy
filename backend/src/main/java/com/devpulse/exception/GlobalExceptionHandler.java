@@ -2,6 +2,8 @@ package com.devpulse.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -58,6 +60,37 @@ public class GlobalExceptionHandler {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
         pd.setTitle("Validation Error");
         pd.setProperty("errors", errors);
+        return pd;
+    }
+
+    /**
+     * Handles authorization failures raised by {@code @PreAuthorize}
+     * and other Spring Security checks once the user is authenticated
+     * but lacks the required authority.
+     *
+     * @param ex the access-denied exception
+     * @return a {@link ProblemDetail} 403 with a generic message
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN, "Access is denied");
+        pd.setTitle(HttpStatus.FORBIDDEN.getReasonPhrase());
+        return pd;
+    }
+
+    /**
+     * Handles authentication failures (missing or invalid credentials)
+     * raised by Spring Security before a principal is established.
+     *
+     * @param ex the authentication exception
+     * @return a {@link ProblemDetail} 401 with a generic message
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handleAuthentication(AuthenticationException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED, "Authentication failed");
+        pd.setTitle(HttpStatus.UNAUTHORIZED.getReasonPhrase());
         return pd;
     }
 
