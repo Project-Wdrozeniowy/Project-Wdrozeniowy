@@ -243,6 +243,73 @@ class AuthServiceTest {
         verify(refreshTokenRepository).delete(expired);
     }
 
+    @Test
+    void refresh_nullToken_throwsUnauthorized() {
+        assertThatThrownBy(() -> authService.refresh(null, httpResponse))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("not found")
+                .satisfies(e -> assertThat(((AppException) e).getStatus())
+                        .isEqualTo(HttpStatus.UNAUTHORIZED));
+    }
+
+    // ───────────────────────── me ─────────────────────────
+
+    @Test
+    void me_validToken_returnsUserAndRotatesCookie() {
+        User user = User.builder()
+                .id(1L).username("alice").email("alice@example.com")
+                .passwordHash("hashed").role(Role.USER).build();
+        RefreshToken stored = RefreshToken.builder()
+                .token("valid-refresh")
+                .user(user)
+                .expiresAt(OffsetDateTime.now().plusHours(1))
+                .build();
+
+        when(refreshTokenRepository.findByToken("valid-refresh")).thenReturn(Optional.of(stored));
+
+        UserDetails ud = org.springframework.security.core.userdetails.User
+                .withUsername("alice").password("hashed").authorities(Collections.emptyList()).build();
+        when(userDetailsService.loadUserByUsername("alice")).thenReturn(ud);
+        when(jwtUtil.generateAccessToken(ud)).thenReturn("access-token");
+        when(jwtUtil.generateRefreshToken()).thenReturn("new-refresh");
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(null);
+
+        AuthResponse response = authService.me("valid-refresh", httpResponse);
+
+        assertThat(response.getAccessToken()).isEqualTo("access-token");
+        assertThat(response.getUser().username()).isEqualTo("alice");
+        verify(refreshTokenRepository).delete(stored);
+        verify(httpResponse).addCookie(any());
+    }
+
+    @Test
+    void me_nullToken_throwsUnauthorized() {
+        assertThatThrownBy(() -> authService.me(null, httpResponse))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("No session found")
+                .satisfies(e -> assertThat(((AppException) e).getStatus())
+                        .isEqualTo(HttpStatus.UNAUTHORIZED));
+    }
+
+    @Test
+    void me_expiredToken_deletesTokenAndThrowsUnauthorized() {
+        User user = User.builder()
+                .id(1L).username("alice").passwordHash("hashed").role(Role.USER).build();
+        RefreshToken expired = RefreshToken.builder()
+                .token("expired-refresh").user(user)
+                .expiresAt(OffsetDateTime.now().minusHours(1)).build();
+
+        when(refreshTokenRepository.findByToken("expired-refresh")).thenReturn(Optional.of(expired));
+
+        assertThatThrownBy(() -> authService.me("expired-refresh", httpResponse))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("expired")
+                .satisfies(e -> assertThat(((AppException) e).getStatus())
+                        .isEqualTo(HttpStatus.UNAUTHORIZED));
+
+        verify(refreshTokenRepository).delete(expired);
+    }
+
     // ───────────────────────── logout ─────────────────────────
 
     @Test
