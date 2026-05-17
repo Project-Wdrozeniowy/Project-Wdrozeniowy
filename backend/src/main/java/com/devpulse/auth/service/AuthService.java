@@ -48,7 +48,7 @@ import java.time.OffsetDateTime;
 @RequiredArgsConstructor
 public class AuthService {
 
-    static final String REFRESH_COOKIE_NAME = "refreshToken";
+    public static final String REFRESH_COOKIE_NAME = "refreshToken";
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;

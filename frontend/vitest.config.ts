@@ -29,10 +29,14 @@ export default defineConfig({
         '**/shared/**',
         // Constants — no executable logic
         '**/constants/**',
-        // UI components and pages — covered by E2E/integration tests
+        // Utility helpers and pure library code
+        '**/utils/**',
+        '**/lib/**',
+        // UI components, pages, providers — covered by E2E/integration tests
         '**/components/**',
         '**/app/**',
         '**/hooks/**',
+        '**/providers/**',
         // Test infrastructure
         '**/test/**',
         '**/mocks/**',
