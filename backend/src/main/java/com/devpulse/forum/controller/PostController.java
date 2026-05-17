@@ -7,6 +7,7 @@ import com.devpulse.forum.dto.PostSummaryDto;
 import com.devpulse.forum.dto.UpdatePostRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -30,7 +31,7 @@ public class PostController {
             @Parameter(description = "Page size", example = "20") @RequestParam(defaultValue = "20") int size,
             @Parameter(description = "Filter by category slug") @RequestParam(required = false) String categorySlug,
             @Parameter(description = "Filter by tag") @RequestParam(required = false) String tag,
-            @Parameter(description = "Sort field", example = "lastActivityAt", allowableValues = {"createdAt", "voteScore", "lastActivityAt"})
+            @Parameter(description = "Sort field", schema = @Schema(type = "string", allowableValues = {"createdAt", "voteScore", "lastActivityAt"}, defaultValue = "lastActivityAt"))
                 @RequestParam(defaultValue = "lastActivityAt") String sort,
             @Parameter(description = "Full-text search query") @RequestParam(required = false) String q) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
