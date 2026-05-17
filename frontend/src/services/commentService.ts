@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import type { Comment, CreateCommentPayload, PaginatedResponse } from '@/types';
+import type { Comment, CreateCommentPayload, PaginatedResponse } from '@/shared/types';
 
 export const commentService = {
   getComments: (postId: string, page = 0, size = 20): Promise<PaginatedResponse<Comment>> =>

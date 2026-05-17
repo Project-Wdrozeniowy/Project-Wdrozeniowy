@@ -1,5 +1,6 @@
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import axios from 'axios';
+import { toast } from '@/lib/toast';
 
 type RequestBody = object | FormData | null;
 
@@ -10,14 +11,15 @@ class ApiClient {
     const envURL = process.env.NEXT_PUBLIC_API_URL;
     if (envURL) return envURL;
 
-    if (typeof window !== 'undefined') {
-      return '/api';
-    }
+    // Client-side: relative URL is fine — the browser resolves it against the origin
+    if (typeof window !== 'undefined') return '/api';
 
+    // Server-side in production: env var is required (relative URLs are invalid in Node.js)
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('NEXT_PUBLIC_API_URL is not set in production environment');
+      throw new Error('NEXT_PUBLIC_API_URL must be set in production');
     }
 
+    // Server-side in development: hit the local gateway directly
     return 'http://localhost:3000/api';
   }
 
@@ -50,9 +52,15 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401 && typeof window !== 'undefined') {
-          window.location.href = '/login';
+      (error: AxiosError<{ message?: string }>) => {
+        if (typeof window !== 'undefined') {
+          if (error.response?.status === 401) {
+            window.location.href = '/login';
+          } else if (!error.response || error.response.status >= 500) {
+            const message =
+              error.response?.data?.message ?? 'Something went wrong. Please try again.';
+            toast.error(message);
+          }
         }
         return Promise.reject(error);
       }

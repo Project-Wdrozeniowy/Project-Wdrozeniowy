@@ -1,12 +1,16 @@
 import { createStore } from 'zustand';
 import { createAuthSlice, type AuthSlice } from '../authSlice';
-import type { User } from '@/types';
+import type { User } from '@/shared/types';
 
 const mockUser: User = {
   id: '1',
+  username: 'testuser',
   email: 'test@example.com',
-  name: 'Test User',
+  displayName: 'Test User',
   role: 'user',
+  status: 'active',
+  postCount: 0,
+  commentCount: 0,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };

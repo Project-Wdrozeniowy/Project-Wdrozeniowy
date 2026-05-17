@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Comment } from '@/types';
+import type { Comment } from '@/shared/types';
 import CommentForm from './CommentForm';
 
 interface CommentItemProps {
@@ -46,7 +46,7 @@ export default function CommentItem({
           <>
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold text-slate-300">
-                {comment.author.name}
+                {comment.author.displayName}
               </span>
               <span className="text-xs text-slate-500">
                 {new Date(comment.createdAt).toLocaleDateString()}
