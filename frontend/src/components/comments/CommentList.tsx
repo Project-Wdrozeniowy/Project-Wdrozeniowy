@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { commentService } from '@/services/commentService';
 import { toast } from '@/lib/toast';
 import { useStore } from '@/store';
@@ -16,12 +15,18 @@ export default function CommentList({ postId }: CommentListProps) {
   const queryClient = useQueryClient();
   const user = useStore((s) => s.user);
   const isAuthenticated = useStore((s) => s.isAuthenticated);
-  const [page, setPage] = useState(0);
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['comments', postId, page],
-    queryFn: () => commentService.getComments(postId, page),
-  });
+  const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ['comments', postId],
+      queryFn: ({ pageParam }) => commentService.getComments(postId, pageParam),
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, _pages, lastPageParam) =>
+        lastPage.last ? undefined : lastPageParam + 1,
+    });
+
+  const comments = data?.pages.flatMap((p) => p.content) ?? [];
+  const totalElements = data?.pages[0]?.totalElements ?? 0;
 
   const addMutation = useMutation({
     mutationFn: ({ content, parentId }: { content: string; parentId?: string | null }) =>
@@ -57,7 +62,7 @@ export default function CommentList({ postId }: CommentListProps) {
   return (
     <section className="flex flex-col gap-6">
       <h2 className="text-lg font-semibold text-slate-100">
-        Comments {data ? `(${data.totalElements})` : ''}
+        Comments {data ? `(${totalElements})` : ''}
       </h2>
 
       {isAuthenticated ? (
@@ -69,13 +74,13 @@ export default function CommentList({ postId }: CommentListProps) {
       {isLoading && <p className="text-sm text-slate-400">Loading comments…</p>}
       {isError && <p className="text-sm text-red-400">Failed to load comments.</p>}
 
-      {data && data.content.length === 0 && !isLoading && (
+      {comments.length === 0 && !isLoading && (
         <p className="text-sm text-slate-500">No comments yet. Be the first!</p>
       )}
 
-      {data && (
+      {comments.length > 0 && (
         <div className="flex flex-col gap-4">
-          {data.content.map((comment) => (
+          {comments.map((comment) => (
             <CommentItem
               key={comment.id}
               comment={comment}
@@ -87,13 +92,14 @@ export default function CommentList({ postId }: CommentListProps) {
         </div>
       )}
 
-      {data && !data.last && (
+      {hasNextPage && (
         <button
           type="button"
-          onClick={() => setPage((p) => p + 1)}
-          className="self-center text-sm text-blue-400 hover:text-blue-300 transition-colors"
+          onClick={() => fetchNextPage()}
+          disabled={isFetchingNextPage}
+          className="self-center text-sm text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors"
         >
-          Load more comments
+          {isFetchingNextPage ? 'Loading…' : 'Load more comments'}
         </button>
       )}
     </section>
