@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { User } from '@/shared/types';
 import { tokenStorage } from '@/services/authService';
+import { toast } from '@/lib/toast';
 
 export interface AuthSlice {
   user: User | null;
@@ -29,6 +30,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => {
     logout: () => {
       tokenStorage.clearTokens();
       set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
+      toast.success('You have been signed out.');
     },
   };
 };

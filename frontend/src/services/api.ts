@@ -1,5 +1,6 @@
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import axios from 'axios';
+import { toast } from '@/lib/toast';
 
 type RequestBody = Record<string, unknown> | FormData | null;
 
@@ -51,9 +52,15 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401 && typeof window !== 'undefined') {
-          window.location.href = '/login';
+      (error: AxiosError<{ message?: string }>) => {
+        if (typeof window !== 'undefined') {
+          if (error.response?.status === 401) {
+            window.location.href = '/login';
+          } else if (!error.response || error.response.status >= 500) {
+            const message =
+              error.response?.data?.message ?? 'Something went wrong. Please try again.';
+            toast.error(message);
+          }
         }
         return Promise.reject(error);
       }
