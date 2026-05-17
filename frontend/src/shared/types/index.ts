@@ -18,7 +18,7 @@ export interface ApiError {
 export type UserRole = 'user' | 'admin' | 'moderator';
 export type UserStatus = 'active' | 'banned' | 'suspended';
 export type PostStatus = 'draft' | 'published' | 'archived' | 'removed';
-export type CommentStatus = 'active' | 'removed' | 'flagged';
+export type CommentStatus = 'VISIBLE' | 'HIDDEN' | 'DELETED';
 export type VoteType = 'up' | 'down';
 
 export enum CategoryKey {
@@ -119,16 +119,20 @@ export interface Post {
 export interface Comment {
   id: string;
   postId: string;
-  userId: string;
-  parentId?: string;
+  parentId: string | null;
   content: string;
   status: CommentStatus;
   voteScore: number;
   depth: number;
   createdAt: string;
   updatedAt: string;
-  author?: User;
-  replies?: Comment[];
+  author: User;
+  replies: Comment[];
+}
+
+export interface CreateCommentPayload {
+  content: string;
+  parentId?: string | null;
 }
 
 // ─── Votes ────────────────────────────────────────────────────────────────────
@@ -181,9 +185,10 @@ export interface PostSubscription {
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
 export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
+  content: T[];
+  totalElements: number;
   totalPages: number;
+  number: number;
+  size: number;
+  last: boolean;
 }
