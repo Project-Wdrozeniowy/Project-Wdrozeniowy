@@ -14,11 +14,12 @@ import java.time.OffsetDateTime;
  *
  * <p>A refresh token is an opaque string (UUID x 2) that allows the client
  * to obtain a new access token without re-authenticating.
- * Storing it in the DB allows server-side revocation.
+ * Storing it in the DB enables server-side revocation and rotation.
  *
  * <p>Maps to the {@code refresh_tokens} table in PostgreSQL.
- * Linked to {@link User} in a many-to-one relationship (a user may have
- * multiple refresh tokens; previous ones are revoked on each new login).
+ * Linked to {@link User} in a many-to-one relationship — a user may have
+ * multiple historical tokens, but only those with {@code revoked_at IS NULL}
+ * and a future {@code expires_at} are considered active.
  */
 @Entity
 @Table(name = "refresh_tokens")
@@ -52,6 +53,14 @@ public class RefreshToken {
     @Column(name = "expires_at", nullable = false)
     private OffsetDateTime expiresAt;
 
+    /**
+     * Timestamp at which the token was revoked, or {@code null} if still valid.
+     * Set when the token is rotated on refresh, on logout, on password change,
+     * or when token reuse is detected.
+     */
+    @Column(name = "revoked_at")
+    private OffsetDateTime revokedAt;
+
     /** Issuance timestamp — set automatically, immutable. */
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -64,5 +73,23 @@ public class RefreshToken {
      */
     public boolean isExpired() {
         return OffsetDateTime.now().isAfter(expiresAt);
+    }
+
+    /**
+     * Checks whether the token has been revoked.
+     *
+     * @return {@code true} if {@link #revokedAt} has been set
+     */
+    public boolean isRevoked() {
+        return revokedAt != null;
+    }
+
+    /**
+     * Checks whether the token is currently usable (not expired and not revoked).
+     *
+     * @return {@code true} if the token can still be exchanged for an access token
+     */
+    public boolean isActive() {
+        return !isExpired() && !isRevoked();
     }
 }
