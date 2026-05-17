@@ -118,6 +118,10 @@ public class AuthService {
      */
     @Transactional
     public AuthResponse refresh(String rawRefreshToken, HttpServletResponse response) {
+        if (rawRefreshToken == null) {
+            throw new AppException("Refresh token not found", HttpStatus.UNAUTHORIZED);
+        }
+
         RefreshToken stored = refreshTokenRepository.findByToken(rawRefreshToken)
                 .orElseThrow(() -> new AppException("Refresh token not found", HttpStatus.UNAUTHORIZED));
 

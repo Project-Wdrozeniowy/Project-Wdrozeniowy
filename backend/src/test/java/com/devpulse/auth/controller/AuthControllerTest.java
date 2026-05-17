@@ -54,7 +54,7 @@ class AuthControllerTest {
                 .build();
     }
 
-    private static final UserInfo SAMPLE_USER = new UserInfo(1L, "alice", "alice@example.com", "USER");
+    private static final UserInfo SAMPLE_USER = new UserInfo("1", "alice", "alice@example.com", "USER");
 
     private static final AuthResponse SAMPLE_RESPONSE = AuthResponse.builder()
             .accessToken("access-token")

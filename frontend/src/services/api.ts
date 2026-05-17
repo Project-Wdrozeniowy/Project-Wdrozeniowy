@@ -51,7 +51,8 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
       (error: AxiosError) => {
-        if (error.response?.status === 401 && typeof window !== 'undefined') {
+        const isAuthEndpoint = error.config?.url?.startsWith('/auth');
+        if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthEndpoint) {
           window.location.href = '/login';
         }
         return Promise.reject(error);

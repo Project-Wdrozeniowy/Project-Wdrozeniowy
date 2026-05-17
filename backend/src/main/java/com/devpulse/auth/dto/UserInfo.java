@@ -9,11 +9,11 @@ import com.devpulse.auth.entity.User;
  * user's information immediately after login, register, or session restore,
  * without making a separate {@code GET /auth/me} call.
  */
-public record UserInfo(Long id, String username, String email, String role) {
+public record UserInfo(String id, String username, String email, String role) {
 
     public static UserInfo from(User user) {
         return new UserInfo(
-                user.getId(),
+                user.getId().toString(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getRole().name()

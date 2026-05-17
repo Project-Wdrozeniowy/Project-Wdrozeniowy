@@ -1,5 +1,4 @@
 import { apiClient } from './api';
-import { tokenMemory } from '@/lib/tokenMemory';
 import type { AuthResponse } from '@/shared/types';
 import type { LoginFormData, RegisterFormData } from '@/lib/validations/auth';
 
@@ -27,5 +26,3 @@ export const authService = {
    */
   logout: (): Promise<void> => apiClient.post<void>('/auth/logout'),
 };
-
-export { tokenMemory };
