@@ -1,19 +1,28 @@
 import { useStore } from '../index';
-import type { User } from '@/types';
+import type { User } from '@/shared/types';
 
 const mockUser: User = {
   id: '42',
+  username: 'combineduser',
   email: 'combined@example.com',
-  name: 'Combined User',
+  displayName: 'Combined User',
   role: 'USER',
+  status: 'ACTIVE',
+  postCount: 0,
+  commentCount: 0,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
 
 beforeEach(() => {
   localStorage.clear();
-  // Reset store state between tests
-  useStore.setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
+  useStore.setState({
+    user: null,
+    token: null,
+    refreshToken: null,
+    isAuthenticated: false,
+    isLoading: false,
+  });
 });
 
 describe('Combined store', () => {

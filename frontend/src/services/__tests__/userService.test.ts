@@ -1,7 +1,6 @@
 import { vi } from 'vitest';
-import type { ApiResponse, User } from '@/types';
+import type { ApiResponse, User } from '@/shared/types';
 
-// Mock the apiClient singleton
 const mockApiClient = {
   get: vi.fn(),
   post: vi.fn(),
@@ -13,14 +12,17 @@ vi.mock('@/services/api', () => ({
   apiClient: mockApiClient,
 }));
 
-// Import after mock is in place
 const { userService } = await import('@/services/userService');
 
 const mockUser: User = {
   id: '1',
+  username: 'userone',
   email: 'user@example.com',
-  name: 'User One',
+  displayName: 'User One',
   role: 'USER',
+  status: 'ACTIVE',
+  postCount: 0,
+  commentCount: 0,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
@@ -56,7 +58,15 @@ describe('userService.getUser', () => {
 
 describe('userService.createUser', () => {
   it('calls apiClient.post with /users and data', async () => {
-    const newUserData = { email: 'new@example.com', name: 'New User' };
+    const newUserData = {
+      email: 'new@example.com',
+      username: 'newuser',
+      displayName: 'New User',
+      role: 'USER' as const,
+      status: 'ACTIVE' as const,
+      postCount: 0,
+      commentCount: 0,
+    };
     mockApiClient.post.mockResolvedValue(mockResponse(mockUser));
     const result = await userService.createUser(newUserData);
     expect(mockApiClient.post).toHaveBeenCalledWith('/users', newUserData);
@@ -66,11 +76,11 @@ describe('userService.createUser', () => {
 
 describe('userService.updateUser', () => {
   it('calls apiClient.patch with /users/:id and data', async () => {
-    const updateData = { name: 'Updated Name' };
+    const updateData = { displayName: 'Updated Name' };
     mockApiClient.patch.mockResolvedValue(mockResponse({ ...mockUser, ...updateData }));
     const result = await userService.updateUser('1', updateData);
     expect(mockApiClient.patch).toHaveBeenCalledWith('/users/1', updateData);
-    expect(result.data.name).toBe('Updated Name');
+    expect(result.data.displayName).toBe('Updated Name');
   });
 });
 

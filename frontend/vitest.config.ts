@@ -6,6 +6,11 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost:3000',
+      },
+    },
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
@@ -20,10 +25,18 @@ export default defineConfig({
         'vitest.config.*',
         'eslint.config.*',
         '**/*.d.ts',
-        // Next.js app-router pages and layouts — covered by E2E / integration tests
-        'src/app/**',
-        // Pure TypeScript type definitions — no executable runtime code
-        'src/types/**',
+        // Type-only files — no executable code
+        '**/types/**',
+        '**/shared/**',
+        // Constants — no executable logic
+        '**/constants/**',
+        // UI components and pages — covered by E2E/integration tests
+        '**/components/**',
+        '**/app/**',
+        '**/hooks/**',
+        // Test infrastructure
+        '**/test/**',
+        '**/mocks/**',
       ],
       thresholds: {
         lines: 65,

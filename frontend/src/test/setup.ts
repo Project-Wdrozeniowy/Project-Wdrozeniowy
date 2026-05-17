@@ -1,31 +1,34 @@
 import '@testing-library/jest-dom';
-import { beforeEach } from 'vitest';
 
-// Provide a working localStorage for jsdom (vitest 3.x does not include it by default)
-const store: Record<string, string> = {};
+class LocalStorageMock implements Storage {
+  private store: Record<string, string> = {};
 
-const localStorageMock = {
-  getItem: (key: string) => store[key] ?? null,
-  setItem: (key: string, value: string) => {
-    store[key] = String(value);
-  },
-  removeItem: (key: string) => {
-    delete store[key];
-  },
-  clear: () => {
-    Object.keys(store).forEach((k) => delete store[k]);
-  },
   get length() {
-    return Object.keys(store).length;
-  },
-  key: (index: number) => Object.keys(store)[index] ?? null,
-};
+    return Object.keys(this.store).length;
+  }
 
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
+  clear() {
+    this.store = {};
+  }
+
+  getItem(key: string): string | null {
+    return this.store[key] ?? null;
+  }
+
+  setItem(key: string, value: string) {
+    this.store[key] = String(value);
+  }
+
+  removeItem(key: string) {
+    delete this.store[key];
+  }
+
+  key(index: number): string | null {
+    return Object.keys(this.store)[index] ?? null;
+  }
+}
+
+Object.defineProperty(globalThis, 'localStorage', {
+  value: new LocalStorageMock(),
   writable: true,
-});
-
-beforeEach(() => {
-  localStorageMock.clear();
 });
