@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+jest.mock('dotenv/config', () => {});
 import type { GatewayConfig } from '../types';
 
 describe('Gateway config', () => {
