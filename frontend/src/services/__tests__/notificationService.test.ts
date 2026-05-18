@@ -31,7 +31,15 @@ beforeEach(() => {
 
 describe('notificationService.list >-65 GET /notifications', () => {
   it('calls apiClient.get with /notifications and empty default params', async () => {
-    const paged = { content: [mockNotification], totalElements: 1, totalPages: 1, page: 0, size: 20, first: true, last: true };
+    const paged = {
+      content: [mockNotification],
+      totalElements: 1,
+      totalPages: 1,
+      page: 0,
+      size: 20,
+      first: true,
+      last: true,
+    };
     mockApiClient.get.mockResolvedValue(paged);
 
     const result = await notificationService.list();
@@ -41,7 +49,15 @@ describe('notificationService.list >-65 GET /notifications', () => {
   });
 
   it('forwards unreadOnly filter', async () => {
-    const paged = { content: [], totalElements: 0, totalPages: 0, page: 0, size: 20, first: true, last: true };
+    const paged = {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      page: 0,
+      size: 20,
+      first: true,
+      last: true,
+    };
     mockApiClient.get.mockResolvedValue(paged);
 
     await notificationService.list({ unreadOnly: true });
@@ -52,7 +68,15 @@ describe('notificationService.list >-65 GET /notifications', () => {
   });
 
   it('forwards page and size params', async () => {
-    mockApiClient.get.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, page: 2, size: 10, first: false, last: true });
+    mockApiClient.get.mockResolvedValue({
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      page: 2,
+      size: 10,
+      first: false,
+      last: true,
+    });
 
     await notificationService.list({ page: 2, size: 10 });
 

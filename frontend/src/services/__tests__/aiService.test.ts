@@ -30,7 +30,10 @@ describe('aiService.suggestTags >-65 POST /ai/suggest-tags', () => {
   });
 
   it('passes optional title along with content', async () => {
-    const request = { content: 'A post discussing React performance optimizations', title: 'React' };
+    const request = {
+      content: 'A post discussing React performance optimizations',
+      title: 'React',
+    };
     const response = { tags: ['react', 'performance'], aiGenerated: true };
     mockApiClient.post.mockResolvedValue(response);
 

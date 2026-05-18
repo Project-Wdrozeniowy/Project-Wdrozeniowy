@@ -15,7 +15,13 @@ vi.mock('@/services/api', () => ({
 const { categoryService, postService, commentService, tagService, voteService } =
   await import('@/services/forumService');
 
-const mockAuthor = { id: 1, username: 'john', displayName: 'John' as string | null, avatarUrl: null, role: 'USER' as const };
+const mockAuthor = {
+  id: 1,
+  username: 'john',
+  displayName: 'John' as string | null,
+  avatarUrl: null,
+  role: 'USER' as const,
+};
 
 const mockCategory: Category = {
   id: 1,
@@ -66,7 +72,15 @@ const mockComment: Comment = {
 const mockTag: Tag = { id: 1, name: 'typescript', slug: 'typescript', postCount: 5 };
 
 function pagedOf<T>(item: T): PagedResponse<T> {
-  return { content: [item], totalElements: 1, totalPages: 1, page: 0, size: 20, first: true, last: true };
+  return {
+    content: [item],
+    totalElements: 1,
+    totalPages: 1,
+    page: 0,
+    size: 20,
+    first: true,
+    last: true,
+  };
 }
 
 beforeEach(() => {
