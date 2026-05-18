@@ -1,0 +1,328 @@
+
+=== DIRECTORY TREE (max depth 3, source files only) ===
+.agents
+.agents\skills
+.agents\skills\acquire-codebase-knowledge
+.agents\skills\acquire-codebase-knowledge\assets
+.agents\skills\acquire-codebase-knowledge\references
+.agents\skills\acquire-codebase-knowledge\scripts
+.agents\skills\acquire-codebase-knowledge\SKILL.md
+.agents\skills\context-map
+.agents\skills\context-map\SKILL.md
+.agents\skills\create-agentsmd
+.agents\skills\create-agentsmd\SKILL.md
+.claude
+.claude\skills
+.claude\skills\acquire-codebase-knowledge
+.claude\skills\acquire-codebase-knowledge\assets
+.claude\skills\acquire-codebase-knowledge\references
+.claude\skills\acquire-codebase-knowledge\scripts
+.claude\skills\acquire-codebase-knowledge\SKILL.md
+.claude\skills\context-map
+.claude\skills\context-map\SKILL.md
+.claude\skills\create-agentsmd
+.claude\skills\create-agentsmd\SKILL.md
+.env
+.env.example
+.gitattributes
+.github
+.github\pull_request_template.md
+.github\workflows
+.github\workflows\backend-build.yml
+.github\workflows\frontend-build.yml
+.github\workflows\gateway-build.yml
+.github\workflows\lint.yml
+.github\workflows\test.yml
+.gitignore
+AGENTS.md
+backend
+backend\.env
+backend\.gitattributes
+backend\.gitignore
+backend\.mvn
+backend\.mvn\wrapper
+backend\.mvn\wrapper\maven-wrapper.properties
+backend\Dockerfile
+backend\mvnw
+backend\mvnw.cmd
+backend\pom.xml
+backend\src
+backend\src\main
+backend\src\main\java
+backend\src\main\resources
+backend\src\test
+backend\src\test\java
+backend\src\test\resources
+CLAUDE.md
+docker-compose.yml
+docs
+docs\codebase
+docs\codebase\.codebase-scan.txt
+docs\db-schema-auth.mmd
+docs\db-schema-auth.png
+docs\db-schema-forum.mmd
+docs\db-schema-forum.png
+docs\db-schema-social.mmd
+docs\db-schema-social.png
+docs\db-schema.mmd
+docs\db-schema.png
+docs\guides
+docs\guides\branch_namings.md
+docs\guides\working_with_branches.md
+frontend
+frontend\.env
+frontend\.gitignore
+frontend\.prettierignore
+frontend\.prettierrc
+frontend\eslint.config.mjs
+frontend\next-env.d.ts
+frontend\next.config.ts
+frontend\package-lock.json
+frontend\package.json
+frontend\postcss.config.mjs
+frontend\public
+frontend\public\file.svg
+frontend\public\globe.svg
+frontend\public\next.svg
+frontend\public\vercel.svg
+frontend\public\window.svg
+frontend\README.md
+frontend\src
+frontend\src\app
+frontend\src\app\(auth)
+frontend\src\app\(main)
+frontend\src\app\_components
+frontend\src\app\favicon.ico
+frontend\src\app\globals.css
+frontend\src\app\layout.tsx
+frontend\src\components
+frontend\src\components\layout
+frontend\src\components\ui
+frontend\src\constants
+frontend\src\constants\categories.ts
+frontend\src\constants\dashboard.ts
+frontend\src\constants\header.ts
+frontend\src\constants\posts.ts
+frontend\src\constants\sidebar.ts
+frontend\src\hooks
+frontend\src\hooks\usePosts.ts
+frontend\src\lib
+frontend\src\lib\cn.ts
+frontend\src\lib\validations
+frontend\src\providers
+frontend\src\providers\__tests__
+frontend\src\providers\QueryProvider.tsx
+frontend\src\services
+frontend\src\services\__tests__
+frontend\src\services\api.ts
+frontend\src\services\authService.ts
+frontend\src\services\forumService.ts
+frontend\src\services\userService.ts
+frontend\src\shared
+frontend\src\shared\types
+frontend\src\store
+frontend\src\store\__tests__
+frontend\src\store\index.ts
+frontend\src\store\slices
+frontend\src\test
+frontend\src\test\setup.ts
+frontend\src\utils
+frontend\src\utils\format.ts
+frontend\tsconfig.json
+frontend\tsconfig.tsbuildinfo
+frontend\vitest.config.ts
+gateway
+gateway\.env
+gateway\.env.example
+gateway\.prettierrc
+gateway\.prettierrc.json
+gateway\Dockerfile
+gateway\eslint.config.mjs
+gateway\jest.config.js
+gateway\package-lock.json
+gateway\package.json
+gateway\README.md
+gateway\src
+gateway\src\__tests__
+gateway\src\__tests__\app.test.ts
+gateway\src\__tests__\config.test.ts
+gateway\src\app.ts
+gateway\src\config
+gateway\src\config\index.ts
+gateway\src\index.ts
+gateway\src\middleware
+gateway\src\middleware\__tests__
+gateway\src\middleware\auth.ts
+gateway\src\middleware\authGuard.ts
+gateway\src\middleware\cors.ts
+gateway\src\middleware\logger.ts
+gateway\src\middleware\rateLimiter.ts
+gateway\src\routes
+gateway\src\routes\proxy.ts
+gateway\src\test
+gateway\src\test\setup.ts
+gateway\src\types
+gateway\src\types\index.ts
+gateway\tsconfig.json
+package-lock.json
+README.md
+
+=== STACK DETECTION (manifest files) ===
+
+--- package-lock.json ---
+{
+  "name": "Project-Wdrozeniowy",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {}
+}
+
+
+=== ENTRY POINTS ===
+No common entry points found. Check 'main' or 'scripts.start' in manifest files above.
+
+=== LINTING AND FORMATTING CONFIG ===
+No linting or formatting config files found in project root.
+
+=== ENVIRONMENT VARIABLE TEMPLATES ===
+--- .env.example ---
+# Copy this file to .env and fill in the values
+# .env is listed in .gitignore and must NOT be committed
+
+# PostgreSQL
+POSTGRES_DB=devpulse
+POSTGRES_USER=devpulse
+POSTGRES_PASSWORD=change_me_in_production
+
+# JWT
+# Generate a 64-byte base64 secret, e.g.:
+#   openssl rand -base64 64 | tr -d '\n'
+JWT_SECRET=change_me_must_be_at_least_32_bytes_base64_encoded_string_here
+JWT_ACCESS_EXPIRY=900   # 15 minutes in seconds
+JWT_REFRESH_EXPIRY=604800   # 7 days in seconds
+
+# Redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# Gateway internal secret (for backend-to-gateway event dispatch)
+INTERNAL_SECRET=change_me_internal_secret
+
+
+=== TODO / FIXME / HACK (production code only, test dirs excluded) ===
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:28: TODO_LIMIT = 60
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:291: """Search for TODO/FIXME/HACK comments."""
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:291: """Search for TODO/FIXME/HACK comments."""
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:291: """Search for TODO/FIXME/HACK comments."""
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:293: patterns = ["TODO", "FIXME", "HACK"]
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:293: patterns = ["TODO", "FIXME", "HACK"]
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:293: patterns = ["TODO", "FIXME", "HACK"]
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:320: return todos[:TODO_LIMIT]
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:617: # TODOs
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:620: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", todos, output_file)
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:620: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", todos, output_file)
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:620: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", todos, output_file)
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:622: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", ["None found."], output_file)
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:622: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", ["None found."], output_file)
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py:622: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", ["None found."], output_file)
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:28: TODO_LIMIT = 60
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:291: """Search for TODO/FIXME/HACK comments."""
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:291: """Search for TODO/FIXME/HACK comments."""
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:291: """Search for TODO/FIXME/HACK comments."""
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:293: patterns = ["TODO", "FIXME", "HACK"]
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:293: patterns = ["TODO", "FIXME", "HACK"]
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:293: patterns = ["TODO", "FIXME", "HACK"]
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:320: return todos[:TODO_LIMIT]
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:617: # TODOs
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:620: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", todos, output_file)
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:620: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", todos, output_file)
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:620: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", todos, output_file)
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:622: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", ["None found."], output_file)
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:622: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", ["None found."], output_file)
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py:622: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", ["None found."], output_file)
+frontend\src\services\forumService.ts:4: // TODO: replace with real API call when backend is ready
+
+=== GIT RECENT COMMITS (last 20) ===
+e631847 Merge pull request #11 from Project-Wdrozeniowy/PWDRZ-28-implement-routing-and-application-layout
+67d2fd5 [PWDRZ-28]: Fix bugs after merging PR #12 вЂ” wire posts, consolidate types, remove dead code
+7b8f1b6 Merge pull request #12 from Project-Wdrozeniowy/PWDRZ-29-build-registration-and-login-pages
+0d4a665 Merge pull request #13 from Project-Wdrozeniowy/PWDRZ-33-create-hifi-mockups-forum-dashboard
+746da09 [PWDRZ-28]: Fix prettier formatting in ProfileTabs.tsx
+5ffb446 [PWDRZ-29]: Resolve merge conflict with PWDRZ-28 in ProfileTabs.tsx
+278034b [PWDRZ-29]: Apply cn() to ProfileTabs and fix prettier formatting
+92e3579 [PWDRZ-29]: Fix frontend build вЂ” pass NEXT_PUBLIC_API_URL in CI
+4b36dc3 [PWDRZ-29]: Fix prettier formatting
+4ba992b [PWDRZ-33]: Resolve merge conflict with PWDRZ-29 in register/page.tsx
+37882e9 [PWDRZ-33]: Fix prettier formatting
+fd8b271 [PWDRZ-33]: Replace template-literal classNames with cn() utility
+ed56c2c [PWDRZ-29]: Replace template-literal classNames with cn() utility
+acfdbe3 [PWDRZ-28]: Replace template-literal classNames with cn() utility
+15f931b [PWDRZ-33]: Fix vitest missing install and layout Tailwind canonical class
+686bf3c [PWDRZ-33]: Address Copilot review вЂ” fix type safety and auth guard
+dc208d4 [PWDRZ-29]: Address Copilot review вЂ” fix authSlice isAuthenticated guard
+a0b504a [PWDRZ-28]: Address Copilot review вЂ” fix api.ts fallback logic and async params
+4baab5a [PWDRZ-33]: Fix post-rebase type and naming conflicts
+1cbb949 [PWDRZ-33]: Sync package-lock.json with package.json
+
+=== HIGH-CHURN FILES (last 90 days, top 20) ===
+  15 frontend/src/app/(auth)/register/page.tsx
+  14 frontend/package-lock.json
+  13 frontend/src/app/(auth)/login/page.tsx
+  12 frontend/package.json
+  10 frontend/src/services/api.ts
+   8 frontend/src/types/index.ts
+   7 frontend/src/store/slices/authSlice.ts
+   7 frontend/src/app/_components/PostCard.tsx
+   6 frontend/src/app/(main)/profile/_components/ProfileTabs.tsx
+   6 frontend/src/app/dashboard/page.tsx
+   6 frontend/src/components/layout/Header.tsx
+   5 frontend/src/app/(main)/page.tsx
+   5 frontend/src/constants/categories.ts
+   5 frontend/src/constants/dashboard.ts
+   5 gateway/package-lock.json
+   5 gateway/package.json
+   5 frontend/next.config.ts
+   4 frontend/src/app/(main)/forum/_components/CategoryFilter.tsx
+   4 frontend/src/services/__tests__/userService.test.ts
+   4 frontend/src/services/authService.ts
+
+=== MONOREPO SIGNALS ===
+No monorepo signals detected.
+
+=== CODE METRICS ===
+Total files scanned: 186
+Total lines of code: 24869
+
+Files by language:
+  Other: 77
+  TypeScript/React: 41
+  TypeScript: 40
+  Java: 25
+  Python: 2
+  JavaScript: 1
+
+Top 10 largest files:
+docs\db-schema-forum.png: 541.0KB
+docs\db-schema.png: 414.5KB
+frontend\package-lock.json: 331.7KB
+docs\db-schema-auth.png: 270.4KB
+gateway\package-lock.json: 259.2KB
+docs\db-schema-social.png: 248.5KB
+frontend\tsconfig.tsbuildinfo: 155.6KB
+frontend\src\app\favicon.ico: 25.3KB
+.agents\skills\acquire-codebase-knowledge\scripts\scan.py: 23.2KB
+.claude\skills\acquire-codebase-knowledge\scripts\scan.py: 23.2KB
+
+=== CI/CD PIPELINES ===
+CI/CD: GitHub Actions
+
+=== CONTAINERS & ORCHESTRATION ===
+Orchestration: Docker Compose found
+
+=== SECURITY & COMPLIANCE ===
+No security configs detected.
+
+=== PERFORMANCE & TESTING ===
+No performance testing configs detected.
+
+=== SCAN COMPLETE ===
