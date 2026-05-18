@@ -288,6 +288,16 @@ docs/
 
 ---
 
+## Agent Commit Policy
+
+**Never commit or push changes unless the user explicitly requests it in their prompt.**
+
+- Make all file edits and run all verifications, then stop.
+- Do not run `git add`, `git commit`, or `git push` unless the user's message contains an explicit instruction such as "commit", "push", or "create a PR".
+- This applies to all automated workflows — finishing a task does not imply permission to commit.
+
+---
+
 ## Pull Request Guidelines
 
 - **Branch name**: `type/PWDRZ-<ticket>-short-description`
