@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import type { User } from '@/shared/types';
+import type { UserProfile } from '@/types';
 import { NAV_LINKS, USER_STATS } from '@/constants/sidebar';
 import { cn } from '@/lib/cn';
 
 interface Props {
-  user: User;
+  user: UserProfile;
   initials: string;
   pathname: string;
 }

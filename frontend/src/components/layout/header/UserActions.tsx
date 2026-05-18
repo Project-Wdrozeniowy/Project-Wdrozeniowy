@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { BellIcon, TrendingIcon } from '@/components/ui/icons';
-import type { User } from '@/shared/types';
+import type { UserProfile } from '@/types';
 
 interface Props {
   isAuthenticated: boolean;
-  user: User | null;
+  user: UserProfile | null;
   logout: () => void;
 }
 

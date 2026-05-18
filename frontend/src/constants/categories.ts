@@ -1,4 +1,12 @@
-import { CategoryKey } from '@/shared/types';
+export enum CategoryKey {
+  AI = 'ai',
+  GAMING = 'gaming',
+  POLITICS = 'politics',
+  SCIENCE = 'science',
+  BUSINESS = 'business',
+  EDUCATION = 'education',
+  NEWS = 'news',
+}
 
 export interface CategoryMeta {
   key: CategoryKey;

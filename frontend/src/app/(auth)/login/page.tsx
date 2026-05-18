@@ -10,13 +10,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@/lib/validations/auth';
 import type { LoginFormData } from '@/lib/validations/auth';
 import { authService } from '@/services/authService';
+import { userService } from '@/services/userService';
 import { useStore } from '@/store';
 import OrbitaLogo from '@/components/ui/OrbitaLogo';
 import { cn } from '@/lib/cn';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser } = useStore();
+  const { setAuth } = useStore();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -30,12 +31,13 @@ export default function LoginPage() {
   async function onSubmit(data: LoginFormData) {
     setServerError(null);
     try {
-      const response = await authService.login(data);
-      const { user, token, refreshToken } = response.data;
-      setUser(user, token, refreshToken);
+      const { accessToken, refreshToken } = await authService.login(data);
+      localStorage.setItem('accessToken', accessToken);
+      const user = await userService.getMyProfile();
+      setAuth(user, accessToken, refreshToken);
       router.push('/');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Invalid email or password';
+      const message = err instanceof Error ? err.message : 'Invalid username or password';
       setServerError(message);
     }
   }
@@ -59,18 +61,18 @@ export default function LoginPage() {
         )}
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="login-email" className="text-gray-900 font-semibold text-sm">
-            Email
+          <label htmlFor="login-username" className="text-gray-900 font-semibold text-sm">
+            Username
           </label>
           <input
-            {...register('email')}
-            id="login-email"
-            type="email"
-            placeholder="your.email@example.com"
-            autoComplete="email"
-            className={cn('input', errors.email && 'ring-2 ring-red-500')}
+            {...register('username')}
+            id="login-username"
+            type="text"
+            placeholder="your_username"
+            autoComplete="username"
+            className={cn('input', errors.username && 'ring-2 ring-red-500')}
           />
-          {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
+          {errors.username && <p className="text-red-500 text-xs">{errors.username.message}</p>}
         </div>
 
         <div className="flex flex-col gap-1.5">

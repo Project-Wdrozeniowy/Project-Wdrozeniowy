@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema } from '@/lib/validations/auth';
 import type { RegisterFormData } from '@/lib/validations/auth';
 import { authService } from '@/services/authService';
+import { userService } from '@/services/userService';
 import { useStore } from '@/store';
 import { CATEGORIES } from '@/constants/categories';
 import OrbitaLogo from '@/components/ui/OrbitaLogo';
@@ -18,7 +19,7 @@ import { cn } from '@/lib/cn';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { setUser } = useStore();
+  const { setAuth } = useStore();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -36,15 +37,14 @@ export default function RegisterPage() {
   async function onSubmit(data: RegisterFormData) {
     setServerError(null);
     try {
-      const response = await authService.register({
+      const { accessToken, refreshToken } = await authService.register({
         username: data.username,
         email: data.email,
         password: data.password,
-        displayName: data.displayName,
-        interests: data.interests,
       });
-      const { user, token, refreshToken } = response.data;
-      setUser(user, token, refreshToken);
+      localStorage.setItem('accessToken', accessToken);
+      const user = await userService.getMyProfile();
+      setAuth(user, accessToken, refreshToken);
       router.push('/');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
