@@ -9,8 +9,17 @@
 .agents\skills\acquire-codebase-knowledge\SKILL.md
 .agents\skills\context-map
 .agents\skills\context-map\SKILL.md
+.agents\skills\copilot-instructions-blueprint-generator
+.agents\skills\copilot-instructions-blueprint-generator\SKILL.md
 .agents\skills\create-agentsmd
 .agents\skills\create-agentsmd\SKILL.md
+.agents\skills\create-readme
+.agents\skills\create-readme\SKILL.md
+.agents\skills\review-and-refactor
+.agents\skills\review-and-refactor\SKILL.md
+.agents\skills\security-review
+.agents\skills\security-review\references
+.agents\skills\security-review\SKILL.md
 .claude
 .claude\skills
 .claude\skills\acquire-codebase-knowledge
@@ -22,10 +31,15 @@
 .claude\skills\context-map\SKILL.md
 .claude\skills\create-agentsmd
 .claude\skills\create-agentsmd\SKILL.md
+.claude\skills\review-and-refactor
+.claude\skills\review-and-refactor\SKILL.md
 .env
 .env.example
 .gitattributes
 .github
+.github\copilot-instructions.md
+.github\instructions
+.github\instructions\review-only.instructions.md
 .github\pull_request_template.md
 .github\workflows
 .github\workflows\backend-build.yml
@@ -58,6 +72,13 @@ docker-compose.yml
 docs
 docs\codebase
 docs\codebase\.codebase-scan.txt
+docs\codebase\ARCHITECTURE.md
+docs\codebase\CONCERNS.md
+docs\codebase\CONVENTIONS.md
+docs\codebase\INTEGRATIONS.md
+docs\codebase\STACK.md
+docs\codebase\STRUCTURE.md
+docs\codebase\TESTING.md
 docs\db-schema-auth.mmd
 docs\db-schema-auth.png
 docs\db-schema-forum.mmd
@@ -197,6 +218,7 @@ POSTGRES_PASSWORD=change_me_in_production
 # JWT
 # Generate a 64-byte base64 secret, e.g.:
 #   openssl rand -base64 64 | tr -d '\n'
+# CRITICAL: must be identical in this file and in gateway/.env
 JWT_SECRET=change_me_must_be_at_least_32_bytes_base64_encoded_string_here
 JWT_ACCESS_EXPIRY=900   # 15 minutes in seconds
 JWT_REFRESH_EXPIRY=604800   # 7 days in seconds
@@ -205,8 +227,16 @@ JWT_REFRESH_EXPIRY=604800   # 7 days in seconds
 REDIS_HOST=redis
 REDIS_PORT=6379
 
-# Gateway internal secret (for backend-to-gateway event dispatch)
+# Gateway
+CORS_ORIGINS=http://localhost:3001
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX=100
+
+# Gateway internal secret (for backend-to-gateway event dispatch — not yet implemented)
 INTERNAL_SECRET=change_me_internal_secret
+
+# Swagger UI — set to true in local development only; must be false in production
+SWAGGER_ENABLED=false
 
 
 === TODO / FIXME / HACK (production code only, test dirs excluded) ===
@@ -243,58 +273,58 @@ INTERNAL_SECRET=change_me_internal_secret
 frontend\src\services\forumService.ts:4: // TODO: replace with real API call when backend is ready
 
 === GIT RECENT COMMITS (last 20) ===
-e631847 Merge pull request #11 from Project-Wdrozeniowy/PWDRZ-28-implement-routing-and-application-layout
-67d2fd5 [PWDRZ-28]: Fix bugs after merging PR #12 вЂ” wire posts, consolidate types, remove dead code
-7b8f1b6 Merge pull request #12 from Project-Wdrozeniowy/PWDRZ-29-build-registration-and-login-pages
-0d4a665 Merge pull request #13 from Project-Wdrozeniowy/PWDRZ-33-create-hifi-mockups-forum-dashboard
-746da09 [PWDRZ-28]: Fix prettier formatting in ProfileTabs.tsx
-5ffb446 [PWDRZ-29]: Resolve merge conflict with PWDRZ-28 in ProfileTabs.tsx
-278034b [PWDRZ-29]: Apply cn() to ProfileTabs and fix prettier formatting
-92e3579 [PWDRZ-29]: Fix frontend build вЂ” pass NEXT_PUBLIC_API_URL in CI
-4b36dc3 [PWDRZ-29]: Fix prettier formatting
-4ba992b [PWDRZ-33]: Resolve merge conflict with PWDRZ-29 in register/page.tsx
-37882e9 [PWDRZ-33]: Fix prettier formatting
-fd8b271 [PWDRZ-33]: Replace template-literal classNames with cn() utility
-ed56c2c [PWDRZ-29]: Replace template-literal classNames with cn() utility
-acfdbe3 [PWDRZ-28]: Replace template-literal classNames with cn() utility
-15f931b [PWDRZ-33]: Fix vitest missing install and layout Tailwind canonical class
-686bf3c [PWDRZ-33]: Address Copilot review вЂ” fix type safety and auth guard
-dc208d4 [PWDRZ-29]: Address Copilot review вЂ” fix authSlice isAuthenticated guard
-a0b504a [PWDRZ-28]: Address Copilot review вЂ” fix api.ts fallback logic and async params
-4baab5a [PWDRZ-33]: Fix post-rebase type and naming conflicts
-1cbb949 [PWDRZ-33]: Sync package-lock.json with package.json
+1af26ff [PWDRZ-83]: Update readme (#26)
+04dc661 [PWDRZ-84]:Adds gateway service and config (#28)
+d9854c1 [Pwdrz-39] create GitHub md file for correct project review (#27)
+89605f5 [PWDRZ-33]: Create Hi-Fi mockups for forum and dashboard pages
+0c0bce8 [PWDRZ-29]: Build registration and login pages
+b2785b9 [PWDRZ-28]: Implement routing and application layout
+60e7e6c [PWDRZ-35]: Configure websocket server (#9)
+b79458b [PWDRZ-21]: Set up CI/CD pipeline with GitHub Actions (#14)
+3a22e63 [PWDRZ-37]: Configure linter, formatter and TS for frontend strict check (#10)
+25b45d4 feat: configure Docker Compose for dev environment (#8)
+ddd01b7 [PWDRZ-34]: Add API gateway with JWT auth, rate limiting, and proxy (#2)
+b350c21 [PWDRZ-24]: Database schema migrations (#6)
+6e6edfe [PWDRZ-23]: Initialize spring boot modular structure (#5)
+c8a43ba [PWDRZ-25]: Spring security jwt (#7)
+5eff81b [Pwdrz-30]: configure state management and api layer (#1)
+273ff4f [PWDRZ-41]: Enhance state management and improve PR guidelines (#4)
+a3dcc27 the rest of the previous task
+d395287 feat: initialize Next.js project with TypeScript, Tailwind, development tools and create .prettierrc
+b11ec30 readme update
+749799d fix phantom changes problem
 
 === HIGH-CHURN FILES (last 90 days, top 20) ===
-  15 frontend/src/app/(auth)/register/page.tsx
-  14 frontend/package-lock.json
-  13 frontend/src/app/(auth)/login/page.tsx
-  12 frontend/package.json
-  10 frontend/src/services/api.ts
-   8 frontend/src/types/index.ts
-   7 frontend/src/store/slices/authSlice.ts
-   7 frontend/src/app/_components/PostCard.tsx
-   6 frontend/src/app/(main)/profile/_components/ProfileTabs.tsx
-   6 frontend/src/app/dashboard/page.tsx
-   6 frontend/src/components/layout/Header.tsx
-   5 frontend/src/app/(main)/page.tsx
-   5 frontend/src/constants/categories.ts
-   5 frontend/src/constants/dashboard.ts
+   8 frontend/package-lock.json
+   8 frontend/package.json
+   6 frontend/src/types/index.ts
+   6 frontend/src/services/api.ts
+   5 frontend/src/store/slices/authSlice.ts
    5 gateway/package-lock.json
    5 gateway/package.json
    5 frontend/next.config.ts
-   4 frontend/src/app/(main)/forum/_components/CategoryFilter.tsx
+   4 README.md
    4 frontend/src/services/__tests__/userService.test.ts
-   4 frontend/src/services/authService.ts
+   4 frontend/src/store/__tests__/index.test.ts
+   4 frontend/src/store/slices/__tests__/authSlice.test.ts
+   4 frontend/src/app/layout.tsx
+   4 frontend/src/services/userService.ts
+   4 .gitignore
+   4 backend/pom.xml
+   4 frontend/.prettierignore
+   4 frontend/.prettierrc
+   4 frontend/tsconfig.json
+   3 backend/src/main/resources/application.properties
 
 === MONOREPO SIGNALS ===
 No monorepo signals detected.
 
 === CODE METRICS ===
-Total files scanned: 186
-Total lines of code: 24869
+Total files scanned: 205
+Total lines of code: 25002
 
 Files by language:
-  Other: 77
+  Other: 96
   TypeScript/React: 41
   TypeScript: 40
   Java: 25
@@ -304,11 +334,11 @@ Files by language:
 Top 10 largest files:
 docs\db-schema-forum.png: 541.0KB
 docs\db-schema.png: 414.5KB
-frontend\package-lock.json: 331.7KB
+frontend\package-lock.json: 333.3KB
 docs\db-schema-auth.png: 270.4KB
 gateway\package-lock.json: 259.2KB
 docs\db-schema-social.png: 248.5KB
-frontend\tsconfig.tsbuildinfo: 155.6KB
+frontend\tsconfig.tsbuildinfo: 152.6KB
 frontend\src\app\favicon.ico: 25.3KB
 .agents\skills\acquire-codebase-knowledge\scripts\scan.py: 23.2KB
 .claude\skills\acquire-codebase-knowledge\scripts\scan.py: 23.2KB
