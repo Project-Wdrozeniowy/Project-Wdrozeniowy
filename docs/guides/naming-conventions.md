@@ -131,9 +131,9 @@ com.devpulse.auth.repository.UserRepository
 
 - Use the `@/*` alias for all cross-folder imports. Relative imports only
   inside the same folder.
-- Import order, enforced by Prettier + ESLint: external packages → `@/*`
-  imports → relative imports → type-only imports last
-  (`import type { … } from …`).
+- Import order (recommended convention — not currently enforced by an ESLint
+  rule): external packages → `@/*` imports → relative imports → type-only
+  imports last (`import type { … } from …`).
 
 ### Styling
 

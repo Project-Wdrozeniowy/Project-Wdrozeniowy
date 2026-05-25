@@ -44,8 +44,8 @@ refresh_validToken_rotatesAccessAndRefreshTokens
   behaviour, controller wiring and JPA queries that you cannot validate with
   mocks alone.
 - MockMvc setup: build manually from the `WebApplicationContext` and apply
-  `springSecurity()`. The `@AutoConfigureMockMvc` annotation is **not on the
-  classpath** in this Spring Boot 4 build.
+  `springSecurity()`. This gives explicit control over the security filter
+  chain — prefer it over `@AutoConfigureMockMvc` for security-sensitive tests.
 
 ### Anti-patterns
 
@@ -62,7 +62,8 @@ refresh_validToken_rotatesAccessAndRefreshTokens
 | Runner         | Vitest 3 (`jsdom` environment)        |
 | DOM helpers    | `@testing-library/react`              |
 | Setup file     | `src/test/setup.ts`                   |
-| Coverage       | ≥ **50%** (CI rule); the lint job runs strict TS at the same time |
+| Coverage       | ≥ **65%** lines/functions (see `frontend/vitest.config.ts`) |
+| Typecheck      | `npm run typecheck` (`tsc --noEmit`) runs as a separate step in the frontend build workflow |
 | Naming         | `*.test.ts`/`*.test.tsx` next to the source, inside `__tests__/` directories |
 
 ### What to test
@@ -85,8 +86,8 @@ refresh_validToken_rotatesAccessAndRefreshTokens
 | -------------- | ----------------------------------- |
 | Runner         | Jest with `ts-jest`                 |
 | Setup file     | `gateway/src/test/setup.ts`         |
-| Coverage       | ≥ **65%** locally (`jest.config.js`), ≥ **50%** in CI |
-| Layout         | `gateway/src/__tests__/*.test.ts`   |
+| Coverage       | ≥ **65%** lines (see `gateway/jest.config.js`)         |
+| Layout         | `gateway/src/__tests__/*.test.ts` and feature-local `__tests__/` folders (e.g. `src/middleware/__tests__/`) |
 
 Focus areas:
 

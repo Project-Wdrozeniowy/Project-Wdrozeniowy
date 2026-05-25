@@ -7,8 +7,7 @@
 ├── backend/      Spring Boot 4 REST API (Java 17, Maven)
 ├── frontend/    Next.js 16 App Router (React 19, TypeScript, Tailwind v4)
 ├── gateway/     Express 5 API gateway (TypeScript, Node 24)
-├── docs/        Database ER diagrams (Mermaid) and existing guides
-├── shared/docs/ Engineering conventions (this folder)
+├── docs/guides/ Engineering conventions (this folder) and ER diagrams
 ├── docker-compose.yml
 ├── .env.example
 └── .github/workflows/  CI pipelines
