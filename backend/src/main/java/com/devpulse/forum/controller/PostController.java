@@ -1,11 +1,17 @@
 package com.devpulse.forum.controller;
 
 import com.devpulse.forum.dto.CreatePostRequest;
+import com.devpulse.forum.dto.PagedResponse;
 import com.devpulse.forum.dto.PostResponse;
+import com.devpulse.forum.dto.PostSummaryResponse;
 import com.devpulse.forum.dto.UpdatePostRequest;
+import com.devpulse.forum.entity.PostStatus;
 import com.devpulse.forum.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +29,29 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
 
     private final PostService postService;
+
+    /**
+     * Returns posts matching the search and filter criteria.
+     *
+     * <p>All query parameters are optional. The {@code status} parameter is
+     * silently ignored for callers that lack the {@code MODERATOR} or
+     * {@code ADMIN} role, who only ever see {@code PUBLISHED} posts.
+     *
+     * <p>Pagination defaults: size 20, sorted by {@code createdAt} descending.
+     */
+    @GetMapping
+    public PagedResponse<PostSummaryResponse> search(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String categorySlug,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) PostStatus status,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        return PagedResponse.from(
+                postService.search(q, categoryId, categorySlug, author, status, pageable),
+                PostSummaryResponse::from);
+    }
 
     /** Creates a new post. */
     @PostMapping

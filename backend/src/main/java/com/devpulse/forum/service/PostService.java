@@ -13,12 +13,21 @@ import com.devpulse.forum.repository.CategoryRepository;
 import com.devpulse.forum.repository.PostRepository;
 import com.devpulse.forum.util.SlugUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Business logic for the forum post CRUD endpoints.
@@ -98,6 +107,68 @@ public class PostService {
         post.setLastActivityAt(OffsetDateTime.now());
 
         return PostResponse.from(postRepository.save(post));
+    }
+
+    /**
+     * Returns a paginated list of posts matching the given criteria.
+     *
+     * <p>Non-staff callers are silently restricted to {@link PostStatus#PUBLISHED}
+     * posts — they cannot ask for drafts or deleted posts by passing a status
+     * query parameter.
+     *
+     * @param q             free-text query matched against title and content (nullable)
+     * @param categoryId    optional category filter by id
+     * @param categorySlug  optional category filter by slug
+     * @param author        optional author username filter
+     * @param status        optional status filter (ignored for non-staff)
+     * @param pageable      pagination + sort
+     * @return page of matching posts as lightweight summaries
+     */
+    @Transactional(readOnly = true)
+    public Page<Post> search(String q,
+                             Long categoryId,
+                             String categorySlug,
+                             String author,
+                             PostStatus status,
+                             Pageable pageable) {
+        List<Specification<Post>> specs = new ArrayList<>();
+        if (StringUtils.hasText(q)) {
+            specs.add(PostSpecifications.textMatches(q.trim()));
+        }
+        if (categoryId != null) {
+            specs.add(PostSpecifications.byCategoryId(categoryId));
+        }
+        if (StringUtils.hasText(categorySlug)) {
+            specs.add(PostSpecifications.byCategorySlug(categorySlug));
+        }
+        if (StringUtils.hasText(author)) {
+            specs.add(PostSpecifications.byAuthorUsername(author));
+        }
+
+        PostStatus effectiveStatus = isStaff() ? status : PostStatus.PUBLISHED;
+        if (effectiveStatus != null) {
+            specs.add(PostSpecifications.statusEquals(effectiveStatus));
+        } else {
+            // Staff with no explicit filter — still hide soft-deleted posts by default.
+            specs.add((root, query, cb) -> cb.notEqual(root.get("status"), PostStatus.DELETED));
+        }
+
+        Specification<Post> combined = specs.stream().reduce(Specification::and).orElse(null);
+        return postRepository.findAll(combined, pageable);
+    }
+
+    private static boolean isStaff() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return false;
+        }
+        for (GrantedAuthority authority : auth.getAuthorities()) {
+            String name = authority.getAuthority();
+            if ("ROLE_ADMIN".equals(name) || "ROLE_MODERATOR".equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Soft-deletes a post by flipping its status. */
