@@ -196,6 +196,7 @@ class AuthServiceTest {
                 .build();
 
         when(refreshTokenRepository.findByToken("valid-refresh")).thenReturn(Optional.of(stored));
+        when(refreshTokenRepository.revokeIfActive(eq("valid-refresh"), any())).thenReturn(1);
 
         UserDetails ud = org.springframework.security.core.userdetails.User
                 .withUsername("alice").password("hashed").authorities(Collections.emptyList()).build();
@@ -208,7 +209,6 @@ class AuthServiceTest {
         assertThat(response.getAccessToken()).isEqualTo("new-access-token");
         assertThat(response.getRefreshToken()).isEqualTo("rotated-refresh");
         assertThat(response.getExpiresIn()).isEqualTo(900L);
-        assertThat(stored.getRevokedAt()).isNotNull();
     }
 
     @Test
