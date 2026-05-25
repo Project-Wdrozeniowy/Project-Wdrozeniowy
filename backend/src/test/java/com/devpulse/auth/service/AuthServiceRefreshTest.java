@@ -68,6 +68,7 @@ class AuthServiceRefreshTest {
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .build();
         when(refreshTokenRepository.findByToken("old-token")).thenReturn(Optional.of(stored));
+        when(refreshTokenRepository.revokeIfActive(eq("old-token"), any())).thenReturn(1);
         UserBuilder ub = org.springframework.security.core.userdetails.User.withUsername("alice")
                 .password("h").roles("USER");
         when(userDetailsService.loadUserByUsername("alice")).thenReturn(ub.build());
@@ -78,9 +79,29 @@ class AuthServiceRefreshTest {
 
         assertThat(response.getAccessToken()).isEqualTo("new-access");
         assertThat(response.getRefreshToken()).isEqualTo("new-refresh");
-        assertThat(stored.getRevokedAt()).isNotNull();
-        // One save() revokes the presented token; a second save() persists the rotated one.
-        verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));
+        verify(refreshTokenRepository, times(1)).revokeIfActive(eq("old-token"), any());
+        // Only the newly issued refresh token is persisted; the old one is revoked
+        // by the atomic UPDATE, no entity save needed.
+        verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
+        verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
+    }
+
+    @Test
+    void refreshTreatsLostRaceAsReuseAndBurnsTheFamily() {
+        RefreshToken stored = RefreshToken.builder()
+                .id(10L)
+                .user(user)
+                .token("contended")
+                .expiresAt(OffsetDateTime.now().plusDays(1))
+                .build();
+        when(refreshTokenRepository.findByToken("contended")).thenReturn(Optional.of(stored));
+        when(refreshTokenRepository.revokeIfActive(eq("contended"), any())).thenReturn(0);
+
+        assertThatThrownBy(() -> authService.refresh("contended"))
+                .isInstanceOf(AppException.class)
+                .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
+        verify(refreshTokenRepository, times(1)).revokeAllActiveByUser(eq(user), any());
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
     }
 
     @Test

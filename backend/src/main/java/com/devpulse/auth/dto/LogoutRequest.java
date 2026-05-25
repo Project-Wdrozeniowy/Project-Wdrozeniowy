@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
  * Request payload for {@code POST /auth/logout}.
  *
  * <p>Carries the refresh token the client wants to invalidate. The endpoint
- * is idempotent — an unknown token returns 200 without revealing token state.
+ * is idempotent — an unknown or already-revoked token returns 204 without
+ * revealing token state.
  */
 @Data
 @NoArgsConstructor

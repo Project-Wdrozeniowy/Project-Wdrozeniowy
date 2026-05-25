@@ -144,9 +144,18 @@ public class AuthService {
             throw new AppException("Refresh token revoked", HttpStatus.UNAUTHORIZED);
         }
 
-        // Rotate: revoke the presented token and issue a fresh pair.
-        stored.setRevokedAt(OffsetDateTime.now());
-        refreshTokenRepository.save(stored);
+        // Atomically rotate: a conditional UPDATE ensures only one of any
+        // concurrent refresh attempts for the same token succeeds. A losing
+        // racer sees 0 rows updated and is treated as reuse — the entire
+        // token family is burned to be safe.
+        OffsetDateTime now = OffsetDateTime.now();
+        int rotated = refreshTokenRepository.revokeIfActive(rawRefreshToken, now);
+        if (rotated == 0) {
+            log.warn("Concurrent refresh detected for user id={}, revoking token family",
+                    stored.getUser().getId());
+            refreshTokenRepository.revokeAllActiveByUser(stored.getUser(), now);
+            throw new AppException("Refresh token revoked", HttpStatus.UNAUTHORIZED);
+        }
 
         return buildAuthResponse(stored.getUser());
     }
