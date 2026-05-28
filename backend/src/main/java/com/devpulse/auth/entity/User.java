@@ -11,7 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
 
 /**
- * Entity representing a user account in the Orbita Forum system.
+ * Entity representing a user account in the DevPulse system.
  *
  * <p>Maps to the {@code users} table in PostgreSQL.
  * The password is stored exclusively as a BCrypt hash
@@ -19,10 +19,11 @@ import java.time.OffsetDateTime;
  *
  * <p>The user's {@link Role} determines their permissions:
  * <ul>
- *   <li>{@code USER}      — standard permissions (create posts, comments, vote)</li>
- *   <li>{@code MODERATOR} — content moderation across the forum</li>
- *   <li>{@code ADMIN}     — full access, including user management</li>
+ *   <li>{@code USER}  — standard permissions (create posts, comments, vote)</li>
+ *   <li>{@code ADMIN} — full access, including user management</li>
  * </ul>
+ * The database {@code user_role} enum also defines {@code MODERATOR};
+ * see PWDRZ-64 for the application-side wiring.
  *
  * <p>Profile fields ({@code displayName}, {@code avatarUrl}, {@code bio}) are optional
  * and editable through the {@code /users/me} endpoints.
