@@ -42,14 +42,15 @@ class AdminControllerSecurityTest {
     }
 
     /**
-     * Anonymous request is denied. Spring Security 6 returns 403 for
-     * unauthenticated requests when no custom AuthenticationEntryPoint is
-     * configured — assert refusal rather than the exact status code.
+     * Anonymous request is rejected with 401 and the RFC 9457 ProblemDetail
+     * body produced by the configured {@code AuthenticationEntryPoint}.
      */
     @Test
-    void anonymousIsDenied() throws Exception {
+    void anonymousIsUnauthorized() throws Exception {
         mockMvc.perform(get("/admin/ping"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.title").value("Unauthorized"));
     }
 
     /** A standard USER must be rejected with 403 by {@code @PreAuthorize}. */
