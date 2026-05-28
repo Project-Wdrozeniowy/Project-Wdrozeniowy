@@ -17,7 +17,7 @@ Every workspace has its own runner. The three rules below apply everywhere:
 | Runner                | JUnit 5 (`org.junit.jupiter`)                |
 | Mocking               | Mockito (`@ExtendWith(MockitoExtension.class)`) |
 | Assertions            | AssertJ (`assertThat`, `assertThatThrownBy`) |
-| Spring integration    | `@SpringBootTest` + `MockMvcBuilders.webAppContextSetup(...).apply(springSecurity())` |
+| Spring integration    | `@SpringBootTest` + `MockMvcBuilders.standaloneSetup(controller)` for focused controller slices; `webAppContextSetup(...).apply(springSecurity())` when the full security filter chain must be exercised |
 | Coverage              | JaCoCo, ≥ **65%** line coverage (see `backend/pom.xml`) |
 | Excluded packages     | `BackendApplication`, `auth.dto.**`, `auth.entity.**`, `exception.**`, `config.**` |
 
@@ -43,9 +43,12 @@ refresh_validToken_rotatesAccessAndRefreshTokens
   test Postgres from `docker-compose.yml`. Use these for security filter
   behaviour, controller wiring and JPA queries that you cannot validate with
   mocks alone.
-- MockMvc setup: build manually from the `WebApplicationContext` and apply
-  `springSecurity()`. This gives explicit control over the security filter
-  chain — prefer it over `@AutoConfigureMockMvc` for security-sensitive tests.
+- MockMvc setup: `MockMvcBuilders.standaloneSetup(controller)` is the default
+  for controller tests today (see `AuthControllerTest`). For tests that need
+  the full security filter chain (auth entry point, `@PreAuthorize`,
+  CSRF), switch to `webAppContextSetup(context).apply(springSecurity())`.
+  Both forms give explicit control over what gets wired in — prefer them
+  over `@AutoConfigureMockMvc` when you want the test scope to be obvious.
 
 ### Anti-patterns
 

@@ -12,6 +12,7 @@ the three workspaces (backend, frontend, gateway).
 | [naming-conventions.md](./naming-conventions.md) | Class / file / function / type naming for backend, frontend and gateway |
 | [git-workflow.md](./git-workflow.md) | Branches, commit messages, PR titles, code review |
 | [testing.md](./testing.md) | Test layout, coverage thresholds, naming patterns |
+| [frontend-backend-integration.md](./frontend-backend-integration.md) | API contract notes: how the frontend should consume the current backend endpoints |
 
 ## Quick rules
 
