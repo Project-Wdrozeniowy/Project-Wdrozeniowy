@@ -1,40 +1,51 @@
 # Frontend ↔ Backend integration guide
 
-Привет! Это шпаргалка по тому, как подружить фронт (`frontend/src/services/*` + `shared/types`) с реальным беком после мержа PR-ов #19–#23. Сейчас контракты расходятся в 6 местах — ниже что именно сломано и как чинить. Все правки — на стороне фронта (бек уже задеплоен в таком виде, менять его дороже).
+This is a cheat sheet for wiring the frontend (`frontend/src/services/*` +
+`frontend/src/types`) to the real backend after PRs #19–#23 land. As of
+today the contracts disagree in six places — this document lists exactly
+what's broken and how to fix it. All fixes live on the frontend; the
+backend has already shipped these shapes and changing it now is more
+expensive.
 
-База: фронт ходит через gateway → бек, поэтому URL-ы в примерах относительные к `/api`.
+The frontend talks to the gateway, which proxies to the backend, so the
+paths below are all relative to `/api`.
 
 ---
 
-## 1. `ApiResponse<T>`-обёртки на беке нет
+## 1. There is no `ApiResponse<T>` envelope on the backend
 
-**Где сейчас:** [frontend/src/shared/types/index.ts:3](../../frontend/src/shared/types/index.ts) — `ApiResponse<T> = { data, message, status, success }`. Все сервисы возвращают `Promise<ApiResponse<T>>`.
+**Today:** [frontend/src/types/index.ts:3](../../frontend/src/types/index.ts)
+defines `ApiResponse<T> = { data, message, status, success }`, and every
+service returns `Promise<ApiResponse<T>>`.
 
-**Реальность:** бек отдаёт DTO **напрямую**. Никакого `{ data, success }`. То есть `response.data` у axios уже и есть полезная нагрузка.
+**Reality:** the backend returns the DTO **directly**. There is no
+`{ data, success }` wrapper. The axios `response.data` is already the
+payload.
 
-**Что делать:**
-- Удалить тип `ApiResponse` либо переименовать в маркер только для legacy-кода.
-- В сервисах поменять сигнатуры на возвращаемый DTO напрямую:
+**Action:**
+- Delete `ApiResponse`, or keep it as a legacy-only marker.
+- Change service signatures to return the DTO directly:
 
 ```ts
-// было
+// before
 login: (data): Promise<ApiResponse<AuthResponse>> =>
   apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data),
 
-// стало
+// after
 login: (data: LoginRequest): Promise<AuthResponse> =>
   apiClient.post<AuthResponse>('/auth/login', data),
 ```
 
-- HTTP-ошибки и так бросаются axios-ом (interceptor уже есть в [api.ts:52](../../frontend/src/services/api.ts)), `success` не нужен.
+- HTTP errors are thrown by axios anyway (interceptor in
+  [api.ts:52](../../frontend/src/services/api.ts)). `success` is not needed.
 
 ---
 
-## 2. Auth: токены и login
+## 2. Auth: tokens and login
 
-### 2.1 `AuthResponse` — другие поля
+### 2.1 `AuthResponse` has different fields
 
-**Бек отдаёт:**
+**Backend returns:**
 ```json
 {
   "accessToken": "eyJhbGciOi...",
@@ -44,9 +55,10 @@ login: (data: LoginRequest): Promise<AuthResponse> =>
 }
 ```
 
-В ответе **нет `user`**. Чтобы получить профиль после логина — отдельный `GET /users/me`.
+There is **no `user`** in the response. Fetch the profile with a separate
+`GET /users/me` call after login.
 
-**Поменять в `shared/types/index.ts`:**
+**Update `frontend/src/types/index.ts`:**
 ```ts
 export interface AuthResponse {
   accessToken: string;
@@ -56,9 +68,13 @@ export interface AuthResponse {
 }
 ```
 
-В [authService.ts](../../frontend/src/services/authService.ts) переименовать `token → accessToken` везде, где он используется (`tokenStorage.setTokens`, request interceptor в [api.ts:43](../../frontend/src/services/api.ts) — там `localStorage.getItem('token')`, ключ оставить можно, но значение класть из `accessToken`).
+In [authService.ts](../../frontend/src/services/authService.ts) rename
+`token → accessToken` everywhere it is read (`tokenStorage.setTokens`, the
+request interceptor in [api.ts:43](../../frontend/src/services/api.ts)
+that calls `localStorage.getItem('token')` — the storage key can stay,
+but the value comes from `accessToken`).
 
-После `login`/`register` сделать второй вызов:
+After `login`/`register`, make the follow-up call:
 ```ts
 const auth = await authService.login(creds);
 tokenStorage.setTokens(auth.accessToken, auth.refreshToken);
@@ -66,28 +82,39 @@ const me = await userService.getMe();
 authStore.setUser(me);
 ```
 
-### 2.2 Login принимает `username`, а не `email`
+### 2.2 Login takes `username`, not `email`
 
-Бек `AuthRequest`: `{ username, password }`. В [lib/validations/auth.ts](../../frontend/src/lib/validations/auth.ts) форма логина — `{ email, password }`. Варианты:
-- (рекомендую) Переименовать поле формы в `username`, поправить лейбл «Username».
-- Либо: оставить email в UI, но на отправке мапить `{ username: form.email, password: form.password }`. Это костыль — бек по email искать не умеет.
+The backend `AuthRequest` is `{ username, password }`. In
+[lib/validations/auth.ts](../../frontend/src/lib/validations/auth.ts) the
+login form is `{ email, password }`. Pick one:
 
-### 2.3 Register: `displayName` и `interests` молча теряются
+- (recommended) Rename the field to `username` and update the label to
+  "Username".
+- Or: keep `email` in the UI and map on submit as
+  `{ username: form.email, password: form.password }`. This is a
+  workaround — the backend cannot look users up by email.
 
-Бек `RegisterRequest` принимает только `username, email, password`. Лишние поля Jackson проигнорирует — пользователь зарегистрируется, но `displayName` будет пустой.
+### 2.3 Register silently drops `displayName` and `interests`
 
-**Что делать:** после `register` сразу вызвать `PATCH /users/me` с `displayName`:
+The backend `RegisterRequest` accepts only `username, email, password`.
+Jackson ignores extra fields, so the user is registered but `displayName`
+ends up empty.
+
+**Action:** right after `register`, call `PATCH /users/me` with
+`displayName`:
 ```ts
 const auth = await authService.register({ username, email, password });
 tokenStorage.setTokens(auth.accessToken, auth.refreshToken);
 await userService.updateMe({ displayName });
 ```
 
-`interests` пока нигде на беке нет — либо выпили из формы, либо положи в `localStorage` до появления соответствующего эндпойнта.
+`interests` does not exist on the backend yet — either drop it from the
+form or stash it in `localStorage` until the endpoint ships.
 
-### 2.4 Logout требует тело с `refreshToken`
+### 2.4 Logout needs a body with `refreshToken`
 
-Сейчас фронт шлёт пустой POST. Бек ждёт `{ refreshToken }` и упадёт в 400.
+The frontend currently sends an empty POST. The backend expects
+`{ refreshToken }` and returns 400 otherwise.
 
 ```ts
 logout: (): Promise<void> => {
@@ -98,26 +125,32 @@ logout: (): Promise<void> => {
 
 ### 2.5 Refresh
 
-Бек ротирует токены — каждый успешный `/auth/refresh` возвращает **новую** пару. После ответа сразу перезаписывай оба в storage. Если бек ответит 401 на refresh — это reuse-detection, токен семьи отозван, нужно гнать на `/login`.
+The backend rotates tokens — every successful `/auth/refresh` returns a
+**new** pair. Overwrite both in storage immediately. A 401 from refresh
+means reuse-detection has revoked the token family — redirect to
+`/login`.
 
 ---
 
-## 3. User profile: роуты и enum-кейсы
+## 3. User profile: routes and enum casing
 
-### 3.1 Роуты
+### 3.1 Routes
 
-В [userService.ts](../../frontend/src/services/userService.ts) сейчас generic CRUD по `/users/:id`. **Такого нет.** Доступны:
+[userService.ts](../../frontend/src/services/userService.ts) currently
+exposes generic CRUD over `/users/:id`. **That does not exist.**
+Available endpoints:
 
-| Метод | Путь | Назначение |
+| Method | Path | Purpose |
 |---|---|---|
-| GET | `/users/me` | свой полный профиль |
-| PATCH | `/users/me` | обновить displayName/email/avatarUrl/bio |
-| POST | `/users/me/password` | сменить пароль (`{ currentPassword, newPassword }`), возвращает 204, **инвалидирует все refresh-токены** |
-| GET | `/users/{username}` | публичный профиль (по username, не по id!) |
+| GET | `/users/me` | full profile of the current user |
+| PATCH | `/users/me` | update displayName/email/avatarUrl/bio |
+| POST | `/users/me/password` | change password (`{ currentPassword, newPassword }`), returns 204, **invalidates all refresh tokens** |
+| GET | `/users/{username}` | public profile (by username, not id!) |
 
-`POST /users` и `DELETE /users/:id` для фронта не существуют. `getUsers` (список) — тоже нет.
+`POST /users` and `DELETE /users/:id` do not exist for the frontend.
+There is no `getUsers` (list) either.
 
-Перепиши сервис примерно так:
+Rewrite the service along these lines:
 ```ts
 export const userService = {
   getMe: () => apiClient.get<ProfileResponse>('/users/me'),
@@ -129,53 +162,61 @@ export const userService = {
 };
 ```
 
-### 3.2 Поля профиля
+### 3.2 Profile fields
 
-`ProfileResponse` (для `/users/me`):
+`ProfileResponse` (for `/users/me`):
 ```ts
 interface ProfileResponse {
-  id: number;                  // ← number, не string!
+  id: number;                  // ← number, not string!
   username: string;
   email: string;
   displayName: string;
   avatarUrl: string | null;
   bio: string | null;
   role: 'USER' | 'MODERATOR' | 'ADMIN';        // ← UPPER_CASE
-  status: 'ACTIVE' | 'BANNED' | 'DEACTIVATED'; // ← UPPER_CASE, и 'DEACTIVATED', не 'suspended'
+  status: 'ACTIVE' | 'BANNED' | 'DEACTIVATED'; // ← UPPER_CASE, and 'DEACTIVATED', not 'suspended'
   postCount: number;
   commentCount: number;
   createdAt: string;           // ISO OffsetDateTime
 }
 ```
 
-`PublicProfileResponse` (для `/users/{username}`) — то же, но без `email`, `role`, `status`.
+`PublicProfileResponse` (for `/users/{username}`) — the same shape minus
+`email`, `role`, `status`.
 
-**Чего на беке нет** (выпили из типа): `emailVerifiedAt`, `updatedAt`, `banReason`.
+**Not on the backend** (drop from the type): `emailVerifiedAt`,
+`updatedAt`, `banReason`.
 
-### 3.3 Enum-кейс — нижний vs верхний
+### 3.3 Enum casing — lower vs upper
 
-В типах фронта роли/статусы в lowercase. Бек шлёт `USER`/`ACTIVE`/`PUBLISHED`. Два варианта:
-- (рекомендую) поменять литералы во фронт-типах на UPPER_CASE — это просто и однозначно.
-- Либо нормализовать в одном месте (response-interceptor или mapper-функция), но тогда придётся помнить про обратное преобразование на отправку.
+The frontend types use lowercase for roles/statuses. The backend ships
+`USER` / `ACTIVE` / `PUBLISHED`. Two options:
+
+- (recommended) Switch the frontend literals to UPPER_CASE — simple and
+  unambiguous.
+- Or: normalise in one place (response interceptor or mapper function),
+  but remember the reverse mapping on the way out.
 
 ---
 
-## 4. Posts (после мержа #22 и #23)
+## 4. Posts (after #22 and #23 merge)
 
-### 4.1 Эндпойнты
+### 4.1 Endpoints
 
-| Метод | Путь | Кто может | Что возвращает |
+| Method | Path | Who | Returns |
 |---|---|---|---|
-| GET | `/posts?q=&categoryId=&categorySlug=&author=&status=&page=&size=&sort=` | все | `PagedResponse<PostSummaryResponse>` |
-| GET | `/posts/{id}` | все | `PostResponse` |
-| GET | `/posts/slug/{slug}` | все | `PostResponse` |
-| POST | `/posts` | авторизованный | `PostResponse` |
-| PUT | `/posts/{id}` | автор / MOD / ADMIN | `PostResponse` |
-| DELETE | `/posts/{id}` | автор / MOD / ADMIN | 204 (soft-delete) |
+| GET | `/posts?q=&categoryId=&categorySlug=&author=&status=&page=&size=&sort=` | anyone | `PagedResponse<PostSummaryResponse>` |
+| GET | `/posts/{id}` | anyone | `PostResponse` |
+| GET | `/posts/slug/{slug}` | anyone | `PostResponse` |
+| POST | `/posts` | authenticated | `PostResponse` |
+| PUT | `/posts/{id}` | author / MOD / ADMIN | `PostResponse` |
+| DELETE | `/posts/{id}` | author / MOD / ADMIN | 204 (soft delete) |
 
-Дефолты списка: `size=20`, `sort=createdAt,desc`. Аноним и USER **никогда** не получат `DRAFT`/`DELETED`, даже если передать `status=DRAFT` (тихо отфильтруется).
+List defaults: `size=20`, `sort=createdAt,desc`. Anonymous and USER will
+**never** see `DRAFT` / `DELETED`, even when passing `status=DRAFT` (it
+is silently filtered out).
 
-### 4.2 Типы
+### 4.2 Types
 
 ```ts
 interface AuthorSummary { id: number; username: string; }
@@ -191,14 +232,14 @@ interface PostResponse {
   viewCount: number;
   voteScore: number;
   commentCount: number;
-  author: AuthorSummary;        // вложенный объект, не userId-строка
+  author: AuthorSummary;        // nested object, not a userId string
   category: CategorySummary | null;
   createdAt: string;
   updatedAt: string;
   lastActivityAt: string;
 }
 
-// PostSummaryResponse — то же, но БЕЗ content и updatedAt (для списка)
+// PostSummaryResponse is the same, MINUS content and updatedAt (used in lists)
 
 interface CreatePostRequest {
   title: string;            // 5..255
@@ -210,30 +251,33 @@ interface UpdatePostRequest {
   title?: string;
   content?: string;
   categoryId?: number | null;
-  clearCategory?: boolean;  // true → отвязать категорию (т.к. null = "не трогать")
+  clearCategory?: boolean;  // true → detach the category (null = "leave it alone")
 }
 ```
 
-### 4.3 Пагинация — НЕ совпадает с `PaginatedResponse` во фронте
+### 4.3 Pagination — does NOT match `PaginatedResponse` on the frontend
 
-Бек шлёт:
+The backend sends:
 ```ts
 interface PagedResponse<T> {
-  content: T[];          // ← не `data`
+  content: T[];          // ← not `data`
   page: number;
-  size: number;          // ← не `pageSize`
-  totalElements: number; // ← не `total`
+  size: number;          // ← not `pageSize`
+  totalElements: number; // ← not `total`
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
 }
 ```
 
-Поменяй `PaginatedResponse` в [shared/types/index.ts:183](../../frontend/src/shared/types/index.ts) под эти поля (или заведи `PagedResponse` рядом и используй его для постов).
+Update `PaginatedResponse` in
+[frontend/src/types/index.ts](../../frontend/src/types/index.ts) to match
+(or add `PagedResponse` next to it and use that one for posts).
 
-### 4.4 Подключение к UI
+### 4.4 Wiring up the UI
 
-[forumService.ts](../../frontend/src/services/forumService.ts) сейчас возвращает `MOCK_POSTS`. Заменить на:
+[forumService.ts](../../frontend/src/services/forumService.ts) currently
+returns `MOCK_POSTS`. Replace with:
 ```ts
 export const forumService = {
   list: (params: SearchParams) =>
@@ -247,39 +291,69 @@ export const forumService = {
 };
 ```
 
-В UI учти, что у `PostSummaryResponse` **нет `content`** — для превью используй `title` + что-то ещё, а полный текст подгружай по клику через `getById`.
+Remember that `PostSummaryResponse` has **no `content`** — for previews
+use `title` and other summary fields, and fetch the full body on click
+via `getById`.
 
 ---
 
 ## 5. Roles & authorization (PR #19)
 
-- Доступные роли: `USER`, `MODERATOR`, `ADMIN`.
-- Пробный admin-only роут: `GET /admin/ping` → 200 `{ "status": "ok", "scope": "admin" }`. Удобно дергать из route-guard, чтобы проверить «а правда ли я админ».
-- Бек возвращает **RFC 9457 ProblemDetail** на 401/403:
+- Available roles: `USER`, `MODERATOR`, `ADMIN`.
+- Admin-only smoke route: `GET /admin/ping` → 200
+  `{ "status": "ok", "scope": "admin" }`. Handy in a route guard to
+  verify "am I really an admin".
+- The backend returns **RFC 9457 ProblemDetail** for 401/403:
   ```json
   { "type": "...", "title": "Forbidden", "status": 403, "detail": "..." }
   ```
-  Структура ошибки в `ApiError` ([types/index.ts:10](../../frontend/src/shared/types/index.ts)) не совпадает — обнови маппинг ошибок в interceptor.
+  The error shape in `ApiError`
+  ([frontend/src/types/index.ts](../../frontend/src/types/index.ts)) does
+  not match — update the error mapping in the interceptor.
+
+### Token storage security note
+
+`tokenStorage` keeps the JWT in `localStorage` today. This is the
+**current** implementation, not the recommended long-term pattern: any
+XSS on the site can read the token. The preferred approach is an
+httpOnly + Secure refresh-token cookie set by the backend, with the
+short-lived access token kept in memory. Treat the localStorage variant
+as a temporary workaround and avoid extending it (no extra secrets in
+storage, short access-token TTL, strict CSP).
 
 ---
 
-## 6. Мелочи
+## 6. Odds and ends
 
-- **`id` везде number, не string.** Просто исправь в типах, либо мапь в `String(id)` на границе — но это лишний слой.
-- **Даты** — `OffsetDateTime` (ISO с таймзоной, `2026-05-25T14:30:00+02:00`). `new Date(str)` парсит нормально.
-- **Storage-ключ для токена** в [api.ts:42](../../frontend/src/services/api.ts) — `'token'`. Если переименуешь — поменяй в обоих местах.
-- **Gateway** ([gateway/src/middleware/auth.ts](../../gateway/src/middleware/auth.ts)) проксирует `Authorization: Bearer ...` как есть, JWT-секрет шарится с беком — ничего настраивать не надо.
+- **`id` is `number` everywhere, not `string`.** Fix the types, or
+  convert with `String(id)` at the boundary — but that is an extra layer
+  with no upside.
+- **Dates** are `OffsetDateTime` (ISO with timezone, e.g.
+  `2026-05-25T14:30:00+02:00`). `new Date(str)` parses fine.
+- **Token storage key** in
+  [api.ts:42](../../frontend/src/services/api.ts) is `'token'`. If you
+  rename it, change both places.
+- **Gateway**
+  ([gateway/src/middleware/auth.ts](../../gateway/src/middleware/auth.ts))
+  forwards `Authorization: Bearer ...` as-is and shares the JWT secret
+  with the backend — nothing to configure.
 
 ---
 
-## Чеклист порядка работ
+## Checklist (work order)
 
-1. Обновить `shared/types/index.ts`: убрать `ApiResponse`-обёртку, поправить `AuthResponse`/`User`/`Post`/`PaginatedResponse`, перейти на UPPER_CASE enum-ы, `id: number`.
-2. Перепилить `services/api.ts` — сигнатуры без `ApiResponse<T>`, переименовать ключ токена если решили на `accessToken`.
-3. `authService.ts`: login по username, logout с телом, register + follow-up `PATCH /users/me` для `displayName`.
-4. `userService.ts`: переписать под `/users/me` + `/users/{username}`.
-5. `forumService.ts`: убрать мок, подключить реальные эндпойнты.
-6. Обновить компоненты, которые сейчас читают `response.data.data` и старые поля.
-7. Прогнать e2e: register → login → me → create post → list → update → delete → logout.
+1. Update `frontend/src/types/index.ts`: drop the `ApiResponse` wrapper,
+   fix `AuthResponse` / `User` / `Post` / `PaginatedResponse`, switch
+   enums to UPPER_CASE, change `id` to `number`.
+2. Rework `services/api.ts` — service signatures without `ApiResponse<T>`;
+   rename the token storage key if switching to `accessToken`.
+3. `authService.ts`: login by username, logout with a body, register
+   followed by `PATCH /users/me` for `displayName`.
+4. `userService.ts`: rewrite around `/users/me` and `/users/{username}`.
+5. `forumService.ts`: drop the mock, wire up the real endpoints.
+6. Update components that read `response.data.data` or stale fields.
+7. End-to-end smoke: register → login → me → create post → list →
+   update → delete → logout.
 
-Если что-то на беке хочется поменять (например, добавить `displayName` в `RegisterRequest`) — кидай тикет, обсудим.
+If you need a backend change (for example adding `displayName` to
+`RegisterRequest`), open a ticket — happy to discuss.

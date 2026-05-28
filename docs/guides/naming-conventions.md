@@ -149,8 +149,9 @@ com.devpulse.auth.repository.UserRepository
   constructors (rare here); everything else is `camelCase.ts`.
 - Middleware filenames describe what they do: `auth.ts`, `logger.ts`,
   `rateLimiter.ts`, `errorHandler.ts`.
-- Route files are named after the resource: `postsRoutes.ts`,
-  `authRoutes.ts`.
+- Route files: today the gateway is a thin proxy with a single
+  `routes/proxy.ts`. Once routes are split per resource, name each file
+  after the resource it owns: `postsRoutes.ts`, `authRoutes.ts`.
 
 ### Functions
 
