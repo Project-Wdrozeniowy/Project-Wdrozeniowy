@@ -48,8 +48,14 @@ public class SecurityConfig {
     /** Service that loads a user from the database by username. */
     private final UserDetailsService userDetailsService;
 
-    /** Shared Jackson mapper used to serialise RFC 9457 ProblemDetail responses. */
-    private final ObjectMapper objectMapper;
+    /**
+     * Jackson mapper used to serialise RFC 9457 ProblemDetail bodies written
+     * directly from the security filter chain. A dedicated instance is used
+     * instead of injecting one — the auto-configured web mapper is not
+     * guaranteed to be on the classpath in this build, and ProblemDetail
+     * needs only Jackson's default configuration.
+     */
+    private final ObjectMapper problemDetailObjectMapper = new ObjectMapper();
 
     /**
      * Defines the HTTP security filter chain.
@@ -111,7 +117,7 @@ public class SecurityConfig {
         pd.setTitle(status.getReasonPhrase());
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-        objectMapper.writeValue(response.getOutputStream(), pd);
+        problemDetailObjectMapper.writeValue(response.getOutputStream(), pd);
     }
 
     /**
