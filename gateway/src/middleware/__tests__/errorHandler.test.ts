@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { logger } from '../logger';
 import { sendError, errorHandler } from '../errorHandler';
 import type { ErrorResponse } from '../../types';
 
@@ -68,11 +69,21 @@ describe('sendError()', () => {
     expect(body.error).toBe('Too Many Requests');
   });
 
-  it('uses "Unknown Error" for unmapped status codes', () => {
+  it('maps 418 to the standard Node reason phrase', () => {
     const req = mockReq();
     const res = mockRes();
 
     sendError(res as unknown as Response, req as Request, 418, "I'm a teapot");
+
+    const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
+    expect(body.error).toBe("I'm a Teapot");
+  });
+
+  it('uses "Unknown Error" for unmapped status codes', () => {
+    const req = mockReq();
+    const res = mockRes();
+
+    sendError(res as unknown as Response, req as Request, 599, 'Custom failure');
 
     const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
     expect(body.error).toBe('Unknown Error');
@@ -96,8 +107,8 @@ describe('errorHandler()', () => {
     expect(body.message).toBe('Internal server error');
   });
 
-  it('logs the error to console.error', () => {
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  it('logs the error through the shared logger', () => {
+    const spy = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
     const err = new Error('unexpected');
     const req = mockReq() as Request;
     req.method = 'POST';
@@ -108,5 +119,21 @@ describe('errorHandler()', () => {
 
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
+  });
+
+  it('honors err.status when present', () => {
+    const err = new Error('bad request') as Error & { status?: number };
+    err.status = 400;
+    const req = mockReq('/api/bad') as Request;
+    req.method = 'POST';
+    const res = mockRes();
+    const next: NextFunction = jest.fn();
+
+    errorHandler(err, req, res as unknown as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
+    expect(body.status).toBe(400);
+    expect(body.message).toBe('bad request');
   });
 });

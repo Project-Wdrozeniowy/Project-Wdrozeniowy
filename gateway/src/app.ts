@@ -5,7 +5,7 @@ import rateLimiter from './middleware/rateLimiter';
 import { accessLogger, errorLogger } from './middleware/logger';
 import authMiddleware from './middleware/auth';
 import proxyMiddleware from './routes/proxy';
-import { errorHandler } from './middleware/errorHandler';
+import { errorHandler, sendError } from './middleware/errorHandler';
 
 const app = express();
 
@@ -22,6 +22,9 @@ app.get('/health', (_req, res) => {
 app.use('/api', authMiddleware);
 app.use(proxyMiddleware);
 
+app.use((req, res) => {
+  sendError(res, req, 404, 'Not found');
+});
 app.use(errorHandler);
 
 export default app;

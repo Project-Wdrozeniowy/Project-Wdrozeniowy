@@ -1,33 +1,46 @@
 import type { Request, Response, NextFunction } from 'express';
+import type { IncomingMessage, ServerResponse } from 'http';
+import { STATUS_CODES } from 'http';
 import type { ErrorResponse } from '../types';
-
-const HTTP_REASON_PHRASES: Record<number, string> = {
-  400: 'Bad Request',
-  401: 'Unauthorized',
-  403: 'Forbidden',
-  404: 'Not Found',
-  429: 'Too Many Requests',
-  500: 'Internal Server Error',
-  502: 'Bad Gateway',
-  503: 'Service Unavailable',
-};
+import { logger } from './logger';
 
 function getReasonPhrase(status: number): string {
-  return HTTP_REASON_PHRASES[status] ?? 'Unknown Error';
+  return STATUS_CODES[status] ?? 'Unknown Error';
 }
 
-export function sendError(res: Response, req: Request, status: number, message: string): void {
+export function sendError(
+  res: Response | ServerResponse,
+  req: Request | IncomingMessage,
+  status: number,
+  message: string
+): void {
+  const path = 'originalUrl' in req ? req.originalUrl : (req.url ?? '/');
   const body: ErrorResponse = {
     status,
     error: getReasonPhrase(status),
     message,
-    path: req.originalUrl,
+    path,
     timestamp: new Date().toISOString(),
   };
-  res.status(status).json(body);
+
+  if ('status' in res && typeof res.status === 'function' && typeof res.json === 'function') {
+    res.status(status).json(body);
+    return;
+  }
+
+  const rawRes = res as ServerResponse;
+  rawRes.writeHead(status, { 'Content-Type': 'application/json' });
+  rawRes.end(JSON.stringify(body));
 }
 
-export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction): void {
-  console.error(`[error] ${req.method} ${req.originalUrl} — ${err.message}`);
-  sendError(res, req, 500, 'Internal server error');
+export function errorHandler(
+  err: Error & { status?: number; statusCode?: number },
+  req: Request,
+  res: Response,
+  _next: NextFunction
+): void {
+  const status = err.status ?? err.statusCode ?? 500;
+  const message = status >= 500 ? 'Internal server error' : err.message;
+  logger.error(`[error] ${req.method} ${req.originalUrl} — ${err.message}`);
+  sendError(res, req, status, message);
 }

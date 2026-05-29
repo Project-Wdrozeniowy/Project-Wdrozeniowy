@@ -122,3 +122,18 @@ describe('Global error handler', () => {
     expect((res.body as { message: string }).message).toBe('Internal server error');
   });
 });
+
+describe('Not found handler', () => {
+  it('returns a unified 404 JSON response for unknown paths', async () => {
+    const res = await request(app).get('/unknown-route');
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        status: 404,
+        error: 'Not Found',
+        message: 'Not found',
+        path: '/unknown-route',
+      })
+    );
+  });
+});
