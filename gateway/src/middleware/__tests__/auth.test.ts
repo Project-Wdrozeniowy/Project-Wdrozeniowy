@@ -20,6 +20,7 @@ function mockReq(overrides: {
     method: overrides.method ?? 'GET',
     baseUrl: overrides.baseUrl ?? '/api',
     path: overrides.path ?? '/users',
+    originalUrl: (overrides.baseUrl ?? '/api') + (overrides.path ?? '/users'),
     headers: {
       authorization: overrides.authorization,
     },
@@ -67,7 +68,13 @@ describe('authMiddleware – missing / invalid Authorization header', () => {
     authMiddleware(req as Request, res as unknown as Response, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Missing or invalid Authorization header' });
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 401,
+        error: 'Unauthorized',
+        message: 'Missing or invalid Authorization header',
+      })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -79,7 +86,13 @@ describe('authMiddleware – missing / invalid Authorization header', () => {
     authMiddleware(req as Request, res as unknown as Response, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Missing or invalid Authorization header' });
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 401,
+        error: 'Unauthorized',
+        message: 'Missing or invalid Authorization header',
+      })
+    );
   });
 });
 
@@ -112,7 +125,9 @@ describe('authMiddleware – expired JWT', () => {
     authMiddleware(req as Request, res as unknown as Response, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Token expired' });
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 401, error: 'Unauthorized', message: 'Token expired' })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 });
@@ -128,7 +143,9 @@ describe('authMiddleware – invalid JWT', () => {
     authMiddleware(req as Request, res as unknown as Response, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid token' });
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 401, error: 'Unauthorized', message: 'Invalid token' })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -140,6 +157,8 @@ describe('authMiddleware – invalid JWT', () => {
     authMiddleware(req as Request, res as unknown as Response, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid token' });
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 401, error: 'Unauthorized', message: 'Invalid token' })
+    );
   });
 });

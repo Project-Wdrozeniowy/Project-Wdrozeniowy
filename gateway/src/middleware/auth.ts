@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import config from '../config';
 import type { PublicRoute } from '../types';
+import { sendError } from './errorHandler';
 
 function isPublicRoute(method: string, path: string): boolean {
   return config.publicRoutes.some(
@@ -24,7 +25,7 @@ function authMiddleware(req: Request, res: Response, next: NextFunction): void {
 
   const token = extractBearerToken(req.headers.authorization);
   if (!token) {
-    res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    sendError(res, req, 401, 'Missing or invalid Authorization header');
     return;
   }
 
@@ -35,10 +36,10 @@ function authMiddleware(req: Request, res: Response, next: NextFunction): void {
     next();
   } catch (err) {
     if (err instanceof jwt.TokenExpiredError) {
-      res.status(401).json({ error: 'Token expired' });
+      sendError(res, req, 401, 'Token expired');
       return;
     }
-    res.status(401).json({ error: 'Invalid token' });
+    sendError(res, req, 401, 'Invalid token');
   }
 }
 
