@@ -36,3 +36,6 @@ Thumbs.db
 # Your compiled files (if any)
 src/**/*.js
 src/**/*.d.ts
+
+tsconfig.json
+tsconfig.build.json
