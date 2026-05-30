@@ -1,5 +1,13 @@
 import type { JwtPayload } from 'jsonwebtoken';
 
+export interface ErrorResponse {
+  status: number;
+  error: string;
+  message: string;
+  path: string;
+  timestamp: string;
+}
+
 export interface GatewayConfig {
   port: number;
   backendUrl: string;

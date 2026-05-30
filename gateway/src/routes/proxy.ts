@@ -1,14 +1,26 @@
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import type { Options } from 'http-proxy-middleware';
+import type { IncomingMessage } from 'http';
+import { logger } from '../middleware/logger';
+import { sendError } from '../middleware/errorHandler';
 import config from '../config';
 
 type ProxyErrorHandler = NonNullable<NonNullable<Options['on']>['error']>;
 
-const handleProxyError: ProxyErrorHandler = (err, _req, res): void => {
-  console.error('[proxy] error:', err.message);
-  if ('writeHead' in res) {
-    res.writeHead(502, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Backend unavailable' }));
+function getPath(req: IncomingMessage): string {
+  return req.url ?? '/';
+}
+
+const handleProxyError: ProxyErrorHandler = (err, req, res): void => {
+  logger.error(`[proxy] error on ${req.method ?? 'GET'} ${getPath(req)}: ${err.message}`);
+
+  if ('writeHead' in res && typeof res.writeHead === 'function') {
+    sendError(res, req, 502, 'Backend unavailable');
+    return;
+  }
+
+  if ('destroy' in res && typeof res.destroy === 'function') {
+    res.destroy();
   }
 };
 
