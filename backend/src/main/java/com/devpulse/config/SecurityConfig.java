@@ -1,9 +1,14 @@
 package com.devpulse.config;
 
 import com.devpulse.auth.filter.JwtAuthenticationFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -16,7 +21,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
@@ -42,6 +49,15 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
 
     /**
+     * Jackson mapper used to serialise RFC 9457 ProblemDetail bodies written
+     * directly from the security filter chain. A dedicated instance is used
+     * instead of injecting one — the auto-configured web mapper is not
+     * guaranteed to be on the classpath in this build, and ProblemDetail
+     * needs only Jackson's default configuration.
+     */
+    private final ObjectMapper problemDetailObjectMapper = new ObjectMapper();
+
+    /**
      * Defines the HTTP security filter chain.
      *
      * <ul>
@@ -62,9 +78,46 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(eh -> eh
+                        .authenticationEntryPoint(problemDetailAuthenticationEntryPoint())
+                        .accessDeniedHandler(problemDetailAccessDeniedHandler()))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    /**
+     * Entry point used when the filter chain rejects a request because the
+     * caller is unauthenticated. Without this bean Spring Security would emit
+     * an empty 403 — instead we surface an RFC 9457 ProblemDetail with the
+     * same shape as {@code com.devpulse.exception.GlobalExceptionHandler}.
+     */
+    @Bean
+    public AuthenticationEntryPoint problemDetailAuthenticationEntryPoint() {
+        return (request, response, authException) ->
+                writeProblemDetail(response, HttpStatus.UNAUTHORIZED, "Authentication failed");
+    }
+
+    /**
+     * Handler used when an authenticated principal lacks the authority for the
+     * requested resource and the rejection happens inside the filter chain
+     * (before MVC dispatch). Returns the same ProblemDetail body as the MVC
+     * {@code AccessDeniedException} handler.
+     */
+    @Bean
+    public AccessDeniedHandler problemDetailAccessDeniedHandler() {
+        return (request, response, accessDeniedException) ->
+                writeProblemDetail(response, HttpStatus.FORBIDDEN, "Access is denied");
+    }
+
+    private void writeProblemDetail(HttpServletResponse response,
+                                    HttpStatus status,
+                                    String detail) throws java.io.IOException {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, detail);
+        pd.setTitle(status.getReasonPhrase());
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+        problemDetailObjectMapper.writeValue(response.getOutputStream(), pd);
     }
 
     /**
