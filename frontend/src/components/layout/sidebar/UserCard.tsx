@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { UserProfile } from '@/types';
+import type { UserProfile } from '@/shared/types';
 import { NAV_LINKS, USER_STATS } from '@/constants/sidebar';
 import { cn } from '@/lib/cn';
 

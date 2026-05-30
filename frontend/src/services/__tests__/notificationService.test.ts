@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { Notification } from '@/types';
+import type { Notification } from '@/shared/types';
 
 const mockApiClient = {
   get: vi.fn(),

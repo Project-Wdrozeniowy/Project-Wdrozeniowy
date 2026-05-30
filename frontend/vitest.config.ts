@@ -26,7 +26,6 @@ export default defineConfig({
         'vitest.config.*',
         '**/*.d.ts',
         // Type-only and shared files — no executable code
-        'src/types/**',
         'src/shared/**',
         // Constants — no executable logic
         'src/constants/**',

@@ -69,7 +69,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/forum/comments/**").permitAll()
                         // Recommendations and public user profiles
                         .requestMatchers(HttpMethod.GET, "/recommendations/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/users/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/users/*").permitAll()
                         // OpenAPI / Swagger UI
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         // Everything else requires a valid JWT; fine-grained role checks via @PreAuthorize

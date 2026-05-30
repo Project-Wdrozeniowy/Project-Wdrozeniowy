@@ -9,7 +9,7 @@ import type {
   RecommendedPost,
   PostSummary,
   Tag,
-} from '../types';
+} from '@/shared/types';
 
 export const analyticsService = {
   getMyActivity: (): Promise<UserActivitySummary> =>

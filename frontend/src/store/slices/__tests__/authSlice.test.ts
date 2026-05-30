@@ -1,6 +1,6 @@
 import { createStore } from 'zustand';
 import { createAuthSlice, type AuthSlice } from '../authSlice';
-import type { UserProfile } from '@/types';
+import type { UserProfile } from '@/shared/types';
 
 const mockUser: UserProfile = {
   id: 1,

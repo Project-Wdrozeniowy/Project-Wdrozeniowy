@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { BellIcon, TrendingIcon } from '@/components/ui/icons';
-import type { UserProfile } from '@/types';
+import type { UserProfile } from '@/shared/types';
 
 interface Props {
   isAuthenticated: boolean;

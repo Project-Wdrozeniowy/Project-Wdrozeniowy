@@ -14,7 +14,7 @@ import type {
   VoteRequest,
   VoteResponse,
   PagedResponse,
-} from '../types';
+} from '@/shared/types';
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import type { Notification, PagedResponse } from '../types';
+import type { Notification, PagedResponse } from '@/shared/types';
 
 export interface ListNotificationsParams {
   page?: number;

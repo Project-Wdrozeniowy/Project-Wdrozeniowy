@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { UserProfile } from '@/types';
+import type { UserProfile } from '@/shared/types';
 
 export interface AuthSlice {
   user: UserProfile | null;

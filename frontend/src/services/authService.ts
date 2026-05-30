@@ -5,7 +5,7 @@ import type {
   LogoutRequest,
   RefreshRequest,
   RegisterRequest,
-} from '../types';
+} from '@/shared/types';
 
 export const authService = {
   register: (data: RegisterRequest): Promise<AuthResponse> =>

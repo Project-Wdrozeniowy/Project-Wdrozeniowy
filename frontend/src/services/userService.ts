@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import type { UserProfile, UpdateProfileRequest } from '../types';
+import type { UserProfile, UpdateProfileRequest } from '@/shared/types';
 
 export const userService = {
   getProfile: (username: string): Promise<UserProfile> =>

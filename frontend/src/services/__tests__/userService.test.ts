@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { UserProfile } from '@/types';
+import type { UserProfile } from '@/shared/types';
 
 // Mock the apiClient singleton
 const mockApiClient = {

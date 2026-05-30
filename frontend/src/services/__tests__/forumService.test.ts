@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { PagedResponse, Category, Post, PostSummary, Comment, Tag } from '@/types';
+import type { PagedResponse, Category, Post, PostSummary, Comment, Tag } from '@/shared/types';
 
 const mockApiClient = {
   get: vi.fn(),
