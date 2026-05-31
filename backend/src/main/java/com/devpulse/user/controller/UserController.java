@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * <p>All {@code /users/me} routes require an authenticated principal —
  * authorization is enforced by the default JWT filter chain in
  * {@link com.devpulse.config.SecurityConfig}. The lookup-by-username
- * route is also authenticated by default.
+ * route ({@code GET /users/{username}}) is publicly accessible — no JWT required.
  */
 @RestController
 @RequestMapping("/users")
