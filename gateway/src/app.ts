@@ -6,6 +6,7 @@ import { accessLogger, errorLogger } from './middleware/logger';
 import authMiddleware from './middleware/auth';
 import proxyMiddleware from './routes/proxy';
 import { errorHandler, sendError } from './middleware/errorHandler';
+import wsProxyMiddleware from './routes/wsProxy';
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.get('/health', (_req, res) => {
 
 app.use('/api', authMiddleware);
 app.use(proxyMiddleware);
+// WebSocket (STOMP) — auth handled inside the STOMP CONNECT frame
+app.use(wsProxyMiddleware);
 
 app.use((req, res) => {
   sendError(res, req, 404, 'Not found');

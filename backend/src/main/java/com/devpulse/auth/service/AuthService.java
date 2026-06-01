@@ -159,4 +159,17 @@ public class AuthService {
                 .expiresIn(accessExpirySeconds)
                 .build();
     }
+
+    /**
+     * Revokes the given refresh token, logging the user out on this device.
+     *
+     * @param rawRefreshToken the refresh token to delete
+     * @throws AppException HTTP 401 if the token is not found
+     */
+    @Transactional
+    public void logout(String rawRefreshToken) {
+        RefreshToken stored = refreshTokenRepository.findByToken(rawRefreshToken)
+                .orElseThrow(() -> new AppException("Refresh token not found", HttpStatus.UNAUTHORIZED));
+        refreshTokenRepository.delete(stored);
+    }
 }

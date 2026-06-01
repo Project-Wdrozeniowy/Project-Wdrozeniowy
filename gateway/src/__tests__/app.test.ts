@@ -49,13 +49,13 @@ describe('Security headers (Helmet)', () => {
 
 describe('Auth guard on /api routes', () => {
   it('returns 401 when no Authorization header is provided', async () => {
-    const res = await request(app).get('/api/users');
+    const res = await request(app).get('/api/analytics/trends');
     expect(res.status).toBe(401);
     expect(res.body).toHaveProperty('message');
   });
 
   it('returns 401 with "Missing or invalid Authorization header" message', async () => {
-    const res = await request(app).get('/api/users');
+    const res = await request(app).get('/api/analytics/trends');
     expect((res.body as { message: string }).message).toBe(
       'Missing or invalid Authorization header'
     );
@@ -63,7 +63,9 @@ describe('Auth guard on /api routes', () => {
 
   it('passes auth guard with a valid Bearer token', async () => {
     const token = makeToken();
-    const res = await request(app).get('/api/users').set('Authorization', `Bearer ${token}`);
+    const res = await request(app)
+      .get('/api/analytics/trends')
+      .set('Authorization', `Bearer ${token}`);
     // Proxy mock calls next(), so Express responds with 404 (no route registered)
     // but it should NOT be 401
     expect(res.status).not.toBe(401);
@@ -74,7 +76,9 @@ describe('Auth guard on /api routes', () => {
       algorithm: 'HS256',
       expiresIn: -1,
     } as jwt.SignOptions);
-    const res = await request(app).get('/api/users').set('Authorization', `Bearer ${expiredToken}`);
+    const res = await request(app)
+      .get('/api/analytics/trends')
+      .set('Authorization', `Bearer ${expiredToken}`);
     expect(res.status).toBe(401);
     expect((res.body as { message: string }).message).toBe('Token expired');
   });
