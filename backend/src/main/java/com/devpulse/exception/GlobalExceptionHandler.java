@@ -1,5 +1,7 @@
 package com.devpulse.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -26,6 +28,8 @@ import java.util.Map;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * Handles domain errors thrown by application services.
@@ -63,13 +67,15 @@ public class GlobalExceptionHandler {
 
     /**
      * Fallback handler for all unhandled exceptions.
-     * Returns 500 without exposing implementation details to the client.
+     * Logs the full stack trace server-side and returns 500 without exposing
+     * implementation details to the client.
      *
      * @param ex the unhandled exception
      * @return a {@link ProblemDetail} 500 with a generic message
      */
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGeneric(Exception ex) {
+        log.error("Unhandled exception", ex);
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
         pd.setTitle("Internal Server Error");

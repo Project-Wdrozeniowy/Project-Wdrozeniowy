@@ -5,9 +5,13 @@ import type { PublicRoute } from '../types';
 import { sendError } from './errorHandler';
 
 function isPublicRoute(method: string, path: string): boolean {
-  return config.publicRoutes.some(
-    (route: PublicRoute) => route.method === method && route.path === path
-  );
+  return config.publicRoutes.some((route: PublicRoute) => {
+    const methodMatches = route.method === '*' || route.method === method;
+    const { pathPrefix } = route;
+    const pathMatches =
+      typeof pathPrefix === 'string' ? path.startsWith(pathPrefix) : path === route.path;
+    return methodMatches && pathMatches;
+  });
 }
 
 function extractBearerToken(authHeader: string | undefined): string | null {

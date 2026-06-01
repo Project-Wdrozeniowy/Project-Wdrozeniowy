@@ -1,19 +1,12 @@
 import { apiClient } from './api';
-import type { User, ApiResponse } from '@/shared/types';
+import type { UserProfile, UpdateProfileRequest } from '@/shared/types';
 
 export const userService = {
-  // Specify the return type
-  getUsers: (): Promise<ApiResponse<User[]>> => apiClient.get<ApiResponse<User[]>>('/users'),
+  getProfile: (username: string): Promise<UserProfile> =>
+    apiClient.get<UserProfile>(`/users/${username}`),
 
-  getUser: (id: string): Promise<ApiResponse<User>> =>
-    apiClient.get<ApiResponse<User>>(`/users/${id}`),
+  getMyProfile: (): Promise<UserProfile> => apiClient.get<UserProfile>('/users/me'),
 
-  createUser: (data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<User>> =>
-    apiClient.post<ApiResponse<User>>('/users', data),
-
-  updateUser: (id: string, data: Partial<User>): Promise<ApiResponse<User>> =>
-    apiClient.patch<ApiResponse<User>>(`/users/${id}`, data),
-
-  deleteUser: (id: string): Promise<ApiResponse<null>> =>
-    apiClient.delete<ApiResponse<null>>(`/users/${id}`),
+  updateMyProfile: (data: UpdateProfileRequest): Promise<UserProfile> =>
+    apiClient.patch<UserProfile>('/users/me', data),
 };
