@@ -7,6 +7,15 @@ what's broken and how to fix it. All fixes live on the frontend; the
 backend has already shipped these shapes and changing it now is more
 expensive.
 
+**Implementation status today:** only the auth endpoints — `register`,
+`login`, `refresh`, and `logout` — actually run real code. Everything
+else described in this guide (`/forum/posts`, `/forum/categories`,
+`/forum/comments`, `/forum/tags`, `/forum/votes`, and both
+`GET`/`PATCH /users/me`) is a controller stub that immediately throws
+`501 NOT_IMPLEMENTED`. The shapes below (paths, DTOs, status codes) are
+the real, merged contract — build the frontend against them — but don't
+expect these non-auth calls to return data yet.
+
 The frontend talks to the gateway, which proxies to the backend, so the
 paths below are all relative to `/api`.
 
@@ -82,17 +91,14 @@ const me = await userService.getMe();
 authStore.setUser(me);
 ```
 
-### 2.2 Login takes `username`, not `email`
+### 2.2 Login fields — already fixed
 
-The backend `AuthRequest` is `{ username, password }`. In
-[lib/validations/auth.ts](../../frontend/src/lib/validations/auth.ts) the
-login form is `{ email, password }`. Pick one:
-
-- (recommended) Rename the field to `username` and update the label to
-  "Username".
-- Or: keep `email` in the UI and map on submit as
-  `{ username: form.email, password: form.password }`. This is a
-  workaround — the backend cannot look users up by email.
+This used to be a mismatch: the backend `AuthRequest` is
+`{ username, password }`, while
+[lib/validations/auth.ts](../../frontend/src/lib/validations/auth.ts)
+defined the login form as `{ email, password }`. That's been resolved —
+`loginSchema` in that file is now `{ username, password }`, matching the
+backend exactly. No action needed here anymore.
 
 ### 2.3 Register silently drops `displayName` and `interests`
 
@@ -125,10 +131,17 @@ logout: (): Promise<void> => {
 
 ### 2.5 Refresh
 
-The backend rotates tokens — every successful `/auth/refresh` returns a
-**new** pair. Overwrite both in storage immediately. A 401 from refresh
-means reuse-detection has revoked the token family — redirect to
-`/login`.
+The backend does **not** rotate the refresh token today. `AuthService.refresh()`
+looks up the raw refresh token, checks it hasn't expired, and returns a
+**new access token paired with the same raw refresh token** you sent in —
+nothing changes in storage on refresh. There is also no reuse-detection:
+an old refresh token simply stays valid until it expires or is revoked
+via `/auth/logout`.
+
+A 401 from `/auth/refresh` just means the token wasn't found or has
+expired — redirect to `/login` in that case. Rotation and
+reuse-detection are a backend follow-up, not shipped behavior — don't
+write frontend logic that assumes the refresh token changes on refresh.
 
 ---
 
@@ -143,9 +156,13 @@ Available endpoints:
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/users/me` | full profile of the current user |
-| PATCH | `/users/me` | update displayName/email/avatarUrl/bio |
-| POST | `/users/me/password` | change password (`{ currentPassword, newPassword }`), returns 204, **invalidates all refresh tokens** |
+| PATCH | `/users/me` | update displayName/avatarUrl/bio |
 | GET | `/users/{username}` | public profile (by username, not id!) |
+
+There is no change-password endpoint on the backend today — no
+`POST /users/me/password` or equivalent exists in `UserController`.
+Don't add a client call for it; if the product needs it, that's a
+backend follow-up.
 
 `POST /users` and `DELETE /users/:id` do not exist for the frontend.
 There is no `getUsers` (list) either.
@@ -155,8 +172,6 @@ Rewrite the service along these lines:
 export const userService = {
   getMe: () => apiClient.get<ProfileResponse>('/users/me'),
   updateMe: (data: UpdateProfileRequest) => apiClient.patch<ProfileResponse>('/users/me', data),
-  changePassword: (data: ChangePasswordRequest) =>
-    apiClient.post<void>('/users/me/password', data),
   getPublicProfile: (username: string) =>
     apiClient.get<PublicProfileResponse>(`/users/${username}`),
 };
@@ -169,7 +184,6 @@ export const userService = {
 interface ProfileResponse {
   id: number;                  // ← number, not string!
   username: string;
-  email: string;
   displayName: string;
   avatarUrl: string | null;
   bio: string | null;
@@ -182,7 +196,7 @@ interface ProfileResponse {
 ```
 
 `PublicProfileResponse` (for `/users/{username}`) — the same shape minus
-`email`, `role`, `status`.
+`role`, `status`.
 
 **Not on the backend** (drop from the type): `emailVerifiedAt`,
 `updatedAt`, `banReason`.
@@ -205,16 +219,16 @@ The frontend types use lowercase for roles/statuses. The backend ships
 
 | Method | Path | Who | Returns |
 |---|---|---|---|
-| GET | `/posts?q=&categoryId=&categorySlug=&author=&status=&page=&size=&sort=` | anyone | `PagedResponse<PostSummaryResponse>` |
-| GET | `/posts/{id}` | anyone | `PostResponse` |
-| GET | `/posts/slug/{slug}` | anyone | `PostResponse` |
-| POST | `/posts` | authenticated | `PostResponse` |
-| PUT | `/posts/{id}` | author / MOD / ADMIN | `PostResponse` |
-| DELETE | `/posts/{id}` | author / MOD / ADMIN | 204 (soft delete) |
+| GET | `/forum/posts?q=&categorySlug=&tag=&page=&size=&sort=` | anyone | `PagedResponse<PostSummaryResponse>` |
+| GET | `/forum/posts/{slug}` | anyone | `PostResponse` |
+| POST | `/forum/posts` | authenticated | `PostResponse` |
+| PATCH | `/forum/posts/{slug}` | author / MOD / ADMIN | `PostResponse` |
+| PATCH | `/forum/posts/{slug}/pin` | MOD / ADMIN | `PostResponse` (toggle pin) |
+| DELETE | `/forum/posts/{slug}` | author / MOD / ADMIN | 204 (soft delete) |
 
-List defaults: `size=20`, `sort=createdAt,desc`. Anonymous and USER will
-**never** see `DRAFT` / `DELETED`, even when passing `status=DRAFT` (it
-is silently filtered out).
+Routing is slug-based throughout — there is no id-based `GET`/`PUT` for
+a single post. List defaults: `size=20`, `sort=lastActivityAt` (allowed
+values: `createdAt`, `voteScore`, `lastActivityAt`).
 
 ### 4.2 Types
 
@@ -227,8 +241,8 @@ interface PostResponse {
   title: string;
   slug: string;
   content: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'DELETED';   // ← UPPER_CASE
-  isPinned: boolean;
+  status: 'DRAFT' | 'PUBLISHED' | 'LOCKED' | 'DELETED';   // ← UPPER_CASE
+  pinned: boolean;
   viewCount: number;
   voteScore: number;
   commentCount: number;
@@ -265,8 +279,8 @@ interface PagedResponse<T> {
   size: number;          // ← not `pageSize`
   totalElements: number; // ← not `total`
   totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
+  first: boolean;
+  last: boolean;
 }
 ```
 
@@ -281,19 +295,19 @@ returns `MOCK_POSTS`. Replace with:
 ```ts
 export const forumService = {
   list: (params: SearchParams) =>
-    apiClient.get<PagedResponse<PostSummaryResponse>>('/posts', { params }),
-  getById: (id: number) => apiClient.get<PostResponse>(`/posts/${id}`),
-  getBySlug: (slug: string) => apiClient.get<PostResponse>(`/posts/slug/${slug}`),
-  create: (data: CreatePostRequest) => apiClient.post<PostResponse>('/posts', data),
-  update: (id: number, data: UpdatePostRequest) =>
-    apiClient.put<PostResponse>(`/posts/${id}`, data),
-  remove: (id: number) => apiClient.delete<void>(`/posts/${id}`),
+    apiClient.get<PagedResponse<PostSummaryResponse>>('/forum/posts', { params }),
+  getBySlug: (slug: string) => apiClient.get<PostResponse>(`/forum/posts/${slug}`),
+  create: (data: CreatePostRequest) => apiClient.post<PostResponse>('/forum/posts', data),
+  update: (slug: string, data: UpdatePostRequest) =>
+    apiClient.patch<PostResponse>(`/forum/posts/${slug}`, data),
+  togglePin: (slug: string) => apiClient.patch<PostResponse>(`/forum/posts/${slug}/pin`),
+  remove: (slug: string) => apiClient.delete<void>(`/forum/posts/${slug}`),
 };
 ```
 
 Remember that `PostSummaryResponse` has **no `content`** — for previews
 use `title` and other summary fields, and fetch the full body on click
-via `getById`.
+via `getBySlug`.
 
 ---
 
