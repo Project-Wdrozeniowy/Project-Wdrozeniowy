@@ -52,7 +52,9 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
      * active (not revoked and not expired). Returning the number of affected
      * rows lets callers detect lost races: when two concurrent {@code /auth/refresh}
      * requests carry the same token, only one UPDATE will hit a row, and the
-     * other receives 0 and can react accordingly.
+     * other receives 0. The loser can then look up the {@code replacedBy}
+     * pointer set by {@link #linkReplacedBy} to see whether this was a benign
+     * rotation race or genuine token reuse.
      *
      * @param token the refresh token value to revoke
      * @param now   the revocation timestamp to write (also the expiry cutoff)
@@ -67,4 +69,27 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
               AND rt.expiresAt > :now
            """)
     int revokeIfActive(@Param("token") String token, @Param("now") OffsetDateTime now);
+
+    /**
+     * Records the token that replaced a just-rotated one.
+     *
+     * <p>Called only on the winning side of a refresh rotation, right after
+     * {@link #revokeIfActive} succeeds for the same row. This is a separate
+     * bulk update — rather than mutating and saving the loaded entity —
+     * because bulk updates bypass the persistence context: saving the
+     * in-memory entity afterwards would overwrite the {@code revokedAt} that
+     * {@link #revokeIfActive} just wrote in the database with its stale
+     * (still-null) in-memory value.
+     *
+     * @param tokenId    the id of the just-revoked token
+     * @param replacedBy the newly issued token that replaced it
+     * @return the number of rows updated (0 or 1)
+     */
+    @Modifying
+    @Query("""
+           UPDATE RefreshToken rt
+              SET rt.replacedBy = :replacedBy
+            WHERE rt.id = :tokenId
+           """)
+    int linkReplacedBy(@Param("tokenId") Long tokenId, @Param("replacedBy") RefreshToken replacedBy);
 }

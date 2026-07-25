@@ -83,25 +83,56 @@ class AuthServiceRefreshTest {
         // Only the newly issued refresh token is persisted; the old one is revoked
         // by the atomic UPDATE, no entity save needed.
         verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
+        // The old token is left pointing at its replacement so a losing
+        // concurrent racer can find the same new pair instead of being
+        // treated as a thief.
+        verify(refreshTokenRepository, times(1)).linkReplacedBy(eq(10L), any(RefreshToken.class));
         verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
     }
 
     @Test
-    void refreshTreatsLostRaceAsReuseAndBurnsTheFamily() {
-        RefreshToken stored = RefreshToken.builder()
+    void refreshLostRaceReturnsWinnersNewPairInsteadOfBurningTheFamily() {
+        // Two concurrent /auth/refresh calls present the same not-yet-rotated
+        // token (two browser tabs, a retry). This request loses the atomic
+        // rotation race, but the winner has already recorded its new token as
+        // the replacement -- the loser should simply get that same new pair.
+        RefreshToken winnersNewToken = RefreshToken.builder()
+                .id(11L)
+                .user(user)
+                .token("winners-new-refresh")
+                .expiresAt(OffsetDateTime.now().plusDays(7))
+                .build();
+        RefreshToken beforeRace = RefreshToken.builder()
                 .id(10L)
                 .user(user)
                 .token("contended")
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .build();
-        when(refreshTokenRepository.findByToken("contended")).thenReturn(Optional.of(stored));
-        when(refreshTokenRepository.revokeIfActive(eq("contended"), any())).thenReturn(0);
+        RefreshToken afterRace = RefreshToken.builder()
+                .id(10L)
+                .user(user)
+                .token("contended")
+                .expiresAt(OffsetDateTime.now().plusDays(1))
+                .revokedAt(OffsetDateTime.now())
+                .replacedBy(winnersNewToken)
+                .build();
 
-        assertThatThrownBy(() -> authService.refresh("contended"))
-                .isInstanceOf(AppException.class)
-                .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
-        verify(refreshTokenRepository, times(1)).revokeAllActiveByUser(eq(user), any());
+        when(refreshTokenRepository.findByToken("contended"))
+                .thenReturn(Optional.of(beforeRace))
+                .thenReturn(Optional.of(afterRace));
+        when(refreshTokenRepository.revokeIfActive(eq("contended"), any())).thenReturn(0);
+        UserBuilder ub = org.springframework.security.core.userdetails.User.withUsername("alice")
+                .password("h").roles("USER");
+        when(userDetailsService.loadUserByUsername("alice")).thenReturn(ub.build());
+        when(jwtUtil.generateAccessToken(any())).thenReturn("new-access-for-loser");
+
+        AuthResponse response = authService.refresh("contended");
+
+        assertThat(response.getAccessToken()).isEqualTo("new-access-for-loser");
+        assertThat(response.getRefreshToken()).isEqualTo("winners-new-refresh");
+        verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+        verify(jwtUtil, never()).generateRefreshToken();
     }
 
     @Test
@@ -115,6 +146,7 @@ class AuthServiceRefreshTest {
 
         assertThatThrownBy(() -> authService.refresh("expired"))
                 .isInstanceOf(AppException.class)
+                .hasMessageContaining("Invalid refresh token")
                 .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
         verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
     }
@@ -131,6 +163,58 @@ class AuthServiceRefreshTest {
 
         assertThatThrownBy(() -> authService.refresh("stolen"))
                 .isInstanceOf(AppException.class)
+                .hasMessageContaining("Invalid refresh token")
+                .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
+        verify(refreshTokenRepository, times(1)).revokeAllActiveByUser(eq(user), any());
+    }
+
+    @Test
+    void refreshOfRevokedAndExpiredTokenStillBurnsTheFamily() {
+        // A token that is both revoked (rotated away earlier) and, by now,
+        // naturally expired must still go through the revoked-token handling
+        // (and burn the family, since it has no replacedBy pointer here)
+        // rather than short-circuiting on a plain "expired" 401.
+        RefreshToken revokedAndExpired = RefreshToken.builder()
+                .user(user)
+                .token("stale")
+                .expiresAt(OffsetDateTime.now().minusDays(1))
+                .revokedAt(OffsetDateTime.now().minusDays(2))
+                .build();
+        when(refreshTokenRepository.findByToken("stale")).thenReturn(Optional.of(revokedAndExpired));
+
+        assertThatThrownBy(() -> authService.refresh("stale"))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("Invalid refresh token")
+                .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
+        verify(refreshTokenRepository, times(1)).revokeAllActiveByUser(eq(user), any());
+    }
+
+    @Test
+    void refreshOfGenerationsOldTokenStillBurnsTheFamily() {
+        // "stored" was rotated forward once (its replacedBy is set), but that
+        // replacement has itself since been rotated forward again -- the
+        // whole chain has moved on. Replaying this old token is real reuse,
+        // not a benign race, even though it does carry a replacedBy pointer.
+        RefreshToken longSinceSuperseded = RefreshToken.builder()
+                .id(12L)
+                .user(user)
+                .token("next-generation")
+                .expiresAt(OffsetDateTime.now().plusDays(1))
+                .revokedAt(OffsetDateTime.now().minusMinutes(1))
+                .build();
+        RefreshToken oldGeneration = RefreshToken.builder()
+                .id(10L)
+                .user(user)
+                .token("old-generation")
+                .expiresAt(OffsetDateTime.now().plusDays(1))
+                .revokedAt(OffsetDateTime.now().minusMinutes(5))
+                .replacedBy(longSinceSuperseded)
+                .build();
+        when(refreshTokenRepository.findByToken("old-generation")).thenReturn(Optional.of(oldGeneration));
+
+        assertThatThrownBy(() -> authService.refresh("old-generation"))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("Invalid refresh token")
                 .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
         verify(refreshTokenRepository, times(1)).revokeAllActiveByUser(eq(user), any());
     }
@@ -141,6 +225,7 @@ class AuthServiceRefreshTest {
 
         assertThatThrownBy(() -> authService.refresh("nope"))
                 .isInstanceOf(AppException.class)
+                .hasMessageContaining("Invalid refresh token")
                 .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 

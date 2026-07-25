@@ -34,10 +34,14 @@ import java.time.OffsetDateTime;
  * Logout:        refresh token   -> mark revoked (idempotent)
  * </pre>
  *
- * <p>Refresh tokens are rotated on every successful refresh. If a token that
- * has already been revoked but is not yet expired is presented, the whole
- * token family for that user is revoked — this is a textbook refresh-token
- * reuse detection that catches stolen tokens.
+ * <p>Refresh tokens are rotated on every successful refresh, and the old
+ * token is left pointing (via {@code replacedBy}) at the new one. If an
+ * already-revoked token is presented again, that pointer tells us whether
+ * this is a benign concurrent refresh (two requests racing for the same
+ * not-yet-rotated token — the loser simply gets the same new pair the
+ * winner already received) or genuine reuse of an old, already-superseded
+ * token, in which case the whole token family for that user is revoked —
+ * a textbook refresh-token reuse detection that catches stolen tokens.
  */
 @Slf4j
 @Service
@@ -62,6 +66,15 @@ public class AuthService {
     /** Refresh token lifetime in seconds; default 604800 s = 7 days. */
     @Value("${jwt.refresh-expiry:604800}")
     private long refreshExpirySeconds;
+
+    /**
+     * Generic message returned to the client for every refresh failure
+     * (unknown, expired or revoked token). Keeping this message identical
+     * across all three cases prevents an unauthenticated caller from
+     * distinguishing why a refresh token was rejected; the specific reason
+     * is still recorded in the server logs for observability.
+     */
+    private static final String INVALID_REFRESH_TOKEN_MESSAGE = "Invalid refresh token";
 
     /**
      * Registers a new user and returns a token pair.
@@ -116,11 +129,19 @@ public class AuthService {
      * Refreshes the access token using a valid refresh token, rotating the
      * refresh token in the process.
      *
-     * <p>On success the presented refresh token is revoked and a brand new
-     * refresh token is issued together with a new access token. If the
-     * presented token has already been revoked but is not yet expired, all
-     * active tokens for that user are revoked — this catches replay of a
-     * stolen token.
+     * <p>On success the presented refresh token is revoked, a brand new
+     * refresh token is issued together with a new access token, and the old
+     * token is left pointing at the new one via {@code replacedBy}.
+     *
+     * <p>If the presented token is already revoked, the {@code replacedBy}
+     * pointer decides what happens next:
+     * <ul>
+     *   <li>if it points at a still-active token, this is a benign
+     *   concurrent refresh (two requests racing for the same not-yet-rotated
+     *   token) — the caller gets the same new pair the winner already got</li>
+     *   <li>otherwise, an old, already-superseded token is being replayed —
+     *   real reuse — so every active token for that user is revoked</li>
+     * </ul>
      *
      * @param rawRefreshToken the refresh token value from the client request
      * @return {@link AuthResponse} with new access and refresh tokens
@@ -129,35 +150,84 @@ public class AuthService {
     @Transactional
     public AuthResponse refresh(String rawRefreshToken) {
         RefreshToken stored = refreshTokenRepository.findByToken(rawRefreshToken)
-                .orElseThrow(() -> new AppException("Refresh token not found", HttpStatus.UNAUTHORIZED));
+                .orElseThrow(() -> {
+                    log.warn("Refresh attempted with a refresh token that does not exist");
+                    return new AppException(INVALID_REFRESH_TOKEN_MESSAGE, HttpStatus.UNAUTHORIZED);
+                });
+
+        // Revoked is checked before expired: a token can be both revoked
+        // (via rotation or reuse detection) and naturally expired, and it
+        // must still go through the revoked-token handling below rather than
+        // short-circuiting on a plain "expired" 401.
+        if (stored.isRevoked()) {
+            return handleRevokedToken(stored);
+        }
 
         if (stored.isExpired()) {
-            throw new AppException("Refresh token expired", HttpStatus.UNAUTHORIZED);
+            log.warn("Refresh token expired for user id={}", stored.getUser().getId());
+            throw new AppException(INVALID_REFRESH_TOKEN_MESSAGE, HttpStatus.UNAUTHORIZED);
         }
 
-        if (stored.isRevoked()) {
-            // Reuse detected — a token that was already rotated is being presented again.
-            // Burn the entire token family to invalidate the attacker (and the legitimate
-            // user, who will be forced to log in again).
-            log.warn("Refresh token reuse detected for user id={}", stored.getUser().getId());
-            refreshTokenRepository.revokeAllActiveByUser(stored.getUser(), OffsetDateTime.now());
-            throw new AppException("Refresh token revoked", HttpStatus.UNAUTHORIZED);
-        }
-
+        // stored.isActive() holds at this point (not revoked, not expired).
         // Atomically rotate: a conditional UPDATE ensures only one of any
-        // concurrent refresh attempts for the same token succeeds. A losing
-        // racer sees 0 rows updated and is treated as reuse — the entire
-        // token family is burned to be safe.
+        // concurrent refresh attempts for the same not-yet-rotated token wins.
         OffsetDateTime now = OffsetDateTime.now();
         int rotated = refreshTokenRepository.revokeIfActive(rawRefreshToken, now);
         if (rotated == 0) {
-            log.warn("Concurrent refresh detected for user id={}, revoking token family",
-                    stored.getUser().getId());
-            refreshTokenRepository.revokeAllActiveByUser(stored.getUser(), now);
-            throw new AppException("Refresh token revoked", HttpStatus.UNAUTHORIZED);
+            // Someone else revoked this exact token between our checks above
+            // and the atomic update. Re-fetch it — it is now revoked — and
+            // let the same replacedBy logic decide whether this was a benign
+            // race or real reuse.
+            RefreshToken raced = refreshTokenRepository.findByToken(rawRefreshToken)
+                    .orElseThrow(() -> new AppException(INVALID_REFRESH_TOKEN_MESSAGE, HttpStatus.UNAUTHORIZED));
+            if (raced.isRevoked()) {
+                return handleRevokedToken(raced);
+            }
+            // Not revoked — it must have simply expired in the tiny window
+            // since our check above, rather than lost a rotation race.
+            log.warn("Refresh token expired for user id={} during rotation attempt",
+                    raced.getUser().getId());
+            throw new AppException(INVALID_REFRESH_TOKEN_MESSAGE, HttpStatus.UNAUTHORIZED);
         }
 
-        return buildAuthResponse(stored.getUser());
+        RefreshToken newToken = createAndSaveRefreshToken(stored.getUser());
+        refreshTokenRepository.linkReplacedBy(stored.getId(), newToken);
+
+        return buildAuthResponseFor(stored.getUser(), newToken);
+    }
+
+    /**
+     * Decides what to do with a refresh token that is already revoked,
+     * whether that was discovered on the initial lookup or after losing the
+     * atomic rotation race.
+     *
+     * <p>A non-null {@code replacedBy} pointer to a still-active token means
+     * another concurrent request already rotated this exact token moments
+     * ago — a benign race, not reuse — so the caller is handed the same new
+     * pair the winner received. Otherwise (no replacement, or the
+     * replacement has itself since been revoked, meaning the chain has moved
+     * on) this is a genuinely old token being replayed, so the entire token
+     * family is revoked.
+     *
+     * @param revoked the revoked refresh token that was presented
+     * @return {@link AuthResponse} derived from the replacement token, for the benign-race case
+     * @throws AppException HTTP 401 if this is real token reuse
+     */
+    private AuthResponse handleRevokedToken(RefreshToken revoked) {
+        RefreshToken replacement = revoked.getReplacedBy();
+        if (replacement != null && replacement.isActive()) {
+            log.info("Benign concurrent refresh for user id={}, returning already-rotated pair",
+                    revoked.getUser().getId());
+            return buildAuthResponseFor(revoked.getUser(), replacement);
+        }
+
+        // Reuse detected — a token that was already rotated (and whose
+        // replacement has moved on, or has none) is being presented again.
+        // Burn the entire token family to invalidate the attacker (and the
+        // legitimate user, who will be forced to log in again).
+        log.warn("Refresh token reuse detected for user id={}", revoked.getUser().getId());
+        refreshTokenRepository.revokeAllActiveByUser(revoked.getUser(), OffsetDateTime.now());
+        throw new AppException(INVALID_REFRESH_TOKEN_MESSAGE, HttpStatus.UNAUTHORIZED);
     }
 
     /**
@@ -186,20 +256,46 @@ public class AuthService {
      * @return {@link AuthResponse} ready to be sent to the client
      */
     private AuthResponse buildAuthResponse(User user) {
+        return buildAuthResponseFor(user, createAndSaveRefreshToken(user));
+    }
+
+    /**
+     * Builds the token pair returned to the client for a given user, reusing
+     * an already-created (and already-saved) refresh token entity rather than
+     * minting a new one.
+     *
+     * <p>Used both for the normal rotation path (the refresh token was just
+     * created) and for the benign-race path (the refresh token is the one a
+     * concurrent winning request already created).
+     *
+     * @param user             the user entity
+     * @param refreshTokenEntity the refresh token whose raw value is sent to the client
+     * @return {@link AuthResponse} ready to be sent to the client
+     */
+    private AuthResponse buildAuthResponseFor(User user, RefreshToken refreshTokenEntity) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         String accessToken = jwtUtil.generateAccessToken(userDetails);
-        String rawRefresh = jwtUtil.generateRefreshToken();
-
-        refreshTokenRepository.save(RefreshToken.builder()
-                .user(user)
-                .token(rawRefresh)
-                .expiresAt(OffsetDateTime.now().plusSeconds(refreshExpirySeconds))
-                .build());
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(rawRefresh)
+                .refreshToken(refreshTokenEntity.getToken())
                 .expiresIn(accessExpirySeconds)
                 .build();
+    }
+
+    /**
+     * Creates a new refresh token entity for the given user and persists it.
+     *
+     * @param user the user the token belongs to
+     * @return the newly created refresh token, with its raw value already set
+     */
+    private RefreshToken createAndSaveRefreshToken(User user) {
+        RefreshToken newToken = RefreshToken.builder()
+                .user(user)
+                .token(jwtUtil.generateRefreshToken())
+                .expiresAt(OffsetDateTime.now().plusSeconds(refreshExpirySeconds))
+                .build();
+        refreshTokenRepository.save(newToken);
+        return newToken;
     }
 }

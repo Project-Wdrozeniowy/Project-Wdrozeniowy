@@ -2,7 +2,6 @@ package com.devpulse.auth.controller;
 
 import com.devpulse.auth.dto.AuthRequest;
 import com.devpulse.auth.dto.AuthResponse;
-import com.devpulse.auth.dto.LogoutRequest;
 import com.devpulse.auth.dto.RefreshRequest;
 import com.devpulse.auth.dto.RegisterRequest;
 import com.devpulse.auth.service.AuthService;
@@ -79,7 +78,7 @@ public class AuthController {
      */
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(@Valid @RequestBody LogoutRequest request) {
+    public void logout(@Valid @RequestBody RefreshRequest request) {
         authService.logout(request.getRefreshToken());
     }
 }
