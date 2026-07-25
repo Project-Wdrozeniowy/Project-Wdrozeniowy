@@ -67,6 +67,20 @@ public class RefreshToken {
     private OffsetDateTime createdAt;
 
     /**
+     * The token that replaced this one when it was rotated, or {@code null}
+     * if this token has not been rotated (or was revoked for another reason,
+     * e.g. logout or reuse detection).
+     *
+     * <p>Set on the winning side of a refresh rotation so that a losing
+     * racer — a second, concurrent {@code /auth/refresh} call for the same
+     * not-yet-rotated token — can look up the token pair the winner already
+     * received instead of being treated as a token thief.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "replaced_by_token_id")
+    private RefreshToken replacedBy;
+
+    /**
      * Checks whether the token has expired.
      *
      * @return {@code true} if the current time is after {@link #expiresAt}

@@ -190,6 +190,7 @@ class AuthServiceTest {
         User user = User.builder()
                 .id(1L).username("alice").passwordHash("hashed").role(Role.USER).build();
         RefreshToken stored = RefreshToken.builder()
+                .id(10L)
                 .token("valid-refresh")
                 .user(user)
                 .expiresAt(OffsetDateTime.now().plusHours(1))
@@ -209,15 +210,20 @@ class AuthServiceTest {
         assertThat(response.getAccessToken()).isEqualTo("new-access-token");
         assertThat(response.getRefreshToken()).isEqualTo("rotated-refresh");
         assertThat(response.getExpiresIn()).isEqualTo(900L);
+        verify(refreshTokenRepository).linkReplacedBy(eq(10L), any(RefreshToken.class));
     }
 
     @Test
     void refresh_tokenNotFound_throwsUnauthorized() {
         when(refreshTokenRepository.findByToken("unknown-token")).thenReturn(Optional.empty());
 
+        // The client-facing message is deliberately generic so that an
+        // unauthenticated caller can't tell "never existed" apart from
+        // "expired" or "revoked" — see refresh_expiredToken_throwsUnauthorized
+        // and AuthServiceRefreshTest for the other two cases.
         assertThatThrownBy(() -> authService.refresh("unknown-token"))
                 .isInstanceOf(AppException.class)
-                .hasMessageContaining("not found")
+                .hasMessageContaining("Invalid refresh token")
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.UNAUTHORIZED));
     }
@@ -236,7 +242,7 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.refresh("expired-refresh"))
                 .isInstanceOf(AppException.class)
-                .hasMessageContaining("expired")
+                .hasMessageContaining("Invalid refresh token")
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.UNAUTHORIZED));
     }
