@@ -286,6 +286,16 @@ docs/
 
 6. **Swagger UI** — available at `http://localhost:8080/swagger-ui.html` in development. It must be **disabled in production**. Check `OpenApiConfig.java` when adding new endpoints.
 
+## Task Backlog Tracking
+
+- The shared executable backlog lives in [docs/agent-task-backlog/pwdrz-jira-tasks.json](docs/agent-task-backlog/pwdrz-jira-tasks.json).
+- Each issue keeps the original Jira payload plus a `localTracking` block for agent state.
+- Use `localTracking.status` values `pending`, `in_progress`, `blocked`, and `done`.
+- When you start a task, set `localTracking.status = in_progress`, fill `localTracking.owner`, and refresh `localTracking.updatedAt`.
+- When you finish a task, set `localTracking.status = done`, refresh `localTracking.updatedAt`, and add a short note in `localTracking.notes`.
+- Do not change the Jira payload when updating local status; the local tracking block is the execution record.
+- If you need to resume work, read the backlog file first and continue from the first `pending` or `blocked` task that is relevant.
+
 ---
 
 ## Agent Commit Policy
