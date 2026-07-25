@@ -110,6 +110,16 @@ npm run lint     # eslint src (--fix for gateway)
 
 7. **Do not commit or push** unless the user explicitly asks. Complete all edits and verifications, then stop.
 
+## Task Backlog Tracking
+
+- Use [docs/agent-task-backlog/pwdrz-jira-tasks.json](docs/agent-task-backlog/pwdrz-jira-tasks.json) as the shared execution backlog.
+- The file contains the full Jira export plus a separate `localTracking` block on each issue.
+- Treat Jira fields as read-only for execution tracking; only `localTracking.status`, `localTracking.updatedAt`, `localTracking.owner`, and `localTracking.notes` change during agent work.
+- Before starting a task, pick the next issue with `localTracking.status = pending` unless the user requested a specific issue key.
+- When a task is in progress, set `localTracking.status = in_progress` and record the agent or user responsible in `localTracking.owner`.
+- When a task is finished, set `localTracking.status = done`, refresh `localTracking.updatedAt`, and leave a brief note about what changed and where.
+- If work is blocked, set `localTracking.status = blocked` and explain the blocker in `localTracking.notes`.
+
 ---
 
 ## Architecture Decisions
