@@ -12,20 +12,27 @@ import com.devpulse.forum.entity.Post;
 import com.devpulse.forum.entity.PostStatus;
 import com.devpulse.forum.repository.CategoryRepository;
 import com.devpulse.forum.repository.PostRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,6 +56,18 @@ class PostServiceTest {
     void setUp() {
         author = User.builder().id(1L).username("alice").role(Role.USER).build();
         category = Category.builder().id(7L).name("News").slug("news").build();
+    }
+
+    @AfterEach
+    void clearAuth() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private static void setAuth(String username, String... roles) {
+        List<SimpleGrantedAuthority> authorities = java.util.Arrays.stream(roles)
+                .map(SimpleGrantedAuthority::new).toList();
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(username, "n/a", authorities));
     }
 
     @Test
@@ -81,6 +100,42 @@ class PostServiceTest {
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    void create_retriesSlugOnUniqueConstraintRace() {
+        when(currentUser.currentUser()).thenReturn(author);
+        when(categoryRepository.findById(7L)).thenReturn(Optional.of(category));
+        when(postRepository.existsBySlug("hello-world")).thenReturn(false);
+        when(postRepository.save(any(Post.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint"))
+                .thenAnswer(i -> {
+                    Post p = i.getArgument(0);
+                    p.setId(42L);
+                    return p;
+                });
+
+        CreatePostRequest req = new CreatePostRequest("Hello World", "body", 7L);
+        PostResponse response = postService.create(req);
+
+        assertThat(response.getId()).isEqualTo(42L);
+        assertThat(response.getSlug()).startsWith("hello-world-");
+        verify(postRepository, times(2)).save(any(Post.class));
+    }
+
+    @Test
+    void create_givesUpAfterRepeatedSlugCollisions() {
+        when(currentUser.currentUser()).thenReturn(author);
+        when(categoryRepository.findById(7L)).thenReturn(Optional.of(category));
+        when(postRepository.existsBySlug("hello-world")).thenReturn(false);
+        when(postRepository.save(any(Post.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint"));
+
+        CreatePostRequest req = new CreatePostRequest("Hello World", "body", 7L);
+
+        assertThatThrownBy(() -> postService.create(req))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        verify(postRepository, times(3)).save(any(Post.class));
     }
 
     @Test
@@ -117,6 +172,39 @@ class PostServiceTest {
     }
 
     @Test
+    void getById_hidesDraftFromOtherUser() {
+        Post post = Post.builder().id(1L).author(author).title("t").slug("t")
+                .content("c").status(PostStatus.DRAFT).build();
+        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+        setAuth("bob", "ROLE_USER");
+
+        assertThatThrownBy(() -> postService.getById(1L))
+                .isInstanceOf(AppException.class)
+                .satisfies(e -> assertThat(((AppException) e).getStatus())
+                        .isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void getById_allowsDraftForAuthor() {
+        Post post = Post.builder().id(1L).author(author).title("t").slug("t")
+                .content("c").status(PostStatus.DRAFT).build();
+        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+        setAuth("alice", "ROLE_USER");
+
+        assertThat(postService.getById(1L).getTitle()).isEqualTo("t");
+    }
+
+    @Test
+    void getById_allowsDraftForAdmin() {
+        Post post = Post.builder().id(1L).author(author).title("t").slug("t")
+                .content("c").status(PostStatus.DRAFT).build();
+        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+        setAuth("root", "ROLE_ADMIN");
+
+        assertThat(postService.getById(1L).getTitle()).isEqualTo("t");
+    }
+
+    @Test
     void getBySlug_returnsVisible() {
         Post post = Post.builder().id(1L).author(author).title("t").slug("t")
                 .content("c").status(PostStatus.PUBLISHED).build();
@@ -133,6 +221,29 @@ class PostServiceTest {
 
         assertThatThrownBy(() -> postService.getBySlug("t"))
                 .isInstanceOf(AppException.class);
+    }
+
+    @Test
+    void getBySlug_hidesDraftFromOtherUser() {
+        Post post = Post.builder().id(1L).author(author).title("t").slug("t")
+                .content("c").status(PostStatus.DRAFT).build();
+        when(postRepository.findBySlug("t")).thenReturn(Optional.of(post));
+        setAuth("bob", "ROLE_USER");
+
+        assertThatThrownBy(() -> postService.getBySlug("t"))
+                .isInstanceOf(AppException.class)
+                .satisfies(e -> assertThat(((AppException) e).getStatus())
+                        .isEqualTo(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void getBySlug_allowsDraftForAuthor() {
+        Post post = Post.builder().id(1L).author(author).title("t").slug("t")
+                .content("c").status(PostStatus.DRAFT).build();
+        when(postRepository.findBySlug("t")).thenReturn(Optional.of(post));
+        setAuth("alice", "ROLE_USER");
+
+        assertThat(postService.getBySlug("t").getTitle()).isEqualTo("t");
     }
 
     @Test

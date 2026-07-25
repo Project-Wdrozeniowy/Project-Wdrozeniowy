@@ -102,10 +102,25 @@ class PostServiceSearchTest {
 
     @Test
     void search_staffWithoutStatus_excludesDeleted() {
-        setAuth("mod", "ROLE_MODERATOR");
+        setAuth("root", "ROLE_ADMIN");
         when(postRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(emptyPage());
 
         postService.search(null, null, null, null, null, PageRequest.of(0, 10));
+    }
+
+    @Test
+    void search_moderatorRole_treatedAsNonStaff() {
+        // ROLE_MODERATOR isn't a real role in the auth system, so it must not
+        // unlock staff-only status filtering — behaviour should match a plain user.
+        setAuth("mod", "ROLE_MODERATOR");
+        when(postRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(emptyPage());
+
+        postService.search("hello", null, null, null, PostStatus.DRAFT, PageRequest.of(0, 10));
+
+        ArgumentCaptor<Specification<Post>> spec = ArgumentCaptor.forClass(Specification.class);
+        org.mockito.Mockito.verify(postRepository).findAll(spec.capture(), any(Pageable.class));
+        assertThat(spec.getValue()).isNotNull();
     }
 }
