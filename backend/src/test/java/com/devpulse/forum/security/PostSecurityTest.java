@@ -42,8 +42,14 @@ class PostSecurityTest {
     }
 
     @Test
-    void moderatorIsAlwaysAllowed() {
-        assertThat(postSecurity.isAuthorOrStaff(1L, auth("mod", "ROLE_MODERATOR"))).isTrue();
+    void moderatorRoleDoesNotGrantAccess() {
+        // ROLE_MODERATOR isn't a real role in the auth system (only USER/ADMIN exist),
+        // so an authority with that name must not be treated as staff.
+        User author = User.builder().id(1L).username("alice").role(Role.USER).build();
+        Post post = Post.builder().id(1L).author(author).build();
+        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+
+        assertThat(postSecurity.isAuthorOrStaff(1L, auth("mod", "ROLE_MODERATOR"))).isFalse();
     }
 
     @Test

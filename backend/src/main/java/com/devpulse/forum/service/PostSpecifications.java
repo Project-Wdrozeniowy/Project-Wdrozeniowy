@@ -21,18 +21,6 @@ public final class PostSpecifications {
     private PostSpecifications() {
     }
 
-    /** Case-insensitive substring match against the post title. */
-    public static Specification<Post> titleContains(String q) {
-        return (root, query, cb) ->
-                cb.like(cb.lower(root.get("title")), "%" + q.toLowerCase() + "%");
-    }
-
-    /** Case-insensitive substring match against the post content. */
-    public static Specification<Post> contentContains(String q) {
-        return (root, query, cb) ->
-                cb.like(cb.lower(root.get("content")), "%" + q.toLowerCase() + "%");
-    }
-
     /** Free-text search across title <em>and</em> content. */
     public static Specification<Post> textMatches(String q) {
         return (root, query, cb) -> cb.or(

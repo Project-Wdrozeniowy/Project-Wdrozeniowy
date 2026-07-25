@@ -13,9 +13,8 @@ import org.springframework.stereotype.Component;
  *
  * <p>A caller is allowed when any of the following holds:
  * <ul>
- *   <li>they are the original author of the post,</li>
- *   <li>they hold the {@code ADMIN} role, or</li>
- *   <li>they hold the {@code MODERATOR} role.</li>
+ *   <li>they are the original author of the post, or</li>
+ *   <li>they hold the {@code ADMIN} role.</li>
  * </ul>
  */
 @Component("postSecurity")
@@ -33,7 +32,7 @@ public class PostSecurity {
         if (authentication == null || !authentication.isAuthenticated()) {
             return false;
         }
-        if (hasRole(authentication, "ROLE_ADMIN") || hasRole(authentication, "ROLE_MODERATOR")) {
+        if (hasRole(authentication, "ROLE_ADMIN")) {
             return true;
         }
         return postRepository.findById(postId)
