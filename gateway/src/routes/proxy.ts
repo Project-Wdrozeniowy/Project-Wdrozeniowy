@@ -28,6 +28,7 @@ const proxyMiddleware = createProxyMiddleware({
   target: config.backendUrl,
   changeOrigin: true,
   pathFilter: '/api',
+  pathRewrite: { '^/api': '' },
   on: {
     error: handleProxyError,
   },
