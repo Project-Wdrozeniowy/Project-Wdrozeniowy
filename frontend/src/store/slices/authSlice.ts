@@ -1,11 +1,12 @@
 import type { StateCreator } from 'zustand';
-import type { User } from '@/types';
+import type { UserProfile } from '@/shared/types';
 
 export interface AuthSlice {
-  user: User | null;
-  token: string | null;
+  user: UserProfile | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
-  setUser: (user: User, token: string) => void;
+  setAuth: (user: UserProfile, accessToken: string, refreshToken: string) => void;
   logout: () => void;
 }
 
@@ -15,40 +16,43 @@ const getInitialToken = (): string | null => {
   }
 
   try {
-    return localStorage.getItem('token');
+    return localStorage.getItem('accessToken');
   } catch {
     return null;
   }
 };
 
 export const createAuthSlice: StateCreator<AuthSlice> = (set) => {
-  const token = getInitialToken();
+  const accessToken = getInitialToken();
 
   return {
     user: null,
-    token,
-    isAuthenticated: Boolean(token),
-    setUser: (user, token) => {
+    accessToken,
+    refreshToken: null,
+    isAuthenticated: Boolean(accessToken),
+    setAuth: (user, accessToken, refreshToken) => {
       if (typeof window !== 'undefined') {
         try {
-          localStorage.setItem('token', token);
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', refreshToken);
         } catch {
           // ignore storage errors (e.g. privacy mode)
         }
       }
 
-      set({ user, token, isAuthenticated: Boolean(token) });
+      set({ user, accessToken, refreshToken, isAuthenticated: true });
     },
     logout: () => {
       if (typeof window !== 'undefined') {
         try {
-          localStorage.removeItem('token');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
         } catch {
           // ignore storage errors (e.g. privacy mode)
         }
       }
 
-      set({ user: null, token: null, isAuthenticated: false });
+      set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
     },
   };
 };
