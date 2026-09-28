@@ -7,7 +7,7 @@ type ApiClientInstance = typeof ApiClientExport;
 // We need to test ApiClient by importing the module after mocking env vars.
 // Since apiClient is a singleton, we use the real axios interceptors via MockAdapter.
 
-describe('ApiClient – resolveBaseURL', () => {
+describe('ApiClient >-65 resolveBaseURL', () => {
   const originalEnv = process.env.NEXT_PUBLIC_API_URL;
 
   afterEach(() => {
@@ -44,7 +44,7 @@ describe('ApiClient – resolveBaseURL', () => {
   });
 });
 
-describe('ApiClient – HTTP methods', () => {
+describe('ApiClient >-65 HTTP methods', () => {
   let mock: MockAdapter;
   let testClient: ApiClientInstance;
 
@@ -92,14 +92,14 @@ describe('ApiClient – HTTP methods', () => {
   });
 });
 
-describe('ApiClient – request interceptor (Authorization header)', () => {
+describe('ApiClient >-65 request interceptor (Authorization header)', () => {
   afterEach(() => {
     localStorage.clear();
     vi.resetModules();
   });
 
   it('attaches Bearer token from localStorage when present', async () => {
-    localStorage.setItem('token', 'test-jwt-token');
+    localStorage.setItem('accessToken', 'test-jwt-token');
     vi.resetModules();
     const { apiClient } = await import('../api');
     const mock = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
@@ -116,7 +116,7 @@ describe('ApiClient – request interceptor (Authorization header)', () => {
   });
 
   it('does not attach Authorization when no token in localStorage', async () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
     vi.resetModules();
     const { apiClient } = await import('../api');
     const mock = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
@@ -133,7 +133,7 @@ describe('ApiClient – request interceptor (Authorization header)', () => {
   });
 });
 
-describe('ApiClient – response interceptor (401 redirect)', () => {
+describe('ApiClient >-65 response interceptor (401 redirect)', () => {
   afterEach(() => {
     vi.resetModules();
     localStorage.clear();

@@ -1,7 +1,7 @@
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import axios from 'axios';
 
-type RequestBody = Record<string, unknown> | FormData | null;
+type RequestBody = object | FormData | null;
 
 class ApiClient {
   private client: AxiosInstance;
@@ -10,12 +10,12 @@ class ApiClient {
     const envURL = process.env.NEXT_PUBLIC_API_URL;
     if (envURL) return envURL;
 
-    if (typeof window !== 'undefined') {
-      return '/api';
-    }
+    // Client-side: relative URL is fine — the browser resolves it against the origin
+    if (typeof window !== 'undefined') return '/api';
 
+    // Server-side in production: env var is required (relative URLs are invalid in Node.js)
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('NEXT_PUBLIC_API_URL is not set in production environment');
+      throw new Error('NEXT_PUBLIC_API_URL must be set in production');
     }
 
     return 'http://localhost:3000/api';
@@ -38,7 +38,7 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('token');
+          const token = localStorage.getItem('accessToken');
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
           }

@@ -7,7 +7,7 @@ vi.mock('next/dynamic', () => ({
   default: () => () => null,
 }));
 
-describe('QueryProvider', () => {
+describe('QueryProvider >-65', () => {
   it('renders children', () => {
     render(
       <QueryProvider>
