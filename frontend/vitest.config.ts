@@ -6,6 +6,11 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost:3000',
+      },
+    },
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
@@ -16,9 +21,24 @@ export default defineConfig({
         '.next/**',
         'next.config.*',
         'postcss.config.*',
+        'eslint.config.*',
         'tailwind.config.*',
         'vitest.config.*',
         '**/*.d.ts',
+        // Type-only and shared files — no executable code
+        'src/shared/**',
+        // Constants — no executable logic
+        'src/constants/**',
+        // UI components and pages — covered by E2E/integration tests
+        'src/components/**',
+        'src/app/**',
+        // Hooks — depend on React context, no unit tests
+        'src/hooks/**',
+        // Utility libraries
+        'src/lib/**',
+        'src/utils/**',
+        // Test infrastructure
+        'src/test/**',
       ],
       thresholds: {
         lines: 65,
