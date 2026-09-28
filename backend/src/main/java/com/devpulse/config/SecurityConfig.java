@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -74,8 +75,22 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Auth: login, register, refresh are fully public;
+                        // logout accepts only a refreshToken in body — no access token required
                         .requestMatchers("/auth/**").permitAll()
+                        // Forum browsing: only safe read methods are public
+                        .requestMatchers(HttpMethod.GET, "/forum/categories", "/forum/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/forum/posts", "/forum/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/forum/tags", "/forum/tags/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/forum/comments/**").permitAll()
+                        // Recommendations and public user profiles
+                        .requestMatchers(HttpMethod.GET, "/recommendations/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/users/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/users/*").permitAll()
+                        // OpenAPI / Swagger UI
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Everything else requires a valid JWT; fine-grained role checks via @PreAuthorize
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(eh -> eh
