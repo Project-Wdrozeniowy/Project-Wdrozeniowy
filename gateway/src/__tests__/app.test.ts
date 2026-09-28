@@ -4,6 +4,7 @@ import express from 'express';
 import type { Request, Response, NextFunction, Express } from 'express';
 import helmet from 'helmet';
 import app from '../app';
+import { errorHandler } from '../middleware/errorHandler';
 
 // Mock the proxy middleware so it doesn't try to forward requests to a real backend
 jest.mock('../routes/proxy', () => {
@@ -48,19 +49,23 @@ describe('Security headers (Helmet)', () => {
 
 describe('Auth guard on /api routes', () => {
   it('returns 401 when no Authorization header is provided', async () => {
-    const res = await request(app).get('/api/users');
+    const res = await request(app).get('/api/analytics/trends');
     expect(res.status).toBe(401);
-    expect(res.body).toHaveProperty('error');
+    expect(res.body).toHaveProperty('message');
   });
 
   it('returns 401 with "Missing or invalid Authorization header" message', async () => {
-    const res = await request(app).get('/api/users');
-    expect((res.body as { error: string }).error).toBe('Missing or invalid Authorization header');
+    const res = await request(app).get('/api/analytics/trends');
+    expect((res.body as { message: string }).message).toBe(
+      'Missing or invalid Authorization header'
+    );
   });
 
   it('passes auth guard with a valid Bearer token', async () => {
     const token = makeToken();
-    const res = await request(app).get('/api/users').set('Authorization', `Bearer ${token}`);
+    const res = await request(app)
+      .get('/api/analytics/trends')
+      .set('Authorization', `Bearer ${token}`);
     // Proxy mock calls next(), so Express responds with 404 (no route registered)
     // but it should NOT be 401
     expect(res.status).not.toBe(401);
@@ -71,9 +76,11 @@ describe('Auth guard on /api routes', () => {
       algorithm: 'HS256',
       expiresIn: -1,
     } as jwt.SignOptions);
-    const res = await request(app).get('/api/users').set('Authorization', `Bearer ${expiredToken}`);
+    const res = await request(app)
+      .get('/api/analytics/trends')
+      .set('Authorization', `Bearer ${expiredToken}`);
     expect(res.status).toBe(401);
-    expect((res.body as { error: string }).error).toBe('Token expired');
+    expect((res.body as { message: string }).message).toBe('Token expired');
   });
 
   it('allows POST /api/auth/login without a token (public route)', async () => {
@@ -111,12 +118,26 @@ describe('Global error handler', () => {
     errorApp.get('/boom', (_req: Request, _res: Response, next: NextFunction): void => {
       next(new Error('unexpected error'));
     });
-    errorApp.use((_err: Error, _req: Request, res: Response, _next: NextFunction): void => {
-      res.status(500).json({ error: 'Internal server error' });
-    });
+    errorApp.use(errorHandler);
 
     const res = await request(errorApp).get('/boom');
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: 'Internal server error' });
+    expect((res.body as { status: number; message: string }).status).toBe(500);
+    expect((res.body as { message: string }).message).toBe('Internal server error');
+  });
+});
+
+describe('Not found handler', () => {
+  it('returns a unified 404 JSON response for unknown paths', async () => {
+    const res = await request(app).get('/unknown-route');
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        status: 404,
+        error: 'Not Found',
+        message: 'Not found',
+        path: '/unknown-route',
+      })
+    );
   });
 });
