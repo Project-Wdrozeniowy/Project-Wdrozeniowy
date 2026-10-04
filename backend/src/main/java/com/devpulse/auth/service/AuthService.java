@@ -9,6 +9,8 @@ import com.devpulse.auth.repository.RefreshTokenRepository;
 import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.exception.AppException;
 import com.devpulse.security.JwtUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +52,9 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+
+    /** Used to reload a refresh token after a bulk update that bypasses the persistence context. */
+    private final EntityManager entityManager;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -175,18 +180,25 @@ public class AuthService {
         int rotated = refreshTokenRepository.revokeIfActive(rawRefreshToken, now);
         if (rotated == 0) {
             // Someone else revoked this exact token between our checks above
-            // and the atomic update. Re-fetch it — it is now revoked — and
-            // let the same replacedBy logic decide whether this was a benign
-            // race or real reuse.
-            RefreshToken raced = refreshTokenRepository.findByToken(rawRefreshToken)
-                    .orElseThrow(() -> new AppException(INVALID_REFRESH_TOKEN_MESSAGE, HttpStatus.UNAUTHORIZED));
-            if (raced.isRevoked()) {
-                return handleRevokedToken(raced);
+            // and the atomic update. The bulk UPDATE bypasses the persistence
+            // context, so `stored` still carries the pre-race state, and a
+            // fresh findByToken() would hand back this very same stale
+            // instance. Reload it from the database to see what the winner
+            // wrote, then let the same replacedBy logic decide whether this
+            // was a benign race or real reuse.
+            try {
+                entityManager.refresh(stored);
+            } catch (EntityNotFoundException e) {
+                log.warn("Refresh token vanished during rotation attempt");
+                throw new AppException(INVALID_REFRESH_TOKEN_MESSAGE, HttpStatus.UNAUTHORIZED);
+            }
+            if (stored.isRevoked()) {
+                return handleRevokedToken(stored);
             }
             // Not revoked — it must have simply expired in the tiny window
             // since our check above, rather than lost a rotation race.
             log.warn("Refresh token expired for user id={} during rotation attempt",
-                    raced.getUser().getId());
+                    stored.getUser().getId());
             throw new AppException(INVALID_REFRESH_TOKEN_MESSAGE, HttpStatus.UNAUTHORIZED);
         }
 
