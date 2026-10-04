@@ -1,7 +1,9 @@
 package com.devpulse.config;
 
 import com.devpulse.auth.filter.JwtAuthenticationFilter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +28,9 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.io.IOException;
+import java.net.URI;
 
 /**
  * Main Spring Security configuration.
@@ -53,10 +58,11 @@ public class SecurityConfig {
      * Jackson mapper used to serialise RFC 9457 ProblemDetail bodies written
      * directly from the security filter chain. A dedicated instance is used
      * instead of injecting one — the auto-configured web mapper is not
-     * guaranteed to be on the classpath in this build, and ProblemDetail
-     * needs only Jackson's default configuration.
+     * guaranteed to be on the classpath in this build. Null members are
+     * omitted so the body matches what MVC produces for the same ProblemDetail.
      */
-    private final ObjectMapper problemDetailObjectMapper = new ObjectMapper();
+    private final ObjectMapper problemDetailObjectMapper =
+            new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     /**
      * Defines the HTTP security filter chain.
@@ -110,7 +116,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationEntryPoint problemDetailAuthenticationEntryPoint() {
         return (request, response, authException) ->
-                writeProblemDetail(response, HttpStatus.UNAUTHORIZED, "Authentication failed");
+                writeProblemDetail(request, response, HttpStatus.UNAUTHORIZED, "Authentication failed");
     }
 
     /**
@@ -122,14 +128,16 @@ public class SecurityConfig {
     @Bean
     public AccessDeniedHandler problemDetailAccessDeniedHandler() {
         return (request, response, accessDeniedException) ->
-                writeProblemDetail(response, HttpStatus.FORBIDDEN, "Access is denied");
+                writeProblemDetail(request, response, HttpStatus.FORBIDDEN, "Access is denied");
     }
 
-    private void writeProblemDetail(HttpServletResponse response,
+    private void writeProblemDetail(HttpServletRequest request,
+                                    HttpServletResponse response,
                                     HttpStatus status,
-                                    String detail) throws java.io.IOException {
+                                    String detail) throws IOException {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, detail);
         pd.setTitle(status.getReasonPhrase());
+        pd.setInstance(URI.create(request.getRequestURI()));
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         problemDetailObjectMapper.writeValue(response.getOutputStream(), pd);

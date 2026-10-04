@@ -25,6 +25,8 @@ import java.util.Map;
  * <ul>
  *   <li>{@link AppException} — domain errors (409, 401, 404, etc.)</li>
  *   <li>{@link MethodArgumentNotValidException} — Bean Validation errors ({@code @Valid})</li>
+ *   <li>{@link AccessDeniedException} — authenticated caller lacks the required role (403)</li>
+ *   <li>{@link AuthenticationException} — failed login (401)</li>
  *   <li>{@link Exception} — unexpected errors (500 Internal Server Error)</li>
  * </ul>
  */
@@ -84,8 +86,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles authentication failures (missing or invalid credentials)
-     * raised by Spring Security before a principal is established.
+     * Handles authentication failures that surface inside a controller call,
+     * most notably {@code BadCredentialsException} thrown by the
+     * {@code AuthenticationManager} on {@code POST /auth/login}. Without this
+     * handler such failures would fall through to the generic handler and be
+     * reported as a 500.
+     *
+     * <p>Requests rejected earlier, inside the security filter chain (missing or
+     * invalid JWT), never reach MVC advice; those are answered by the
+     * {@code AuthenticationEntryPoint} configured in
+     * {@link com.devpulse.config.SecurityConfig}.
      *
      * @param ex the authentication exception
      * @return a {@link ProblemDetail} 401 with a generic message
