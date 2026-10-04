@@ -1,7 +1,7 @@
 package com.devpulse.auth.entity;
 
 /**
- * User roles in the Orbita Forum system.
+ * User roles in the DevPulse system.
  *
  * <p>Values are stored as strings in the {@code users.role} column
  * (PostgreSQL {@code user_role} enum) and mapped to Spring Security authorities

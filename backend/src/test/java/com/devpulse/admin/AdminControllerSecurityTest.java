@@ -50,7 +50,9 @@ class AdminControllerSecurityTest {
         mockMvc.perform(get("/admin/ping"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.title").value("Unauthorized"));
+                .andExpect(jsonPath("$.title").value("Unauthorized"))
+                .andExpect(jsonPath("$.detail").value("Authentication failed"))
+                .andExpect(jsonPath("$.instance").value("/admin/ping"));
     }
 
     /** A standard USER must be rejected with 403 by {@code @PreAuthorize}. */
@@ -58,7 +60,9 @@ class AdminControllerSecurityTest {
     @WithMockUser(username = "alice", roles = "USER")
     void standardUserIsForbidden() throws Exception {
         mockMvc.perform(get("/admin/ping"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.detail").value("Access is denied"));
     }
 
     /** A MODERATOR is also rejected with 403 — admin scope is strictly ADMIN. */
