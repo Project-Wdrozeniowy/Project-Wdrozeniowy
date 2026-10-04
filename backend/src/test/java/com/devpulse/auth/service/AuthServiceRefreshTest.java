@@ -7,6 +7,8 @@ import com.devpulse.auth.repository.RefreshTokenRepository;
 import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.exception.AppException;
 import com.devpulse.security.JwtUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +30,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -42,6 +46,7 @@ class AuthServiceRefreshTest {
 
     @Mock private UserRepository userRepository;
     @Mock private RefreshTokenRepository refreshTokenRepository;
+    @Mock private EntityManager entityManager;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtUtil jwtUtil;
     @Mock private AuthenticationManager authenticationManager;
@@ -102,25 +107,23 @@ class AuthServiceRefreshTest {
                 .token("winners-new-refresh")
                 .expiresAt(OffsetDateTime.now().plusDays(7))
                 .build();
-        RefreshToken beforeRace = RefreshToken.builder()
+        RefreshToken contended = RefreshToken.builder()
                 .id(10L)
                 .user(user)
                 .token("contended")
                 .expiresAt(OffsetDateTime.now().plusDays(1))
-                .build();
-        RefreshToken afterRace = RefreshToken.builder()
-                .id(10L)
-                .user(user)
-                .token("contended")
-                .expiresAt(OffsetDateTime.now().plusDays(1))
-                .revokedAt(OffsetDateTime.now())
-                .replacedBy(winnersNewToken)
                 .build();
 
-        when(refreshTokenRepository.findByToken("contended"))
-                .thenReturn(Optional.of(beforeRace))
-                .thenReturn(Optional.of(afterRace));
+        when(refreshTokenRepository.findByToken("contended")).thenReturn(Optional.of(contended));
         when(refreshTokenRepository.revokeIfActive(eq("contended"), any())).thenReturn(0);
+        // In a real persistence context the entity we already hold is stale after the
+        // winner's bulk UPDATE; refresh() is what pulls in the winner's revokedAt and
+        // replacedBy. The token must be re-read from the database, not looked up again.
+        doAnswer(invocation -> {
+            contended.setRevokedAt(OffsetDateTime.now());
+            contended.setReplacedBy(winnersNewToken);
+            return null;
+        }).when(entityManager).refresh(contended);
         UserBuilder ub = org.springframework.security.core.userdetails.User.withUsername("alice")
                 .password("h").roles("USER");
         when(userDetailsService.loadUserByUsername("alice")).thenReturn(ub.build());
@@ -130,9 +133,55 @@ class AuthServiceRefreshTest {
 
         assertThat(response.getAccessToken()).isEqualTo("new-access-for-loser");
         assertThat(response.getRefreshToken()).isEqualTo("winners-new-refresh");
+        verify(entityManager, times(1)).refresh(contended);
+        verify(refreshTokenRepository, times(1)).findByToken("contended");
         verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
         verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
         verify(jwtUtil, never()).generateRefreshToken();
+    }
+
+    @Test
+    void refreshLostRaceOnTokenThatExpiredInTheMeantimeIsRejectedWithoutBurningTheFamily() {
+        // The atomic UPDATE touched no row, yet the reloaded token is not revoked:
+        // it simply ran out between our expiry check and the UPDATE.
+        RefreshToken contended = RefreshToken.builder()
+                .id(10L)
+                .user(user)
+                .token("contended")
+                .expiresAt(OffsetDateTime.now().plusDays(1))
+                .build();
+        when(refreshTokenRepository.findByToken("contended")).thenReturn(Optional.of(contended));
+        when(refreshTokenRepository.revokeIfActive(eq("contended"), any())).thenReturn(0);
+        doAnswer(invocation -> {
+            contended.setExpiresAt(OffsetDateTime.now().minusSeconds(1));
+            return null;
+        }).when(entityManager).refresh(contended);
+
+        assertThatThrownBy(() -> authService.refresh("contended"))
+                .isInstanceOfSatisfying(AppException.class,
+                        e -> assertThat(e.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED));
+
+        verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+    }
+
+    @Test
+    void refreshLostRaceOnTokenDeletedInTheMeantimeIsRejected() {
+        RefreshToken contended = RefreshToken.builder()
+                .id(10L)
+                .user(user)
+                .token("contended")
+                .expiresAt(OffsetDateTime.now().plusDays(1))
+                .build();
+        when(refreshTokenRepository.findByToken("contended")).thenReturn(Optional.of(contended));
+        when(refreshTokenRepository.revokeIfActive(eq("contended"), any())).thenReturn(0);
+        doThrow(new EntityNotFoundException("gone")).when(entityManager).refresh(contended);
+
+        assertThatThrownBy(() -> authService.refresh("contended"))
+                .isInstanceOfSatisfying(AppException.class,
+                        e -> assertThat(e.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED));
+
+        verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
     }
 
     @Test
