@@ -41,6 +41,13 @@ export enum Topic {
 
 export const TOPIC_LABELS = Object.values(Topic);
 
+/** Filter value meaning "no topic selected". */
+export const ALL_TOPICS = 'All';
+
+export function isTopic(value: string | null): value is Topic {
+  return TOPIC_LABELS.some((label) => label === value);
+}
+
 export const CATEGORY_COLORS: Record<Topic, string> = {
   [Topic.AI]: 'border-cat-ai text-cat-ai',
   [Topic.Gaming]: 'border-cat-gaming text-cat-gaming',
