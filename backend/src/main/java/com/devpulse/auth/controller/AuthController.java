@@ -26,8 +26,8 @@ import org.springframework.web.bind.annotation.*;
  * <ul>
  *   <li>{@code POST /auth/register} — register a new account</li>
  *   <li>{@code POST /auth/login}    — log in and receive a token pair</li>
- *   <li>{@code POST /auth/refresh}  — refresh the access token</li>
- *   <li>{@code POST /auth/logout}   — revoke the refresh token</li>
+ *   <li>{@code POST /auth/refresh}  — refresh the access token (rotates the refresh token)</li>
+ *   <li>{@code POST /auth/logout}   — revoke a refresh token</li>
  * </ul>
  */
 @Tag(name = "Auth", description = "Registration, login, token management")
@@ -76,8 +76,11 @@ public class AuthController {
     /**
      * Refreshes the access token using a valid refresh token.
      *
+     * <p>The refresh token is rotated: the presented value is invalidated
+     * and the response contains a new access/refresh token pair.
+     *
      * @param request object containing the refresh token
-     * @return {@link AuthResponse} with a new access token; HTTP 200
+     * @return {@link AuthResponse} with a new access and refresh token; HTTP 200
      */
     @Operation(summary = "Refresh the access token")
     @ApiResponses({
@@ -90,16 +93,19 @@ public class AuthController {
     }
 
     /**
-     * Revokes the given refresh token, effectively logging out the user.
+     * Logs the caller out by revoking the given refresh token.
+     *
+     * <p>Idempotent — unknown or already-revoked tokens return 204 without
+     * disclosing whether the token existed.
      *
      * @param request object containing the refresh token to revoke
      */
     @Operation(summary = "Logout — revoke refresh token",
-            description = "Revokes the supplied refresh token. No access token is required; the refresh token itself acts as the credential.")
+            description = "Revokes the supplied refresh token. No access token is required; the refresh token itself acts as the credential. "
+                    + "Idempotent: unknown or already-revoked tokens also return 204.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Logged out"),
-        @ApiResponse(responseCode = "400", description = "Validation error"),
-        @ApiResponse(responseCode = "401", description = "Refresh token not found")
+        @ApiResponse(responseCode = "400", description = "Validation error")
     })
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
