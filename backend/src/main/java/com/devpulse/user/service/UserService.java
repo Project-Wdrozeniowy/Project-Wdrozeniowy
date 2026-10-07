@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.OffsetDateTime;
+
 /**
  * Business logic for user profile management.
  *
@@ -119,8 +121,8 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        // Force re-login on every active device by removing existing refresh tokens.
-        refreshTokenRepository.deleteAllByUser(user);
+        // Force re-login on every device, this one included, by revoking all active refresh tokens.
+        refreshTokenRepository.revokeAllActiveByUser(user, OffsetDateTime.now());
     }
 
     private static AppException emailTaken() {

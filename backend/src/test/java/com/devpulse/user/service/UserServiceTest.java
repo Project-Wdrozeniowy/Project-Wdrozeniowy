@@ -21,11 +21,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -185,7 +187,7 @@ class UserServiceTest {
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.BAD_REQUEST));
         verify(userRepository, never()).save(any());
-        verify(refreshTokenRepository, never()).deleteAllByUser(any());
+        verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
     }
 
     @Test
@@ -200,6 +202,6 @@ class UserServiceTest {
 
         assertThat(principal.getPasswordHash()).isEqualTo("newHash");
         verify(userRepository).save(principal);
-        verify(refreshTokenRepository).deleteAllByUser(principal);
+        verify(refreshTokenRepository).revokeAllActiveByUser(eq(principal), any(OffsetDateTime.class));
     }
 }
