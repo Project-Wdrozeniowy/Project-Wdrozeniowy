@@ -1,19 +1,20 @@
 import { apiClient } from './api';
-import type { User, ApiResponse } from '../types';
+import type {
+  ChangePasswordRequest,
+  MyProfile,
+  UpdateProfileRequest,
+  UserProfile,
+} from '@/shared/types';
 
 export const userService = {
-  // Specify the return type
-  getUsers: (): Promise<ApiResponse<User[]>> => apiClient.get<ApiResponse<User[]>>('/users'),
+  getProfile: (username: string): Promise<UserProfile> =>
+    apiClient.get<UserProfile>(`/users/${username}`),
 
-  getUser: (id: string): Promise<ApiResponse<User>> =>
-    apiClient.get<ApiResponse<User>>(`/users/${id}`),
+  getMyProfile: (): Promise<MyProfile> => apiClient.get<MyProfile>('/users/me'),
 
-  createUser: (data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<User>> =>
-    apiClient.post<ApiResponse<User>>('/users', data),
+  updateMyProfile: (data: UpdateProfileRequest): Promise<MyProfile> =>
+    apiClient.patch<MyProfile>('/users/me', data),
 
-  updateUser: (id: string, data: Partial<User>): Promise<ApiResponse<User>> =>
-    apiClient.patch<ApiResponse<User>>(`/users/${id}`, data),
-
-  deleteUser: (id: string): Promise<ApiResponse<null>> =>
-    apiClient.delete<ApiResponse<null>>(`/users/${id}`),
+  changePassword: (data: ChangePasswordRequest): Promise<void> =>
+    apiClient.post<void>('/users/me/password', data),
 };
