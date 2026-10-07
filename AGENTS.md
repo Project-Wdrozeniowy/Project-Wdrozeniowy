@@ -177,6 +177,8 @@ cd backend
 
 Test config: `src/test/resources/application-test.properties` — overrides datasource, disables Flyway, uses `create-drop` DDL.
 
+`MigrationSchemaTest` is the exception: it applies the real Flyway migrations to a separate `migration_test` schema and runs Hibernate `validate` against them. When you map a new table or column (especially a PostgreSQL enum, which needs `@JdbcTypeCode(SqlTypes.NAMED_ENUM)`), add a round-trip case there; `create-drop` tests will not notice a mismatch with the migrations.
+
 ---
 
 ## Code Style
