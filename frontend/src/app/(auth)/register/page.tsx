@@ -15,7 +15,9 @@ import { useStore } from '@/store';
 import { CATEGORIES } from '@/constants/categories';
 import OrbitaLogo from '@/components/ui/OrbitaLogo';
 import FormField from '@/components/ui/FormField';
+import { apiErrorMessage } from '@/lib/apiError';
 import { cn } from '@/lib/cn';
+import { toast } from '@/lib/toast';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -45,10 +47,10 @@ export default function RegisterPage() {
       localStorage.setItem('accessToken', accessToken);
       const user = await userService.getMyProfile();
       setAuth(user, accessToken, refreshToken);
+      toast.success('Your account has been created.');
       router.push('/');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
-      setServerError(message);
+      setServerError(apiErrorMessage(err, 'Registration failed. Please try again.'));
     }
   }
 
