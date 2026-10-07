@@ -77,6 +77,22 @@ class UserDetailsServiceImplTest {
     }
 
     @Test
+    void loadUserByUsername_moderatorRole_mapsToRoleModeratorAuthority() {
+        User user = User.builder()
+                .username("mod")
+                .passwordHash("hashed")
+                .role(Role.MODERATOR)
+                .build();
+        when(userRepository.findByUsername("mod")).thenReturn(Optional.of(user));
+
+        UserDetails details = userDetailsService.loadUserByUsername("mod");
+
+        assertThat(details.getAuthorities())
+                .extracting(GrantedAuthority::getAuthority)
+                .containsExactly("ROLE_MODERATOR");
+    }
+
+    @Test
     void loadUserByUsername_unknownUser_throwsUsernameNotFoundException() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
