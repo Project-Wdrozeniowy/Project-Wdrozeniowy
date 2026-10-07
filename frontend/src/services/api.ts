@@ -1,7 +1,13 @@
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import axios from 'axios';
+import type { ProblemDetail } from '@/shared/types';
+import { toast } from '@/lib/toast';
 
 type RequestBody = object | FormData | null;
+
+const FALLBACK_ERROR_MESSAGE = 'Something went wrong. Please try again.';
+// A fixed id makes sonner replace the toast instead of stacking one per failed request.
+const API_ERROR_TOAST_ID = 'api-error';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -50,9 +56,18 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401 && typeof window !== 'undefined') {
-          window.location.href = '/login';
+      (error: AxiosError<ProblemDetail>) => {
+        if (typeof window !== 'undefined') {
+          const status = error.response?.status;
+          // /auth endpoints return expected 401s (bad credentials, no session) that callers handle.
+          const isAuthEndpoint = error.config?.url?.startsWith('/auth');
+
+          if (status === 401 && !isAuthEndpoint) {
+            window.location.href = '/login';
+          } else if (status === undefined || status >= 500) {
+            // 4xx errors are handled by the caller (form errors etc.); only unexpected failures toast.
+            toast.error(error.response?.data?.detail ?? FALLBACK_ERROR_MESSAGE, API_ERROR_TOAST_ID);
+          }
         }
         return Promise.reject(error);
       }

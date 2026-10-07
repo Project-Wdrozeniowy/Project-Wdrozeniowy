@@ -157,3 +157,55 @@ describe('ApiClient >-65 response interceptor (401 redirect)', () => {
     mock.restore();
   });
 });
+
+describe('ApiClient response interceptor (error toasts)', () => {
+  async function setup() {
+    vi.resetModules();
+    const toastModule = await import('@/lib/toast');
+    const errorSpy = vi.spyOn(toastModule.toast, 'error').mockImplementation(() => 'toast-id');
+    const { apiClient } = await import('../api');
+    const mock = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
+    return { apiClient, mock, errorSpy };
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('toasts the ProblemDetail detail on 5xx', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    mock.onGet('/boom').reply(500, { status: 500, detail: 'Database is down' });
+
+    await expect(apiClient.get('/boom')).rejects.toBeDefined();
+    expect(errorSpy).toHaveBeenCalledWith('Database is down', 'api-error');
+  });
+
+  it('toasts a fallback message on network errors', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    mock.onGet('/offline').networkError();
+
+    await expect(apiClient.get('/offline')).rejects.toBeDefined();
+    expect(errorSpy).toHaveBeenCalledWith('Something went wrong. Please try again.', 'api-error');
+  });
+
+  it('does not toast 4xx errors', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    mock.onGet('/missing').reply(404, { status: 404, detail: 'Not found' });
+
+    await expect(apiClient.get('/missing')).rejects.toBeDefined();
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not redirect on 401 from /auth endpoints', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: { ...window.location, href: '/login' },
+    });
+    mock.onPost('/auth/login').reply(401, { status: 401, detail: 'Bad credentials' });
+
+    await expect(apiClient.post('/auth/login', {})).rejects.toBeDefined();
+    expect(window.location.href).toBe('/login');
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+});
