@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 
 /**
@@ -38,12 +39,13 @@ import java.time.OffsetDateTime;
  *
  * <p>Refresh tokens are rotated on every successful refresh, and the old
  * token is left pointing (via {@code replacedBy}) at the new one. If an
- * already-revoked token is presented again, that pointer tells us whether
- * this is a benign concurrent refresh (two requests racing for the same
- * not-yet-rotated token — the loser simply gets the same new pair the
- * winner already received) or genuine reuse of an old, already-superseded
- * token, in which case the whole token family for that user is revoked —
- * a textbook refresh-token reuse detection that catches stolen tokens.
+ * already-revoked token is presented again, that pointer and the time of the
+ * revocation tell us whether this is a benign concurrent refresh (two
+ * requests racing for the same not-yet-rotated token within
+ * {@link #ROTATION_GRACE} — the loser simply gets the same new pair the
+ * winner already received) or reuse of a superseded token, in which case the
+ * whole token family for that user is revoked — a textbook refresh-token
+ * reuse detection that catches stolen tokens.
  */
 @Slf4j
 @Service
@@ -80,6 +82,15 @@ public class AuthService {
      * is still recorded in the server logs for observability.
      */
     private static final String INVALID_REFRESH_TOKEN_MESSAGE = "Invalid refresh token";
+
+    /**
+     * How long after a rotation the previous refresh token is still exchanged
+     * for the pair it was rotated into. This covers requests that race for the
+     * same token (two tabs, a client retry); the window has to stay short,
+     * because within it a stolen copy of the previous token works as well.
+     * After it, presenting the previous token counts as reuse.
+     */
+    static final Duration ROTATION_GRACE = Duration.ofSeconds(30);
 
     /**
      * Registers a new user and returns a token pair.
@@ -139,20 +150,26 @@ public class AuthService {
      * token is left pointing at the new one via {@code replacedBy}.
      *
      * <p>If the presented token is already revoked, the {@code replacedBy}
-     * pointer decides what happens next:
+     * pointer and the revocation time decide what happens next:
      * <ul>
-     *   <li>if it points at a still-active token, this is a benign
-     *   concurrent refresh (two requests racing for the same not-yet-rotated
-     *   token) — the caller gets the same new pair the winner already got</li>
-     *   <li>otherwise, an old, already-superseded token is being replayed —
-     *   real reuse — so every active token for that user is revoked</li>
+     *   <li>if it was rotated less than {@link #ROTATION_GRACE} ago into a
+     *   still-active token, this is a benign concurrent refresh (two requests
+     *   racing for the same not-yet-rotated token) — the caller gets the same
+     *   new pair the winner already got</li>
+     *   <li>otherwise a superseded token is being replayed — real reuse — so
+     *   every active token for that user is revoked</li>
      * </ul>
+     *
+     * <p>The revocation of the token family has to survive the 401 that
+     * follows it, hence {@code noRollbackFor}: by default an
+     * {@link AppException} would roll the revocation back together with the
+     * rest of the transaction. No other path writes before throwing.
      *
      * @param rawRefreshToken the refresh token value from the client request
      * @return {@link AuthResponse} with new access and refresh tokens
      * @throws AppException HTTP 401 if the token is unknown, expired or revoked
      */
-    @Transactional
+    @Transactional(noRollbackFor = AppException.class)
     public AuthResponse refresh(String rawRefreshToken) {
         RefreshToken stored = refreshTokenRepository.findByToken(rawRefreshToken)
                 .orElseThrow(() -> {
@@ -213,13 +230,13 @@ public class AuthService {
      * whether that was discovered on the initial lookup or after losing the
      * atomic rotation race.
      *
-     * <p>A non-null {@code replacedBy} pointer to a still-active token means
-     * another concurrent request already rotated this exact token moments
-     * ago — a benign race, not reuse — so the caller is handed the same new
-     * pair the winner received. Otherwise (no replacement, or the
-     * replacement has itself since been revoked, meaning the chain has moved
-     * on) this is a genuinely old token being replayed, so the entire token
-     * family is revoked.
+     * <p>A token that was rotated less than {@link #ROTATION_GRACE} ago into a
+     * still-active replacement means another concurrent request rotated this
+     * exact token moments ago — a benign race, not reuse — so the caller is
+     * handed the same new pair the winner received. Otherwise (no
+     * replacement, the replacement has itself been revoked, or the rotation
+     * is older than the grace period) a superseded token is being replayed,
+     * so the entire token family is revoked.
      *
      * @param revoked the revoked refresh token that was presented
      * @return {@link AuthResponse} derived from the replacement token, for the benign-race case
@@ -227,7 +244,9 @@ public class AuthService {
      */
     private AuthResponse handleRevokedToken(RefreshToken revoked) {
         RefreshToken replacement = revoked.getReplacedBy();
-        if (replacement != null && replacement.isActive()) {
+        boolean rotatedJustNow = revoked.getRevokedAt()
+                .isAfter(OffsetDateTime.now().minus(ROTATION_GRACE));
+        if (replacement != null && replacement.isActive() && rotatedJustNow) {
             log.info("Benign concurrent refresh for user id={}, returning already-rotated pair",
                     revoked.getUser().getId());
             return buildAuthResponseFor(revoked.getUser(), replacement);
