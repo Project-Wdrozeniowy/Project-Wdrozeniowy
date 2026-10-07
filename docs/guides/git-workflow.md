@@ -4,17 +4,17 @@
 
 | Branch         | Purpose                                              |
 | -------------- | ---------------------------------------------------- |
-| `main`         | Production. Only fast-forwards from `develop` after a release tag. |
-| `develop`      | Integration branch. All feature work merges here. |
+| `main`         | Production. Updated from `develop` for a release. |
+| `develop`      | Integration branch. Every PR targets it. |
 | `feature/*`    | Day-to-day work. One ticket per branch. |
-| `bugfix/*`     | Bug fixes that do not match a Jira feature. |
-| `hotfix/*`     | Emergency fixes against `main`. |
+| `bugfix/*`     | Bug fixes. |
+| `hotfix/*`     | Urgent fixes that should skip the normal queue; they still target `develop`. |
 | `docs/*`       | Documentation-only changes. |
 
 ### Naming pattern
 
 ```
-feature/PWDRZ-<ticket>-<kebab-case-summary>
+<type>/PWDRZ-<ticket>-<kebab-case-summary>
 ```
 
 Examples:
@@ -56,38 +56,38 @@ WIP
 
 ## Pull requests
 
-- Target branch is **`develop`** for everything that is not a hotfix.
+- Target branch is **`develop`**.
 - Title matches the commit subject: `[PWDRZ-XX]: <summary>`.
-- Body sections:
-  - **Summary** — 2–5 bullets describing the change.
-  - **Test plan** — checklist of how the reviewer can verify it (build, tests,
-    manual smoke).
-  - Optional **Notes** — follow-ups, known limitations.
-- Link the Jira ticket at the bottom: `Closes PWDRZ-XX`.
+- Body follows the PR template (`.github/pull_request_template.md`):
+  **Summary**, **How to Test**, **Jira Ticket**, optional **Notes / Risks**.
+  [branch_namings.md](./branch_namings.md) explains how to fill it in.
 
 ### Stacked PRs
 
 If a PR depends on another open PR (e.g. PWDRZ-69 builds on PWDRZ-65), set the
 **base branch** to the dependency's branch. Once the dependency merges,
-retarget the base to `develop`.
+retarget the base to `develop`. Because the dependency was squash-merged, your
+branch still contains its original commits: merge `develop` into your branch
+(or rebase only your own commits onto it) before asking for another review.
 
 ### Review
 
-- At least one human approval is required on every PR (branch protection).
+- Ask for at least one review from a teammate before merging. The `develop`
+  ruleset doesn't require an approval, so this is a team rule, not a check.
+- All review threads must be resolved before merging (enforced).
 - Re-request review after pushing changes.
-- Squash on merge unless there is a reason to preserve history.
+- PRs into `develop` are **squash-merged** (the only merge method the ruleset
+  allows), so the PR title becomes the commit subject on `develop`.
 
 ## CI requirements
 
-A PR can only merge when **all** of these are green (see
-[testing.md](./testing.md) for thresholds):
+Merge only when every check on the PR is green (see [testing.md](./testing.md)
+for thresholds). The ruleset doesn't enforce this, so it's up to whoever merges.
 
-- `Build Backend`
-- `Backend Tests`
-- `Frontend Lint & Format Check`
-- `Frontend Tests`
-- `Gateway Lint & Format Check`
-- `Gateway Tests`
+- `Build Backend`, `Build Frontend`, `Build Gateway`: only run when that
+  workspace changed
+- `Backend Tests`, `Frontend Tests`, `Gateway Tests`
+- `Frontend Lint & Format Check`, `Gateway Lint & Format Check`
 
 If a check fails, fix the cause; do **not** disable the check.
 

@@ -18,31 +18,34 @@ Every workspace has its own runner. The three rules below apply everywhere:
 | Mocking               | Mockito (`@ExtendWith(MockitoExtension.class)`) |
 | Assertions            | AssertJ (`assertThat`, `assertThatThrownBy`) |
 | Spring integration    | `@SpringBootTest` + `MockMvcBuilders.standaloneSetup(controller)` for focused controller slices; `webAppContextSetup(...).apply(springSecurity())` when the full security filter chain must be exercised |
-| Coverage              | JaCoCo, ≥ **65%** line coverage (see `backend/pom.xml`) |
-| Excluded packages     | `BackendApplication`, `auth.dto.**`, `auth.entity.**`, `exception.**`, `config.**` |
+| Real schema           | `@MigratedSchemaTest` (`com.devpulse.support`), see below |
+| Coverage              | JaCoCo, ≥ **65%** line coverage, enforced by `./mvnw verify` |
+| Excluded packages     | listed in the `jacoco-maven-plugin` `check` execution in `backend/pom.xml` |
 
 ### Naming
 
-```
-<method>_<state-or-scenario>_<expected-outcome>
-```
-
-Examples (from `AuthServiceTest`):
+Name a test after the behaviour it checks. Two styles are in use; stay
+consistent within a class:
 
 ```
-register_happyPath_returnsTokenPair
-login_badCredentials_propagatesAuthenticationException
-refresh_validToken_rotatesAccessAndRefreshTokens
+register_success                                 <method>_<scenario>[_<outcome>]
+replayingARotatedTokenRevokesTheWholeFamily      a sentence in camelCase
 ```
 
 ### Layout
 
 - Unit tests: pure Mockito, no Spring context — fast, used for services and
   pure helpers.
-- Integration tests: `@SpringBootTest` with `@ActiveProfiles("test")` and the
-  test Postgres from `docker-compose.yml`. Use these for security filter
-  behaviour, controller wiring and JPA queries that you cannot validate with
-  mocks alone.
+- Integration tests: `@SpringBootTest` with `@ActiveProfiles("test")` against a
+  real PostgreSQL (CI starts a `postgres:16` service; locally point
+  `SPRING_DATASOURCE_URL` at any PostgreSQL 16). The test profile uses
+  `ddl-auto=create-drop`, so Hibernate builds its own tables.
+- Real-schema tests: annotate the class with `@MigratedSchemaTest` instead. It
+  applies the Flyway migrations to a separate `migration_test` schema and runs
+  Hibernate `validate` against them. Use it for anything that depends on the
+  real schema: native enum columns (`@JdbcTypeCode(SqlTypes.NAMED_ENUM)`),
+  defaults, constraints, bulk updates and transactions. Add a round-trip case
+  to `MigrationSchemaTest` whenever you map a new table or enum column.
 - MockMvc setup: `MockMvcBuilders.standaloneSetup(controller)` is the default
   for controller tests today (see `AuthControllerTest`). For tests that need
   the full security filter chain (auth entry point, `@PreAuthorize`,
@@ -53,8 +56,8 @@ refresh_validToken_rotatesAccessAndRefreshTokens
 ### Anti-patterns
 
 - Do not test getters/setters or Lombok-generated code.
-- Do not assert exact strings of internal error messages — assert status code
-  and an exception type only.
+- Do not assert exact strings of internal log messages. Asserting the
+  ProblemDetail `detail` a client sees is fine; it is part of the API.
 - Do not write a test whose only assertion is `Mockito.verify(repo).save(...)`
   unless the save is the **observable behaviour** of the method.
 
@@ -101,7 +104,7 @@ Focus areas:
 ## Running the suites
 
 ```
-# Backend (requires Postgres on :5432)
+# Backend (requires PostgreSQL; override SPRING_DATASOURCE_URL/USERNAME/PASSWORD if needed)
 ./mvnw -q -f backend/pom.xml verify
 
 # Frontend
