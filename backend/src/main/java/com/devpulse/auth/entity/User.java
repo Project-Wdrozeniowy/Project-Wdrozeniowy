@@ -6,7 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 
@@ -71,8 +73,13 @@ public class User {
     /**
      * User role defining their permissions.
      * Default value: {@link Role#USER}.
+     *
+     * <p>Stored in the PostgreSQL enum column {@code user_role}, hence
+     * {@link SqlTypes#NAMED_ENUM}: a plain string mapping binds the value as
+     * {@code varchar}, which PostgreSQL refuses to assign to an enum column.
      */
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
     @Builder.Default
     private Role role = Role.USER;
