@@ -378,4 +378,25 @@ class AuthServiceRefreshTest {
 
         verify(refreshTokenRepository, never()).save(any());
     }
+
+    @Test
+    void refreshWithMissingTokenThrowsUnauthorizedWithoutLookup() {
+        assertThatThrownBy(() -> authService.refresh(null))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("Invalid refresh token")
+                .satisfies(e -> assertThat(((AppException) e).getStatus())
+                        .isEqualTo(HttpStatus.UNAUTHORIZED));
+        assertThatThrownBy(() -> authService.refresh("  "))
+                .isInstanceOf(AppException.class);
+
+        verify(refreshTokenRepository, never()).findByToken(any());
+    }
+
+    @Test
+    void logoutWithMissingTokenIsNoOp() {
+        authService.logout(null);
+        authService.logout("");
+
+        verify(refreshTokenRepository, never()).findByToken(any());
+    }
 }

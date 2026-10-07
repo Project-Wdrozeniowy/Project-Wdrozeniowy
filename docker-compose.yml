@@ -44,6 +44,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-900}
       JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-604800}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
     depends_on:
       postgres:
