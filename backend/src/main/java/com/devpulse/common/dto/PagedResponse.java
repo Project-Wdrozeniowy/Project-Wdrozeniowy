@@ -38,6 +38,11 @@ public class PagedResponse<T> {
     @Schema(description = "Whether this is the last page")
     private boolean last;
 
+    /** Wraps a Spring Data {@link Page} whose content is already mapped to DTOs. */
+    public static <T> PagedResponse<T> from(Page<T> page) {
+        return from(page, Function.identity());
+    }
+
     /** Maps a Spring Data {@link Page} of entities into a {@link PagedResponse} of DTOs. */
     public static <E, T> PagedResponse<T> from(Page<E> page, Function<E, T> mapper) {
         return PagedResponse.<T>builder()

@@ -2,6 +2,9 @@ package com.devpulse.auth.repository;
 
 import com.devpulse.auth.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -40,4 +43,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return {@code true} if an account with that email already exists
      */
     boolean existsByEmail(String email);
+
+    /**
+     * Atomically adds {@code delta} to the user's post counter. A bulk update,
+     * so concurrent posts by the same user don't overwrite each other's count.
+     *
+     * @param userId the author
+     * @param delta  {@code +1} or {@code -1}
+     * @return the number of updated rows
+     */
+    @Modifying
+    @Query("UPDATE User u SET u.postCount = u.postCount + :delta WHERE u.id = :userId")
+    int adjustPostCount(@Param("userId") Long userId, @Param("delta") int delta);
 }

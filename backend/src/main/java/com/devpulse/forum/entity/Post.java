@@ -5,19 +5,25 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Entity representing a forum post.
  *
  * <p>Maps to the {@code posts} table created by migration V2. The
  * aggregate counters ({@code view_count}, {@code vote_score},
- * {@code comment_count}) are maintained by background jobs and read-only
- * from the post management endpoints.
+ * {@code comment_count}) belong to the views, votes and comments features
+ * and are read-only from the post management endpoints.
  */
 @Entity
 @Table(name = "posts")
@@ -50,14 +56,26 @@ public class Post {
     @Column(nullable = false, columnDefinition = "text")
     private String content;
 
+    /** Stored in the PostgreSQL enum column {@code post_status}, hence {@link SqlTypes#NAMED_ENUM}. */
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
     @Builder.Default
     private PostStatus status = PostStatus.PUBLISHED;
 
     @Column(name = "is_pinned", nullable = false)
     @Builder.Default
-    private Boolean isPinned = false;
+    private boolean pinned = false;
+
+    /** Tags attached through the {@code post_tags} join table. */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "post_tags",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    @Builder.Default
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private Set<Tag> tags = new LinkedHashSet<>();
 
     @Column(name = "view_count", nullable = false)
     @Builder.Default
