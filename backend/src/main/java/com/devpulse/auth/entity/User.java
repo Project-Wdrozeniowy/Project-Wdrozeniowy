@@ -6,7 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 
@@ -19,9 +21,13 @@ import java.time.OffsetDateTime;
  *
  * <p>The user's {@link Role} determines their permissions:
  * <ul>
- *   <li>{@code USER}  — standard permissions (create posts, comments, vote)</li>
- *   <li>{@code ADMIN} — full access, including content moderation</li>
+ *   <li>{@code USER}      — standard permissions (create posts, comments, vote)</li>
+ *   <li>{@code MODERATOR} — USER permissions plus content moderation</li>
+ *   <li>{@code ADMIN}     — full access, including user management</li>
  * </ul>
+ *
+ * <p>Profile fields ({@code displayName}, {@code avatarUrl}, {@code bio}) are optional
+ * and editable through the {@code /users/me} endpoints.
  */
 @Entity
 @Table(name = "users")
@@ -51,14 +57,58 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    /** Optional public display name (falls back to {@link #username} in the UI). */
+    @Column(name = "display_name", length = 100)
+    private String displayName;
+
+    /** Optional URL pointing to the user's avatar image. */
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
+    /** Optional short biography shown on the public profile page. */
+    @Column(columnDefinition = "text")
+    private String bio;
+
     /**
      * User role defining their permissions.
      * Default value: {@link Role#USER}.
+     *
+     * <p>Stored in the PostgreSQL enum column {@code user_role}, hence
+     * {@link SqlTypes#NAMED_ENUM}: a plain string mapping binds the value as
+     * {@code varchar}, which PostgreSQL refuses to assign to an enum column.
      */
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
     @Builder.Default
     private Role role = Role.USER;
+
+    /**
+     * Account lifecycle status.
+     * Default value: {@link UserStatus#ACTIVE}.
+     *
+     * <p>Stored in the PostgreSQL enum column {@code user_status}; see {@link #role}
+     * for why it needs {@link SqlTypes#NAMED_ENUM}.
+     */
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
+
+    /** Reason recorded by a moderator when banning the account; {@code null} otherwise. */
+    @Column(name = "ban_reason", columnDefinition = "text")
+    private String banReason;
+
+    /** Denormalised number of the user's public posts, shown on the profile; maintained by {@code PostService}. */
+    @Column(name = "post_count", nullable = false)
+    @Builder.Default
+    private Integer postCount = 0;
+
+    /** Denormalised number of comments written by the user, shown on the profile. */
+    @Column(name = "comment_count", nullable = false)
+    @Builder.Default
+    private Integer commentCount = 0;
 
     /** Timestamp of account creation — set automatically, immutable. */
     @CreationTimestamp
