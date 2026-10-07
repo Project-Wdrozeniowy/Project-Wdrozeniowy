@@ -2,14 +2,19 @@ package com.devpulse.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,11 +32,15 @@ import java.util.Map;
  *   <li>{@link MethodArgumentNotValidException} — Bean Validation errors ({@code @Valid})</li>
  *   <li>{@link AccessDeniedException} — authenticated caller lacks the required role (403)</li>
  *   <li>{@link AuthenticationException} — failed login (401)</li>
+ *   <li>Spring MVC's own errors — malformed JSON, wrong parameter types, unknown
+ *       paths, unsupported methods or media types, {@code ResponseStatusException}
+ *       — keep their status (400, 404, 405, 415, ...); this comes from
+ *       {@link ResponseEntityExceptionHandler}</li>
  *   <li>{@link Exception} — unexpected errors (500 Internal Server Error)</li>
  * </ul>
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
@@ -57,8 +66,11 @@ public class GlobalExceptionHandler {
      * @param ex the exception containing the list of validation errors
      * @return a {@link ProblemDetail} 400 with a map of field-level errors
      */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatusCode status,
+                                                                  WebRequest request) {
         Map<String, String> errors = new HashMap<>();
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
             errors.put(fe.getField(), fe.getDefaultMessage());
@@ -66,7 +78,7 @@ public class GlobalExceptionHandler {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
         pd.setTitle("Validation Error");
         pd.setProperty("errors", errors);
-        return pd;
+        return handleExceptionInternal(ex, pd, headers, HttpStatus.BAD_REQUEST, request);
     }
 
     /**
