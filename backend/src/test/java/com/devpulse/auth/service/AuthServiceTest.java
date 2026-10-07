@@ -32,6 +32,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -164,7 +165,7 @@ class AuthServiceTest {
 
         assertThat(response.getAccessToken()).isEqualTo("access-token");
         assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
-        verify(refreshTokenRepository).deleteAllByUser(user);
+        verify(refreshTokenRepository).revokeAllActiveByUser(eq(user), any(OffsetDateTime.class));
     }
 
     @Test
@@ -185,42 +186,50 @@ class AuthServiceTest {
     // ───────────────────────── refresh ─────────────────────────
 
     @Test
-    void refresh_validToken_returnsNewAccessTokenAndSameRefreshToken() {
+    void refresh_validToken_rotatesAccessAndRefreshTokens() {
         User user = User.builder()
                 .id(1L).username("alice").passwordHash("hashed").role(Role.USER).build();
         RefreshToken stored = RefreshToken.builder()
+                .id(10L)
                 .token("valid-refresh")
                 .user(user)
                 .expiresAt(OffsetDateTime.now().plusHours(1))
                 .build();
 
         when(refreshTokenRepository.findByToken("valid-refresh")).thenReturn(Optional.of(stored));
+        when(refreshTokenRepository.revokeIfActive(eq("valid-refresh"), any())).thenReturn(1);
 
         UserDetails ud = org.springframework.security.core.userdetails.User
                 .withUsername("alice").password("hashed").authorities(Collections.emptyList()).build();
         when(userDetailsService.loadUserByUsername("alice")).thenReturn(ud);
         when(jwtUtil.generateAccessToken(ud)).thenReturn("new-access-token");
+        when(jwtUtil.generateRefreshToken()).thenReturn("rotated-refresh");
 
         AuthResponse response = authService.refresh("valid-refresh");
 
         assertThat(response.getAccessToken()).isEqualTo("new-access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("valid-refresh");
+        assertThat(response.getRefreshToken()).isEqualTo("rotated-refresh");
         assertThat(response.getExpiresIn()).isEqualTo(900L);
+        verify(refreshTokenRepository).linkReplacedBy(eq(10L), any(RefreshToken.class));
     }
 
     @Test
     void refresh_tokenNotFound_throwsUnauthorized() {
         when(refreshTokenRepository.findByToken("unknown-token")).thenReturn(Optional.empty());
 
+        // The client-facing message is deliberately generic so that an
+        // unauthenticated caller can't tell "never existed" apart from
+        // "expired" or "revoked" — see refresh_expiredToken_throwsUnauthorized
+        // and AuthServiceRefreshTest for the other two cases.
         assertThatThrownBy(() -> authService.refresh("unknown-token"))
                 .isInstanceOf(AppException.class)
-                .hasMessageContaining("not found")
+                .hasMessageContaining("Invalid refresh token")
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.UNAUTHORIZED));
     }
 
     @Test
-    void refresh_expiredToken_deletesTokenAndThrowsUnauthorized() {
+    void refresh_expiredToken_throwsUnauthorized() {
         User user = User.builder()
                 .id(1L).username("alice").passwordHash("hashed").role(Role.USER).build();
         RefreshToken expired = RefreshToken.builder()
@@ -233,10 +242,8 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.refresh("expired-refresh"))
                 .isInstanceOf(AppException.class)
-                .hasMessageContaining("expired")
+                .hasMessageContaining("Invalid refresh token")
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.UNAUTHORIZED));
-
-        verify(refreshTokenRepository).delete(expired);
     }
 }
