@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { UserProfile } from '@/shared/types';
+import type { MyProfile, UserProfile } from '@/shared/types';
 
 // Mock the apiClient singleton
 const mockApiClient = {
@@ -29,6 +29,8 @@ const mockProfile: UserProfile = {
   createdAt: '2024-01-01T00:00:00.000Z',
 };
 
+const mockMyProfile: MyProfile = { ...mockProfile, email: 'john@example.com' };
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -44,20 +46,29 @@ describe('userService.getProfile >-65 GET /users/:username', () => {
 
 describe('userService.getMyProfile >-65 GET /users/me', () => {
   it('calls apiClient.get with /users/me', async () => {
-    mockApiClient.get.mockResolvedValue(mockProfile);
+    mockApiClient.get.mockResolvedValue(mockMyProfile);
     const result = await userService.getMyProfile();
     expect(mockApiClient.get).toHaveBeenCalledWith('/users/me');
-    expect(result).toEqual(mockProfile);
+    expect(result.email).toBe('john@example.com');
   });
 });
 
 describe('userService.updateMyProfile >-65 PATCH /users/me', () => {
   it('calls apiClient.patch with /users/me and data', async () => {
     const updateData = { displayName: 'Jane Doe' };
-    const updated = { ...mockProfile, displayName: 'Jane Doe' };
+    const updated = { ...mockMyProfile, displayName: 'Jane Doe' };
     mockApiClient.patch.mockResolvedValue(updated);
     const result = await userService.updateMyProfile(updateData);
     expect(mockApiClient.patch).toHaveBeenCalledWith('/users/me', updateData);
     expect(result.displayName).toBe('Jane Doe');
+  });
+});
+
+describe('userService.changePassword >-65 POST /users/me/password', () => {
+  it('calls apiClient.post with /users/me/password and both passwords', async () => {
+    const data = { currentPassword: 'old-password', newPassword: 'new-password' };
+    mockApiClient.post.mockResolvedValue(undefined);
+    await userService.changePassword(data);
+    expect(mockApiClient.post).toHaveBeenCalledWith('/users/me/password', data);
   });
 });
