@@ -1,5 +1,6 @@
 package com.devpulse.forum.dto;
 
+import com.devpulse.forum.entity.Post;
 import com.devpulse.user.dto.UserSummaryDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -51,4 +52,26 @@ public class PostSummaryDto {
 
     @Schema(description = "Creation timestamp")
     private OffsetDateTime createdAt;
+
+    /** Builds the listing representation of {@code post}. */
+    public static PostSummaryDto from(Post post) {
+        return fill(PostSummaryDto.builder(), post).build();
+    }
+
+    /** Copies the summary fields of {@code post} into {@code builder}. */
+    static <B extends PostSummaryDtoBuilder<?, ?>> B fill(B builder, Post post) {
+        builder.id(post.getId())
+                .title(post.getTitle())
+                .slug(post.getSlug())
+                .status(post.getStatus().name())
+                .pinned(post.isPinned())
+                .viewCount(post.getViewCount())
+                .voteScore(post.getVoteScore())
+                .commentCount(post.getCommentCount())
+                .category(CategoryDto.from(post.getCategory()))
+                .author(UserSummaryDto.from(post.getAuthor()))
+                .lastActivityAt(post.getLastActivityAt())
+                .createdAt(post.getCreatedAt());
+        return builder;
+    }
 }

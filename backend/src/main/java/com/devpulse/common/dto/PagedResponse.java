@@ -5,8 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.function.Function;
 
 @Getter
 @Builder
@@ -35,4 +37,22 @@ public class PagedResponse<T> {
 
     @Schema(description = "Whether this is the last page")
     private boolean last;
+
+    /** Wraps a Spring Data {@link Page} whose content is already mapped to DTOs. */
+    public static <T> PagedResponse<T> from(Page<T> page) {
+        return from(page, Function.identity());
+    }
+
+    /** Maps a Spring Data {@link Page} of entities into a {@link PagedResponse} of DTOs. */
+    public static <E, T> PagedResponse<T> from(Page<E> page, Function<E, T> mapper) {
+        return PagedResponse.<T>builder()
+                .content(page.map(mapper).getContent())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .build();
+    }
 }
