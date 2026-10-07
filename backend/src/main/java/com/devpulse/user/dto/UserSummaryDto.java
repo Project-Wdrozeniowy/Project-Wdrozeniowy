@@ -1,5 +1,6 @@
 package com.devpulse.user.dto;
 
+import com.devpulse.auth.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,4 +28,15 @@ public class UserSummaryDto {
 
     @Schema(description = "User role", example = "USER", allowableValues = {"USER", "MODERATOR", "ADMIN"})
     private String role;
+
+    /** Builds the summary of {@code user}. */
+    public static UserSummaryDto from(User user) {
+        return UserSummaryDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
+                .role(user.getRole().name())
+                .build();
+    }
 }

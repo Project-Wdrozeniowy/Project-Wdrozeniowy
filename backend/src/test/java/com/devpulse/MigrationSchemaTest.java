@@ -4,6 +4,9 @@ import com.devpulse.auth.entity.Role;
 import com.devpulse.auth.entity.User;
 import com.devpulse.auth.entity.UserStatus;
 import com.devpulse.auth.repository.UserRepository;
+import com.devpulse.forum.entity.Post;
+import com.devpulse.forum.entity.PostStatus;
+import com.devpulse.forum.repository.PostRepository;
 import com.devpulse.support.MigratedSchemaTest;
 import jakarta.persistence.EntityManager;
 import org.flywaydb.core.Flyway;
@@ -32,6 +35,9 @@ class MigrationSchemaTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     @Autowired
     private EntityManager entityManager;
@@ -74,6 +80,27 @@ class MigrationSchemaTest {
         assertThat(userRepository.findById(id))
                 .get()
                 .extracting(User::getStatus)
+                .isEqualTo(status);
+    }
+
+    /** {@code posts.status} is the native {@code post_status} enum, and every Java constant exists in it. */
+    @ParameterizedTest
+    @EnumSource(PostStatus.class)
+    void postStatusRoundTripsThroughNativeEnum(PostStatus status) {
+        String name = "post-" + status.name().toLowerCase();
+        User author = userRepository.saveAndFlush(user(name, Role.USER));
+        Long id = postRepository.saveAndFlush(Post.builder()
+                .author(author)
+                .title(name)
+                .slug("schema-" + name)
+                .content("content")
+                .status(status)
+                .build()).getId();
+        entityManager.clear();
+
+        assertThat(postRepository.findById(id))
+                .get()
+                .extracting(Post::getStatus)
                 .isEqualTo(status);
     }
 

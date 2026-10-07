@@ -9,14 +9,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,54 +27,48 @@ class PostSecurityTest {
     @InjectMocks private PostSecurity postSecurity;
 
     private static Authentication auth(String username, String... roles) {
-        List<SimpleGrantedAuthority> authorities = java.util.Arrays.stream(roles)
-                .map(SimpleGrantedAuthority::new).toList();
-        return new UsernamePasswordAuthenticationToken(username, "n/a", authorities);
+        return new UsernamePasswordAuthenticationToken(username, "n/a", AuthorityUtils.createAuthorityList(roles));
+    }
+
+    private void postBy(String username) {
+        User author = User.builder().id(1L).username(username).role(Role.USER).build();
+        when(postRepository.findBySlug("hello")).thenReturn(Optional.of(Post.builder().slug("hello").author(author).build()));
     }
 
     @Test
     void anonymousIsDenied() {
-        assertThat(postSecurity.isAuthorOrStaff(1L, null)).isFalse();
+        Authentication anonymous = new AnonymousAuthenticationToken(
+                "key", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
+
+        assertThat(postSecurity.canModify("hello", null)).isFalse();
+        assertThat(postSecurity.canModify("hello", anonymous)).isFalse();
     }
 
     @Test
-    void adminIsAlwaysAllowed() {
-        assertThat(postSecurity.isAuthorOrStaff(1L, auth("root", "ROLE_ADMIN"))).isTrue();
-    }
-
-    @Test
-    void moderatorRoleDoesNotGrantAccess() {
-        // ROLE_MODERATOR isn't a real role in the auth system (only USER/ADMIN exist),
-        // so an authority with that name must not be treated as staff.
-        User author = User.builder().id(1L).username("alice").role(Role.USER).build();
-        Post post = Post.builder().id(1L).author(author).build();
-        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
-
-        assertThat(postSecurity.isAuthorOrStaff(1L, auth("mod", "ROLE_MODERATOR"))).isFalse();
+    void adminAndModeratorAreAllowedWithoutLookup() {
+        assertThat(postSecurity.canModify("hello", auth("root", "ROLE_ADMIN"))).isTrue();
+        assertThat(postSecurity.canModify("hello", auth("mod", "ROLE_MODERATOR"))).isTrue();
+        verifyNoInteractions(postRepository);
     }
 
     @Test
     void authorIsAllowed() {
-        User author = User.builder().id(1L).username("alice").role(Role.USER).build();
-        Post post = Post.builder().id(1L).author(author).build();
-        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+        postBy("alice");
 
-        assertThat(postSecurity.isAuthorOrStaff(1L, auth("alice", "ROLE_USER"))).isTrue();
+        assertThat(postSecurity.canModify("hello", auth("alice", "ROLE_USER"))).isTrue();
     }
 
     @Test
     void otherUserIsDenied() {
-        User author = User.builder().id(1L).username("alice").role(Role.USER).build();
-        Post post = Post.builder().id(1L).author(author).build();
-        when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+        postBy("alice");
 
-        assertThat(postSecurity.isAuthorOrStaff(1L, auth("bob", "ROLE_USER"))).isFalse();
+        assertThat(postSecurity.canModify("hello", auth("bob", "ROLE_USER"))).isFalse();
     }
 
     @Test
-    void missingPostIsDenied() {
-        when(postRepository.findById(99L)).thenReturn(Optional.empty());
+    void unknownSlugIsLeftToTheServiceToAnswer404() {
+        when(postRepository.findBySlug("ghost")).thenReturn(Optional.empty());
 
-        assertThat(postSecurity.isAuthorOrStaff(99L, auth("alice", "ROLE_USER"))).isFalse();
+        assertThat(postSecurity.canModify("ghost", auth("bob", "ROLE_USER"))).isTrue();
     }
 }

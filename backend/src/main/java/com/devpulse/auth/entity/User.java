@@ -100,7 +100,7 @@ public class User {
     @Column(name = "ban_reason", columnDefinition = "text")
     private String banReason;
 
-    /** Denormalised number of posts written by the user, shown on the profile. */
+    /** Denormalised number of the user's public posts, shown on the profile; maintained by {@code PostService}. */
     @Column(name = "post_count", nullable = false)
     @Builder.Default
     private Integer postCount = 0;
