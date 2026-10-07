@@ -41,9 +41,9 @@ com.devpulse.auth.repository.UserRepository
 | Filter          | `Filter`       | `JwtAuthenticationFilter` |
 | Utility         | `Util`         | `JwtUtil`, `SlugUtil`  |
 | DTO — inbound   | `Request`      | `CreatePostRequest`    |
-| DTO — outbound  | `Response`     | `PostResponse`         |
-| DTO — listing   | `SummaryResponse` | `PostSummaryResponse` |
-| Generic wrapper | `Response`     | `PagedResponse<T>`     |
+| DTO — outbound  | `Dto`          | `PostDto`, `UserProfileDto` |
+| DTO — listing   | `SummaryDto`   | `PostSummaryDto`, `UserSummaryDto` |
+| Generic wrapper | `Response`     | `PagedResponse<T>`, `AuthResponse` |
 | Exception       | `Exception`    | `AppException`         |
 | Exception advice| `Handler`      | `GlobalExceptionHandler` |
 | Test            | `Test`         | `PostServiceTest`      |
@@ -76,11 +76,17 @@ com.devpulse.auth.repository.UserRepository
 
 ### Lombok
 
-- `@Data @Builder @NoArgsConstructor @AllArgsConstructor` on entities and DTOs.
+- Entities: `@Builder @NoArgsConstructor @AllArgsConstructor` plus `@Data`, or
+  `@Getter @Setter` when the entity has collections or bidirectional
+  associations (generated `equals`/`hashCode`/`toString` would walk them).
+- Response DTOs: `@Getter @Builder` (`@SuperBuilder` when one extends another)
+  with a static `from(entity)` factory.
+- Request DTOs: `@Data @NoArgsConstructor`, **without** `@AllArgsConstructor`.
+  Jackson 3 would deserialize through the all-args constructor and fail on a
+  missing primitive field.
 - `@RequiredArgsConstructor` on services/controllers (`final` field injection
   — no `@Autowired`).
-- `@Slf4j` for loggers; do not declare `private static final Logger log`
-  by hand.
+- `@Slf4j` for loggers in new code.
 
 ## Frontend (TypeScript / React)
 
@@ -93,7 +99,7 @@ com.devpulse.auth.repository.UserRepository
 | Hook                 | `useThing.ts`         |
 | Service / API client | `camelCase.ts` (e.g. `userService.ts`) |
 | Store slice          | `camelCaseSlice.ts` under `store/slices/` |
-| Type declarations    | `src/types/index.ts` (single re-export entry) |
+| Type declarations    | `src/shared/types/index.ts` (single entry)  |
 | Test                 | `__tests__/Thing.test.tsx`, sibling to source |
 
 ### Functions and variables
@@ -117,7 +123,8 @@ com.devpulse.auth.repository.UserRepository
 - **No `I` prefix**. `User`, not `IUser`.
 - Component props named `<ComponentName>Props`:
   `interface PostCardProps { … }`.
-- Generic wrappers reused across resources: `ApiResponse<T>`, `Paginated<T>`.
+- Generic wrappers reused across resources: `PagedResponse<T>`, matching the
+  backend's `PagedResponse`. API responses are not wrapped in an envelope.
 
 ### State (Zustand)
 
@@ -138,8 +145,8 @@ com.devpulse.auth.repository.UserRepository
 ### Styling
 
 - Tailwind utility classes inline. No CSS modules.
-- Long class lists are split onto multiple lines using template strings or
-  `clsx` once it is added. Conditional classes go through `clsx`.
+- Conditional or long class lists go through `cn()` from `@/lib/cn` (a thin
+  wrapper around `clsx`).
 
 ## Gateway (TypeScript / Node)
 
@@ -155,11 +162,11 @@ com.devpulse.auth.repository.UserRepository
 
 ### Functions
 
-- Middleware factories: `verbNoun` returning a middleware function
-  (`requireAuth`, `rateLimitPerIp`).
-- Proxy handlers: `proxyToBackend`.
-- Express handlers: `(req, res, next) => …` — typed via `RequestHandler<…>`
-  with the request / response shape mirrored from the backend DTO.
+- Middleware modules default-export the middleware, named after what it does
+  (`authMiddleware`, `corsMiddleware`, `rateLimiter`, `errorHandler`).
+- Proxies: `proxyMiddleware`, `wsProxyMiddleware`.
+- Express handlers: `(req, res, next) => …` typed with Express's
+  `Request` / `Response` / `NextFunction`.
 
 ### Configuration
 
@@ -171,5 +178,5 @@ com.devpulse.auth.repository.UserRepository
 
 See [git-workflow.md](./git-workflow.md). Quick summary:
 
-- Branch: `feature/PWDRZ-XX-short-description`
+- Branch: `type/PWDRZ-XX-short-description` (`feature`, `bugfix`, `hotfix`, `docs`)
 - Commit & PR title: `[PWDRZ-XX]: Short imperative summary`

@@ -8,21 +8,23 @@ the three workspaces (backend, frontend, gateway).
 
 | Document | Purpose |
 | --- | --- |
-| [architecture.md](./architecture.md) | Monorepo layout, module responsibilities, deployment topology |
+| [architecture.md](./architecture.md) | Monorepo layout, module responsibilities, request flow |
 | [naming-conventions.md](./naming-conventions.md) | Class / file / function / type naming for backend, frontend and gateway |
-| [git-workflow.md](./git-workflow.md) | Branches, commit messages, PR titles, code review |
-| [testing.md](./testing.md) | Test layout, coverage thresholds, naming patterns |
-| [frontend-backend-integration.md](./frontend-backend-integration.md) | API contract notes: how the frontend should consume the current backend endpoints |
+| [git-workflow.md](./git-workflow.md) | Branches, commit messages, PR titles, code review, merging |
+| [testing.md](./testing.md) | Test layout, coverage thresholds, tests against the real schema |
+| [branch_namings.md](./branch_namings.md) | How to write a PR description |
+| [working_with_branches.md](./working_with_branches.md) | Day-to-day branching commands |
 
 ## Quick rules
 
-1. **Branch names**: `feature/PWDRZ-XX-short-description`
-2. **Commit / PR title**: `[PWDRZ-XX]: Short imperative summary`
+1. **Branch names**: `type/PWDRZ-XX-short-description`, where `type` is `feature`, `bugfix`, `hotfix` or `docs`.
+2. **Commit / PR title**: `[PWDRZ-XX]: Short imperative summary`.
 3. **Comments and identifiers are English-only.** Russian / Polish only in user-facing copy.
 4. **Tests must keep coverage above the configured threshold** (see [testing.md](./testing.md)).
-5. **Never invent shared types by hand** — until an OpenAPI contract is in place,
-   the backend response shape is the source of truth; mirror it in the frontend
-   `src/types/` and gateway `src/types/` directories with the same field names.
+5. **The API contract is the backend's OpenAPI description** (Swagger UI at
+   `/swagger-ui.html` when `SWAGGER_ENABLED=true`). The frontend mirrors it in
+   `frontend/src/shared/types/index.ts` with the same field names. Change both in
+   the same PR, and never invent a response shape on one side only.
 
 ## How to extend these docs
 
