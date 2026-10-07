@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ChevronRightIcon } from '@/components/ui/icons';
 import { TRENDING_TOPICS } from '@/constants/sidebar';
+import { cn } from '@/lib/cn';
 
 export default function TrendingTopics() {
   return (
@@ -15,7 +16,7 @@ export default function TrendingTopics() {
           >
             <div className="flex items-center gap-3">
               <span className="text-slate-400 font-bold text-xl w-4 text-center">{rank}</span>
-              <span className={`w-3 h-3 rounded-full ${color} shrink-0`} />
+              <span className={cn('w-3 h-3 rounded-full shrink-0', color)} />
               <span className="text-gray-50 text-sm group-hover:text-blue-400 transition-colors">
                 {name}
               </span>

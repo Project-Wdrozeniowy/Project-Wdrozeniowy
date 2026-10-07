@@ -1,5 +1,6 @@
 package com.devpulse.forum.dto;
 
+import com.devpulse.forum.entity.Post;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Getter
@@ -24,4 +26,16 @@ public class PostDto extends PostSummaryDto {
 
     @Schema(description = "Last update timestamp")
     private OffsetDateTime updatedAt;
+
+    /** Builds the full representation of {@code post}, including content and tags. */
+    public static PostDto from(Post post) {
+        return fill(PostDto.builder(), post)
+                .content(post.getContent())
+                .tags(post.getTags().stream()
+                        .map(TagDto::from)
+                        .sorted(Comparator.comparing(TagDto::getSlug))
+                        .toList())
+                .updatedAt(post.getUpdatedAt())
+                .build();
+    }
 }

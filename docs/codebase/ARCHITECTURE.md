@@ -45,7 +45,7 @@ PostgreSQL 16 (Flyway-managed schema)
 ```
 
 Flow description:
-1. Browser sends request. Token (if any) is attached from `localStorage` by the axios interceptor in [frontend/src/services/api.ts](../../frontend/src/services/api.ts).
+1. Browser sends request. Token (if any) is attached from in-memory `tokenMemory` by the axios interceptor in [frontend/src/services/api.ts](../../frontend/src/services/api.ts).
 2. Gateway checks public-route list. If route is not public, JWT is verified with `jsonwebtoken` using the shared `JWT_SECRET`.
 3. Verified request is proxied to `BACKEND_URL` (Spring Boot).
 4. Spring Security's `JwtAuthenticationFilter` re-validates the same JWT and populates `SecurityContext`.

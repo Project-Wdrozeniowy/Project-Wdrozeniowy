@@ -1,9 +1,7 @@
 'use client';
 
-import { CATEGORIES } from '@/constants/categories';
+import { ALL_TOPICS, CATEGORIES } from '@/constants/categories';
 import { cn } from '@/lib/cn';
-
-const ALL_LABEL = 'All';
 
 interface Props {
   active: string;
@@ -11,13 +9,15 @@ interface Props {
 }
 
 export default function CategoryFilter({ active, onSelect }: Props) {
-  const labels = [ALL_LABEL, ...CATEGORIES.map((c) => c.label)];
+  const labels = [ALL_TOPICS, ...CATEGORIES.map((c) => c.label)];
 
   return (
     <div className="flex flex-wrap gap-2">
       {labels.map((label) => (
         <button
           key={label}
+          type="button"
+          aria-pressed={active === label}
           onClick={() => onSelect(label)}
           className={cn(
             'px-3 py-1.5 rounded text-sm font-semibold transition-colors',

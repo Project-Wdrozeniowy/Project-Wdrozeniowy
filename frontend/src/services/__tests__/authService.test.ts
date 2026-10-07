@@ -12,10 +12,10 @@ vi.mock('@/services/api', () => ({
 }));
 
 const { authService } = await import('@/services/authService');
+const { tokenMemory } = await import('@/lib/tokenMemory');
 
 const mockAuthResponse = {
   accessToken: 'access-token',
-  refreshToken: 'refresh-token',
   tokenType: 'Bearer',
   expiresIn: 3600,
 };
@@ -48,26 +48,27 @@ describe('authService.login >-65 POST /auth/login', () => {
   });
 });
 
-describe('authService.refresh >-65 POST /auth/refresh', () => {
-  it('calls apiClient.post with /auth/refresh and refresh token', async () => {
-    const data = { refreshToken: 'old-refresh-token' };
-    const renewed = { ...mockAuthResponse, accessToken: 'new-access-token' };
-    mockApiClient.post.mockResolvedValue(renewed);
+describe('authService.logout >-65 POST /auth/logout', () => {
+  it('calls apiClient.post with /auth/logout and no body (the refresh cookie identifies the session)', async () => {
+    mockApiClient.post.mockResolvedValue(undefined);
 
-    const result = await authService.refresh(data);
+    await authService.logout();
 
-    expect(mockApiClient.post).toHaveBeenCalledWith('/auth/refresh', data);
-    expect(result).toEqual(renewed);
+    expect(mockApiClient.post).toHaveBeenCalledWith('/auth/logout');
   });
 });
 
-describe('authService.logout >-65 POST /auth/logout', () => {
-  it('calls apiClient.post with /auth/logout and refresh token', async () => {
-    const data = { refreshToken: 'refresh-token' };
-    mockApiClient.post.mockResolvedValue(undefined);
+describe('authService.loadProfile >-65 GET /users/me', () => {
+  it('sets the access token in memory before requesting the profile', async () => {
+    const profile = { id: 1, username: 'john' };
+    mockApiClient.get.mockImplementation(async () => {
+      expect(tokenMemory.get()).toBe('fresh-access-token');
+      return profile;
+    });
 
-    await authService.logout(data);
+    const result = await authService.loadProfile('fresh-access-token');
 
-    expect(mockApiClient.post).toHaveBeenCalledWith('/auth/logout', data);
+    expect(mockApiClient.get).toHaveBeenCalledWith('/users/me');
+    expect(result).toEqual(profile);
   });
 });
