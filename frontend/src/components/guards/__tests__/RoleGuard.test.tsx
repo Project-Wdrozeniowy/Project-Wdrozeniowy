@@ -14,10 +14,10 @@ vi.mock('@/store', () => ({
   useStore: vi.fn(),
 }));
 
-function mockState(isAuthenticated: boolean, role: UserRole | null) {
+function mockState(isInitialized: boolean, role: UserRole | null) {
   const user = role ? { id: 1, role } : null;
   vi.mocked(useStore).mockImplementation(((selector: (s: unknown) => unknown) =>
-    selector({ isAuthenticated, user })) as typeof useStore);
+    selector({ isInitialized, user })) as typeof useStore);
 }
 
 function renderGuard(allowedRoles: UserRole[] = ['ADMIN']) {
@@ -32,23 +32,24 @@ beforeEach(() => {
   mockReplace.mockClear();
 });
 
-describe('RoleGuard – unauthenticated', () => {
+describe('RoleGuard – session still being restored (page reload)', () => {
   beforeEach(() => mockState(false, null));
+
+  it('shows a loader and does not redirect', () => {
+    renderGuard();
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.queryByText('admin content')).not.toBeInTheDocument();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+});
+
+describe('RoleGuard – guest', () => {
+  beforeEach(() => mockState(true, null));
 
   it('renders nothing and redirects to /login', () => {
     const { container } = renderGuard();
     expect(container).toBeEmptyDOMElement();
     expect(mockReplace).toHaveBeenCalledWith('/login');
-  });
-});
-
-describe('RoleGuard – authenticated, profile still loading', () => {
-  beforeEach(() => mockState(true, null));
-
-  it('renders nothing and does not redirect', () => {
-    const { container } = renderGuard();
-    expect(container).toBeEmptyDOMElement();
-    expect(mockReplace).not.toHaveBeenCalled();
   });
 });
 
@@ -68,10 +69,13 @@ describe('RoleGuard – allowed role', () => {
 });
 
 describe('RoleGuard – forbidden role', () => {
-  it.each<UserRole>(['USER', 'MODERATOR'])('redirects %s to / and hides children', (role) => {
-    mockState(true, role);
-    const { container } = renderGuard(['ADMIN']);
-    expect(container).toBeEmptyDOMElement();
-    expect(mockReplace).toHaveBeenCalledWith('/');
-  });
+  it.each<UserRole>(['USER', 'MODERATOR'])(
+    'redirects %s to / after a reload without showing the page',
+    (role) => {
+      mockState(true, role);
+      const { container } = renderGuard(['ADMIN']);
+      expect(container).toBeEmptyDOMElement();
+      expect(mockReplace).toHaveBeenCalledWith('/');
+    }
+  );
 });

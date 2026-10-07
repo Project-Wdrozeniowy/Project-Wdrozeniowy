@@ -13,9 +13,9 @@ vi.mock('@/store', () => ({
   useStore: vi.fn(),
 }));
 
-function mockAuth(isAuthenticated: boolean) {
+function mockAuth(isInitialized: boolean, isAuthenticated: boolean) {
   vi.mocked(useStore).mockImplementation(((selector: (s: unknown) => unknown) =>
-    selector({ isAuthenticated })) as typeof useStore);
+    selector({ isInitialized, isAuthenticated })) as typeof useStore);
 }
 
 function renderGuard() {
@@ -30,8 +30,23 @@ beforeEach(() => {
   mockReplace.mockClear();
 });
 
-describe('AuthGuard – unauthenticated', () => {
-  beforeEach(() => mockAuth(false));
+describe('AuthGuard – session still being restored (page reload)', () => {
+  beforeEach(() => mockAuth(false, false));
+
+  it('shows a loader without the protected content', () => {
+    renderGuard();
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.queryByText('protected content')).not.toBeInTheDocument();
+  });
+
+  it('does not redirect yet', () => {
+    renderGuard();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+});
+
+describe('AuthGuard – guest', () => {
+  beforeEach(() => mockAuth(true, false));
 
   it('renders nothing and does not expose children', () => {
     const { container } = renderGuard();
@@ -45,16 +60,12 @@ describe('AuthGuard – unauthenticated', () => {
   });
 });
 
-describe('AuthGuard – authenticated', () => {
-  beforeEach(() => mockAuth(true));
+describe('AuthGuard – signed in', () => {
+  beforeEach(() => mockAuth(true, true));
 
-  it('renders children', () => {
+  it('renders children without redirecting', () => {
     renderGuard();
     expect(screen.getByText('protected content')).toBeInTheDocument();
-  });
-
-  it('does not redirect', () => {
-    renderGuard();
     expect(mockReplace).not.toHaveBeenCalled();
   });
 });
