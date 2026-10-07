@@ -141,6 +141,68 @@ class AuthServiceRefreshTest {
     }
 
     @Test
+    void refreshOfJustRotatedTokenReturnsTheSamePair() {
+        // The second of two concurrent requests arrives after the first one
+        // has already committed its rotation, so it finds the token revoked
+        // on the initial lookup rather than by losing the atomic update.
+        RefreshToken replacement = RefreshToken.builder()
+                .id(11L)
+                .user(user)
+                .token("replacement")
+                .expiresAt(OffsetDateTime.now().plusDays(7))
+                .build();
+        RefreshToken justRotated = RefreshToken.builder()
+                .id(10L)
+                .user(user)
+                .token("just-rotated")
+                .expiresAt(OffsetDateTime.now().plusDays(1))
+                .revokedAt(OffsetDateTime.now().minusSeconds(2))
+                .replacedBy(replacement)
+                .build();
+        when(refreshTokenRepository.findByToken("just-rotated")).thenReturn(Optional.of(justRotated));
+        UserBuilder ub = org.springframework.security.core.userdetails.User.withUsername("alice")
+                .password("h").roles("USER");
+        when(userDetailsService.loadUserByUsername("alice")).thenReturn(ub.build());
+        when(jwtUtil.generateAccessToken(any())).thenReturn("access-for-second-tab");
+
+        AuthResponse response = authService.refresh("just-rotated");
+
+        assertThat(response.getRefreshToken()).isEqualTo("replacement");
+        verify(refreshTokenRepository, never()).revokeIfActive(anyString(), any());
+        verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
+    }
+
+    @Test
+    void refreshOfPreviousTokenAfterTheGracePeriodBurnsTheFamily() {
+        // The token was rotated into a replacement that is still active, but
+        // too long ago for this to be a request racing the rotation. If it
+        // were exchanged again, a stolen copy of the previous token would keep
+        // working for as long as the legitimate client keeps refreshing.
+        RefreshToken replacement = RefreshToken.builder()
+                .id(11L)
+                .user(user)
+                .token("replacement")
+                .expiresAt(OffsetDateTime.now().plusDays(7))
+                .build();
+        RefreshToken previous = RefreshToken.builder()
+                .id(10L)
+                .user(user)
+                .token("previous")
+                .expiresAt(OffsetDateTime.now().plusDays(1))
+                .revokedAt(OffsetDateTime.now().minus(AuthService.ROTATION_GRACE).minusSeconds(1))
+                .replacedBy(replacement)
+                .build();
+        when(refreshTokenRepository.findByToken("previous")).thenReturn(Optional.of(previous));
+
+        assertThatThrownBy(() -> authService.refresh("previous"))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("Invalid refresh token")
+                .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
+        verify(refreshTokenRepository, times(1)).revokeAllActiveByUser(eq(user), any());
+        verify(jwtUtil, never()).generateAccessToken(any());
+    }
+
+    @Test
     void refreshLostRaceOnTokenThatExpiredInTheMeantimeIsRejectedWithoutBurningTheFamily() {
         // The atomic UPDATE touched no row, yet the reloaded token is not revoked:
         // it simply ran out between our expiry check and the UPDATE.
