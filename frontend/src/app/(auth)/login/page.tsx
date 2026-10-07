@@ -12,7 +12,9 @@ import type { LoginFormData } from '@/lib/validations/auth';
 import { authService } from '@/services/authService';
 import { useStore } from '@/store';
 import OrbitaLogo from '@/components/ui/OrbitaLogo';
+import { apiErrorMessage, apiErrorStatus } from '@/lib/apiError';
 import { cn } from '@/lib/cn';
+import { toast } from '@/lib/toast';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,10 +35,14 @@ export default function LoginPage() {
       const { accessToken } = await authService.login(data);
       const user = await authService.loadProfile(accessToken);
       setAuth(user, accessToken);
+      toast.success(`Welcome back, ${user.displayName ?? user.username}!`);
       router.push('/');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Invalid username or password';
-      setServerError(message);
+      setServerError(
+        apiErrorStatus(err) === 401
+          ? 'Invalid username or password'
+          : apiErrorMessage(err, 'Sign in failed. Please try again.')
+      );
     }
   }
 

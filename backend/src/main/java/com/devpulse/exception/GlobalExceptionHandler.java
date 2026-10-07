@@ -2,12 +2,19 @@ package com.devpulse.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,11 +30,17 @@ import java.util.Map;
  * <ul>
  *   <li>{@link AppException} — domain errors (409, 401, 404, etc.)</li>
  *   <li>{@link MethodArgumentNotValidException} — Bean Validation errors ({@code @Valid})</li>
+ *   <li>{@link AccessDeniedException} — authenticated caller lacks the required role (403)</li>
+ *   <li>{@link AuthenticationException} — failed login (401)</li>
+ *   <li>Spring MVC's own errors — malformed JSON, wrong parameter types, unknown
+ *       paths, unsupported methods or media types, {@code ResponseStatusException}
+ *       — keep their status (400, 404, 405, 415, ...); this comes from
+ *       {@link ResponseEntityExceptionHandler}</li>
  *   <li>{@link Exception} — unexpected errors (500 Internal Server Error)</li>
  * </ul>
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
@@ -53,8 +66,11 @@ public class GlobalExceptionHandler {
      * @param ex the exception containing the list of validation errors
      * @return a {@link ProblemDetail} 400 with a map of field-level errors
      */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatusCode status,
+                                                                  WebRequest request) {
         Map<String, String> errors = new HashMap<>();
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
             errors.put(fe.getField(), fe.getDefaultMessage());
@@ -62,6 +78,45 @@ public class GlobalExceptionHandler {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
         pd.setTitle("Validation Error");
         pd.setProperty("errors", errors);
+        return handleExceptionInternal(ex, pd, headers, HttpStatus.BAD_REQUEST, request);
+    }
+
+    /**
+     * Handles authorization failures raised by {@code @PreAuthorize}
+     * and other Spring Security checks once the user is authenticated
+     * but lacks the required authority.
+     *
+     * @param ex the access-denied exception
+     * @return a {@link ProblemDetail} 403 with a generic message
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN, "Access is denied");
+        pd.setTitle(HttpStatus.FORBIDDEN.getReasonPhrase());
+        return pd;
+    }
+
+    /**
+     * Handles authentication failures that surface inside a controller call,
+     * most notably {@code BadCredentialsException} thrown by the
+     * {@code AuthenticationManager} on {@code POST /auth/login}. Without this
+     * handler such failures would fall through to the generic handler and be
+     * reported as a 500.
+     *
+     * <p>Requests rejected earlier, inside the security filter chain (missing or
+     * invalid JWT), never reach MVC advice; those are answered by the
+     * {@code AuthenticationEntryPoint} configured in
+     * {@link com.devpulse.config.SecurityConfig}.
+     *
+     * @param ex the authentication exception
+     * @return a {@link ProblemDetail} 401 with a generic message
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handleAuthentication(AuthenticationException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED, "Authentication failed");
+        pd.setTitle(HttpStatus.UNAUTHORIZED.getReasonPhrase());
         return pd;
     }
 

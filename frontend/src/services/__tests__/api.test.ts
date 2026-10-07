@@ -151,6 +151,71 @@ describe('ApiClient >-65 request interceptor (Authorization header)', () => {
   });
 });
 
+describe('ApiClient response interceptor (error toasts)', () => {
+  async function setup() {
+    vi.resetModules();
+    const toastModule = await import('@/lib/toast');
+    const errorSpy = vi.spyOn(toastModule.toast, 'error').mockImplementation(() => 'toast-id');
+    const { apiClient } = await import('../api');
+    const mock = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
+    return { apiClient, mock, errorSpy };
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('toasts the ProblemDetail detail on 5xx', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    mock.onGet('/boom').reply(500, { status: 500, detail: 'Database is down' });
+
+    await expect(apiClient.get('/boom')).rejects.toBeDefined();
+    expect(errorSpy).toHaveBeenCalledWith('Database is down', 'api-error');
+  });
+
+  it('toasts a fallback message on network errors', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    mock.onGet('/offline').networkError();
+
+    await expect(apiClient.get('/offline')).rejects.toBeDefined();
+    expect(errorSpy).toHaveBeenCalledWith('Something went wrong. Please try again.', 'api-error');
+  });
+
+  it('does not toast 4xx errors', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    mock.onGet('/missing').reply(404, { status: 404, detail: 'Not found' });
+
+    await expect(apiClient.get('/missing')).rejects.toBeDefined();
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  function setLocation(href: string) {
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: { ...window.location, href },
+    });
+  }
+
+  it('does not redirect on 401 from /auth endpoints', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    setLocation('/forum');
+    mock.onPost('/auth/login').reply(401, { status: 401, detail: 'Bad credentials' });
+
+    await expect(apiClient.post('/auth/login', {})).rejects.toBeDefined();
+    expect(window.location.href).toBe('/forum');
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it('still redirects on 401 from paths that only start with "auth"', async () => {
+    const { apiClient, mock } = await setup();
+    setLocation('/forum');
+    mock.onGet('/authors').reply(401, { status: 401 });
+
+    await expect(apiClient.get('/authors')).rejects.toBeDefined();
+    expect(window.location.href).toBe('/login');
+  });
+});
+
 describe('ApiClient >-65 session refresh', () => {
   afterEach(() => {
     vi.resetModules();
@@ -234,6 +299,21 @@ describe('ApiClient >-65 session refresh', () => {
     expect(window.location.href).toBe('/login');
   });
 
+  it('passes errors of the repeated request to the caller without signing out', async () => {
+    const { tokenMemory, apiClient, mock } = await setup();
+    tokenMemory.set('expired-token');
+    mock.onPost('/auth/refresh').reply(200, { accessToken: 'new-token', tokenType: 'Bearer' });
+    let calls = 0;
+    mock.onGet('/protected').reply(() => {
+      calls += 1;
+      return calls === 1 ? [401, {}] : [403, { detail: 'Access is denied' }];
+    });
+
+    await expect(apiClient.get('/protected')).rejects.toMatchObject({ response: { status: 403 } });
+    expect(tokenMemory.get()).toBe('new-token');
+    expect(window.location.href).toBe('/current');
+  });
+
   it('does not retry a request that already failed after a refresh', async () => {
     const { tokenMemory, apiClient, mock } = await setup();
     tokenMemory.set('token');
@@ -242,6 +322,9 @@ describe('ApiClient >-65 session refresh', () => {
 
     await expect(apiClient.get('/protected')).rejects.toBeDefined();
     expect(mock.history.get.filter((r) => r.url === '/protected')).toHaveLength(2);
+    // A fresh token being rejected as well means the session is gone.
+    expect(tokenMemory.get()).toBeNull();
+    expect(window.location.href).toBe('/login');
   });
 
   it('does not refresh or redirect on 401 from /auth endpoints', async () => {

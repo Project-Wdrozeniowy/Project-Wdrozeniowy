@@ -1,5 +1,6 @@
 package com.devpulse.forum.dto;
 
+import com.devpulse.forum.entity.Tag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,4 +25,14 @@ public class TagDto {
 
     @Schema(description = "Number of posts using this tag", example = "42")
     private int postCount;
+
+    /** Builds the DTO of {@code tag}. */
+    public static TagDto from(Tag tag) {
+        return TagDto.builder()
+                .id(tag.getId())
+                .name(tag.getName())
+                .slug(tag.getSlug())
+                .postCount(tag.getPostCount())
+                .build();
+    }
 }

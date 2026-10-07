@@ -7,11 +7,14 @@ import type {
 } from 'axios';
 import axios from 'axios';
 import { tokenMemory } from '@/lib/tokenMemory';
-import type { AuthResponse } from '@/shared/types';
+import { API_ERROR_TOAST_ID, toast } from '@/lib/toast';
+import type { AuthResponse, ProblemDetail } from '@/shared/types';
 
 type RequestBody = object | FormData | null;
 
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retried?: boolean };
+
+const FALLBACK_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -61,31 +64,48 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
-      async (error: AxiosError) => {
+      async (error: AxiosError<ProblemDetail>) => {
+        if (typeof window === 'undefined') {
+          return Promise.reject(error);
+        }
         const config = error.config as RetriableRequestConfig | undefined;
+        const status = error.response?.status;
         // /auth endpoints return expected 401s (bad credentials, no session) that callers handle.
-        const isAuthEndpoint = config?.url?.startsWith('/auth');
+        const isAuthEndpoint = config?.url?.startsWith('/auth/') ?? false;
 
-        if (
-          error.response?.status === 401 &&
-          config &&
-          !config._retried &&
-          !isAuthEndpoint &&
-          typeof window !== 'undefined'
-        ) {
-          config._retried = true;
-          try {
-            const token = await this.refreshAccessToken();
-            config.headers.Authorization = `Bearer ${token}`;
-            return await this.client.request(config);
-          } catch {
-            tokenMemory.set(null);
-            window.location.href = '/login';
+        if (status === 401 && config && !isAuthEndpoint) {
+          if (config._retried) {
+            // Even a freshly refreshed token was rejected: the session is gone.
+            this.endSession();
+            return Promise.reject(error);
           }
+          // The access token expired: get a new one from the refresh cookie and repeat once.
+          config._retried = true;
+          let token: string;
+          try {
+            token = await this.refreshAccessToken();
+          } catch {
+            this.endSession();
+            return Promise.reject(error);
+          }
+          config.headers.Authorization = `Bearer ${token}`;
+          // Errors of the repeated request (403, 5xx, ...) reach the caller as they are.
+          return this.client.request(config);
+        }
+
+        if (status === undefined || status >= 500) {
+          // 4xx errors are handled by the caller (form errors etc.); only unexpected failures toast.
+          toast.error(error.response?.data?.detail ?? FALLBACK_ERROR_MESSAGE, API_ERROR_TOAST_ID);
         }
         return Promise.reject(error);
       }
     );
+  }
+
+  /** Drops the in-memory access token and sends the user to the login page. */
+  private endSession() {
+    tokenMemory.set(null);
+    window.location.href = '/login';
   }
 
   /**

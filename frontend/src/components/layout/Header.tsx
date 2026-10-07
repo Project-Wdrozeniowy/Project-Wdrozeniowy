@@ -9,6 +9,7 @@ import NavLinks from '@/components/layout/header/NavLinks';
 import SearchBar from '@/components/layout/header/SearchBar';
 import UserActions from '@/components/layout/header/UserActions';
 import { NAV_LINKS } from '@/constants/header';
+import { toast } from '@/lib/toast';
 
 export default function Header() {
   const pathname = usePathname();
@@ -17,6 +18,7 @@ export default function Header() {
   function handleSignOut() {
     authService.logout().catch(() => {});
     logout();
+    toast.success('You have been signed out.');
   }
 
   return (
