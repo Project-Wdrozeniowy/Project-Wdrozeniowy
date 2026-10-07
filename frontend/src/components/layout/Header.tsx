@@ -12,12 +12,10 @@ import { NAV_LINKS } from '@/constants/header';
 
 export default function Header() {
   const pathname = usePathname();
-  const { isAuthenticated, user, logout, refreshToken } = useStore((state) => state);
+  const { isAuthenticated, user, logout } = useStore((state) => state);
 
   function handleSignOut() {
-    if (refreshToken) {
-      authService.logout({ refreshToken }).catch(() => {});
-    }
+    authService.logout().catch(() => {});
     logout();
   }
 

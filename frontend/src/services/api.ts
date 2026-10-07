@@ -1,10 +1,21 @@
-import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import type {
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+  AxiosError,
+  InternalAxiosRequestConfig,
+} from 'axios';
 import axios from 'axios';
+import { tokenMemory } from '@/lib/tokenMemory';
+import type { AuthResponse } from '@/shared/types';
 
 type RequestBody = object | FormData | null;
 
+type RetriableRequestConfig = InternalAxiosRequestConfig & { _retried?: boolean };
+
 class ApiClient {
   private client: AxiosInstance;
+  private refreshing: Promise<string> | null = null;
 
   private static resolveBaseURL(): string {
     const envURL = process.env.NEXT_PUBLIC_API_URL;
@@ -26,6 +37,8 @@ class ApiClient {
     this.client = axios.create({
       baseURL,
       timeout: 10000,
+      // Sends and stores the httpOnly refresh cookie on cross-origin gateway calls.
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -37,11 +50,9 @@ class ApiClient {
   private setupInterceptors() {
     this.client.interceptors.request.use(
       (config) => {
-        if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('accessToken');
-          if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-          }
+        const token = tokenMemory.get();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
@@ -50,13 +61,48 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
-      (error: AxiosError) => {
-        if (error.response?.status === 401 && typeof window !== 'undefined') {
-          window.location.href = '/login';
+      async (error: AxiosError) => {
+        const config = error.config as RetriableRequestConfig | undefined;
+        // /auth endpoints return expected 401s (bad credentials, no session) that callers handle.
+        const isAuthEndpoint = config?.url?.startsWith('/auth');
+
+        if (
+          error.response?.status === 401 &&
+          config &&
+          !config._retried &&
+          !isAuthEndpoint &&
+          typeof window !== 'undefined'
+        ) {
+          config._retried = true;
+          try {
+            const token = await this.refreshAccessToken();
+            config.headers.Authorization = `Bearer ${token}`;
+            return await this.client.request(config);
+          } catch {
+            tokenMemory.set(null);
+            window.location.href = '/login';
+          }
         }
         return Promise.reject(error);
       }
     );
+  }
+
+  /**
+   * Exchanges the httpOnly refresh cookie for a new access token and stores it in memory.
+   * Concurrent callers share one request: the server rotates the cookie on every call.
+   */
+  public refreshAccessToken(): Promise<string> {
+    this.refreshing ??= this.client
+      .post<AuthResponse>('/auth/refresh')
+      .then((response) => {
+        tokenMemory.set(response.data.accessToken);
+        return response.data.accessToken;
+      })
+      .finally(() => {
+        this.refreshing = null;
+      });
+    return this.refreshing;
   }
 
   public async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {

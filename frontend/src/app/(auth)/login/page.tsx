@@ -10,7 +10,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@/lib/validations/auth';
 import type { LoginFormData } from '@/lib/validations/auth';
 import { authService } from '@/services/authService';
-import { userService } from '@/services/userService';
 import { useStore } from '@/store';
 import OrbitaLogo from '@/components/ui/OrbitaLogo';
 import { cn } from '@/lib/cn';
@@ -31,10 +30,9 @@ export default function LoginPage() {
   async function onSubmit(data: LoginFormData) {
     setServerError(null);
     try {
-      const { accessToken, refreshToken } = await authService.login(data);
-      localStorage.setItem('accessToken', accessToken);
-      const user = await userService.getMyProfile();
-      setAuth(user, accessToken, refreshToken);
+      const { accessToken } = await authService.login(data);
+      const user = await authService.loadProfile(accessToken);
+      setAuth(user, accessToken);
       router.push('/');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid username or password';

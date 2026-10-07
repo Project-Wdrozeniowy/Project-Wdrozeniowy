@@ -35,19 +35,11 @@ export interface RegisterRequest {
   password: string;
 }
 
+/** The refresh token is not part of the body: it travels as an httpOnly cookie. */
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   tokenType: string;
   expiresIn: number;
-}
-
-export interface RefreshRequest {
-  refreshToken: string;
-}
-
-export interface LogoutRequest {
-  refreshToken: string;
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────

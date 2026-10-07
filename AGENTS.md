@@ -276,7 +276,7 @@ docs/
 
 1. **Dual JWT verification is intentional** — the gateway verifies the token before proxying, and Spring Security re-validates it as defence-in-depth. The same `JWT_SECRET` must be configured in both.
 
-2. **Token storage direction** — the current implementation stores the JWT in `localStorage`. The intended direction is `httpOnly` cookies. Do not introduce new code that further cements the `localStorage` approach.
+2. **Token storage** — the access token lives only in memory (`frontend/src/lib/tokenMemory.ts`). The refresh token is an `HttpOnly; SameSite=Strict` cookie (`/api/auth` path) set by the backend and never appears in a request or response body. On page load `AuthProvider` calls `POST /auth/refresh`, then `GET /users/me`. Never write tokens to `localStorage`/`sessionStorage`. Set `COOKIE_SECURE=false` for plain-HTTP local dev (Safari ignores `Secure` cookies on `http://localhost`).
 
 3. **Forum data is currently mocked** — `frontend/src/services/forumService.ts` returns static fixtures. The `/api/posts` endpoint does not exist in the backend yet. Backend forum endpoints are in the backlog.
 

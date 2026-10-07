@@ -97,12 +97,11 @@ public class AuthService {
             throw new AppException("Email already registered", HttpStatus.CONFLICT);
         }
 
-        User user = User.builder()
+        User user = userRepository.save(User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .build();
-        userRepository.save(user);
+                .build());
 
         return buildAuthResponse(user);
     }
@@ -154,6 +153,11 @@ public class AuthService {
      */
     @Transactional
     public AuthResponse refresh(String rawRefreshToken) {
+        if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
+            log.warn("Refresh attempted without a refresh token");
+            throw new AppException(INVALID_REFRESH_TOKEN_MESSAGE, HttpStatus.UNAUTHORIZED);
+        }
+
         RefreshToken stored = refreshTokenRepository.findByToken(rawRefreshToken)
                 .orElseThrow(() -> {
                     log.warn("Refresh attempted with a refresh token that does not exist");
@@ -252,6 +256,9 @@ public class AuthService {
      */
     @Transactional
     public void logout(String rawRefreshToken) {
+        if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
+            return;
+        }
         refreshTokenRepository.findByToken(rawRefreshToken).ifPresent(token -> {
             if (!token.isRevoked()) {
                 token.setRevokedAt(OffsetDateTime.now());
