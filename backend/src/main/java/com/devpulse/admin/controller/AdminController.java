@@ -11,9 +11,10 @@ import java.util.Map;
  * Administration endpoints, restricted to users with the {@code ADMIN} role.
  *
  * <p>Acts as the entry point for administrative actions on the forum.
- * Access is enforced via {@link PreAuthorize} on each handler — anonymous
- * or non-admin requests receive HTTP 403 (handled by
- * {@link com.devpulse.exception.GlobalExceptionHandler}).
+ * Anonymous requests are rejected by the security filter chain with HTTP 401
+ * (see {@link com.devpulse.config.SecurityConfig}). Authenticated users without
+ * the {@code ADMIN} role are rejected by {@link PreAuthorize} on each handler
+ * with HTTP 403 (handled by {@link com.devpulse.exception.GlobalExceptionHandler}).
  */
 @RestController
 @RequestMapping("/admin")
