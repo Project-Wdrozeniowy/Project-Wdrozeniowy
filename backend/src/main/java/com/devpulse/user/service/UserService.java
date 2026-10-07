@@ -6,10 +6,11 @@ import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.auth.util.AuthenticatedUserResolver;
 import com.devpulse.exception.AppException;
 import com.devpulse.user.dto.ChangePasswordRequest;
-import com.devpulse.user.dto.ProfileResponse;
-import com.devpulse.user.dto.PublicProfileResponse;
+import com.devpulse.user.dto.MyProfileDto;
 import com.devpulse.user.dto.UpdateProfileRequest;
+import com.devpulse.user.dto.UserProfileDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -37,8 +38,8 @@ public class UserService {
      * @return the caller's profile
      */
     @Transactional(readOnly = true)
-    public ProfileResponse getCurrentProfile() {
-        return ProfileResponse.from(currentUser.currentUser());
+    public MyProfileDto getCurrentProfile() {
+        return MyProfileDto.from(currentUser.currentUser());
     }
 
     /**
@@ -49,44 +50,52 @@ public class UserService {
      * @throws AppException HTTP 404 if no such user exists
      */
     @Transactional(readOnly = true)
-    public PublicProfileResponse getPublicProfile(String username) {
+    public UserProfileDto getPublicProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
-        return PublicProfileResponse.from(user);
+        return UserProfileDto.from(user);
     }
 
     /**
      * Updates mutable profile fields of the authenticated user.
      *
-     * <p>Only non-{@code null} fields in the request are applied — the endpoint
-     * follows PATCH semantics. Email changes are validated for uniqueness.
+     * <p>PATCH semantics: fields that are {@code null} in the request stay as
+     * they are. An empty string clears {@code displayName}, {@code avatarUrl}
+     * or {@code bio}. Email changes are checked for uniqueness; the unique
+     * constraint on {@code users.email} catches the race between that check
+     * and the update, so a concurrent request for the same address also ends
+     * in 409 instead of a 500.
      *
      * @param request fields to update
      * @return the updated profile
      * @throws AppException HTTP 409 if the new email is already registered
      */
     @Transactional
-    public ProfileResponse updateProfile(UpdateProfileRequest request) {
+    public MyProfileDto updateProfile(UpdateProfileRequest request) {
         User user = currentUser.currentUser();
 
         if (StringUtils.hasText(request.getEmail()) && !request.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.getEmail())) {
-                throw new AppException("Email already registered", HttpStatus.CONFLICT);
+                throw emailTaken();
             }
             user.setEmail(request.getEmail());
         }
         if (request.getDisplayName() != null) {
-            user.setDisplayName(request.getDisplayName());
+            user.setDisplayName(blankToNull(request.getDisplayName()));
         }
         if (request.getAvatarUrl() != null) {
-            user.setAvatarUrl(request.getAvatarUrl());
+            user.setAvatarUrl(blankToNull(request.getAvatarUrl()));
         }
         if (request.getBio() != null) {
-            user.setBio(request.getBio());
+            user.setBio(blankToNull(request.getBio()));
         }
 
-        userRepository.save(user);
-        return ProfileResponse.from(user);
+        try {
+            userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException e) {
+            throw emailTaken();
+        }
+        return MyProfileDto.from(user);
     }
 
     /**
@@ -112,5 +121,13 @@ public class UserService {
 
         // Force re-login on every active device by removing existing refresh tokens.
         refreshTokenRepository.deleteAllByUser(user);
+    }
+
+    private static AppException emailTaken() {
+        return new AppException("Email already registered", HttpStatus.CONFLICT);
+    }
+
+    private static String blankToNull(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
     }
 }

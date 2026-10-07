@@ -8,15 +8,16 @@ import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.auth.util.AuthenticatedUserResolver;
 import com.devpulse.exception.AppException;
 import com.devpulse.user.dto.ChangePasswordRequest;
-import com.devpulse.user.dto.ProfileResponse;
-import com.devpulse.user.dto.PublicProfileResponse;
+import com.devpulse.user.dto.MyProfileDto;
 import com.devpulse.user.dto.UpdateProfileRequest;
+import com.devpulse.user.dto.UserProfileDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -59,23 +60,26 @@ class UserServiceTest {
     void getCurrentProfile_returnsFullProfile() {
         when(currentUser.currentUser()).thenReturn(principal);
 
-        ProfileResponse response = userService.getCurrentProfile();
+        MyProfileDto response = userService.getCurrentProfile();
 
         assertThat(response.getUsername()).isEqualTo("alice");
         assertThat(response.getEmail()).isEqualTo("alice@example.com");
-        assertThat(response.getRole()).isEqualTo(Role.USER);
-        assertThat(response.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(response.getRole()).isEqualTo("USER");
+        assertThat(response.getStatus()).isEqualTo("ACTIVE");
+        assertThat(response.getPostCount()).isEqualTo(2);
     }
 
     @Test
     void getPublicProfile_hidesPrivateFields() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(principal));
 
-        PublicProfileResponse response = userService.getPublicProfile("alice");
+        UserProfileDto response = userService.getPublicProfile("alice");
 
         assertThat(response.getUsername()).isEqualTo("alice");
         assertThat(response.getDisplayName()).isEqualTo("Alice");
-        // PublicProfileResponse intentionally has no email/status accessors.
+        assertThat(response.getRole()).isEqualTo("USER");
+        // Only the own profile type carries the email address.
+        assertThat(response).isNotInstanceOf(MyProfileDto.class);
     }
 
     @Test
@@ -98,12 +102,46 @@ class UserServiceTest {
         req.setAvatarUrl(null); // explicitly unchanged
         req.setEmail(null);
 
-        ProfileResponse response = userService.updateProfile(req);
+        MyProfileDto response = userService.updateProfile(req);
 
         assertThat(response.getDisplayName()).isEqualTo("Alicia");
         assertThat(response.getBio()).isEqualTo("new bio");
         assertThat(response.getAvatarUrl()).isEqualTo("https://img/a.png");
-        verify(userRepository).save(principal);
+        verify(userRepository).saveAndFlush(principal);
+    }
+
+    @Test
+    void updateProfile_emptyStringClearsOptionalFields() {
+        when(currentUser.currentUser()).thenReturn(principal);
+
+        UpdateProfileRequest req = new UpdateProfileRequest();
+        req.setDisplayName("");
+        req.setAvatarUrl("  ");
+        req.setBio("");
+
+        MyProfileDto response = userService.updateProfile(req);
+
+        assertThat(response.getDisplayName()).isNull();
+        assertThat(response.getAvatarUrl()).isNull();
+        assertThat(response.getBio()).isNull();
+    }
+
+    @Test
+    void updateProfile_emailTakenConcurrently_returnsConflict() {
+        // Both requests pass the existsByEmail check; the unique constraint
+        // rejects the second one when it is flushed.
+        when(currentUser.currentUser()).thenReturn(principal);
+        when(userRepository.existsByEmail("raced@example.com")).thenReturn(false);
+        when(userRepository.saveAndFlush(principal))
+                .thenThrow(new DataIntegrityViolationException("users_email_key"));
+
+        UpdateProfileRequest req = new UpdateProfileRequest();
+        req.setEmail("raced@example.com");
+
+        assertThatThrownBy(() -> userService.updateProfile(req))
+                .isInstanceOf(AppException.class)
+                .satisfies(e -> assertThat(((AppException) e).getStatus())
+                        .isEqualTo(HttpStatus.CONFLICT));
     }
 
     @Test
@@ -118,7 +156,7 @@ class UserServiceTest {
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.CONFLICT));
-        verify(userRepository, never()).save(any());
+        verify(userRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -129,10 +167,10 @@ class UserServiceTest {
         UpdateProfileRequest req = new UpdateProfileRequest();
         req.setEmail("new@example.com");
 
-        ProfileResponse response = userService.updateProfile(req);
+        MyProfileDto response = userService.updateProfile(req);
 
         assertThat(response.getEmail()).isEqualTo("new@example.com");
-        verify(userRepository).save(principal);
+        verify(userRepository).saveAndFlush(principal);
     }
 
     @Test

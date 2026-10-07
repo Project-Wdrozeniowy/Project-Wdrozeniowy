@@ -1,9 +1,9 @@
 package com.devpulse.user.controller;
 
 import com.devpulse.user.dto.ChangePasswordRequest;
-import com.devpulse.user.dto.ProfileResponse;
-import com.devpulse.user.dto.PublicProfileResponse;
+import com.devpulse.user.dto.MyProfileDto;
 import com.devpulse.user.dto.UpdateProfileRequest;
+import com.devpulse.user.dto.UserProfileDto;
 import com.devpulse.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,7 +35,7 @@ public class UserController {
     /**
      * Returns the caller's full profile.
      *
-     * @return {@link ProfileResponse}; HTTP 200
+     * @return {@link MyProfileDto}; HTTP 200
      */
     @Operation(summary = "Get own profile", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
@@ -43,7 +43,7 @@ public class UserController {
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @GetMapping("/me")
-    public ProfileResponse currentProfile() {
+    public MyProfileDto currentProfile() {
         return userService.getCurrentProfile();
     }
 
@@ -61,7 +61,7 @@ public class UserController {
         @ApiResponse(responseCode = "409", description = "Email already registered")
     })
     @PatchMapping("/me")
-    public ProfileResponse updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+    public MyProfileDto updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
         return userService.updateProfile(request);
     }
 
@@ -87,7 +87,7 @@ public class UserController {
      * Returns the publicly visible profile for the given username.
      *
      * @param username the username to look up
-     * @return {@link PublicProfileResponse}; HTTP 200
+     * @return {@link UserProfileDto}; HTTP 200
      */
     @Operation(summary = "Get public profile by username")
     @ApiResponses({
@@ -95,7 +95,7 @@ public class UserController {
         @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/{username}")
-    public PublicProfileResponse publicProfile(
+    public UserProfileDto publicProfile(
             @Parameter(description = "Username", example = "johndoe") @PathVariable String username) {
         return userService.getPublicProfile(username);
     }

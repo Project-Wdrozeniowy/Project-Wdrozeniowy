@@ -2,8 +2,8 @@ package com.devpulse.user.controller;
 
 import com.devpulse.exception.AppException;
 import com.devpulse.exception.GlobalExceptionHandler;
-import com.devpulse.user.dto.ProfileResponse;
-import com.devpulse.user.dto.PublicProfileResponse;
+import com.devpulse.user.dto.MyProfileDto;
+import com.devpulse.user.dto.UserProfileDto;
 import com.devpulse.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,7 +60,7 @@ class UserControllerTest {
 
     @Test
     void currentProfile_returnsFullProfile() throws Exception {
-        when(userService.getCurrentProfile()).thenReturn(ProfileResponse.builder()
+        when(userService.getCurrentProfile()).thenReturn(MyProfileDto.builder()
                 .id(1L)
                 .username("alice")
                 .email("alice@example.com")
@@ -80,7 +80,7 @@ class UserControllerTest {
 
     @Test
     void updateProfile_validRequest_returnsUpdatedProfile() throws Exception {
-        when(userService.updateProfile(any())).thenReturn(ProfileResponse.builder()
+        when(userService.updateProfile(any())).thenReturn(MyProfileDto.builder()
                 .id(1L)
                 .username("alice")
                 .email("new@example.com")
@@ -96,6 +96,17 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("new@example.com"))
                 .andExpect(jsonPath("$.displayName").value("Alice B."));
+    }
+
+    @Test
+    void updateProfile_bioOverContractLimit_returns400() throws Exception {
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"bio\":\"" + "x".repeat(1001) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.bio").exists());
+
+        verifyNoInteractions(userService);
     }
 
     @Test
@@ -179,11 +190,13 @@ class UserControllerTest {
     // ───────────────────────── GET /users/{username} ─────────────────────────
 
     @Test
-    void publicProfile_doesNotLeakPrivateFields() throws Exception {
-        when(userService.getPublicProfile("alice")).thenReturn(PublicProfileResponse.builder()
+    void publicProfile_returnsContractFieldsWithoutEmail() throws Exception {
+        when(userService.getPublicProfile("alice")).thenReturn(UserProfileDto.builder()
                 .id(1L)
                 .username("alice")
                 .displayName("Alice")
+                .role("MODERATOR")
+                .status("ACTIVE")
                 .postCount(3)
                 .commentCount(5)
                 .build());
@@ -191,9 +204,9 @@ class UserControllerTest {
         mockMvc.perform(get("/users/alice"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("alice"))
-                .andExpect(jsonPath("$.email").doesNotExist())
-                .andExpect(jsonPath("$.status").doesNotExist())
-                .andExpect(jsonPath("$.role").doesNotExist());
+                .andExpect(jsonPath("$.role").value("MODERATOR"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.email").doesNotExist());
     }
 
     @Test
