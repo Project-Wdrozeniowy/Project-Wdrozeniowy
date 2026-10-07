@@ -196,16 +196,29 @@ describe('ApiClient response interceptor (error toasts)', () => {
     expect(errorSpy).not.toHaveBeenCalled();
   });
 
-  it('does not redirect on 401 from /auth endpoints', async () => {
-    const { apiClient, mock, errorSpy } = await setup();
+  function setLocation(href: string) {
     Object.defineProperty(window, 'location', {
       writable: true,
-      value: { ...window.location, href: '/login' },
+      value: { ...window.location, href },
     });
+  }
+
+  it('does not redirect on 401 from /auth endpoints', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    setLocation('/forum');
     mock.onPost('/auth/login').reply(401, { status: 401, detail: 'Bad credentials' });
 
     await expect(apiClient.post('/auth/login', {})).rejects.toBeDefined();
-    expect(window.location.href).toBe('/login');
+    expect(window.location.href).toBe('/forum');
     expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it('still redirects on 401 from paths that only start with "auth"', async () => {
+    const { apiClient, mock } = await setup();
+    setLocation('/forum');
+    mock.onGet('/authors').reply(401, { status: 401 });
+
+    await expect(apiClient.get('/authors')).rejects.toBeDefined();
+    expect(window.location.href).toBe('/login');
   });
 });

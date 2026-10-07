@@ -60,7 +60,7 @@ class ApiClient {
         if (typeof window !== 'undefined') {
           const status = error.response?.status;
           // /auth endpoints return expected 401s (bad credentials, no session) that callers handle.
-          const isAuthEndpoint = error.config?.url?.startsWith('/auth');
+          const isAuthEndpoint = error.config?.url?.startsWith('/auth/');
 
           if (status === 401 && !isAuthEndpoint) {
             window.location.href = '/login';
