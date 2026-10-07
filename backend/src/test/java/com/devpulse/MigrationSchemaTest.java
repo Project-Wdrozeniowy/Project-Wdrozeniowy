@@ -3,39 +3,26 @@ package com.devpulse;
 import com.devpulse.auth.entity.Role;
 import com.devpulse.auth.entity.User;
 import com.devpulse.auth.repository.UserRepository;
+import com.devpulse.support.MigratedSchemaTest;
 import jakarta.persistence.EntityManager;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Applies the real Flyway migrations to PostgreSQL and checks that the JPA
- * mapping works against the schema they produce.
+ * Checks that the Flyway migrations run on startup and that every mapped
+ * entity can be written to and read back from the schema they produce.
  *
- * <p>The other Spring tests run with {@code ddl-auto=create-drop}, so Hibernate
- * builds its own tables and never sees the native enum types, defaults and
- * constraints from {@code db/migration}. This test uses a dedicated schema, so
- * it shares the test database without touching the tables those tests create.
+ * <p>Add a round-trip case here whenever a new table or column is mapped,
+ * especially a PostgreSQL enum column, which needs
+ * {@code @JdbcTypeCode(SqlTypes.NAMED_ENUM)}.
  */
-@SpringBootTest
-@ActiveProfiles("test")
-@TestPropertySource(properties = {
-        "spring.flyway.enabled=true",
-        "spring.flyway.schemas=" + MigrationSchemaTest.SCHEMA,
-        "spring.flyway.default-schema=" + MigrationSchemaTest.SCHEMA,
-        "spring.datasource.hikari.schema=" + MigrationSchemaTest.SCHEMA,
-        "spring.jpa.hibernate.ddl-auto=validate"
-})
+@MigratedSchemaTest
 @Transactional
 class MigrationSchemaTest {
-
-    static final String SCHEMA = "migration_test";
 
     @Autowired
     private Flyway flyway;
