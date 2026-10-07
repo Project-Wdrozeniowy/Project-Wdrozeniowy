@@ -9,15 +9,22 @@ import NavLinks from '@/components/layout/header/NavLinks';
 import SearchBar from '@/components/layout/header/SearchBar';
 import UserActions from '@/components/layout/header/UserActions';
 import { NAV_LINKS } from '@/constants/header';
-import { toast } from '@/lib/toast';
+import { API_ERROR_TOAST_ID, toast } from '@/lib/toast';
 
 export default function Header() {
   const pathname = usePathname();
-  const { isAuthenticated, user, logout, refreshToken } = useStore((state) => state);
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const user = useStore((state) => state.user);
+  const logout = useStore((state) => state.logout);
 
-  function handleSignOut() {
-    if (refreshToken) {
-      authService.logout({ refreshToken }).catch(() => {});
+  async function handleSignOut() {
+    try {
+      // Revokes the refresh token and clears its cookie. If this fails the cookie stays
+      // valid and the next page load would sign the user back in, so keep the session.
+      await authService.logout();
+    } catch {
+      toast.error('Could not sign out. Please try again.', API_ERROR_TOAST_ID);
+      return;
     }
     logout();
     toast.success('You have been signed out.');

@@ -1,6 +1,7 @@
 import { createStore } from 'zustand';
 import { createAuthSlice, type AuthSlice } from '../authSlice';
 import type { UserProfile } from '@/shared/types';
+import { tokenMemory } from '@/lib/tokenMemory';
 
 const mockUser: UserProfile = {
   id: 1,
@@ -20,69 +21,55 @@ function makeStore() {
 }
 
 beforeEach(() => {
-  localStorage.clear();
+  tokenMemory.set(null);
 });
 
 describe('authSlice >-65 initial state', () => {
-  it('user is null by default', () => {
-    const store = makeStore();
-    expect(store.getState().user).toBeNull();
-  });
-
-  it('accessToken is null when localStorage is empty', () => {
-    const store = makeStore();
-    expect(store.getState().accessToken).toBeNull();
-  });
-
-  it('isAuthenticated is false when no token in localStorage', () => {
-    const store = makeStore();
-    expect(store.getState().isAuthenticated).toBe(false);
-  });
-
-  it('reads accessToken from localStorage on initialisation', () => {
-    localStorage.setItem('accessToken', 'stored-token');
-    const store = makeStore();
-    expect(store.getState().accessToken).toBe('stored-token');
-    expect(store.getState().isAuthenticated).toBe(true);
+  it('starts as a not-yet-initialised guest', () => {
+    const { user, isAuthenticated, isInitialized } = makeStore().getState();
+    expect(user).toBeNull();
+    expect(isAuthenticated).toBe(false);
+    expect(isInitialized).toBe(false);
   });
 });
 
 describe('authSlice >-65 setAuth', () => {
-  it('updates user, accessToken, refreshToken and isAuthenticated', () => {
+  it('stores the user, marks the session authenticated and initialised', () => {
     const store = makeStore();
-    store.getState().setAuth(mockUser, 'access-token', 'refresh-token');
-    const { user, accessToken, refreshToken, isAuthenticated } = store.getState();
+    store.getState().setAuth(mockUser, 'access-token');
+    const { user, isAuthenticated, isInitialized } = store.getState();
     expect(user).toEqual(mockUser);
-    expect(accessToken).toBe('access-token');
-    expect(refreshToken).toBe('refresh-token');
     expect(isAuthenticated).toBe(true);
+    expect(isInitialized).toBe(true);
   });
 
-  it('writes tokens to localStorage', () => {
+  it('keeps the access token in memory only, never in storage', () => {
     const store = makeStore();
-    store.getState().setAuth(mockUser, 'access-token', 'refresh-token');
-    expect(localStorage.getItem('accessToken')).toBe('access-token');
-    expect(localStorage.getItem('refreshToken')).toBe('refresh-token');
+    store.getState().setAuth(mockUser, 'access-token');
+    expect(tokenMemory.get()).toBe('access-token');
+    expect(localStorage.getItem('accessToken')).toBeNull();
+    expect(localStorage.getItem('refreshToken')).toBeNull();
+  });
+});
+
+describe('authSlice >-65 setInitialized', () => {
+  it('marks restore as finished without authenticating', () => {
+    const store = makeStore();
+    store.getState().setInitialized();
+    expect(store.getState().isInitialized).toBe(true);
+    expect(store.getState().isAuthenticated).toBe(false);
   });
 });
 
 describe('authSlice >-65 logout', () => {
-  it('resets user, tokens and isAuthenticated to defaults', () => {
+  it('clears the user and the in-memory token but stays initialised', () => {
     const store = makeStore();
-    store.getState().setAuth(mockUser, 'access-token', 'refresh-token');
+    store.getState().setAuth(mockUser, 'access-token');
     store.getState().logout();
-    const { user, accessToken, refreshToken, isAuthenticated } = store.getState();
+    const { user, isAuthenticated, isInitialized } = store.getState();
     expect(user).toBeNull();
-    expect(accessToken).toBeNull();
-    expect(refreshToken).toBeNull();
     expect(isAuthenticated).toBe(false);
-  });
-
-  it('removes tokens from localStorage', () => {
-    const store = makeStore();
-    store.getState().setAuth(mockUser, 'access-token', 'refresh-token');
-    store.getState().logout();
-    expect(localStorage.getItem('accessToken')).toBeNull();
-    expect(localStorage.getItem('refreshToken')).toBeNull();
+    expect(isInitialized).toBe(true);
+    expect(tokenMemory.get()).toBeNull();
   });
 });
