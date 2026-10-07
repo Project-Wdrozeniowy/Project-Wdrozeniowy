@@ -1,15 +1,16 @@
 package com.devpulse.user.dto;
 
+import com.devpulse.auth.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.OffsetDateTime;
 
 @Getter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Full public user profile")
@@ -44,4 +45,24 @@ public class UserProfileDto {
 
     @Schema(description = "Account creation timestamp")
     private OffsetDateTime createdAt;
+
+    /** Builds the public profile of {@code user}. */
+    public static UserProfileDto from(User user) {
+        return fill(UserProfileDto.builder(), user).build();
+    }
+
+    /** Copies the public profile fields of {@code user} into {@code builder}. */
+    static <B extends UserProfileDtoBuilder<?, ?>> B fill(B builder, User user) {
+        builder.id(user.getId())
+                .username(user.getUsername())
+                .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
+                .bio(user.getBio())
+                .role(user.getRole().name())
+                .status(user.getStatus().name())
+                .postCount(user.getPostCount())
+                .commentCount(user.getCommentCount())
+                .createdAt(user.getCreatedAt());
+        return builder;
+    }
 }

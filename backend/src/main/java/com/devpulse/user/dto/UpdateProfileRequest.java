@@ -26,19 +26,19 @@ public class UpdateProfileRequest {
     @Schema(description = "New email address — must not be used by another account")
     private String email;
 
-    /** New public display name (1..100 characters). */
-    @Size(min = 1, max = 100)
-    @Schema(description = "New display name")
+    /** New public display name (max 100 characters); an empty string clears it. */
+    @Size(max = 100)
+    @Schema(description = "New display name; an empty string clears it")
     private String displayName;
 
-    /** New avatar URL (max 500 characters). */
+    /** New avatar URL (max 500 characters); an empty string clears it. */
     @URL
     @Size(max = 500)
-    @Schema(description = "New avatar URL — must be a valid HTTP/HTTPS URL")
+    @Schema(description = "New avatar URL — must be a valid HTTP/HTTPS URL; an empty string clears it")
     private String avatarUrl;
 
-    /** New biography (max 2000 characters to keep the payload reasonable). */
-    @Size(max = 2000)
-    @Schema(description = "New bio text")
+    /** New biography (max 1000 characters, as agreed in the API contract); an empty string clears it. */
+    @Size(max = 1000)
+    @Schema(description = "New bio text; an empty string clears it")
     private String bio;
 }

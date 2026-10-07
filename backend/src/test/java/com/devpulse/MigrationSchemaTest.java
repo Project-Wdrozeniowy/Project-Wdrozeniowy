@@ -2,6 +2,7 @@ package com.devpulse;
 
 import com.devpulse.auth.entity.Role;
 import com.devpulse.auth.entity.User;
+import com.devpulse.auth.entity.UserStatus;
 import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.support.MigratedSchemaTest;
 import jakarta.persistence.EntityManager;
@@ -56,6 +57,24 @@ class MigrationSchemaTest {
                 .get()
                 .extracting(User::getRole)
                 .isEqualTo(role);
+    }
+
+    /**
+     * {@code users.status} is the native {@code user_status} enum, and every
+     * Java constant exists in it.
+     */
+    @ParameterizedTest
+    @EnumSource(UserStatus.class)
+    void userStatusRoundTripsThroughNativeEnum(UserStatus status) {
+        User user = user("status-" + status.name().toLowerCase(), Role.USER);
+        user.setStatus(status);
+        Long id = userRepository.saveAndFlush(user).getId();
+        entityManager.clear();
+
+        assertThat(userRepository.findById(id))
+                .get()
+                .extracting(User::getStatus)
+                .isEqualTo(status);
     }
 
     private static User user(String username, Role role) {

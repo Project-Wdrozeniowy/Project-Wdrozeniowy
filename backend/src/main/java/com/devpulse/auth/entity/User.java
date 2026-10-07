@@ -21,11 +21,10 @@ import java.time.OffsetDateTime;
  *
  * <p>The user's {@link Role} determines their permissions:
  * <ul>
- *   <li>{@code USER}  — standard permissions (create posts, comments, vote)</li>
- *   <li>{@code ADMIN} — full access, including user management</li>
+ *   <li>{@code USER}      — standard permissions (create posts, comments, vote)</li>
+ *   <li>{@code MODERATOR} — USER permissions plus content moderation</li>
+ *   <li>{@code ADMIN}     — full access, including user management</li>
  * </ul>
- * The database {@code user_role} enum also defines {@code MODERATOR};
- * see PWDRZ-64 for the application-side wiring.
  *
  * <p>Profile fields ({@code displayName}, {@code avatarUrl}, {@code bio}) are optional
  * and editable through the {@code /users/me} endpoints.
@@ -87,8 +86,12 @@ public class User {
     /**
      * Account lifecycle status.
      * Default value: {@link UserStatus#ACTIVE}.
+     *
+     * <p>Stored in the PostgreSQL enum column {@code user_status}; see {@link #role}
+     * for why it needs {@link SqlTypes#NAMED_ENUM}.
      */
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false)
     @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;
@@ -97,12 +100,12 @@ public class User {
     @Column(name = "ban_reason", columnDefinition = "text")
     private String banReason;
 
-    /** Aggregated count of posts authored by the user. Maintained by background jobs. */
+    /** Denormalised number of posts written by the user, shown on the profile. */
     @Column(name = "post_count", nullable = false)
     @Builder.Default
     private Integer postCount = 0;
 
-    /** Aggregated count of comments authored by the user. Maintained by background jobs. */
+    /** Denormalised number of comments written by the user, shown on the profile. */
     @Column(name = "comment_count", nullable = false)
     @Builder.Default
     private Integer commentCount = 0;
