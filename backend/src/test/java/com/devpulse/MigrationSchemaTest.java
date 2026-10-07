@@ -7,6 +7,8 @@ import com.devpulse.support.MigratedSchemaTest;
 import jakarta.persistence.EntityManager;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,16 +42,20 @@ class MigrationSchemaTest {
         assertThat(flyway.info().applied()).isNotEmpty();
     }
 
-    /** {@code users.role} is the native {@code user_role} enum, not a varchar. */
-    @Test
-    void userRoleRoundTripsThroughNativeEnum() {
-        Long id = userRepository.saveAndFlush(user("schema-admin", Role.ADMIN)).getId();
+    /**
+     * {@code users.role} is the native {@code user_role} enum, not a varchar,
+     * and every Java constant exists in it.
+     */
+    @ParameterizedTest
+    @EnumSource(Role.class)
+    void userRoleRoundTripsThroughNativeEnum(Role role) {
+        Long id = userRepository.saveAndFlush(user("schema-" + role.name().toLowerCase(), role)).getId();
         entityManager.clear();
 
         assertThat(userRepository.findById(id))
                 .get()
                 .extracting(User::getRole)
-                .isEqualTo(Role.ADMIN);
+                .isEqualTo(role);
     }
 
     private static User user(String username, Role role) {
