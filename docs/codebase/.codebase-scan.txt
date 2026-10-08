@@ -78,7 +78,6 @@ backend\src\test
 backend\src\test\java
 backend\src\test\resources
 CLAUDE.md
-CODEBASE.md
 docker-compose.yml
 docs
 docs\agent-task-backlog
@@ -107,7 +106,7 @@ docs\guides\conventions-index.md
 docs\guides\git-workflow.md
 docs\guides\naming-conventions.md
 docs\guides\testing.md
-docs\guides\working_with_branches.md
+docs\README.md
 frontend
 frontend\.env
 frontend\.env.example
@@ -200,6 +199,7 @@ gateway\src\app.ts
 gateway\src\config
 gateway\src\config\index.ts
 gateway\src\index.ts
+gateway\src\middleware
 
 === STACK DETECTION (manifest files) ===
 
@@ -292,6 +292,7 @@ backend\src\main\java\com\devpulse\websocket\controller\WebSocketController.java
 frontend\src\hooks\usePosts.ts:4: // TODO: replace with postService.list() once PostCard is migrated to PostSummary
 
 === GIT RECENT COMMITS (last 20) ===
+a12b1d2 docs: Update architecture, concerns, conventions, integrations, stack, structure, and testing documentation
 9ed9182 [PWDRZ-63]: Add USER/ADMIN roles with AuthGuard and RoleGuard (#15)
 a939ad0 [PWDRZ-82]: Replace localStorage token storage with httpOnly cookies (#25)
 1d4e92a [PWDRZ-42]: Add engineering conventions to docs/guides (#29)
@@ -311,7 +312,6 @@ a0b8ae8 Pwdrz 26 define rest api contract and endpoints (#24)
 1af26ff [PWDRZ-83]: Update readme (#26)
 04dc661 [PWDRZ-84]:Adds gateway service and config (#28)
 d9854c1 [Pwdrz-39] create GitHub md file for correct project review (#27)
-89605f5 [PWDRZ-33]: Create Hi-Fi mockups for forum and dashboard pages
 
 === HIGH-CHURN FILES (last 90 days, top 20) ===
    3 AGENTS.md
@@ -326,24 +326,24 @@ d9854c1 [Pwdrz-39] create GitHub md file for correct project review (#27)
    3 backend/src/main/java/com/devpulse/exception/GlobalExceptionHandler.java
    3 backend/src/main/java/com/devpulse/auth/entity/User.java
    3 backend/src/test/java/com/devpulse/MigrationSchemaTest.java
+   2 .github/copilot-instructions.md
+   2 docs/codebase/ARCHITECTURE.md
+   2 docs/guides/conventions-index.md
+   2 docs/guides/git-workflow.md
    2 backend/src/main/java/com/devpulse/auth/dto/LogoutRequest.java
    2 backend/src/main/resources/application.properties
    2 backend/src/test/java/com/devpulse/auth/controller/AuthControllerTest.java
    2 backend/src/test/java/com/devpulse/auth/service/AuthServiceRefreshTest.java
-   2 frontend/src/app/layout.tsx
-   2 frontend/src/lib/toast.ts
-   2 frontend/src/services/__tests__/authService.test.ts
-   2 frontend/src/services/authService.ts
 
 === MONOREPO SIGNALS ===
 No monorepo signals detected.
 
 === CODE METRICS ===
-Total files scanned: 326
+Total files scanned: 325
 Total lines of code: 33405
 
 Files by language:
-  Other: 110
+  Other: 109
   Java: 102
   TypeScript/React: 56
   TypeScript: 55
@@ -353,12 +353,12 @@ Files by language:
 Top 10 largest files:
 docs\agent-task-backlog\pwdrz-jira-tasks.json: 1066.4KB
 docs\db-schema-forum.png: 541.0KB
-docs\db-schema.png: 414.5KB
 frontend\package-lock.json: 333.9KB
-docs\db-schema-auth.png: 270.4KB
 gateway\package-lock.json: 259.2KB
 docs\db-schema-social.png: 248.5KB
 frontend\tsconfig.tsbuildinfo: 155.7KB
+docs\db-schema.png: 109.3KB
+docs\db-schema-auth.png: 57.6KB
 frontend\src\app\favicon.ico: 25.3KB
 .agents\skills\acquire-codebase-knowledge\scripts\scan.py: 23.2KB
 

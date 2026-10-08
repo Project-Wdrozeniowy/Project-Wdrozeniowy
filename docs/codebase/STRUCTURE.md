@@ -115,12 +115,13 @@ frontend/src/app/
   (main)/
     layout.tsx                   ← main layout (Header + Sidebar)
     page.tsx                     ← home feed
-    (protected)/                 ← role-gated admin, dashboard, profile routes
-    dashboard/
+    (protected)/
+      layout.tsx                 ← protected/role-gated layout
+      admin/
+      dashboard/
+      profile/
     forum/
       _components/CategoryFilter.tsx
-    profile/
-      _components/ProfileTabs.tsx
   _components/
     PostCard.tsx                 ← shared post display component
 ```

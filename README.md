@@ -75,20 +75,31 @@ cd ../gateway && npm install
 
 ## Running Locally
 
-Start each service in a separate terminal:
+Choose one backend/gateway workflow. Do not run the same service both through Docker Compose and its local development command.
+
+### Compose backend and gateway
 
 ```bash
+# Starts postgres, redis, backend, and gateway.
+docker compose up -d
+
 # Frontend — http://localhost:3001
 cd frontend
 echo "NEXT_PUBLIC_API_URL=http://localhost:3000/api" > .env
 npm run dev
+```
+
+### Run backend and gateway from source
+
+```bash
+# Infrastructure only
+docker compose up -d postgres redis
 
 # Gateway — http://localhost:3000
 cd gateway
 npm run dev
 
-# Backend is already running via Docker Compose (port 8080)
-# To run with Maven directly (requires postgres running):
+# Backend — http://localhost:8080
 cd backend && ./mvnw spring-boot:run
 ```
 
@@ -166,6 +177,7 @@ backend/src/main/resources/db/migration/
   V2__create_forum_tables.sql
   V3__create_notifications.sql
   V4__create_analytics_tables.sql
+  V5__add_replaced_by_to_refresh_tokens.sql
 ```
 
 Detailed architecture, conventions, and the evidence-backed current-state map are documented in [docs/README.md](docs/README.md).

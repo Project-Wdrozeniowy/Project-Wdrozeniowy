@@ -5,10 +5,11 @@ Next.js 16 application served on port `3001` in local development. It communicat
 ## Quick start
 
 ```bash
-# From the repository root, configure shared infrastructure first.
-cp ../.env.example ../.env
+# Run this block from the repository root.
+cp .env.example .env
 
 # Create the frontend environment file.
+cd frontend
 echo "NEXT_PUBLIC_API_URL=http://localhost:3000/api" > .env
 
 npm install
