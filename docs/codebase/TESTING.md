@@ -1,5 +1,7 @@
 # Testing Patterns
 
+> Snapshot scope: verified against the local test configuration and CI on 2026-10-08. All three local configurations enforce 65%; the CI job labels that say 50% are stale labels, not the active thresholds. PWDRZ-118 owns the future threshold decision.
+
 ## Core Sections (Required)
 
 ### 1) Test Stack and Commands
@@ -34,7 +36,7 @@ npm run test:coverage   # jest --coverage
 ```bash
 cd backend
 ./mvnw test                          # run all tests
-./mvnw test -pl backend              # from repo root
+./mvnw verify                        # run tests, report and enforce JaCoCo coverage
 ```
 
 ---
@@ -86,7 +88,7 @@ cd backend
 #### Frontend
 - HTTP calls mocked with `axios-mock-adapter` — intercepts axios requests at the adapter level
 - React components tested with `@testing-library/react` + jsdom; no snapshot tests observed
-- Test isolation: each test file has a fresh module scope via Vitest; `localStorage` in jsdom is reset via setup or test teardown
+- Test isolation: token state is reset through `tokenMemory` in tests; refresh-cookie behaviour is exercised through mocked HTTP responses.
 
 #### Gateway
 - Express middleware tested in isolation by calling handler functions directly or via `supertest`
@@ -104,9 +106,9 @@ cd backend
 
 | Module | Tool | Threshold | Reporter | Evidence |
 |--------|------|-----------|----------|----------|
-| Frontend | Vitest v8 | 65% lines/functions/branches/statements | text, lcov, html | [frontend/vitest.config.ts](../../frontend/vitest.config.ts) |
-| Gateway | Jest v8 | 65% lines/functions/branches/statements | text, lcov, html | [gateway/jest.config.js](../../gateway/jest.config.js) |
-| Backend | JaCoCo (Spring Boot default) | ≥50% implied by CI job name | [TODO] explicit config not found in pom.xml | [.github/workflows/test.yml](../../.github/workflows/test.yml) |
+| Frontend | Vitest 3 | 65% lines/functions/branches/statements | text, lcov, html | [frontend/vitest.config.ts](../../frontend/vitest.config.ts) |
+| Gateway | Jest 29 | 65% lines/functions/branches/statements | text, lcov, html | [gateway/jest.config.js](../../gateway/jest.config.js) |
+| Backend | JaCoCo 0.8.12 | 65% line coverage | JaCoCo XML/HTML report | [backend/pom.xml](../../backend/pom.xml) |
 
 Coverage exclusions (frontend):
 - `**/types/**`, `**/shared/**`, `**/constants/**` — type-only / static data
@@ -125,5 +127,4 @@ Known gaps:
 - [gateway/jest.config.js](../../gateway/jest.config.js)
 - [backend/src/test/resources/application-test.properties](../../backend/src/test/resources/application-test.properties)
 - [.github/workflows/test.yml](../../.github/workflows/test.yml)
-- [frontend/coverage/index.html](../../frontend/coverage/index.html) — generated coverage report (committed)
-- [gateway/coverage/](../../gateway/coverage/) — generated coverage report (committed)
+- [backend/pom.xml](../../backend/pom.xml)

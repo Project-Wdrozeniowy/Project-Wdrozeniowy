@@ -22,9 +22,9 @@ End every review with a ## Summary paragraph and a ## What is good section listi
 
 ## Auth Token Storage
 
-☢️ Issue — localStorage JWT storage
-New code storing JWT tokens in localStorage or sessionStorage increases XSS exposure; the project direction is httpOnly cookies.
-Fix: Remove the storage call and plan for cookie-based auth instead.
+☢️ Issue — browser-persistent JWT storage
+New code storing tokens in localStorage or sessionStorage increases XSS exposure. The implemented flow keeps access tokens in memory and refresh tokens in an HttpOnly cookie.
+Fix: Remove the storage call; use the existing token-memory and refresh flow instead.
 
 ```ts
 // Flag:
@@ -51,14 +51,14 @@ springdoc.api-docs.enabled=true
 
 ## Calls to Unimplemented Forum Endpoints
 
-☢️ Issue — Real HTTP calls to non-existent backend API
-`forumService.ts` returns static fixtures; calling a real endpoint that has no Spring `@RestController` will cause 404 errors at runtime.
-Fix: Keep using static fixtures in `forumService.ts` until the backend forum API is implemented.
+☢️ Issue — Invented or unavailable forum API call
+Forum post endpoints exist under `/api/forum/posts`, but several adjacent controller contracts remain unimplemented and return 501. The current feed is still mock-backed at `usePosts.ts`.
+Fix: Use the typed `forumService` adapter and the documented endpoint contract; do not invent `/api/posts` or wire UI to a 501 stub.
 
 ```ts
 // Flag:
 axios.get('/api/posts')
-apiClient.post('/api/forum/...')
+apiClient.post('/api/forum/unknown-feature')
 ```
 
 ---

@@ -14,7 +14,7 @@ helmet → cors → morgan → rate limiter
   │
   ├─ GET /health ───────────────────────────→ { status: "ok" }
   │
-  ├─ POST /api/auth/login|/register ────────→ proxy → Spring Boot :8080
+  ├─ POST /api/auth/login|/register|/refresh|/logout → proxy → Spring Boot :8080
   │
   ├─ Bearer token valid ────────────────────→ proxy (+ Authorization header) → Spring Boot :8080
   │
@@ -53,6 +53,8 @@ npm run dev
 - **Public routes (no token needed):**
   - `POST /api/auth/login`
   - `POST /api/auth/register`
+  - `POST /api/auth/refresh`
+  - `POST /api/auth/logout`
 - **Error responses:**
   - `401` — token missing, invalid, or expired
   - `429` — rate limit exceeded; back off and retry
@@ -62,7 +64,7 @@ npm run dev
 
 ## For Backend Developers (Spring Boot)
 
-- **Only pre-validated requests arrive.** The gateway rejects any request with a missing or invalid JWT — Spring Boot will never see one.
+- **Protected requests are pre-validated.** The gateway rejects a protected request with a missing or invalid JWT. Public auth routes intentionally reach Spring Boot without a bearer token.
 - **Authorization header is forwarded unchanged.** `Authorization: Bearer <token>` is passed through as-is; Spring Boot can decode it if it needs the user identity.
 - **Path is preserved.** A request to `/api/users/42` arrives at Spring Boot as `/api/users/42` — the gateway only rewrites the host/port.
 - **No public port needed.** Spring Boot only needs to be reachable by the gateway (defaults to `localhost:8080`); it does not need to be exposed to the internet or the browser.
@@ -92,7 +94,8 @@ Edit the `publicRoutes` array in [`src/config/index.ts`](src/config/index.ts) �
 publicRoutes: [
   { method: 'POST', path: '/api/auth/login' },
   { method: 'POST', path: '/api/auth/register' },
-  { method: 'POST', path: '/api/auth/refresh' }, // add new entry here
+  { method: 'POST', path: '/api/auth/refresh' },
+  { method: 'POST', path: '/api/auth/logout' },
 ],
 ```
 

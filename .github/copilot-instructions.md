@@ -96,7 +96,7 @@ npm run lint     # eslint src (--fix for gateway)
 
 ## Hard Constraints
 
-1. **Do not cement localStorage for JWT.** Current code uses localStorage, but the direction is `httpOnly` cookies. Do not add new code that further couples auth tokens to localStorage.
+1. **Do not add browser-persistent token storage.** Access tokens use in-memory `tokenMemory`; refresh tokens use an `HttpOnly` cookie. Do not add `localStorage` or `sessionStorage` token handling.
 
 2. **Do not remove Redis** from Docker Compose or remove any `depends_on` referencing it. Provisioned for future caching/sessions.
 
@@ -106,7 +106,7 @@ npm run lint     # eslint src (--fix for gateway)
 
 5. **Swagger must stay disabled by default.** `springdoc.swagger-ui.enabled` and `springdoc.api-docs.enabled` are both controlled by `${SWAGGER_ENABLED:false}`. Never hardcode `true`.
 
-6. **Do not call `/api/posts` or other unimplemented forum endpoints.** `forumService.ts` returns static fixtures — the backend forum API does not exist yet.
+6. **Use the documented forum API boundary.** Backend post endpoints use `/api/forum/posts`; `postService` already exposes typed adapters. The current feed remains mock-backed in `usePosts.ts` until its dedicated integration task is complete. Do not invent `/api/posts`.
 
 7. **Do not commit or push** unless the user explicitly asks. Complete all edits and verifications, then stop.
 
@@ -126,8 +126,8 @@ npm run lint     # eslint src (--fix for gateway)
 
 - **Dual JWT verification is intentional.** Gateway verifies before proxying; Spring Security re-validates as defence-in-depth. Both must share the same `JWT_SECRET`.
 - **JWT_SECRET must be identical** in root `.env` (backend) and `gateway/.env`. A mismatch causes 401 on every authenticated request with no descriptive error.
-- **Public routes** (no JWT): `POST /api/auth/login`, `POST /api/auth/register`.
-- **Forum data is mocked** in `forumService.ts`. Do not wire it to a real endpoint until the backend API exists.
+- **Public routes** (no bearer JWT): `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/refresh`, `POST /api/auth/logout`.
+- **Forum posts API exists**, but the forum feed still uses mock data through `usePosts.ts`. Keep API and UI integration work scoped to their tasks.
 
 ---
 
@@ -139,7 +139,7 @@ npm run lint     # eslint src (--fix for gateway)
 | Gateway  | Jest 29 + ts-jest + supertest       | `src/__tests__/` and `src/middleware/__tests__/`       |
 | Backend  | JUnit 5 + Mockito + Spring Boot Test | mirrors `src/main/java/`                              |
 
-- Coverage thresholds: ≥ 65% frontend/gateway, ≥ 50% backend.
+- Current configured coverage thresholds: ≥ 65% frontend/gateway (all metrics) and ≥ 65% backend (JaCoCo line coverage). PWDRZ-118 owns any policy change.
 - Coverage-excluded folders (frontend): `app/`, `components/`, `hooks/`, `types/`, `constants/`.
 - Backend tests use `src/test/resources/application-test.properties` — no Flyway, no real DB.
 - In gateway config tests, use `jest.mock('dotenv/config', () => {})` when calling `jest.resetModules()` to prevent `.env` from polluting isolated test env vars.

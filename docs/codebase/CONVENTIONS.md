@@ -1,5 +1,7 @@
 # Coding Conventions
 
+> Snapshot scope: verified against repository configuration on 2026-10-08. `develop` is the documented integration branch. Local test configuration enforces 65%; CI job labels that say 50% are stale labels. GitHub rulesets remain authoritative for enforcement.
+
 ## Core Sections (Required)
 
 ### 1) Naming Rules
@@ -12,7 +14,7 @@
 | Non-component TS files | camelCase `.ts` | `authService.ts`, `usePosts.ts`, `format.ts` | [frontend/src/services/](../../frontend/src/services/) |
 | Interfaces/types | PascalCase, no `I` prefix | `AuthResponse`, `GatewayConfig`, `User` | [frontend/src/shared/types/index.ts](../../frontend/src/shared/types/index.ts), [gateway/src/types/index.ts](../../gateway/src/types/index.ts) |
 | Zustand slices | camelCase, suffix `Slice` | `createAuthSlice`, `AuthSlice` | [frontend/src/store/slices/authSlice.ts](../../frontend/src/store/slices/authSlice.ts) |
-| Constants / env keys | `UPPER_SNAKE_CASE` for env vars; `camelCase` const names in TS | `TOKEN_KEY`, `SESSION_COOKIE` | [frontend/src/services/authService.ts](../../frontend/src/services/authService.ts) |
+| Constants / env keys | `UPPER_SNAKE_CASE` for env vars; `camelCase` for ordinary TS constants | `JWT_SECRET`, `tokenMemory` | [.env.example](../../.env.example), [frontend/src/lib/tokenMemory.ts](../../frontend/src/lib/tokenMemory.ts) |
 | Enums | PascalCase name, uppercase members | `CategoryKey.AI`, `CategoryKey.GAMING` | [frontend/src/shared/types/index.ts](../../frontend/src/shared/types/index.ts) |
 
 #### Java (backend)
@@ -28,7 +30,7 @@
 
 | Item | Rule | Example | Evidence |
 |------|------|---------|----------|
-| Branch name | `type/TICKET-ID-short-description` | `feature/PWDRZ-30-login-page` | [docs/guides/working_with_branches.md](../../docs/guides/working_with_branches.md) |
+| Branch name | `type/PWDRZ-<ticket>-short-description` | `feature/PWDRZ-30-login-page` | [docs/guides/git-workflow.md](../../docs/guides/git-workflow.md) |
 | Commit message | `[PWDRZ-<n>]: Short imperative description` | `[PWDRZ-33]: Fix prettier formatting` | git log (scan output) |
 | PR title | `[PWDRZ-<n>]: Short description` | `[PWDRZ-28]: Implement routing and application layout` | [.github/pull_request_template.md](../../.github/pull_request_template.md) |
 
@@ -97,7 +99,7 @@
 
 #### Frontend
 - **HTTP error handling**: axios response interceptor in [frontend/src/services/api.ts](../../frontend/src/services/api.ts) — auto-redirects to `/login` on 401
-- **Sensitive data**: JWT stored in `localStorage` and a lightweight non-httpOnly session cookie (`orbita_session`) — see [CONCERNS.md](CONCERNS.md) for XSS risk
+- **Sensitive data**: access JWTs are held in `tokenMemory`; refresh tokens are sent only in an `HttpOnly; SameSite=Strict` cookie. Do not introduce browser-persistent token storage.
 
 ---
 
@@ -124,5 +126,5 @@
 - [frontend/tsconfig.json](../../frontend/tsconfig.json)
 - [frontend/src/shared/types/index.ts](../../frontend/src/shared/types/index.ts)
 - [backend/src/main/java/com/devpulse/exception/GlobalExceptionHandler.java](../../backend/src/main/java/com/devpulse/exception/GlobalExceptionHandler.java)
-- [docs/guides/working_with_branches.md](../../docs/guides/working_with_branches.md)
+- [docs/guides/git-workflow.md](../../docs/guides/git-workflow.md)
 - [docs/guides/branch_namings.md](../../docs/guides/branch_namings.md)

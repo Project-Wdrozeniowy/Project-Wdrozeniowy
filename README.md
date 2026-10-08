@@ -59,10 +59,10 @@ JWT_SECRET=your_base64_secret
 > [!IMPORTANT]
 > `JWT_SECRET` must be **identical** in `.env` and `gateway/.env`. A mismatch causes 401 on every authenticated request with no descriptive error.
 
-### 2. Start the database and backend
+### 2. Start the infrastructure, backend, and gateway
 
 ```bash
-docker compose up -d        # starts postgres, redis, backend
+docker compose up -d        # starts postgres, redis, backend, gateway
 docker compose logs -f      # watch startup; Flyway runs migrations automatically
 ```
 
@@ -75,20 +75,31 @@ cd ../gateway && npm install
 
 ## Running Locally
 
-Start each service in a separate terminal:
+Choose one backend/gateway workflow. Do not run the same service both through Docker Compose and its local development command.
+
+### Compose backend and gateway
 
 ```bash
+# Starts postgres, redis, backend, and gateway.
+docker compose up -d
+
 # Frontend — http://localhost:3001
 cd frontend
 echo "NEXT_PUBLIC_API_URL=http://localhost:3000/api" > .env
 npm run dev
+```
+
+### Run backend and gateway from source
+
+```bash
+# Infrastructure only
+docker compose up -d postgres redis
 
 # Gateway — http://localhost:3000
 cd gateway
 npm run dev
 
-# Backend is already running via Docker Compose (port 8080)
-# To run with Maven directly (requires postgres running):
+# Backend — http://localhost:8080
 cd backend && ./mvnw spring-boot:run
 ```
 
@@ -101,8 +112,8 @@ cd frontend && npm run test:coverage
 # Gateway — Jest 29, coverage threshold: 65%
 cd gateway && npm run test:coverage
 
-# Backend — JUnit 5 (requires a running PostgreSQL)
-cd backend && ./mvnw test
+# Backend — JUnit 5 + JaCoCo (requires a running PostgreSQL)
+cd backend && ./mvnw verify
 ```
 
 Run a specific test:
@@ -166,9 +177,10 @@ backend/src/main/resources/db/migration/
   V2__create_forum_tables.sql
   V3__create_notifications.sql
   V4__create_analytics_tables.sql
+  V5__add_replaced_by_to_refresh_tokens.sql
 ```
 
-Detailed architecture and conventions are documented in [`docs/codebase/`](docs/codebase/).
+Detailed architecture, conventions, and the evidence-backed current-state map are documented in [docs/README.md](docs/README.md).
 
 ## Pull Requests
 
@@ -183,8 +195,10 @@ Required checks before submitting:
 ```bash
 cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test
 cd gateway  && npm run typecheck && npm run lint && npm run format:check && npm run test
-cd backend  && ./mvnw test
+cd backend  && ./mvnw verify
 ```
+
+GitHub rulesets are authoritative for branch protection and merge restrictions. Repository documentation describes the contribution workflow but must not be used to infer ruleset enforcement.
 
 ## Troubleshooting
 

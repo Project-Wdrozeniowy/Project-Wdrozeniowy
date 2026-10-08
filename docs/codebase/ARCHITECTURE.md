@@ -1,5 +1,7 @@
 # Architecture
 
+> Snapshot scope: verified against source and runtime configuration on 2026-10-08. Source/configuration remain authoritative after this snapshot. Docker Compose starts PostgreSQL, Redis, backend, and gateway; the frontend runs separately.
+
 ## Core Sections (Required)
 
 ### 1) Architectural Style
@@ -30,7 +32,7 @@ Gateway (Express, port 3000)
     ├── morgan logger
     ├── rate limiter (100 req/min default)
     ├── /health → 200 OK (no auth)
-    ├── /api/auth/login, /api/auth/register → bypass JWT check (public routes)
+    ├── /api/auth/login, /api/auth/register, /api/auth/refresh, /api/auth/logout → public routes
     └── /api/* → JWT verification → proxy to backend
                       │
                       │  HTTP proxy (http-proxy-middleware)
@@ -38,7 +40,7 @@ Gateway (Express, port 3000)
 Backend (Spring Boot, port 8080)
     ├── JwtAuthenticationFilter (Spring Security) — re-validates JWT
     ├── /auth/** → AuthController → AuthService → UserRepository / JwtUtil
-    └── (future controllers) → services → repositories → PostgreSQL
+    └── user/forum controllers → services → repositories → PostgreSQL
                       │
                       ▼
 PostgreSQL 16 (Flyway-managed schema)
@@ -51,6 +53,21 @@ Flow description:
 4. Spring Security's `JwtAuthenticationFilter` re-validates the same JWT and populates `SecurityContext`.
 5. Controller receives request, delegates to `AuthService`, which interacts with JPA repositories.
 6. Response travels back through the proxy unchanged.
+
+---
+
+### 2.1) Current capability status
+
+This table is a documentation baseline, not a product roadmap. “Implemented” means an executable path is present in the repository; it does not replace feature-specific verification.
+
+| Capability | Status | Evidence / boundary |
+|---|---|---|
+| Login, registration, refresh-token rotation, logout | Implemented | `auth` controller/service, refresh-cookie helper, frontend API client and tests |
+| User profile and account settings API | Implemented API; frontend page incomplete | `user` controller/service exists; profile page still contains placeholder UI |
+| Forum post CRUD, pagination, search/filter API | Implemented API; frontend feed incomplete | `forum/PostController` and `PostService` exist; `usePosts` returns `MOCK_POSTS` |
+| Categories, comments, tags, votes, notifications, analytics, AI, recommendations | Contract stubs / deferred | Controllers exist for several areas but unavailable operations return `501 NOT_IMPLEMENTED` |
+| WebSocket / real-time notifications | Provisioned, not end-to-end | Spring WebSocket and gateway proxy paths exist; Socket.IO is not wired and subscriptions contain TODOs |
+| Redis | Provisioned, not integrated | Compose service exists; no Redis client dependency or runtime use is present |
 
 ---
 
@@ -90,8 +107,8 @@ Flow description:
 
 - **Dual JWT verification (gateway + backend)**: Both the gateway and Spring Security verify the JWT. If the shared `JWT_SECRET` diverges between services, 100% of authenticated requests will fail with no obvious error. There is no documented secret rotation or distribution procedure.
 - **Redis declared but unused**: `docker-compose.yml` provisions Redis 7 and the backend `depends_on: redis`, but neither the backend `pom.xml` nor the gateway `package.json` has a Redis client. The intended use (sessions, caching, pub/sub) is undocumented. See [CONCERNS.md](CONCERNS.md).
-- **Gateway not in docker-compose**: The `docker-compose.yml` runs only `postgres`, `redis`, and `backend`. The gateway must be started separately, which creates a gap between the documented architecture (Frontend → Gateway → Backend) and the containerised stack.
-- **Forum data is mocked**: [frontend/src/services/forumService.ts](../../frontend/src/services/forumService.ts) returns static mock data; the `/api/posts` endpoint does not exist in the backend yet.
+- **API availability is uneven**: Auth, users, and forum posts have implementation paths. Several controller contracts (comments, votes, notifications, analytics, AI, recommendations) intentionally return `501 NOT_IMPLEMENTED`; OpenAPI must not be treated as proof that every advertised operation is usable.
+- **Forum UI remains mocked at the query boundary**: [frontend/src/services/forumService.ts](../../frontend/src/services/forumService.ts) has real adapters for `/forum/posts`, but [frontend/src/hooks/usePosts.ts](../../frontend/src/hooks/usePosts.ts) still resolves `MOCK_POSTS` until the feed is migrated.
 
 ---
 
