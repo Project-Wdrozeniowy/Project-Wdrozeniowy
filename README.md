@@ -183,7 +183,7 @@ Required checks before submitting:
 ```bash
 cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test
 cd gateway  && npm run typecheck && npm run lint && npm run format:check && npm run test
-cd backend  && ./mvnw test
+cd backend  && ./mvnw verify
 ```
 
 GitHub rulesets are authoritative for branch protection and merge restrictions. Repository documentation describes the contribution workflow but must not be used to infer ruleset enforcement.
