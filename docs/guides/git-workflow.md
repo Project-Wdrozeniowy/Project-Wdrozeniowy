@@ -91,6 +91,31 @@ for thresholds). The ruleset doesn't enforce this, so it's up to whoever merges.
 
 If a check fails, fix the cause; do **not** disable the check.
 
+## Daily branch commands
+
+Start a task branch from the integration branch:
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+git switch -c feature/PWDRZ-123-short-description
+```
+
+Push the branch and open a pull request targeting `develop`:
+
+```bash
+git push -u origin feature/PWDRZ-123-short-description
+```
+
+For an existing branch, update it from `develop` before requesting review:
+
+```bash
+git fetch origin
+git rebase origin/develop
+```
+
+Use `--force-with-lease` only when updating your own branch after a rebase.
+
 ## Local hygiene
 
 - Rebase your feature branch on `develop` before opening the PR if it has

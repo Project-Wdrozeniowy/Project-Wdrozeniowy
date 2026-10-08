@@ -1,10 +1,12 @@
 # Technology Stack
 
+> Snapshot scope: verified against source, manifests, runtime configuration and CI on 2026-10-08. Source/configuration remain authoritative after this snapshot.
+
 ## Core Sections (Required)
 
 ### 1) Runtime Summary
 
-This is a multi-service monorepo (manual, no workspace manager). Each service has its own runtime.
+This is a manual multi-project repository. Each service has its own runtime and package/build lifecycle; no root workspace or task graph exists yet.
 
 #### Frontend
 
@@ -123,17 +125,17 @@ npm run format        # Prettier write
 cd backend
 ./mvnw spring-boot:run          # Run locally
 ./mvnw --batch-mode package     # Build JAR
-./mvnw test                     # Run tests
+./mvnw verify                   # Run tests and enforce JaCoCo coverage
 
 # Docker (full stack)
-docker compose up -d            # Postgres + Redis + Backend
+docker compose up -d            # Postgres + Redis + Backend + Gateway
 ```
 
 ---
 
 ### 5) Environment and Config
 
-- Config sources: `.env.example` (root), `backend/.env`, `gateway/.env.example`, `frontend/.env`
+- Config sources: `.env.example` (root), `gateway/.env.example`, `frontend/.env` (local, created by developer), and Spring properties in `backend/src/main/resources/application.properties`.
 - Required env vars:
   - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
   - `JWT_SECRET` (≥32 bytes Base64, shared by gateway and backend)

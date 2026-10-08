@@ -1,5 +1,7 @@
 # External Integrations
 
+> Snapshot scope: verified against runtime configuration and source on 2026-10-08. PostgreSQL/Flyway, gateway proxy/JWT, cookie refresh, Springdoc and WebSocket configuration exist. Redis, Socket.IO and `INTERNAL_SECRET` are provisioned or declared but are not application integrations yet.
+
 ## Core Sections (Required)
 
 ### 1) Integration Inventory
@@ -9,7 +11,7 @@
 | PostgreSQL 16 | Relational database | Primary data store — users, roles, tokens, forum data, notifications, analytics | DB credentials (env vars) | High | [docker-compose.yml](../../docker-compose.yml), [backend/src/main/resources/application.properties](../../backend/src/main/resources/application.properties) |
 | Redis 7 | In-memory cache / data structure store | Declared in docker-compose, not yet wired in application code | No auth configured in docker-compose | Medium (planned) | [docker-compose.yml](../../docker-compose.yml) |
 | JWT (shared secret) | Internal auth token | Access token verification between gateway and backend | HMAC-SHA256, shared `JWT_SECRET` | High | [gateway/src/middleware/auth.ts](../../gateway/src/middleware/auth.ts), [backend/.../JwtUtil.java](../../backend/src/main/java/com/devpulse/security/JwtUtil.java) |
-| SpringDoc / Swagger UI | Internal dev tooling | OpenAPI 3 docs at `/swagger-ui.html` | None (public in dev) | Low | [backend/pom.xml](../../backend/pom.xml), [backend/.../OpenApiConfig.java](../../backend/src/main/java/com/devpulse/config/OpenApiConfig.java) |
+| SpringDoc / Swagger UI | Internal dev tooling | OpenAPI 3 docs at `/swagger-ui/index.html` when enabled | Disabled by default; enable locally with `SWAGGER_ENABLED=true` | Low | [backend/src/main/resources/application.properties](../../backend/src/main/resources/application.properties), [backend/.../OpenApiConfig.java](../../backend/src/main/java/com/devpulse/config/OpenApiConfig.java) |
 | Socket.IO | WebSocket server | Real-time events (installed in gateway, not wired) | [ASK USER] | Low (planned) | [gateway/package.json](../../gateway/package.json) |
 
 ---
@@ -25,7 +27,7 @@
 
 ### 3) Database Schema
 
-Four Flyway migrations define the full schema:
+Five Flyway migrations define the current schema:
 
 | Migration | Tables created | Evidence |
 |-----------|---------------|----------|
@@ -33,6 +35,7 @@ Four Flyway migrations define the full schema:
 | V2 — forum | `categories`, `posts`, `comments`, `tags`, `post_tags`, `votes` | [V2__create_forum_tables.sql](../../backend/src/main/resources/db/migration/V2__create_forum_tables.sql) |
 | V3 — notifications | `notifications` | [V3__create_notifications.sql](../../backend/src/main/resources/db/migration/V3__create_notifications.sql) |
 | V4 — analytics | analytics-related tables | [V4__create_analytics_tables.sql](../../backend/src/main/resources/db/migration/V4__create_analytics_tables.sql) |
+| V5 — refresh-token rotation | `refresh_tokens.replaced_by_token_id` self-reference | [V5__add_replaced_by_to_refresh_tokens.sql](../../backend/src/main/resources/db/migration/V5__add_replaced_by_to_refresh_tokens.sql) |
 
 ER diagrams available: [docs/db-schema.mmd](../../docs/db-schema.mmd), [docs/db-schema-auth.mmd](../../docs/db-schema-auth.mmd), [docs/db-schema-forum.mmd](../../docs/db-schema-forum.mmd), [docs/db-schema-social.mmd](../../docs/db-schema-social.mmd).
 
@@ -54,7 +57,7 @@ ER diagrams available: [docs/db-schema.mmd](../../docs/db-schema.mmd), [docs/db-
 - **Timeout policy**: Frontend axios client has a 10-second timeout (`timeout: 10000`) configured in [frontend/src/services/api.ts](../../frontend/src/services/api.ts). Gateway proxy has no explicit timeout configured.
 - **Circuit breaker**: None implemented.
 - **Proxy error fallback**: Gateway returns `{ error: "Backend unavailable" }` with HTTP 502 if the backend is unreachable — implemented in [gateway/src/routes/proxy.ts](../../gateway/src/routes/proxy.ts).
-- **Frontend auth error fallback**: axios interceptor auto-redirects to `/login` on 401 — [frontend/src/services/api.ts](../../frontend/src/services/api.ts).
+- **Frontend auth error fallback**: the axios interceptor refreshes once using the HttpOnly cookie, retries the request, then clears in-memory state and redirects to `/login` only if refresh fails — [frontend/src/services/api.ts](../../frontend/src/services/api.ts).
 - **Docker health checks**: PostgreSQL and Redis have health checks; backend `depends_on` waits for both to be healthy before starting.
 
 ---

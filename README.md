@@ -59,10 +59,10 @@ JWT_SECRET=your_base64_secret
 > [!IMPORTANT]
 > `JWT_SECRET` must be **identical** in `.env` and `gateway/.env`. A mismatch causes 401 on every authenticated request with no descriptive error.
 
-### 2. Start the database and backend
+### 2. Start the infrastructure, backend, and gateway
 
 ```bash
-docker compose up -d        # starts postgres, redis, backend
+docker compose up -d        # starts postgres, redis, backend, gateway
 docker compose logs -f      # watch startup; Flyway runs migrations automatically
 ```
 
@@ -101,8 +101,8 @@ cd frontend && npm run test:coverage
 # Gateway — Jest 29, coverage threshold: 65%
 cd gateway && npm run test:coverage
 
-# Backend — JUnit 5 (requires a running PostgreSQL)
-cd backend && ./mvnw test
+# Backend — JUnit 5 + JaCoCo (requires a running PostgreSQL)
+cd backend && ./mvnw verify
 ```
 
 Run a specific test:
@@ -168,7 +168,7 @@ backend/src/main/resources/db/migration/
   V4__create_analytics_tables.sql
 ```
 
-Detailed architecture and conventions are documented in [`docs/codebase/`](docs/codebase/).
+Detailed architecture, conventions, and the evidence-backed current-state map are documented in [docs/README.md](docs/README.md).
 
 ## Pull Requests
 
@@ -185,6 +185,8 @@ cd frontend && npm run typecheck && npm run lint && npm run format:check && npm 
 cd gateway  && npm run typecheck && npm run lint && npm run format:check && npm run test
 cd backend  && ./mvnw test
 ```
+
+GitHub rulesets are authoritative for branch protection and merge restrictions. Repository documentation describes the contribution workflow but must not be used to infer ruleset enforcement.
 
 ## Troubleshooting
 

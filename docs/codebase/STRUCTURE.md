@@ -1,5 +1,7 @@
 # Codebase Structure
 
+> Snapshot scope: verified against the repository tree and entry configuration on 2026-10-08. This is a manual multi-project repository; root task orchestration is tracked separately.
+
 ## Core Sections (Required)
 
 ### 1) Top-Level Map
@@ -10,10 +12,10 @@
 | `gateway/` | Node.js/Express reverse proxy — JWT verification, rate limiting, CORS, proxying to backend | [gateway/src/app.ts](../../gateway/src/app.ts) |
 | `backend/` | Spring Boot REST API — business logic, auth endpoints, DB persistence | [backend/src/main/java/com/devpulse/](../../backend/src/main/java/com/devpulse/) |
 | `docs/` | Architecture diagrams (Mermaid + PNG), developer guides | [docs/guides/](../../docs/guides/) |
-| `docker-compose.yml` | Orchestrates PostgreSQL 16, Redis 7, and the backend service | [docker-compose.yml](../../docker-compose.yml) |
+| `docker-compose.yml` | Orchestrates PostgreSQL 16, Redis 7, backend, and gateway; frontend runs separately | [docker-compose.yml](../../docker-compose.yml) |
 | `.github/workflows/` | CI pipelines: build, lint, and test for each service | [.github/workflows/](../../.github/workflows/) |
 | `.env.example` | Root-level env template for shared secrets | [.env.example](../../.env.example) |
-| `AGENTS.md` | AI agent instructions file (currently empty) | [AGENTS.md](../../AGENTS.md) |
+| `AGENTS.md` | Contributor and agent instructions, including workflow and testing expectations | [AGENTS.md](../../AGENTS.md) |
 
 ---
 
@@ -113,6 +115,7 @@ frontend/src/app/
   (main)/
     layout.tsx                   ← main layout (Header + Sidebar)
     page.tsx                     ← home feed
+    (protected)/                 ← role-gated admin, dashboard, profile routes
     dashboard/
     forum/
       _components/CategoryFilter.tsx
@@ -142,4 +145,8 @@ com.devpulse/
     GlobalExceptionHandler.java
   security/
     JwtUtil.java
+  forum/                         ← post implementation plus controller contracts for adjacent forum features
+  user/                          ← profile and password-management API
+  notification/, analytics/, ai/, recommendation/, websocket/
+                                  ← controller contracts; some endpoints return 501
 ```

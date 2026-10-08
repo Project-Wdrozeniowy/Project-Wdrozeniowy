@@ -1,6 +1,7 @@
 
 === DIRECTORY TREE (max depth 3, source files only) ===
 .agents
+.agents\agents
 .agents\skills
 .agents\skills\acquire-codebase-knowledge
 .agents\skills\acquire-codebase-knowledge\assets
@@ -20,6 +21,8 @@
 .agents\skills\security-review
 .agents\skills\security-review\references
 .agents\skills\security-review\SKILL.md
+.agents\tools
+.agents\tools\atlassian-requirements-to-jira.agent.md
 .claude
 .claude\skills
 .claude\skills\acquire-codebase-knowledge
@@ -33,13 +36,18 @@
 .claude\skills\create-agentsmd\SKILL.md
 .claude\skills\review-and-refactor
 .claude\skills\review-and-refactor\SKILL.md
+.claude\skills\whatidid
+.claude\skills\whatidid\SKILL.md
 .env
 .env.example
 .gitattributes
 .github
+.github\agents
+.github\agents\atlassian-requirements-to-jira.agent.md
 .github\copilot-instructions.md
 .github\instructions
 .github\instructions\review-only.instructions.md
+.github\instructions\task-backlog.instructions.md
 .github\pull_request_template.md
 .github\workflows
 .github\workflows\backend-build.yml
@@ -48,6 +56,8 @@
 .github\workflows\lint.yml
 .github\workflows\test.yml
 .gitignore
+.vscode
+.vscode\mcp.json
 AGENTS.md
 backend
 backend\.env
@@ -68,8 +78,11 @@ backend\src\test
 backend\src\test\java
 backend\src\test\resources
 CLAUDE.md
+CODEBASE.md
 docker-compose.yml
 docs
+docs\agent-task-backlog
+docs\agent-task-backlog\pwdrz-jira-tasks.json
 docs\codebase
 docs\codebase\.codebase-scan.txt
 docs\codebase\ARCHITECTURE.md
@@ -88,10 +101,16 @@ docs\db-schema-social.png
 docs\db-schema.mmd
 docs\db-schema.png
 docs\guides
+docs\guides\architecture.md
 docs\guides\branch_namings.md
+docs\guides\conventions-index.md
+docs\guides\git-workflow.md
+docs\guides\naming-conventions.md
+docs\guides\testing.md
 docs\guides\working_with_branches.md
 frontend
 frontend\.env
+frontend\.env.example
 frontend\.gitignore
 frontend\.prettierignore
 frontend\.prettierrc
@@ -117,6 +136,7 @@ frontend\src\app\favicon.ico
 frontend\src\app\globals.css
 frontend\src\app\layout.tsx
 frontend\src\components
+frontend\src\components\guards
 frontend\src\components\layout
 frontend\src\components\ui
 frontend\src\constants
@@ -128,16 +148,25 @@ frontend\src\constants\sidebar.ts
 frontend\src\hooks
 frontend\src\hooks\usePosts.ts
 frontend\src\lib
+frontend\src\lib\__tests__
+frontend\src\lib\apiError.ts
 frontend\src\lib\cn.ts
+frontend\src\lib\toast.ts
+frontend\src\lib\tokenMemory.ts
 frontend\src\lib\validations
 frontend\src\providers
 frontend\src\providers\__tests__
+frontend\src\providers\AuthProvider.tsx
 frontend\src\providers\QueryProvider.tsx
+frontend\src\providers\ToastProvider.tsx
 frontend\src\services
 frontend\src\services\__tests__
+frontend\src\services\aiService.ts
+frontend\src\services\analyticsService.ts
 frontend\src\services\api.ts
 frontend\src\services\authService.ts
 frontend\src\services\forumService.ts
+frontend\src\services\notificationService.ts
 frontend\src\services\userService.ts
 frontend\src\shared
 frontend\src\shared\types
@@ -171,22 +200,6 @@ gateway\src\app.ts
 gateway\src\config
 gateway\src\config\index.ts
 gateway\src\index.ts
-gateway\src\middleware
-gateway\src\middleware\__tests__
-gateway\src\middleware\auth.ts
-gateway\src\middleware\authGuard.ts
-gateway\src\middleware\cors.ts
-gateway\src\middleware\logger.ts
-gateway\src\middleware\rateLimiter.ts
-gateway\src\routes
-gateway\src\routes\proxy.ts
-gateway\src\test
-gateway\src\test\setup.ts
-gateway\src\types
-gateway\src\types\index.ts
-gateway\tsconfig.json
-package-lock.json
-README.md
 
 === STACK DETECTION (manifest files) ===
 
@@ -222,6 +235,10 @@ POSTGRES_PASSWORD=change_me_in_production
 JWT_SECRET=change_me_must_be_at_least_32_bytes_base64_encoded_string_here
 JWT_ACCESS_EXPIRY=900   # 15 minutes in seconds
 JWT_REFRESH_EXPIRY=604800   # 7 days in seconds
+
+# Refresh-token cookie: Secure flag. Keep true in production (HTTPS).
+# Set to false for local development over plain HTTP (Safari ignores Secure cookies on http://localhost).
+COOKIE_SECURE=false
 
 # Redis
 REDIS_HOST=redis
@@ -270,78 +287,80 @@ SWAGGER_ENABLED=false
 .claude\skills\acquire-codebase-knowledge\scripts\scan.py:622: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", ["None found."], output_file)
 .claude\skills\acquire-codebase-knowledge\scripts\scan.py:622: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", ["None found."], output_file)
 .claude\skills\acquire-codebase-knowledge\scripts\scan.py:622: print_section("TODO / FIXME / HACK (production code only, test dirs excluded)", ["None found."], output_file)
-frontend\src\services\forumService.ts:4: // TODO: replace with real API call when backend is ready
+backend\src\main\java\com\devpulse\websocket\controller\WebSocketController.java:76: // TODO: persist subscription; validate that the authenticated principal matches
+backend\src\main\java\com\devpulse\websocket\controller\WebSocketController.java:89: // TODO: remove subscription
+frontend\src\hooks\usePosts.ts:4: // TODO: replace with postService.list() once PostCard is migrated to PostSummary
 
 === GIT RECENT COMMITS (last 20) ===
+9ed9182 [PWDRZ-63]: Add USER/ADMIN roles with AuthGuard and RoleGuard (#15)
+a939ad0 [PWDRZ-82]: Replace localStorage token storage with httpOnly cookies (#25)
+1d4e92a [PWDRZ-42]: Add engineering conventions to docs/guides (#29)
+7457de8 [PWDRZ-71]: Add toast notification system (#16)
+152451f [PWDRZ-122]: Keep the status of Spring MVC errors instead of returning 500 (#34)
+8728f9d [PWDRZ-65]: Implement forum posts CRUD (#22)
+c6ee124 [PWDRZ-61]: Create user profile endpoints with editable account settings (#21)
+3de5a01 [PWDRZ-28]: Fix forum topic filter and navigation highlighting (#32)
+7d8f19f [PWDRZ-62]: Implement refresh token rotation, logout and reuse detection (#20)
+6dac4cf [PWDRZ-121]: Run Flyway on startup and map users.role as a native enum (#33)
+5d7f628 [PWDRZ-64]: Add USER, MODERATOR and ADMIN roles with protected routes (#19)
+63419b0 [PWDRZ-404]: Fix gateway proxy path rewrite and frontend API URL (#30)
+f0f63ac Implement code changes to enhance functionality and improve performance
+a0b8ae8 Pwdrz 26 define rest api contract and endpoints (#24)
+873e441 [PWDRZ-72]: Adds centralized error handling and structured responses (#18)
+0b1488e [PWDRZ-83]: Update codebase md and add new skill
 1af26ff [PWDRZ-83]: Update readme (#26)
 04dc661 [PWDRZ-84]:Adds gateway service and config (#28)
 d9854c1 [Pwdrz-39] create GitHub md file for correct project review (#27)
 89605f5 [PWDRZ-33]: Create Hi-Fi mockups for forum and dashboard pages
-0c0bce8 [PWDRZ-29]: Build registration and login pages
-b2785b9 [PWDRZ-28]: Implement routing and application layout
-60e7e6c [PWDRZ-35]: Configure websocket server (#9)
-b79458b [PWDRZ-21]: Set up CI/CD pipeline with GitHub Actions (#14)
-3a22e63 [PWDRZ-37]: Configure linter, formatter and TS for frontend strict check (#10)
-25b45d4 feat: configure Docker Compose for dev environment (#8)
-ddd01b7 [PWDRZ-34]: Add API gateway with JWT auth, rate limiting, and proxy (#2)
-b350c21 [PWDRZ-24]: Database schema migrations (#6)
-6e6edfe [PWDRZ-23]: Initialize spring boot modular structure (#5)
-c8a43ba [PWDRZ-25]: Spring security jwt (#7)
-5eff81b [Pwdrz-30]: configure state management and api layer (#1)
-273ff4f [PWDRZ-41]: Enhance state management and improve PR guidelines (#4)
-a3dcc27 the rest of the previous task
-d395287 feat: initialize Next.js project with TypeScript, Tailwind, development tools and create .prettierrc
-b11ec30 readme update
-749799d fix phantom changes problem
 
 === HIGH-CHURN FILES (last 90 days, top 20) ===
-   8 frontend/package-lock.json
-   8 frontend/package.json
-   6 frontend/src/types/index.ts
-   6 frontend/src/services/api.ts
-   5 frontend/src/store/slices/authSlice.ts
-   5 gateway/package-lock.json
-   5 gateway/package.json
-   5 frontend/next.config.ts
-   4 README.md
-   4 frontend/src/services/__tests__/userService.test.ts
-   4 frontend/src/store/__tests__/index.test.ts
-   4 frontend/src/store/slices/__tests__/authSlice.test.ts
-   4 frontend/src/app/layout.tsx
-   4 frontend/src/services/userService.ts
-   4 .gitignore
-   4 backend/pom.xml
-   4 frontend/.prettierignore
-   4 frontend/.prettierrc
-   4 frontend/tsconfig.json
-   3 backend/src/main/resources/application.properties
+   3 AGENTS.md
+   3 backend/src/main/java/com/devpulse/auth/controller/AuthController.java
+   3 backend/src/main/java/com/devpulse/auth/service/AuthService.java
+   3 frontend/src/app/(auth)/login/page.tsx
+   3 frontend/src/app/(auth)/register/page.tsx
+   3 frontend/src/components/layout/Header.tsx
+   3 frontend/src/services/__tests__/api.test.ts
+   3 frontend/src/services/api.ts
+   3 frontend/src/shared/types/index.ts
+   3 backend/src/main/java/com/devpulse/exception/GlobalExceptionHandler.java
+   3 backend/src/main/java/com/devpulse/auth/entity/User.java
+   3 backend/src/test/java/com/devpulse/MigrationSchemaTest.java
+   2 backend/src/main/java/com/devpulse/auth/dto/LogoutRequest.java
+   2 backend/src/main/resources/application.properties
+   2 backend/src/test/java/com/devpulse/auth/controller/AuthControllerTest.java
+   2 backend/src/test/java/com/devpulse/auth/service/AuthServiceRefreshTest.java
+   2 frontend/src/app/layout.tsx
+   2 frontend/src/lib/toast.ts
+   2 frontend/src/services/__tests__/authService.test.ts
+   2 frontend/src/services/authService.ts
 
 === MONOREPO SIGNALS ===
 No monorepo signals detected.
 
 === CODE METRICS ===
-Total files scanned: 205
-Total lines of code: 25002
+Total files scanned: 326
+Total lines of code: 33405
 
 Files by language:
-  Other: 96
-  TypeScript/React: 41
-  TypeScript: 40
-  Java: 25
+  Other: 110
+  Java: 102
+  TypeScript/React: 56
+  TypeScript: 55
   Python: 2
   JavaScript: 1
 
 Top 10 largest files:
+docs\agent-task-backlog\pwdrz-jira-tasks.json: 1066.4KB
 docs\db-schema-forum.png: 541.0KB
 docs\db-schema.png: 414.5KB
-frontend\package-lock.json: 333.3KB
+frontend\package-lock.json: 333.9KB
 docs\db-schema-auth.png: 270.4KB
 gateway\package-lock.json: 259.2KB
 docs\db-schema-social.png: 248.5KB
-frontend\tsconfig.tsbuildinfo: 152.6KB
+frontend\tsconfig.tsbuildinfo: 155.7KB
 frontend\src\app\favicon.ico: 25.3KB
 .agents\skills\acquire-codebase-knowledge\scripts\scan.py: 23.2KB
-.claude\skills\acquire-codebase-knowledge\scripts\scan.py: 23.2KB
 
 === CI/CD PIPELINES ===
 CI/CD: GitHub Actions

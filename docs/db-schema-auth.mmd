@@ -23,7 +23,9 @@ erDiagram
         varchar_64 token UK
         timestamptz expires_at
         timestamptz revoked_at
+        bigint replaced_by_token_id FK
         timestamptz created_at
     }
 
     users ||--o{ refresh_tokens : "has"
+    refresh_tokens o|--o| refresh_tokens : "replaced by"

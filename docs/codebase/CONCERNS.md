@@ -1,16 +1,18 @@
 # Codebase Concerns
 
+> Snapshot scope: verified against source and configuration on 2026-10-08. This list records current risks, not historical reports. `CODEBASE.md` was retired because it described superseded auth and forum behaviour.
+
 ## Core Sections (Required)
 
 ### 1) Top Risks (Prioritized)
 
 | Severity | Concern | Evidence | Impact | Suggested action |
 |----------|---------|----------|--------|------------------|
-| High | JWT stored in `localStorage` (XSS-exposed) | [frontend/src/services/authService.ts](../../frontend/src/services/authService.ts) — `localStorage.setItem(TOKEN_KEY, token)` | Any XSS vector can steal access + refresh tokens | Migrate to `httpOnly` cookie transport; gateway already supports `cookie-parser` |
+| High | Documentation/instruction drift can direct contributors to obsolete API and auth behaviour | [.github/copilot-instructions.md](../../.github/copilot-instructions.md), historical reports | Incorrect implementation choices and duplicated work | Keep source/configuration as the documented authority; update instruction files together with contract changes |
 | High | Shared `JWT_SECRET` has no rotation or distribution procedure | [.env.example](../../.env.example), [gateway/src/middleware/auth.ts](../../gateway/src/middleware/auth.ts) | Secret mismatch = 100% auth failure with no obvious error; compromised secret = full impersonation | Document rotation steps; consider asymmetric keys (RS256) so gateway only needs the public key |
 | High | Redis provisioned in docker-compose with backend `depends_on: redis`, but no Redis client exists in the backend | [docker-compose.yml](../../docker-compose.yml) — `depends_on: redis: condition: service_healthy`; [backend/pom.xml](../../backend/pom.xml) — no `spring-data-redis` | Implicit dependency with no implementation; undefined purpose creates confusion; if Redis is removed from compose the backend may not start | Clarify Redis role [ASK USER]; either add `spring-data-redis` or remove the `depends_on` |
-| Medium | Gateway is absent from `docker-compose.yml` | [docker-compose.yml](../../docker-compose.yml) — only postgres, redis, backend | Frontend → Gateway → Backend flow works in dev only if gateway is started manually; partial compose run breaks the full architecture | Add gateway service to docker-compose; document the intended local development startup |
-| Medium | Forum data is fully mocked; no backend posts/forum API exists yet | [frontend/src/services/forumService.ts](../../frontend/src/services/forumService.ts) — `// TODO: replace with real API call when backend is ready`; DB schema exists in V2 migration | Forum feature is non-functional end-to-end; tests pass against mocks, not real data | Implement backend forum endpoints (PWDRZ backlog); connect forumService to real API |
+| Medium | Forum feed remains disconnected from the implemented posts API | [frontend/src/hooks/usePosts.ts](../../frontend/src/hooks/usePosts.ts) — resolves `MOCK_POSTS` | Users see fixture data and FE tests do not exercise the API adapter | Complete PWDRZ-81; retain focused API-adapter tests |
+| Medium | Controller contracts returning `501` are visible in OpenAPI | [backend/src/main/java/com/devpulse/analytics/controller/AnalyticsController.java](../../backend/src/main/java/com/devpulse/analytics/controller/AnalyticsController.java) | Clients may integrate against unavailable operations | Complete PWDRZ-127: align OpenAPI availability with implemented behaviour |
 | Medium | `INTERNAL_SECRET` declared in `.env.example` but never used | [.env.example](../../.env.example) | Unknown design intent; orphaned env var creates confusion during onboarding | [ASK USER] Clarify purpose; implement or remove |
 | Low | `socket.io` installed in gateway but not wired to any route | [gateway/package.json](../../gateway/package.json) | Dead dependency adds ~4 MB to install; unclear feature intent | [ASK USER] Clarify WebSocket feature plan; connect or remove |
 
@@ -20,12 +22,12 @@
 
 | Debt item | Why it exists | Where | Risk if ignored | Suggested fix |
 |-----------|---------------|-------|-----------------|---------------|
-| Mock-only forum service | Backend forum endpoints not yet implemented | [frontend/src/services/forumService.ts](../../frontend/src/services/forumService.ts) | Users see mock data in production; tests give false confidence | Implement `/api/posts`, `/api/categories` in backend; connect service |
+| Mock-only forum feed | Feed hook was built before posts UI integration | [frontend/src/hooks/usePosts.ts](../../frontend/src/hooks/usePosts.ts) | Users see mock data in the forum feed | Integrate `postService.list` through PWDRZ-81 |
 | No E2E test suite | E2E tooling never set up | All three modules | UI regressions go undetected; component coverage is zero | Add Playwright or Cypress; automate login/register/forum flows |
 | Coverage reports committed to repo | Generated files in `frontend/coverage/` and `gateway/coverage/` | [frontend/coverage/](../../frontend/coverage/), [gateway/coverage/](../../gateway/coverage/) | Repository bloat; diff noise on every test run | Add `coverage/` to `.gitignore`; use CI artifacts or Codecov instead |
 | Backend has no formatter enforcement | No Maven Spotless/google-java-format configured | [backend/pom.xml](../../backend/pom.xml) | Inconsistent Java formatting as the team grows | Add Spotless Maven plugin with a style guide |
 | Dual JWT verification (gateway + Spring Security) | Both layers verify JWTs independently | [gateway/src/middleware/auth.ts](../../gateway/src/middleware/auth.ts), [backend/src/main/java/com/devpulse/auth/filter/JwtAuthenticationFilter.java](../../backend/src/main/java/com/devpulse/auth/filter/JwtAuthenticationFilter.java) | Double work; harder to reason about auth flow; risk of divergent behaviour if configs differ | Document the intent: is the backend filter a defence-in-depth measure or a redundancy? [ASK USER] |
-| No pagination in type definitions | `Post`, `Comment`, `User` types have no pagination wrappers | [frontend/src/shared/types/index.ts](../../frontend/src/shared/types/index.ts) | Scaling the API without pagination breaks all list endpoints | Define `Page<T>` type before implementing list endpoints |
+| Contract stubs mixed with implemented endpoints | API surface was defined ahead of feature delivery | backend controller packages | Consumers can confuse planned and usable operations | Mark unavailable operations accurately in OpenAPI under PWDRZ-127 |
 
 ---
 
@@ -33,11 +35,10 @@
 
 | Risk | OWASP category | Evidence | Current mitigation | Gap |
 |------|----------------|----------|--------------------|-----|
-| JWT in `localStorage` — XSS token theft | A03 Injection (XSS) | [frontend/src/services/authService.ts](../../frontend/src/services/authService.ts) | Non-functional session cookie (`orbita_session`) signals auth state but does not carry the token | Move JWT to `httpOnly; Secure` cookie; remove localStorage storage |
-| `orbita_session` non-httpOnly cookie | A07 Identification and Authentication Failures | [frontend/src/services/authService.ts](../../frontend/src/services/authService.ts) | `SameSite=Lax; Secure` (on HTTPS) | Cookie is readable by JS — not a credential itself, but signals login state to potential attackers |
+| Access-token exposure after XSS | A03 Injection (XSS) | [frontend/src/lib/tokenMemory.ts](../../frontend/src/lib/tokenMemory.ts) | Access token is memory-only and refresh token is `HttpOnly` | Any in-memory bearer token is readable by injected script until expiry; maintain XSS prevention and short token lifetime |
 | Shared symmetric JWT secret | A02 Cryptographic Failures | [.env.example](../../.env.example) | Base64-encoded, ≥32 bytes enforced at startup ([JwtUtil.java](../../backend/src/main/java/com/devpulse/security/JwtUtil.java)) | No rotation; both gateway and backend share the same secret — compromise of one exposes both |
 | No rate limiting on auth endpoints in backend | A07 Identification and Authentication Failures | [backend/src/main/java/com/devpulse/auth/controller/AuthController.java](../../backend/src/main/java/com/devpulse/auth/controller/AuthController.java) | Gateway rate limiter applies globally (100 req/min) | Backend has no per-endpoint auth rate limit; if gateway is bypassed, brute force is unmitigated |
-| Swagger UI exposed (no auth) | A01 Broken Access Control | [backend/pom.xml](../../backend/pom.xml) — springdoc dependency | Acceptable in dev | Ensure Swagger UI is disabled or auth-protected in production |
+| Swagger/UI exposure if enabled outside development | A05 Security Misconfiguration | [backend/src/main/resources/application.properties](../../backend/src/main/resources/application.properties) | Disabled by default through `SWAGGER_ENABLED=false` | Deployment configuration must not enable it unintentionally |
 | Redis exposed without password | A05 Security Misconfiguration | [docker-compose.yml](../../docker-compose.yml) — no `requirepass` | Only accessible within `devpulse-net` Docker network | If network isolation is broken, Redis is fully open |
 
 ---
@@ -82,8 +83,8 @@
 
 - [docs/codebase/.codebase-scan.txt](../../docs/codebase/.codebase-scan.txt) — HIGH-CHURN FILES section
 - [docker-compose.yml](../../docker-compose.yml) — Redis dependency
-- [frontend/src/services/authService.ts](../../frontend/src/services/authService.ts) — localStorage token storage
-- [frontend/src/services/forumService.ts](../../frontend/src/services/forumService.ts) — mock TODO
+- [frontend/src/lib/tokenMemory.ts](../../frontend/src/lib/tokenMemory.ts) — memory-only access token
+- [frontend/src/hooks/usePosts.ts](../../frontend/src/hooks/usePosts.ts) — feed mock TODO
 - [gateway/package.json](../../gateway/package.json) — socket.io dependency
 - [.env.example](../../.env.example) — INTERNAL_SECRET
 - [frontend/vitest.config.ts](../../frontend/vitest.config.ts) — coverage exclusions
