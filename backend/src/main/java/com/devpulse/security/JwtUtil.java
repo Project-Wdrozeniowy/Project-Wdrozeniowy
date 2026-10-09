@@ -76,7 +76,9 @@ public class JwtUtil {
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + accessExpirySeconds * 1_000))
-                .signWith(key)
+                // Explicit HS256: with signWith(key) alone jjwt picks HS384 or HS512 for
+                // longer keys, and the gateway only accepts HS256.
+                .signWith(key, Jwts.SIG.HS256)
                 .compact();
     }
 
