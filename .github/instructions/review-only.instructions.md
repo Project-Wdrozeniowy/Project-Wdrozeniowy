@@ -67,7 +67,7 @@ apiClient.post('/api/forum/unknown-feature')
 
 🛑 Critical — Mutating an applied migration
 Editing a migration that has already run will cause a Flyway checksum mismatch and block all future application startups.
-Fix: Add a new `V5__description.sql` instead; V1–V4 files are immutable.
+Fix: Add the next numbered migration instead; V1–V5 files are immutable.
 
 ```
 # Flag edits to:
@@ -75,6 +75,7 @@ backend/src/main/resources/db/migration/V1__*.sql
 backend/src/main/resources/db/migration/V2__*.sql
 backend/src/main/resources/db/migration/V3__*.sql
 backend/src/main/resources/db/migration/V4__*.sql
+backend/src/main/resources/db/migration/V5__*.sql
 ```
 
 ---
@@ -155,9 +156,11 @@ Fix: Mirror every new `paths` entry from `tsconfig.json` into `vitest.config.ts`
 ## Missing Tests for New Logic Files
 
 ☢️ Issue — New logic file without tests
-Untested service, slice, or middleware code reduces coverage below the 65% threshold and lets regressions go undetected.
+Untested service, slice, or middleware code can lower the configured coverage metric and lets regressions go undetected; PWDRZ-118 owns the final threshold policy.
 Fix: Add `__tests__/*.test.ts` alongside each new file in `services/`, `store/slices/`, `providers/`, `middleware/`, or `config/`.
-Exempted (no tests required): `app/`, `components/`, `hooks/`, `types/`, `constants/`.
+The current Vitest metric excludes `app/`, `components/`, `hooks/`, `lib/`, and
+`utils/`; this is not an exemption from testing new behaviour. PWDRZ-118 owns
+the coverage-scope review.
 
 ---
 

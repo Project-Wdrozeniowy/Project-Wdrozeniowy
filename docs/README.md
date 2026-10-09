@@ -6,7 +6,7 @@ This directory contains documentation that supplements the repository-level [REA
 
 1. Start with the root README for prerequisites, local startup, and the common quality commands.
 2. Read [guides/conventions-index.md](guides/conventions-index.md) before opening a pull request.
-3. Use [codebase/](codebase/) as an evidence-backed snapshot of the current repository state. Source code, migrations, runtime configuration, CI workflows, and GitHub rulesets take precedence if they differ from a snapshot.
+3. For the Sprint 5 quality baseline (PWDRZ-120), use the [architecture and capability map](codebase/ARCHITECTURE.md), the [stack and local-run map](codebase/STACK.md), the [testing/CI map](codebase/TESTING.md), and the [Definition of Done](guides/conventions-index.md#definition-of-done). The [full codebase snapshot](codebase/) provides supporting structure, integrations, conventions, and current risks. Source code, migrations, runtime configuration, CI workflows, and GitHub rulesets take precedence if they differ from a snapshot.
 4. Use the Mermaid ER diagrams (`db-schema*.mmd`) as the editable database diagrams. Their PNG counterparts are generated viewing artefacts.
 
 ## Sources of truth

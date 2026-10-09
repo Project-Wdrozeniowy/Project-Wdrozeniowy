@@ -29,9 +29,9 @@ the three workspaces (backend, frontend, gateway).
 
 Use the smallest applicable set of checks; do not claim cross-service completion from one service's unit tests.
 
-- **Local frontend or gateway change:** implementation, focused tests, `typecheck`, lint and formatting pass; loading/error/empty states are handled where data is fetched.
+- **Local frontend or gateway change:** implementation, focused tests, `typecheck`, lint, formatting, and the affected service's production build pass; loading/error/empty states are handled where data is fetched.
 - **Local backend change:** controller/service/persistence validation, relevant Java tests, Flyway compatibility where the schema is affected, and `./mvnw verify` pass.
-- **Cross-service change:** both sides use the documented HTTP contract; gateway behaviour is covered where it is involved; the result is verified through the user-visible request path or a dedicated integration test.
+- **Cross-service change:** each affected service passes its local checks and build; both sides use the documented HTTP contract; gateway behaviour is covered where it is involved; the result is verified through the user-visible request path or a dedicated integration test.
 - **Documentation/configuration change:** source-of-truth links are updated, commands are reproducible, and no secret, generated coverage output, or local `.env` file is committed.
 
 When an existing ticket is already implemented but reveals missing follow-up work, create a new owner-specific task instead of reopening the completed implementation scope.

@@ -1,5 +1,5 @@
 
-=== DIRECTORY TREE (max depth 3, source files only) ===
+=== DIRECTORY TREE (max depth 3, first 200 entries only; incomplete) ===
 .agents
 .agents\agents
 .agents\skills
@@ -201,6 +201,10 @@ gateway\src\config\index.ts
 gateway\src\index.ts
 gateway\src\middleware
 
+[TRUNCATED] The scanner caps this directory listing at 200 entries. It is not a
+complete tree: gateway middleware/routes and other later paths are present in
+the repository. Use `git ls-files` or STRUCTURE.md for the current map.
+
 === STACK DETECTION (manifest files) ===
 
 --- package-lock.json ---
@@ -292,7 +296,9 @@ backend\src\main\java\com\devpulse\websocket\controller\WebSocketController.java
 frontend\src\hooks\usePosts.ts:4: // TODO: replace with postService.list() once PostCard is migrated to PostSummary
 
 === GIT RECENT COMMITS (last 20) ===
-a12b1d2 docs: Update architecture, concerns, conventions, integrations, stack, structure, and testing documentation
+fa2e9a6 Update legal documents and licence terms
+14f5ed0 Change license to proprietary terms
+5d39d6c [PRDRZ-120]: Define monorepo quality baseline and completion criteria (#36)
 9ed9182 [PWDRZ-63]: Add USER/ADMIN roles with AuthGuard and RoleGuard (#15)
 a939ad0 [PWDRZ-82]: Replace localStorage token storage with httpOnly cookies (#25)
 1d4e92a [PWDRZ-42]: Add engineering conventions to docs/guides (#29)
@@ -310,8 +316,6 @@ a0b8ae8 Pwdrz 26 define rest api contract and endpoints (#24)
 873e441 [PWDRZ-72]: Adds centralized error handling and structured responses (#18)
 0b1488e [PWDRZ-83]: Update codebase md and add new skill
 1af26ff [PWDRZ-83]: Update readme (#26)
-04dc661 [PWDRZ-84]:Adds gateway service and config (#28)
-d9854c1 [Pwdrz-39] create GitHub md file for correct project review (#27)
 
 === HIGH-CHURN FILES (last 90 days, top 20) ===
    3 AGENTS.md
@@ -326,24 +330,24 @@ d9854c1 [Pwdrz-39] create GitHub md file for correct project review (#27)
    3 backend/src/main/java/com/devpulse/exception/GlobalExceptionHandler.java
    3 backend/src/main/java/com/devpulse/auth/entity/User.java
    3 backend/src/test/java/com/devpulse/MigrationSchemaTest.java
+   2 LICENSE
+   2 README.md
    2 .github/copilot-instructions.md
    2 docs/codebase/ARCHITECTURE.md
    2 docs/guides/conventions-index.md
    2 docs/guides/git-workflow.md
    2 backend/src/main/java/com/devpulse/auth/dto/LogoutRequest.java
    2 backend/src/main/resources/application.properties
-   2 backend/src/test/java/com/devpulse/auth/controller/AuthControllerTest.java
-   2 backend/src/test/java/com/devpulse/auth/service/AuthServiceRefreshTest.java
 
 === MONOREPO SIGNALS ===
 No monorepo signals detected.
 
 === CODE METRICS ===
-Total files scanned: 325
+Total files scanned: 326
 Total lines of code: 33405
 
 Files by language:
-  Other: 109
+  Other: 110
   Java: 102
   TypeScript/React: 56
   TypeScript: 55

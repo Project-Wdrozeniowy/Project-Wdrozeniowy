@@ -1,6 +1,6 @@
 # Technology Stack
 
-> Snapshot scope: verified against source, manifests, runtime configuration and CI on 2026-10-08. Source/configuration remain authoritative after this snapshot.
+> Snapshot scope: verified against source, manifests, runtime configuration and CI on 2026-10-09. Source/configuration remain authoritative after this snapshot.
 
 ## Core Sections (Required)
 
@@ -102,49 +102,39 @@ This is a manual multi-project repository. Each service has its own runtime and 
 
 ### 4) Key Commands
 
+From the repository root, run these independent commands (see the root README
+for environment setup and separate-terminal startup):
+
 ```bash
-# Frontend
-cd frontend && npm install
-npm run dev           # Next.js dev server
-npm run build         # Production build
-npm run test          # Vitest unit tests
-npm run test:coverage # Coverage (threshold: 65%)
-npm run lint          # ESLint
-npm run format        # Prettier write
-npm run format:check  # Prettier check (used in CI)
-
-# Gateway
-cd gateway && npm install
-npm run dev           # tsx watch (hot reload)
-npm run build         # tsc → dist/
-npm run test          # Jest with coverage
-npm run lint          # ESLint
-npm run format        # Prettier write
-
-# Backend
-cd backend
-./mvnw spring-boot:run          # Run locally
-./mvnw --batch-mode package     # Build JAR
-./mvnw verify                   # Run tests and enforce JaCoCo coverage
-
-# Docker (full stack)
-docker compose up -d            # Postgres + Redis + Backend + Gateway
+npm --prefix frontend install
+npm --prefix frontend run dev -- -p 3001
+npm --prefix frontend run build
+npm --prefix frontend run test:coverage
+npm --prefix gateway install
+npm --prefix gateway run dev
+npm --prefix gateway run build
+npm --prefix gateway run test:coverage
+docker compose up -d # PostgreSQL + Redis + backend + gateway
 ```
+
+For Maven development, change into `backend/` after exporting the required
+environment variables; then run `./mvnw spring-boot:run` or `./mvnw verify`.
+On Windows PowerShell, use `mvnw.cmd`.
 
 ---
 
 ### 5) Environment and Config
 
 - Config sources: `.env.example` (root), `gateway/.env.example`, `frontend/.env` (local, created by developer), and Spring properties in `backend/src/main/resources/application.properties`.
-- Required env vars:
-  - `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+- Runtime and template env vars:
+  - `POSTGRES_PASSWORD` is required by Compose/backend; `POSTGRES_DB` and `POSTGRES_USER` have defaults.
   - `JWT_SECRET` (≥32 bytes Base64, shared by gateway and backend)
   - `JWT_ACCESS_EXPIRY` (default 900 s), `JWT_REFRESH_EXPIRY` (default 604800 s)
-  - `REDIS_HOST`, `REDIS_PORT` (declared in root `.env.example`, not yet wired in app code)
-  - `INTERNAL_SECRET` (declared in root `.env.example`, not yet used in code)
+  - `REDIS_HOST`, `REDIS_PORT` (declared in root `.env.example`, not yet consumed by application code)
+  - `INTERNAL_SECRET` (reserved in root `.env.example`, not yet consumed by application code)
   - `BACKEND_URL` (gateway), `CORS_ORIGINS` (gateway)
   - `NEXT_PUBLIC_API_URL` (frontend — required in production)
-- Deployment constraint: `JWT_SECRET` must be **identical** in gateway and backend configs; mismatch causes 401 on every request.
+- Deployment constraint: `JWT_SECRET` must be **identical** in gateway and backend configs; mismatch rejects authenticated requests. Root `.env` is read by Compose, while local gateway and Maven processes need their own environment configuration.
 
 ---
 

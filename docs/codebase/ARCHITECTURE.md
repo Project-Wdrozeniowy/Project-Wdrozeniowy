@@ -1,6 +1,6 @@
 # Architecture
 
-> Snapshot scope: verified against source and runtime configuration on 2026-10-08. Source/configuration remain authoritative after this snapshot. Docker Compose starts PostgreSQL, Redis, backend, and gateway; the frontend runs separately.
+> Snapshot scope: verified against source and runtime configuration on 2026-10-09. Source/configuration remain authoritative after this snapshot. Docker Compose starts PostgreSQL, Redis, backend, and gateway; the frontend runs separately.
 
 ## Core Sections (Required)
 
@@ -13,7 +13,7 @@
   - Tier 3 — Application/Data: Spring Boot owns business logic and database persistence
   - Verified from [gateway/src/app.ts](../../gateway/src/app.ts), [gateway/src/routes/proxy.ts](../../gateway/src/routes/proxy.ts), and [backend/src/main/java/com/devpulse/auth/controller/AuthController.java](../../backend/src/main/java/com/devpulse/auth/controller/AuthController.java)
 - **Primary constraints**:
-  1. Stateless authentication — no server sessions; JWT carries identity on every request
+  1. Stateless access-token verification; refresh tokens are stored and rotated server-side
   2. Single JWT secret shared between gateway and backend — both verify tokens independently
   3. All frontend API calls route through the gateway on `/api/*`; direct backend access is not intended for clients
 
@@ -62,12 +62,20 @@ This table is a documentation baseline, not a product roadmap. “Implemented”
 
 | Capability | Status | Evidence / boundary |
 |---|---|---|
-| Login, registration, refresh-token rotation, logout | Implemented | `auth` controller/service, refresh-cookie helper, frontend API client and tests |
-| User profile and account settings API | Implemented API; frontend page incomplete | `user` controller/service exists; profile page still contains placeholder UI |
-| Forum post CRUD, pagination, search/filter API | Implemented API; frontend feed incomplete | `forum/PostController` and `PostService` exist; `usePosts` returns `MOCK_POSTS` |
-| Categories, comments, tags, votes, notifications, analytics, AI, recommendations | Contract stubs / deferred | Controllers exist for several areas but unavailable operations return `501 NOT_IMPLEMENTED` |
+| Login, registration, refresh-token rotation, logout | Implemented in source; cross-service regression coverage remains | [AuthController](../../backend/src/main/java/com/devpulse/auth/controller/AuthController.java), [AuthProvider](../../frontend/src/providers/AuthProvider.tsx), [gateway public routes](../../gateway/src/config/index.ts); PWDRZ-114 and PWDRZ-117 track additional checks |
+| User profile and account settings API | Implemented API; frontend page incomplete | [UserController](../../backend/src/main/java/com/devpulse/user/controller/UserController.java) exists; the [profile page](../../frontend/src/app/(main)/(protected)/profile/page.tsx) is still a placeholder; PWDRZ-60 owns the FE page |
+| Forum post CRUD, pagination, search/filter API | Implemented API; frontend feed mocked | [PostController](../../backend/src/main/java/com/devpulse/forum/controller/PostController.java) and [PostService](../../backend/src/main/java/com/devpulse/forum/service/PostService.java) exist; [usePosts](../../frontend/src/hooks/usePosts.ts) returns `MOCK_POSTS` |
+| Categories, comments, tags, votes, notifications, analytics, AI, recommendations | Contract stubs / deferred | Corresponding controllers return `501 NOT_IMPLEMENTED`, for example [CommentController](../../backend/src/main/java/com/devpulse/forum/controller/CommentController.java) |
 | WebSocket / real-time notifications | Provisioned, not end-to-end | Spring WebSocket and gateway proxy paths exist; Socket.IO is not wired and subscriptions contain TODOs |
 | Redis | Provisioned, not integrated | Compose service exists; no Redis client dependency or runtime use is present |
+
+The earlier Jira bug descriptions are historical reports, not the present API
+contract. PWDRZ-91–94 and PWDRZ-98 have audit comments explaining the current
+auth/profile implementations and any changed design. PWDRZ-68 records that the
+forum adapters are implemented but the feed still uses mocks; PWDRZ-81 owns
+the feed integration. PWDRZ-114 owns missing gateway refresh/logout regression
+checks, and PWDRZ-127 owns OpenAPI availability for `501` stubs. These
+follow-ups do not change the implementation status of the original tickets.
 
 ---
 

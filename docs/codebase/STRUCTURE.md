@@ -1,6 +1,6 @@
 # Codebase Structure
 
-> Snapshot scope: verified against the repository tree and entry configuration on 2026-10-08. This is a manual multi-project repository; root task orchestration is tracked separately.
+> Snapshot scope: verified against the repository tree and entry configuration on 2026-10-09. This is a manual multi-project repository; root task orchestration is tracked separately.
 
 ## Core Sections (Required)
 
@@ -8,7 +8,7 @@
 
 | Path | Purpose | Evidence |
 |------|---------|----------|
-| `frontend/` | Next.js 16 App Router SPA — UI, routing, client auth | [frontend/package.json](../../frontend/package.json) |
+| `frontend/` | Next.js 16 App Router application — UI, routing, client auth | [frontend/package.json](../../frontend/package.json) |
 | `gateway/` | Node.js/Express reverse proxy — JWT verification, rate limiting, CORS, proxying to backend | [gateway/src/app.ts](../../gateway/src/app.ts) |
 | `backend/` | Spring Boot REST API — business logic, auth endpoints, DB persistence | [backend/src/main/java/com/devpulse/](../../backend/src/main/java/com/devpulse/) |
 | `docs/` | Architecture diagrams (Mermaid + PNG), developer guides | [docs/guides/](../../docs/guides/) |

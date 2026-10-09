@@ -25,9 +25,12 @@ helmet → cors → morgan → rate limiter
 
 ## Quick Start
 
+From `gateway/`, after copying the root `.env.example` to `.env` at the repository
+root (for PostgreSQL and the backend):
+
 ```bash
 npm install
-cp .env.example .env   # then set JWT_SECRET — app throws on startup if missing
+cp .env.example .env   # set JWT_SECRET to the same value as in the root .env
 npm run dev
 ```
 

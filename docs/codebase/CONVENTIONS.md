@@ -1,6 +1,6 @@
 # Coding Conventions
 
-> Snapshot scope: verified against repository configuration on 2026-10-08. `develop` is the documented integration branch. Local test configuration enforces 65%; CI job labels that say 50% are stale labels. GitHub rulesets remain authoritative for enforcement.
+> Snapshot scope: verified against repository configuration on 2026-10-09. `develop` is the documented integration branch. Local test configuration currently enforces 65%; CI job labels that say 50% are stale labels. GitHub rulesets remain authoritative for enforcement; PWDRZ-118 owns threshold policy.
 
 ## Core Sections (Required)
 
@@ -98,7 +98,7 @@
 - **Auth errors**: explicit JSON responses (`{ error: "..." }`) with appropriate HTTP status codes (401, 429, 500)
 
 #### Frontend
-- **HTTP error handling**: axios response interceptor in [frontend/src/services/api.ts](../../frontend/src/services/api.ts) — auto-redirects to `/login` on 401
+- **HTTP error handling**: axios response interceptor in [frontend/src/services/api.ts](../../frontend/src/services/api.ts) — on a protected request's 401, refreshes once and retries; redirects to `/login` if refresh or the retry fails
 - **Sensitive data**: access JWTs are held in `tokenMemory`; refresh tokens are sent only in an `HttpOnly; SameSite=Strict` cookie. Do not introduce browser-persistent token storage.
 
 ---
@@ -112,7 +112,7 @@
 - **Mocking strategy**:
   - Frontend: `axios-mock-adapter` for HTTP; no DOM event mocking library observed beyond React Testing Library
   - Gateway: Jest manual mocks; `supertest` for HTTP-level integration tests
-  - Backend: `@SpringBootTest` + `@MockitoBean` pattern; H2 in-memory for unit tests, real PostgreSQL (CI service) for integration
+  - Backend: focused Mockito tests without a database, Spring tests with PostgreSQL and `create-drop`, and `@MigratedSchemaTest` tests with PostgreSQL plus real Flyway migrations
 - **Coverage thresholds**: 65% lines/functions/branches/statements (frontend vitest, gateway jest) — enforced in CI
 
 ---

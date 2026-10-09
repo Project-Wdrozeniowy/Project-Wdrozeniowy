@@ -35,7 +35,7 @@ frontend/src/
 
 gateway/src/
   middleware/        ← auth, cors, rateLimiter, logger
-  routes/            ← proxy.ts only
+  routes/            ← proxy.ts and wsProxy.ts
   config/            ← env validation
   types/             ← GatewayConfig, Express extensions
 
@@ -140,6 +140,6 @@ npm run lint     # eslint src (--fix for gateway)
 | Backend  | JUnit 5 + Mockito + Spring Boot Test | mirrors `src/main/java/`                              |
 
 - Current configured coverage thresholds: ≥ 65% frontend/gateway (all metrics) and ≥ 65% backend (JaCoCo line coverage). PWDRZ-118 owns any policy change.
-- Coverage-excluded folders (frontend): `app/`, `components/`, `hooks/`, `types/`, `constants/`.
-- Backend tests use `src/test/resources/application-test.properties` — no Flyway, no real DB.
+- Coverage-excluded folders (frontend): `app/`, `components/`, `hooks/`, `lib/`, `utils/`, `shared/`, and `constants/` (see `frontend/vitest.config.ts` for the exact globs).
+- Backend Spring tests use PostgreSQL. The default test profile disables Flyway and uses Hibernate `create-drop`; tests annotated with `@MigratedSchemaTest` apply real Flyway migrations to `migration_test` and validate mappings.
 - In gateway config tests, use `jest.mock('dotenv/config', () => {})` when calling `jest.resetModules()` to prevent `.env` from polluting isolated test env vars.

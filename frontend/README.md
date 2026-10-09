@@ -8,12 +8,12 @@ Next.js 16 application served on port `3001` in local development. It communicat
 # Run this block from the repository root.
 cp .env.example .env
 
-# Create the frontend environment file.
+# If frontend/.env does not already exist, create it from the template.
 cd frontend
-echo "NEXT_PUBLIC_API_URL=http://localhost:3000/api" > .env
+cp .env.example .env
 
 npm install
-npm run dev
+npm run dev -- -p 3001
 ```
 
 Open `http://localhost:3001`. Start the gateway and backend as described in the repository [README](../README.md).

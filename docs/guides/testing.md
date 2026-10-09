@@ -68,7 +68,7 @@ replayingARotatedTokenRevokesTheWholeFamily      a sentence in camelCase
 | Runner         | Vitest 3 (`jsdom` environment)        |
 | DOM helpers    | `@testing-library/react`              |
 | Setup file     | `src/test/setup.ts`                   |
-| Coverage       | ≥ **65%** lines/functions (see `frontend/vitest.config.ts`) |
+| Coverage       | Currently ≥ **65%** lines/functions/branches/statements on included source (see `frontend/vitest.config.ts`); PWDRZ-118 will reassess the policy |
 | Typecheck      | `npm run typecheck` (`tsc --noEmit`) runs as a separate step in the frontend build workflow |
 | Naming         | `*.test.ts`/`*.test.tsx` next to the source, inside `__tests__/` directories |
 
@@ -92,7 +92,7 @@ replayingARotatedTokenRevokesTheWholeFamily      a sentence in camelCase
 | -------------- | ----------------------------------- |
 | Runner         | Jest with `ts-jest`                 |
 | Setup file     | `gateway/src/test/setup.ts`         |
-| Coverage       | ≥ **65%** lines (see `gateway/jest.config.js`)         |
+| Coverage       | Currently ≥ **65%** lines/functions/branches/statements (see `gateway/jest.config.js`); PWDRZ-118 will reassess the policy |
 | Layout         | `gateway/src/__tests__/*.test.ts` and feature-local `__tests__/` folders (e.g. `src/middleware/__tests__/`) |
 
 Focus areas:
@@ -103,17 +103,19 @@ Focus areas:
 
 ## Running the suites
 
-```
-# Backend (requires PostgreSQL; override SPRING_DATASOURCE_URL/USERNAME/PASSWORD if needed)
-./mvnw -q -f backend/pom.xml verify
+Run each line independently from the repository root:
 
-# Frontend
-cd frontend && npm test            # watch mode: npm run test:watch
-cd frontend && npm run test:coverage
+```bash
+# Backend (requires PostgreSQL; export matching POSTGRES_* and JWT_SECRET values)
+cd backend && ./mvnw verify
+
+# Frontend (single run; Vitest does not watch in the configured test script)
+npm --prefix frontend test
+npm --prefix frontend run test:coverage
 
 # Gateway
-cd gateway && npm test
-cd gateway && npm run test:coverage
+npm --prefix gateway test
+npm --prefix gateway run test:coverage
 ```
 
 The `docker-compose.yml` at the repo root spins up Postgres and Redis for

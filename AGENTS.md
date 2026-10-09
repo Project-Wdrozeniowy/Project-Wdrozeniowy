@@ -16,7 +16,7 @@ Frontend (Next.js 16)  →  Gateway (Express 5)  →  Backend (Spring Boot 4)  �
 - **Backend** (`backend/`) — Java 17, Spring Boot 4, Spring Security, Spring Data JPA, PostgreSQL, Flyway migrations, JWT (jjwt 0.12.6)
 - **Infra** — PostgreSQL 16 + Redis 7 (via Docker Compose); Redis is provisioned but not yet wired in application code
 
-Database schema is managed by Flyway (4 migrations: users, forum, notifications, analytics).  
+Database schema is managed by Flyway (V1–V5: users, forum, notifications, analytics, and refresh-token rotation).
 ER diagrams live in `docs/db-schema*.mmd`.
 
 ---
@@ -51,8 +51,8 @@ cp gateway/.env.example gateway/.env
 ### 2. Start the database and backend via Docker Compose
 
 ```bash
-docker compose up -d        # starts postgres, redis, backend
-docker compose logs -f      # watch startup
+docker compose up -d postgres redis backend
+docker compose logs --tail=100 # inspect startup
 ```
 
 PostgreSQL is available at `localhost:5432`. Flyway migrations run automatically on backend startup.
@@ -73,16 +73,19 @@ cd gateway && npm install
 
 ## Development Workflow
 
-All three services run independently. Start them in separate terminals.
+The frontend and gateway run from source in separate terminals when the
+Compose command above starts the backend. See the root README for the
+alternative full-Compose workflow. Do not start a service through Compose
+and from source on the same port.
 
-### Frontend (port 3001 by default)
+### Frontend (explicitly run on port 3001)
 
 ```bash
 cd frontend
-# Create frontend/.env if not present:
-echo "NEXT_PUBLIC_API_URL=http://localhost:3000/api" > .env
+# Copy the template to frontend/.env if needed; set NEXT_PUBLIC_API_URL to the gateway.
+# The root setup section already creates this file.
 
-npm run dev     # Next.js dev server with hot reload
+npm run dev -- -p 3001  # Next.js dev server with hot reload on port 3001
 ```
 
 ### Gateway (port 3000 by default)
@@ -99,7 +102,9 @@ The backend is included in Docker Compose and runs at `localhost:8080`. For loca
 
 ```bash
 cd backend
-# Requires a running PostgreSQL (use docker compose up postgres)
+# Requires running PostgreSQL and exported POSTGRES_*/JWT_SECRET values;
+# the root .env is read by Compose, not automatically by Maven.
+# Use docker compose up -d postgres redis, without the backend container.
 ./mvnw spring-boot:run
 ```
 
@@ -112,7 +117,10 @@ Browser (localhost:3001)
       → PostgreSQL (localhost:5432)
 ```
 
-Public routes that bypass JWT: `POST /api/auth/login`, `POST /api/auth/register`
+Public auth routes that bypass bearer JWT: `POST /api/auth/login`,
+`POST /api/auth/register`, `POST /api/auth/refresh`, and
+`POST /api/auth/logout`. Read-only forum and public-profile routes are also
+listed in `gateway/src/config/index.ts`.
 
 ---
 
@@ -148,7 +156,10 @@ npx vitest run -t "login"
 Test files live in `__tests__/` subdirectories next to the module under test.  
 Example: `src/services/__tests__/authService.test.ts` tests `src/services/authService.ts`.
 
-Coverage excludes: `app/`, `components/`, `hooks/`, `types/`, `constants/` (UI/static — no executable logic).
+Current Vitest coverage excludes: `app/`, `components/`, `hooks/`, `lib/`,
+`utils/`, `shared/`, and `constants/`. Several of these contain executable
+logic; their exclusion does not mean they are tested. PWDRZ-118 will review
+the measured scope and threshold.
 
 ### Gateway tests (Jest 29 + ts-jest + supertest)
 
@@ -264,7 +275,7 @@ backend/src/main/java/com/devpulse/
 
 backend/src/main/resources/
   application.properties
-  db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics)
+  db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics), V5 (refresh-token rotation)
 
 docs/
   codebase/        ← generated reference docs (STACK, STRUCTURE, ARCHITECTURE, etc.)
@@ -280,7 +291,7 @@ docs/
 
 2. **Token storage** — the access token lives only in memory (`frontend/src/lib/tokenMemory.ts`). The refresh token is an `HttpOnly; SameSite=Strict` cookie (`/api/auth` path) set by the backend and never appears in a request or response body. On page load `AuthProvider` calls `POST /auth/refresh`, then `GET /users/me`. Never write tokens to `localStorage`/`sessionStorage`. Set `COOKIE_SECURE=false` for plain-HTTP local dev (Safari ignores `Secure` cookies on `http://localhost`).
 
-3. **Forum data is currently mocked** — `frontend/src/services/forumService.ts` returns static fixtures. The `/api/posts` endpoint does not exist in the backend yet. Backend forum endpoints are in the backlog.
+3. **Forum feed is currently mocked** — `frontend/src/hooks/usePosts.ts` returns `MOCK_POSTS`, although `frontend/src/services/forumService.ts` has typed adapters and the backend implements `/api/forum/posts`. PWDRZ-81 owns connecting the feed; adjacent comment, vote, category, and tag endpoints still contain `501` stubs.
 
 4. **Redis** — provisioned in Docker Compose, not yet wired in application code. It will be used for caching and/or session management. Do not remove it or the `depends_on` from compose.
 
@@ -333,15 +344,15 @@ cd gateway && npm run typecheck && npm run lint && npm run format:check && npm r
 cd backend && ./mvnw test
 ```
 
-All three CI workflows must pass: **Build**, **Lint**, and **Tests** (≥65% coverage for frontend/gateway, ≥50% for backend).
+All three CI workflows must pass: **Build**, **Lint**, and **Tests**. Current test configurations enforce 65% for frontend/gateway (all four metrics) and 65% backend line coverage; PWDRZ-118 owns the threshold review. The `≥50%` labels in the Tests workflow are stale labels, not the active gate.
 
 ---
 
 ## Common Gotchas
 
-- **`NEXT_PUBLIC_API_URL` not set** → frontend falls back to `http://localhost:3000/api` in dev and throws at build time in production. Always set it in `frontend/.env`.
+- **`NEXT_PUBLIC_API_URL` not set** → the API client falls back to `http://localhost:3000/api` during development; production builds require an explicit value. Set it in `frontend/.env`.
 - **JWT_SECRET mismatch** → gateway returns 401 on every non-public request with no descriptive error. Check that `JWT_SECRET` in `gateway/.env` and in root `.env` (passed to backend via Docker Compose) are identical.
-- **Flyway migration failure** → if the backend fails to start with a Flyway error, the most common cause is a stale local database state. Run `docker compose down -v && docker compose up -d` to reset.
+- **Flyway migration failure** → inspect the migration error and database state first. `docker compose down -v` deletes local PostgreSQL data; use it only when that data is disposable and a reset is intended.
 - **`@/*` alias not resolving in tests** → Vitest resolves aliases via `resolve.alias` in `vitest.config.ts`. Do not use `tsconfig.json` paths alone — they must be mirrored in the vitest config.
-- **Port conflicts** → frontend dev server defaults to port 3001 (set via `NEXT_PUBLIC_API_URL` pointing to gateway at 3000); gateway defaults to 3000. If you change ports, update both env files.
-- **Coverage reports in git** → `frontend/coverage/` and `gateway/coverage/` are currently tracked in the repository. Do not commit new coverage artifacts. This will be addressed by adding them to `.gitignore`.
+- **Port conflicts** → Next.js defaults to port 3000, so run it with `-p 3001` while the gateway owns 3000. `NEXT_PUBLIC_API_URL` controls the API target, not the frontend listening port.
+- **Coverage reports** → `coverage/` is already ignored at the repository root, and no frontend/gateway coverage files are currently tracked. Do not add generated reports to Git.

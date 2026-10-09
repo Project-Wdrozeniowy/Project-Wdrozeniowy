@@ -1,6 +1,6 @@
 # External Integrations
 
-> Snapshot scope: verified against runtime configuration and source on 2026-10-08. PostgreSQL/Flyway, gateway proxy/JWT, cookie refresh, Springdoc and WebSocket configuration exist. Redis, Socket.IO and `INTERNAL_SECRET` are provisioned or declared but are not application integrations yet.
+> Snapshot scope: verified against runtime configuration and source on 2026-10-09. PostgreSQL/Flyway, gateway proxy/JWT, cookie refresh, Springdoc and STOMP WebSocket configuration exist. Redis, Socket.IO and `INTERNAL_SECRET` are provisioned or declared but are not application integrations yet.
 
 ## Core Sections (Required)
 
@@ -9,10 +9,11 @@
 | System | Type | Purpose | Auth model | Criticality | Evidence |
 |--------|------|---------|------------|-------------|----------|
 | PostgreSQL 16 | Relational database | Primary data store — users, roles, tokens, forum data, notifications, analytics | DB credentials (env vars) | High | [docker-compose.yml](../../docker-compose.yml), [backend/src/main/resources/application.properties](../../backend/src/main/resources/application.properties) |
-| Redis 7 | In-memory cache / data structure store | Declared in docker-compose, not yet wired in application code | No auth configured in docker-compose | Medium (planned) | [docker-compose.yml](../../docker-compose.yml) |
+| Redis 7 | In-memory data store | Declared in Compose, not yet wired in application code | No auth configured; Compose publishes host port 6379 | Medium (planned) | [docker-compose.yml](../../docker-compose.yml) |
 | JWT (shared secret) | Internal auth token | Access token verification between gateway and backend | HMAC-SHA256, shared `JWT_SECRET` | High | [gateway/src/middleware/auth.ts](../../gateway/src/middleware/auth.ts), [backend/.../JwtUtil.java](../../backend/src/main/java/com/devpulse/security/JwtUtil.java) |
 | SpringDoc / Swagger UI | Internal dev tooling | OpenAPI 3 docs at `/swagger-ui/index.html` when enabled | Disabled by default; enable locally with `SWAGGER_ENABLED=true` | Low | [backend/src/main/resources/application.properties](../../backend/src/main/resources/application.properties), [backend/.../OpenApiConfig.java](../../backend/src/main/java/com/devpulse/config/OpenApiConfig.java) |
-| Socket.IO | WebSocket server | Real-time events (installed in gateway, not wired) | [ASK USER] | Low (planned) | [gateway/package.json](../../gateway/package.json) |
+| STOMP WebSocket proxy | Gateway-to-backend transport | `/ws` proxy path exists, but subscription/event business logic is incomplete | Backend authenticates the STOMP CONNECT frame | Medium (partial) | [gateway/src/routes/wsProxy.ts](../../gateway/src/routes/wsProxy.ts), [backend/src/main/java/com/devpulse/websocket/controller/WebSocketController.java](../../backend/src/main/java/com/devpulse/websocket/controller/WebSocketController.java) |
+| Socket.IO | Installed dependency | Planned for real-time notifications, not wired to the gateway server | Not implemented | Low (planned) | [gateway/package.json](../../gateway/package.json) |
 
 ---
 
@@ -21,7 +22,7 @@
 | Store | Role | Access layer | Key risk | Evidence |
 |-------|------|--------------|----------|----------|
 | PostgreSQL 16 | Single source of truth for all persistent data | Spring Data JPA repositories (`com.devpulse.auth.repository`), schema managed by Flyway | No read replicas; single connection pool; all traffic goes to one instance | [backend/src/main/resources/application.properties](../../backend/src/main/resources/application.properties) |
-| Redis 7 | [TODO] — planned caching/session store | No client configured in backend or gateway as of this analysis | Backend `depends_on: redis` in docker-compose while the dependency is unused — startup ordering issue | [docker-compose.yml](../../docker-compose.yml) |
+| Redis 7 | [TODO] — planned caching, events, or session use case | No client configured in backend or gateway as of this analysis | Backend `depends_on: redis` while the dependency is unused; host port 6379 is published in the development Compose stack | [docker-compose.yml](../../docker-compose.yml) |
 
 ---
 
