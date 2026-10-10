@@ -1,19 +1,54 @@
-export default function ProfileCard() {
+'use client';
+
+import { useState } from 'react';
+import { ROLE_LABELS } from '@/constants/profile';
+import type { MyProfile } from '@/shared/types';
+
+const joinedFormat = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' });
+
+export default function ProfileCard({ profile }: { profile: MyProfile }) {
+  // The link that failed, not a flag: a new link gets its own chance to load.
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
+
+  const name = profile.displayName || profile.username;
+  const initial = (Array.from(name)[0] ?? '').toUpperCase();
+  const showAvatar = Boolean(profile.avatarUrl) && profile.avatarUrl !== failedAvatarUrl;
+
   return (
-    <div className="bg-white rounded-xl p-6 flex flex-col gap-4">
+    <section aria-label="Profile" className="bg-white rounded-xl p-6 flex flex-col gap-4">
       <div className="flex items-center gap-4">
-        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-2xl font-bold shrink-0">
-          JD
+        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-2xl font-bold shrink-0 overflow-hidden">
+          {showAvatar ? (
+            // eslint-disable-next-line @next/next/no-img-element -- user-provided URL on any host
+            <img
+              src={profile.avatarUrl ?? undefined}
+              alt={`Avatar of ${name}`}
+              referrerPolicy="no-referrer"
+              onError={() => setFailedAvatarUrl(profile.avatarUrl)}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span aria-hidden="true">{initial}</span>
+          )}
         </div>
+
         <div className="flex flex-col gap-1 min-w-0">
-          <div className="h-6 w-40 bg-gray-100 rounded animate-pulse" />
-          <div className="h-4 w-24 bg-gray-100 rounded animate-pulse" />
-          <div className="flex gap-2 mt-2">
-            <div className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
-            <div className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
+          <h1 className="text-gray-900 font-bold text-2xl break-words">{name}</h1>
+          <p className="text-gray-500 text-sm break-all">@{profile.username}</p>
+          <div className="flex items-center gap-3 flex-wrap text-gray-500 text-sm mt-1">
+            <span className="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded">
+              {ROLE_LABELS[profile.role]}
+            </span>
+            <span>Joined {joinedFormat.format(new Date(profile.createdAt))}</span>
+            <span>{profile.postCount} Posts</span>
+            <span>{profile.commentCount} Comments</span>
           </div>
         </div>
       </div>
-    </div>
+
+      {profile.bio && (
+        <p className="text-gray-700 text-sm whitespace-pre-wrap break-words">{profile.bio}</p>
+      )}
+    </section>
   );
 }

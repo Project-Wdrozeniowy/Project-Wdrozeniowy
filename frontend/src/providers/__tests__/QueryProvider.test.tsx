@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, renderHook, screen } from '@testing-library/react';
 import { useQueryClient } from '@tanstack/react-query';
 import QueryProvider from '../QueryProvider';
+import { useStore } from '@/store';
 
 // next/dynamic is not supported in vitest jsdom – mock it to render nothing
 vi.mock('next/dynamic', () => ({
@@ -41,5 +42,45 @@ describe('QueryProvider >-65', () => {
     );
     expect(screen.getByTestId('a')).toBeInTheDocument();
     expect(screen.getByTestId('b')).toBeInTheDocument();
+  });
+});
+
+describe('QueryProvider cache and sign-out', () => {
+  function captureClient() {
+    const { result } = renderHook(() => useQueryClient(), { wrapper: QueryProvider });
+    return result.current;
+  }
+
+  afterEach(() => {
+    useStore.setState({ user: null, isAuthenticated: false });
+  });
+
+  it('drops every cached query when the user signs out, so the next user never sees them', () => {
+    useStore.setState({ isAuthenticated: true });
+    const client = captureClient();
+    client.setQueryData(['my-profile', 1], { email: 'private@example.com' });
+
+    act(() => useStore.getState().logout());
+
+    expect(client.getQueryData(['my-profile', 1])).toBeUndefined();
+  });
+
+  it('keeps the cache while the session stays signed in', () => {
+    useStore.setState({ isAuthenticated: true });
+    const client = captureClient();
+    client.setQueryData(['forum-posts'], 'cached');
+
+    act(() => useStore.setState({ isInitialized: true }));
+
+    expect(client.getQueryData(['forum-posts'])).toBe('cached');
+  });
+
+  it('does not clear anything when a guest signs in', () => {
+    const client = captureClient();
+    client.setQueryData(['forum-posts'], 'public data');
+
+    act(() => useStore.setState({ isAuthenticated: true }));
+
+    expect(client.getQueryData(['forum-posts'])).toBe('public data');
   });
 });

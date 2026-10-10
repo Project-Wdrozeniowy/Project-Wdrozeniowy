@@ -68,7 +68,7 @@ describe('authService.loadProfile >-65 GET /users/me', () => {
 
     const result = await authService.loadProfile('fresh-access-token');
 
-    expect(mockApiClient.get).toHaveBeenCalledWith('/users/me');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/users/me', undefined);
     expect(result).toEqual(profile);
   });
 });

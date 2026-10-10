@@ -3,7 +3,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useStore } from '@/store';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -23,6 +24,18 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
           },
         },
       })
+  );
+
+  // Cached data belongs to the signed-in user. Without this, the next account in the same tab
+  // could be served the previous one's profile (or any other per-user query).
+  useEffect(
+    () =>
+      useStore.subscribe((state, previous) => {
+        if (previous.isAuthenticated && !state.isAuthenticated) {
+          queryClient.clear();
+        }
+      }),
+    [queryClient]
   );
 
   return (
