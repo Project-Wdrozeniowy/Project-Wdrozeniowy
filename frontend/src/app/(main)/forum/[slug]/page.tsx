@@ -1,3 +1,5 @@
+import CommentSection from '../_components/CommentSection';
+
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
@@ -22,20 +24,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         <p className="text-slate-500 text-xs">Post slug: {slug}</p>
       </div>
 
-      {/* Comments placeholder */}
-      <div className="flex flex-col gap-3">
-        <h2 className="text-gray-50 font-semibold text-lg">Comments</h2>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-slate-800 rounded-xl p-4 flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-slate-700 animate-pulse" />
-              <div className="h-3 w-20 bg-slate-700 rounded animate-pulse" />
-            </div>
-            <div className="h-3 w-full bg-slate-700 rounded animate-pulse" />
-            <div className="h-3 w-4/5 bg-slate-700 rounded animate-pulse" />
-          </div>
-        ))}
-      </div>
+      <CommentSection slug={slug} />
     </div>
   );
 }
