@@ -146,6 +146,15 @@ describe('postService.list >-65 GET /forum/posts', () => {
     expect(result).toEqual(paged);
   });
 
+  it('forwards extra request options next to the params', async () => {
+    mockApiClient.get.mockResolvedValue(pagedOf(mockPostSummary));
+    await postService.list({ page: 2 }, { skipErrorToast: true });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/posts', {
+      params: { page: 2 },
+      skipErrorToast: true,
+    });
+  });
+
   it('passes filter params', async () => {
     mockApiClient.get.mockResolvedValue(pagedOf(mockPostSummary));
     await postService.list({ categorySlug: 'general', tag: 'typescript', q: 'hello', page: 1 });

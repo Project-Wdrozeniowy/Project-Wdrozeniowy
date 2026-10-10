@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
-import type { MockPost } from '@/constants/posts';
-import { CATEGORY_COLORS } from '@/constants/categories';
+import { getCategoryColor } from '@/lib/categoryColor';
+import type { PostCardData } from '@/lib/postCard';
 import { cn } from '@/lib/cn';
 import {
   CommentIcon,
@@ -14,24 +15,18 @@ import {
 import ActionButton from './ActionButton';
 import VoteButton from './VoteButton';
 
-export default function PostCard({ post }: { post: MockPost }) {
-  const [votes, setVotes] = useState(post.votes);
+export default function PostCard({ post }: { post: PostCardData }) {
   const [voted, setVoted] = useState<'up' | 'down' | null>(null);
+  // Derived, so a refetched vote count is never hidden behind a stale copy in state.
+  const votes = post.votes + (voted === 'up' ? 1 : voted === 'down' ? -1 : 0);
 
   function handleVote(dir: 'up' | 'down') {
-    if (voted === dir) {
-      setVotes(post.votes);
-      setVoted(null);
-    } else if (voted === null) {
-      setVotes((v) => v + (dir === 'up' ? 1 : -1));
-      setVoted(dir);
-    } else {
-      setVotes((v) => v + (dir === 'up' ? 2 : -2));
-      setVoted(dir);
-    }
+    setVoted((current) => (current === dir ? null : dir));
   }
 
-  const categoryColor = CATEGORY_COLORS[post.category] ?? 'border-slate-500 text-slate-400';
+  const categoryColor = post.category
+    ? getCategoryColor({ name: post.category, slug: post.categorySlug })
+    : '';
 
   return (
     <article className="bg-slate-800 rounded-xl p-5 flex gap-4 hover:bg-slate-800/80 transition-colors">
@@ -70,16 +65,28 @@ export default function PostCard({ post }: { post: MockPost }) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <h2 className="text-gray-50 font-semibold text-xl leading-snug">{post.title}</h2>
-          <span
-            className={cn(
-              'text-xs font-semibold px-2 py-0.5 rounded border self-start',
-              categoryColor
+          <h2 className="text-gray-50 font-semibold text-xl leading-snug break-words">
+            {post.href ? (
+              <Link href={post.href} className="hover:text-blue-400 transition-colors">
+                {post.title}
+              </Link>
+            ) : (
+              post.title
             )}
-          >
-            {post.category}
-          </span>
-          <p className="text-slate-400 text-base leading-relaxed line-clamp-2">{post.excerpt}</p>
+          </h2>
+          {post.category && (
+            <span
+              className={cn(
+                'text-xs font-semibold px-2 py-0.5 rounded border self-start',
+                categoryColor
+              )}
+            >
+              {post.category}
+            </span>
+          )}
+          {post.excerpt && (
+            <p className="text-slate-400 text-base leading-relaxed line-clamp-2">{post.excerpt}</p>
+          )}
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">

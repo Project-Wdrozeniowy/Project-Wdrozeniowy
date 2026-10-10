@@ -137,7 +137,8 @@ export interface PostSummary {
   viewCount: number;
   voteScore: number;
   commentCount: number;
-  category: Category;
+  /** `null` when the category was deleted after the post was created. */
+  category: Category | null;
   author: UserSummary;
   lastActivityAt: string;
   createdAt: string;

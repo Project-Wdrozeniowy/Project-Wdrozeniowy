@@ -1,6 +1,6 @@
 export default function PostFeedSkeleton() {
   return (
-    <div className="flex flex-col gap-3">
+    <div role="status" aria-label="Loading posts" aria-busy="true" className="flex flex-col gap-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="bg-slate-800 rounded-xl p-5 flex flex-col gap-3 animate-pulse">
           <div className="flex items-center gap-2">
