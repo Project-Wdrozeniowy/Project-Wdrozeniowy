@@ -173,11 +173,13 @@ export interface Comment {
   id: number;
   postId: number;
   parentId: number | null;
-  content: string;
+  /** Can be `null` when the comment is deleted (it is then shown as a placeholder). */
+  content: string | null;
   status: CommentStatus;
   voteScore: number;
   depth: number;
-  author: UserSummary;
+  /** Can be `null` when the comment is deleted. */
+  author: UserSummary | null;
   replies: Comment[];
   createdAt: string;
   updatedAt: string;
