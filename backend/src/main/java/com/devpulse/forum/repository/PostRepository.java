@@ -7,9 +7,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -48,4 +50,19 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     @Override
     @EntityGraph(attributePaths = {"author", "category"})
     Page<Post> findAll(Specification<Post> spec, Pageable pageable);
+
+    /**
+     * Atomically adds one to {@code commentCount} and bumps {@code lastActivityAt}.
+     * A single UPDATE avoids the lost updates of a read-modify-write on the entity
+     * when two comments are posted concurrently.
+     */
+    @Modifying(flushAutomatically = true)
+    @Query("update Post p set p.commentCount = p.commentCount + 1, p.lastActivityAt = :now where p.id = :id")
+    void incrementCommentCount(@Param("id") Long id, @Param("now") OffsetDateTime now);
+
+    /** Atomically subtracts one from {@code commentCount}, never going below zero. */
+    @Modifying(flushAutomatically = true)
+    @Query("update Post p set p.commentCount = case when p.commentCount > 0 then p.commentCount - 1 else 0 end "
+            + "where p.id = :id")
+    void decrementCommentCount(@Param("id") Long id);
 }
