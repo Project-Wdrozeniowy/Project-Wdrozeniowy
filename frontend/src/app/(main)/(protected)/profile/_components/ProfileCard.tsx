@@ -2,9 +2,16 @@
 
 import { useState } from 'react';
 import { ROLE_LABELS } from '@/constants/profile';
+import { isHttpUrl } from '@/lib/url';
 import type { MyProfile } from '@/shared/types';
 
 const joinedFormat = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' });
+
+/** "October 2026", or `null` for a value that is not a date (formatting it would throw). */
+function formatJoined(createdAt: string): string | null {
+  const date = new Date(createdAt);
+  return Number.isNaN(date.getTime()) ? null : joinedFormat.format(date);
+}
 
 interface ProfileCardProps {
   profile: MyProfile;
@@ -16,7 +23,12 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
 
   const name = profile.displayName || profile.username;
   const initial = (Array.from(name)[0] ?? '').toUpperCase();
-  const showAvatar = Boolean(profile.avatarUrl) && profile.avatarUrl !== failedAvatarUrl;
+  // Stored values can predate the form's rules, so only http(s) links are shown as images.
+  const showAvatar =
+    profile.avatarUrl !== null &&
+    isHttpUrl(profile.avatarUrl) &&
+    profile.avatarUrl !== failedAvatarUrl;
+  const joined = formatJoined(profile.createdAt);
 
   return (
     <section aria-label="Profile" className="bg-white rounded-xl p-6 flex flex-col gap-4">
@@ -43,7 +55,7 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
             <span className="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded">
               {ROLE_LABELS[profile.role]}
             </span>
-            <span>Joined {joinedFormat.format(new Date(profile.createdAt))}</span>
+            {joined && <span>Joined {joined}</span>}
             <span>{profile.postCount} Posts</span>
             <span>{profile.commentCount} Comments</span>
           </div>

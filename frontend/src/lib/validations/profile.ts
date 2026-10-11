@@ -6,15 +6,7 @@ import {
   EMAIL_MAX_LENGTH,
   PROFILE_FIELD_ERRORS,
 } from '@/constants/profile';
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const { protocol } = new URL(value);
-    return protocol === 'http:' || protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
+import { isHttpUrl } from '@/lib/url';
 
 /** Mirrors the backend rules of `PATCH /users/me`, so most mistakes are caught before the request. */
 export const profileSchema = z.object({

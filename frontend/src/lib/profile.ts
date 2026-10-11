@@ -31,7 +31,9 @@ export function buildUpdateRequest(
   const request: UpdateProfileRequest = {};
   for (const field of PROFILE_FIELDS) {
     const next = values[field].trim();
-    if (next !== current[field]) {
+    // The stored text may carry stray whitespace the user never saw as a change: compare trimmed
+    // with trimmed, so an untouched form never looks edited.
+    if (next !== current[field].trim()) {
       request[field] = next;
     }
   }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { profileToFormValues } from '@/lib/profile';
 import ProfileCard from './ProfileCard';
 import ProfileForm from './ProfileForm';
 import ProfileLoadError from './ProfileLoadError';
@@ -25,10 +24,7 @@ export default function ProfileView() {
   return (
     <>
       <ProfileCard profile={data} />
-      {/* The form reads its starting values once. A new key (the server's editable values changed,
-          e.g. an edit from another device) gives an untouched form the fresh values, so Save can
-          never write stale ones back. Refreshes that change nothing the form shows keep edits. */}
-      <ProfileForm key={JSON.stringify(profileToFormValues(data))} profile={data} />
+      <ProfileForm profile={data} />
     </>
   );
 }

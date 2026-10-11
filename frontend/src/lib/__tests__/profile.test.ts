@@ -75,6 +75,14 @@ describe('buildUpdateRequest', () => {
     });
   });
 
+  it('does not report a change for a stored value with stray whitespace the user did not touch', () => {
+    const legacy = { ...profile, displayName: ' Alice ', bio: 'Hello\n' };
+    // The form shows the stored text as it is, and validation trims it: still no change.
+    expect(
+      buildUpdateRequest({ ...unchanged, displayName: ' Alice ', bio: 'Hello\n' }, legacy)
+    ).toEqual({});
+  });
+
   it('does not treat an unset field and an empty input as a change', () => {
     const unset = { ...profile, displayName: null, avatarUrl: null, bio: null };
     expect(

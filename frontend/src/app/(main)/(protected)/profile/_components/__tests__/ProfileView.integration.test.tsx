@@ -475,6 +475,71 @@ describe('data staying in step with the server', () => {
     expect(saveButton()).toBeDisabled();
   });
 
+  it('keeps what the user typed in one field while another field is updated from the server', async () => {
+    const { client } = renderView();
+    await loaded();
+    const user = userEvent.setup();
+    await user.type(input('Bio'), ' typed by me');
+    const typed = input('Bio').value;
+
+    act(() => {
+      client.setQueryData(['my-profile', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
+    });
+
+    // The untouched field follows the server, the field being edited keeps the user's text.
+    await waitFor(() => expect(input('Display name').value).toBe('Changed elsewhere'));
+    expect(input('Bio').value).toBe(typed);
+    expect(saveButton()).toBeEnabled();
+  });
+
+  it('sends only the field the user edited when another one changed on the server meanwhile', async () => {
+    mock
+      .onPatch('/users/me')
+      .reply(200, { ...PROFILE, displayName: 'Changed elsewhere', bio: 'Mine' });
+    const { client } = renderView();
+    await loaded();
+    const user = userEvent.setup();
+    await user.clear(input('Bio'));
+    await user.type(input('Bio'), 'Mine');
+    act(() => {
+      client.setQueryData(['my-profile', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
+    });
+    await waitFor(() => expect(input('Display name').value).toBe('Changed elsewhere'));
+
+    await user.click(saveButton());
+
+    await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+    expect(lastPatchBody()).toEqual({ bio: 'Mine' });
+  });
+
+  it('keeps keyboard focus on the field after the user saves', async () => {
+    mock.onPatch('/users/me').reply(200, { ...PROFILE, displayName: 'Alice A.' });
+    renderView();
+    await loaded();
+    const user = userEvent.setup();
+    await user.clear(input('Display name'));
+    await user.type(input('Display name'), 'Alice A.{Enter}');
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    expect(input('Display name')).toHaveFocus();
+  });
+
+  it('ignores Discard while a save is running', async () => {
+    mock.onPatch('/users/me').reply(() => new Promise(() => {}));
+    renderView();
+    await loaded();
+    const user = userEvent.setup();
+    await user.type(input('Display name'), ' edited');
+    await user.click(saveButton());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Saving…' })).toBeInTheDocument()
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Discard changes' }));
+
+    expect(input('Display name').value).toBe('Alice edited');
+  });
+
   it('keeps unsaved edits when a refresh changes nothing the form shows', async () => {
     const { client } = renderView();
     await loaded();

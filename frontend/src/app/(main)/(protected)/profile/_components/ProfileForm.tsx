@@ -37,7 +37,11 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
-    defaultValues: profileToFormValues(profile),
+    // The form follows the server's profile: fields the user has not touched take newer values
+    // (for example an edit made on another device), fields being edited keep the user's text.
+    // No remount, so focus and unsaved edits survive.
+    values: profileToFormValues(profile),
+    resetOptions: { keepDirtyValues: true },
   });
 
   // useWatch (not watch) so the React Compiler can optimize this component.
@@ -64,7 +68,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setFormError(null);
     try {
       const updated = await mutateAsync(request);
-      reset(profileToFormValues(updated));
+      reset(profileToFormValues(updated), { keepDirtyValues: false });
       toast.success(PROFILE_SAVED_MESSAGE);
     } catch (error: unknown) {
       const { fields, form } = getProfileSaveError(error);
@@ -79,7 +83,8 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
   function handleDiscard() {
     if (isPending) return;
-    reset(profileToFormValues(profile));
+    // Explicit: the form's default reset keeps dirty values, and Discard must not.
+    reset(profileToFormValues(profile), { keepDirtyValues: false });
     setFormError(null);
   }
 

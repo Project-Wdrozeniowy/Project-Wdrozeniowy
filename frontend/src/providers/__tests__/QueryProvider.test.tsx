@@ -65,6 +65,26 @@ describe('QueryProvider cache and sign-out', () => {
     expect(client.getQueryData(['my-profile', 1])).toBeUndefined();
   });
 
+  it('drops the cache when another account replaces the session without a sign-out', () => {
+    useStore.setState({ isAuthenticated: true, user: { id: 1 } as never });
+    const client = captureClient();
+    client.setQueryData(['anything-per-user'], 'account 1 data');
+
+    act(() => useStore.setState({ user: { id: 2 } as never }));
+
+    expect(client.getQueryData(['anything-per-user'])).toBeUndefined();
+  });
+
+  it('keeps the cache when the same user is updated (a profile edit or a session refresh)', () => {
+    useStore.setState({ isAuthenticated: true, user: { id: 1, displayName: 'A' } as never });
+    const client = captureClient();
+    client.setQueryData(['anything-per-user'], 'account 1 data');
+
+    act(() => useStore.setState({ user: { id: 1, displayName: 'B' } as never }));
+
+    expect(client.getQueryData(['anything-per-user'])).toBe('account 1 data');
+  });
+
   it('keeps the cache while the session stays signed in', () => {
     useStore.setState({ isAuthenticated: true });
     const client = captureClient();

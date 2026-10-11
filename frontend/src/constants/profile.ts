@@ -1,3 +1,5 @@
+import type { UserRole } from '@/shared/types';
+
 /** Limits of `PATCH /users/me`; they match the backend validation. */
 export const EMAIL_MAX_LENGTH = 100;
 export const DISPLAY_NAME_MAX_LENGTH = 100;
@@ -36,8 +38,6 @@ export const PROFILE_SERVER_FIELD_ERRORS: Record<ProfileField, string> = {
 };
 
 export const EMAIL_TAKEN_MESSAGE = 'This email address is already in use.';
-
-import type { UserRole } from '@/shared/types';
 
 /** The role as shown to the user; the API value is an identifier, not display text. */
 export const ROLE_LABELS: Record<UserRole, string> = {

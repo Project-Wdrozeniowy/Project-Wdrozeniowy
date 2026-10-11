@@ -40,6 +40,23 @@ describe('ProfileCard avatar', () => {
   });
 });
 
+describe('ProfileCard robustness', () => {
+  it('does not crash on an invalid join date, it just leaves the date out', () => {
+    render(<ProfileCard profile={{ ...PROFILE, createdAt: 'not-a-date' }} />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Alice' })).toBeInTheDocument();
+    expect(screen.queryByText(/Joined/)).not.toBeInTheDocument();
+  });
+
+  it.each(['ftp://example.com/a.png', 'javascript:alert(1)', 'data:image/png;base64,AAAA'])(
+    'does not render an avatar from a stored value that is not http(s): %s',
+    (avatarUrl) => {
+      render(<ProfileCard profile={{ ...PROFILE, avatarUrl }} />);
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
+      expect(screen.getByText('A')).toBeInTheDocument();
+    }
+  );
+});
+
 describe('ProfileCard role', () => {
   it.each([
     ['USER', 'Member'],
