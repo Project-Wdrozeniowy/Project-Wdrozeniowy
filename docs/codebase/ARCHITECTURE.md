@@ -62,6 +62,8 @@ Flow description:
 
 ---
 
+<a id="capability-status"></a>
+
 ### 2.1) Current capability status
 
 This table is a documentation baseline, not a product roadmap. “Implemented” means an executable path is present in the repository; it does not replace feature-specific verification.

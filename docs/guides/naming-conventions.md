@@ -1,9 +1,12 @@
 # Naming conventions
 
-These are approved conventions for new and changed work, not a claim that the
-existing code has already been fully migrated. See the [architecture guide](architecture.md)
-for placement and service boundaries. Cleanup that changes application code is
-tracked separately in Jira.
+> [Русская версия / Russian translation ↓](#ru) — temporary reading aid; the
+> English text is canonical.
+
+These are **approved conventions for new and changed work**, not a claim that
+existing code has been fully migrated. See the
+[architecture guide](architecture.md) for placement and service boundaries.
+Application-code cleanup is tracked separately in Jira.
 
 ## Universal
 
@@ -50,11 +53,12 @@ com.devpulse.auth.repository.UserRepository
 | Exception advice| `Handler`      | `GlobalExceptionHandler` |
 | Test            | `Test`         | `PostServiceTest`      |
 
-The DTO suffix table is the target convention. Existing outbound classes with
-`Response` outside a generic wrapper must be reviewed by the backend owner;
-do not rename a public Java type without updating serialization, OpenAPI,
-tests, and its consumers. [PWDRZ-133](https://project-wdrz.atlassian.net/browse/PWDRZ-133)
-owns the backend cleanup, not this documentation edit.
+> **Target convention, not current-state inventory:** The backend owner must
+> review existing outbound classes with `Response` outside a generic wrapper.
+> **Do not rename a public Java type** without updating serialization,
+> OpenAPI, tests, and consumers. Backend cleanup is
+> [PWDRZ-133](https://project-wdrz.atlassian.net/browse/PWDRZ-133), not this
+> documentation edit.
 
 ### Methods
 
@@ -78,23 +82,25 @@ owns the backend cleanup, not this documentation edit.
 - Tables: plural `snake_case` (`users`, `refresh_tokens`).
 - Postgres enums: `snake_case` type name, `UPPER_CASE` values
   (`user_role`, `USER`/`MODERATOR`/`ADMIN`).
-- The target schema convention is `created_at` and `updated_at` on every
-  table. For append-only rows, `updated_at` begins at creation and changes
-  only if the row is updated. Existing tables do not all comply; add columns
-  through a new Flyway migration and coordinate mappings/tests with the
-  backend owner under [PWDRZ-134](https://project-wdrz.atlassian.net/browse/PWDRZ-134).
-  Never edit an already-applied migration.
+- **Target schema convention:** `created_at` and `updated_at` on every table.
+  For append-only rows, `updated_at` begins at creation and changes only if
+  the row is updated. Existing tables do not all comply; add columns through
+  a new Flyway migration and coordinate mappings/tests with the backend owner
+  under [PWDRZ-134](https://project-wdrz.atlassian.net/browse/PWDRZ-134).
+  **Never edit an already-applied migration.**
 - Flyway files: `V{N}__short_description.sql` (e.g.
   `V2__create_forum_tables.sql`).
 
 ### Lombok
 
-Choose Lombok annotations for the type's actual behaviour and verify JSON
-binding for request/response DTOs. In particular, generated equality and
-`toString` on JPA relationships need care; no single entity annotation recipe
-is mandatory. Do not ban `@AllArgsConstructor` globally for requests without
-a failing binding case. Constructor injection remains the default for services
-and controllers. The backend owner reviews Java-specific choices.
+Choose Lombok annotations for the type's actual behaviour and **verify JSON
+binding** for request/response DTOs. In particular, generated equality and
+`toString` on JPA relationships need care; *no single entity annotation
+recipe is mandatory*.
+
+Do not ban `@AllArgsConstructor` globally for requests without a failing
+binding case. Constructor injection remains the default for services and
+controllers. The backend owner reviews Java-specific choices.
 
 ## Frontend (TypeScript / React)
 
@@ -128,11 +134,11 @@ and controllers. The backend owner reviews Java-specific choices.
 
 ### Types
 
-- Prefer `interface` for project-owned object shapes and contracts. A `type`
+- **Prefer `interface`** for project-owned object shapes and contracts. A `type`
   alias is suitable for unions, intersections, mapped types, and deliberately
   closed DTO shapes that are not intended to be extended as contracts.
   `type` does **not** make fields immutable; use `readonly` where needed.
-- **No `I` prefix**. `User`, not `IUser`.
+- **No `I` prefix.** `User`, not `IUser`.
 - Component props are named `<ComponentName>Props`, including local props
   shapes: `interface PostCardProps { … }`. Existing inline `Props` forms need
   [PWDRZ-132](https://project-wdrz.atlassian.net/browse/PWDRZ-132), not a
@@ -151,7 +157,7 @@ and controllers. The backend owner reviews Java-specific choices.
 
 ### Imports
 
-- Use the `@/*` alias for all cross-folder imports. Relative imports only
+- **Use the `@/*` alias** for all cross-folder imports. Relative imports only
   inside the same folder.
 - No additional project-specific import-order rule is imposed. Formatter and
   linter configuration remain the enforceable style source.
@@ -184,10 +190,211 @@ and controllers. The backend owner reviews Java-specific choices.
 
 ### Configuration
 
-- All env access goes through a single `config/` module that validates
-  required variables on startup. Code outside `config/` never reads
-  `process.env`.
+- **All env access goes through `config/`**, which validates required
+  variables on startup. Code outside `config/` never reads `process.env`.
 
 ## Pull request / branch naming
 
 The [Git workflow](git-workflow.md) owns branch, commit, and PR naming rules.
+
+<a id="ru"></a>
+
+## Русская версия — временная вспомогательная локализация
+
+> Это вспомогательный перевод для раннего этапа. **Канонический источник —
+> английский текст выше.** При изменении правил обновляйте обе версии.
+> Удаление русского раздела в конце проекта или при взрослении процесса:
+> [PWDRZ-139](https://project-wdrz.atlassian.net/browse/PWDRZ-139).
+
+Это **утверждённые правила для нового и изменяемого кода**, а не заявление,
+что весь старый код уже приведён к ним. Размещение кода и границы сервисов
+описаны в [архитектурном гайде](architecture.md). Cleanup application code
+отслеживается в Jira отдельно.
+
+### Общие правила
+
+- Идентификаторы, имена тестов и веток, темы коммитов и метаданные PR — на
+  английском. Developer guides могут быть на английском или польском, а
+  временно и на русском — см. [индекс](README.md#language-and-maintenance).
+- Используйте сокращения, только если они понятны команде. Не вводите
+  неоднозначные сокращения в публичных именах.
+- В собственных именах проекта считайте аббревиатуру словом: `JwtUtil`,
+  `ApiClient`, `clientIp`, а не `JWTUtil`, `APIClient`, `clientIP`. На границе
+  интеграции сохраняйте имена, заданные внешним контрактом.
+
+### Backend (Java)
+
+#### Пакеты
+
+Сегменты — строчные и однословные: сначала **предметная область**,
+потом **слой**:
+
+```text
+com.devpulse.<context>.<layer>
+com.devpulse.forum.service.PostService
+com.devpulse.auth.repository.UserRepository
+```
+
+#### Классы
+
+| Вид | Суффикс | Пример |
+| --- | --- | --- |
+| Entity | нет | `User`, `Post` |
+| Enum | нет; существительное | `Role`, `PostStatus` |
+| Repository | `Repository` | `PostRepository` |
+| Service | `Service` | `PostService` |
+| Реализация service | `*Impl`, только при наличии interface | `UserDetailsServiceImpl` |
+| Controller | `Controller` | `PostController` |
+| Spring config | `Config` | `SecurityConfig` |
+| Filter | `Filter` | `JwtAuthenticationFilter` |
+| Utility | `Util` | `JwtUtil`, `SlugUtil` |
+| Входящий DTO | `Request` | `CreatePostRequest` |
+| Исходящий DTO | `Dto` | `PostDto`, `UserProfileDto` |
+| DTO списка | `SummaryDto` | `PostSummaryDto`, `UserSummaryDto` |
+| Обобщённая обёртка | `Response` | `PagedResponse<T>`, `AuthResponse` |
+| Exception | `Exception` | `AppException` |
+| Exception advice | `Handler` | `GlobalExceptionHandler` |
+| Test | `Test` | `PostServiceTest` |
+
+> **Целевая convention, не описание всего текущего кода:** Существующие
+> исходящие классы с `Response` вне обобщённой обёртки проверяет
+> backend-разработчик. **Не переименовывайте публичный Java-тип** без
+> одновременного обновления serialization, OpenAPI, тестов и потребителей.
+> Backend cleanup — [PWDRZ-133](https://project-wdrz.atlassian.net/browse/PWDRZ-133),
+> а не эта документационная правка.
+
+#### Методы
+
+- Имена методов repository отражают Spring Data query intent (`findBy*`,
+  `existsBy*`, `deleteBy*`, `countBy*`), когда эти формы подходят.
+- Метод controller называет HTTP-операцию, метод service — доменную. Их
+  имена не обязаны совпадать. Ясное имя действия важнее фиксированного
+  набора глаголов.
+
+#### Переменные
+
+- Переменные — `camelCase`. Boolean-поля и параметры должны читаться как
+  предикаты; `is`, `has`, `should`, `can` полезны, когда звучат естественно,
+  но не обязательны для слов вроде `read`.
+- Временной тип и суффикс выбирайте по смыслу: `createdAt` — момент времени;
+  календарная дата или длительность не обязаны быть `OffsetDateTime` либо
+  оканчиваться на `At`.
+
+#### JPA и база данных
+
+- Столбцы — `snake_case` (`password_hash`, `created_at`); таблицы —
+  множественное число и `snake_case` (`users`, `refresh_tokens`).
+- PostgreSQL enum: имя типа в `snake_case`, значения в `UPPER_CASE`, например
+  `user_role` и `USER`/`MODERATOR`/`ADMIN`.
+- **Целевая схема:** `created_at` и `updated_at` в каждой таблице. У
+  append-only строк `updated_at` при создании равен времени создания и
+  меняется лишь при обновлении строки. Не все нынешние таблицы соответствуют
+  правилу; добавляйте поля **новой** Flyway-миграцией, согласуя mappings и
+  тесты с backend-разработчиком в [PWDRZ-134](https://project-wdrz.atlassian.net/browse/PWDRZ-134).
+  **Никогда не редактируйте уже применённую миграцию.**
+- Имена Flyway-файлов: `V{N}__short_description.sql`, например
+  `V2__create_forum_tables.sql`.
+
+#### Lombok
+
+Выбирайте аннотации под реальное поведение типа и **проверяйте JSON binding**
+для request/response DTO. Осторожно с генерируемыми `equals` и `toString`
+у JPA-связей; *универсального рецепта аннотаций для entity нет*.
+
+Не запрещайте `@AllArgsConstructor` глобально для requests без подтверждённой
+проблемы binding. Для services и controllers по умолчанию используйте
+constructor injection. Java-решения проверяет backend-разработчик.
+
+### Frontend (TypeScript / React)
+
+#### Файлы
+
+| Вид | Имя |
+| --- | --- |
+| Route | `app/<route>/page.tsx`, `app/<route>/layout.tsx` |
+| React component | `PascalCase.tsx` |
+| Hook | `useThing.ts` |
+| Service / API client | `camelCase.ts`, например `userService.ts` |
+| Store slice | `camelCaseSlice.ts` в `store/slices/` |
+| Общие типы | Сейчас `src/shared/types/index.ts`; новые файлы допустимы при ясной ответственности |
+| Test | `__tests__/Thing.test.tsx` рядом с source |
+
+#### Функции и переменные
+
+- React components — `PascalCase`; hooks — `useThing` с соблюдением Rules of
+  Hooks.
+- Для event handlers нет особого правила `on*` против `handle*`; имя должно
+  объяснять callback или действие в контексте.
+- Service helpers: действие + предметный объект, например `getUsers`,
+  `createPost`, `updateProfile`. `fetch*` не зарезервирован для hooks и
+  подходит, когда речь действительно о сетевом получении.
+- Boolean-имена читаются как предикаты: `isOpen`, `hasError`, `canEdit` —
+  примеры, а не исчерпывающий список префиксов.
+- `UPPER_SNAKE_CASE` — для заранее заданных неизменяемых значений, например
+  `HOURS_IN_DAY`, `DAYS_OF_WEEK`. Вычисленные во время работы значения —
+  `camelCase`, даже при объявлении через `const`: `currentWeek`, `hoursLeft`,
+  `clientIp`. Сам по себе `const` не делает объект глубоко неизменяемым.
+
+#### Типы
+
+- **Предпочитайте `interface`** для собственных object shapes и contracts.
+  `type` подходит для unions, intersections, mapped types и намеренно
+  закрытых DTO shapes, которые не планируется расширять как контракт.
+  `type` **не** делает поля неизменяемыми; при необходимости используйте
+  `readonly`.
+- **Без префикса `I`.** `User`, не `IUser`.
+- Props компонента называются `<ComponentName>Props`, включая локальные:
+  `interface PostCardProps { … }`. Старые обобщённые `Props` исправляются в
+  [PWDRZ-132](https://project-wdrz.atlassian.net/browse/PWDRZ-132), не только
+  в документации.
+- Общая обёртка для ресурсов — `PagedResponse<T>`, согласованная с backend.
+  Дополнительной envelope-обёртки для API responses нет.
+
+#### State (Zustand)
+
+- Один slice на связную ответственность общего клиентского state; разделяйте,
+  когда несвязанные состояния начинают сцепляться. Файл `<name>Slice.ts`,
+  экспортируемый interface `<Name>Slice`, factory `create<Name>Slice`.
+- Actions — глаголы в `camelCase`: setters `set<Field>` (`setUser`,
+  `setLoading`), доменные действия — простой глагол (`logout`, `resetCart`).
+
+#### Импорты
+
+- **Для импортов между папками используйте alias `@/*`**; относительные пути —
+  только внутри одной папки. Дополнительного правила порядка импортов нет;
+  форматирование и lint определяются конфигурацией.
+
+#### Стили
+
+- Используйте Tailwind utilities; не добавляйте CSS Modules в новый код.
+  Для условных или длинных списков классов — `cn()` из `@/lib/cn`. Короткому
+  статическому `className` обёртка не нужна.
+
+### Gateway (TypeScript / Node)
+
+#### Файлы и папки
+
+- Классы/constructors — `PascalCase`, прочие файлы — `camelCase.ts`.
+- Middleware-файл описывает действие: `auth.ts`, `logger.ts`,
+  `rateLimiter.ts`, `errorHandler.ts`.
+- Route-файл называет реальную ответственность. Сейчас proxy лежат в
+  `routes/proxy.ts` и `routes/wsProxy.ts`; до появления такого разделения
+  имена resource routes не предписаны.
+
+#### Функции
+
+- Для gateway modules, включая middleware и proxy functions, используйте
+  named exports (`authMiddleware`, `errorHandler`, `proxyMiddleware`).
+  Существующие default exports и их импорты/тесты меняются отдельно в
+  [PWDRZ-136](https://project-wdrz.atlassian.net/browse/PWDRZ-136).
+- Express handlers имеют вид `(req, res, next) => …` и типы Express
+  `Request` / `Response` / `NextFunction`.
+
+#### Конфигурация
+
+- **Чтение env централизовано в `config/`**, который проверяет обязательные
+  переменные при старте. Вне `config/` код не читает `process.env`.
+
+### Имена PR и веток
+
+Имена веток, коммитов и PR определяет [Git workflow](git-workflow.md).

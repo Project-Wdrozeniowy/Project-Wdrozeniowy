@@ -1,8 +1,11 @@
 # Testing
 
-Every workspace has its own runner. The rules below are team policy for new and
-changed work; current coverage scope and the E2E gap are described separately
-from that target.
+> [Русская версия / Russian translation ↓](#ru) — temporary reading aid; the
+> English text is canonical.
+
+Every workspace has its own runner. The rules below are **team policy for new
+and changed work**. Current coverage scope and the E2E gap are described
+separately from that target.
 
 1. **Tests live next to or mirror the production tree.** A class at
    `…/forum/service/PostService.java` has its test at
@@ -47,12 +50,12 @@ in English.
   real PostgreSQL (CI starts a `postgres:16` service; locally point
   `SPRING_DATASOURCE_URL` at any PostgreSQL 16). The test profile uses
   `ddl-auto=create-drop`, so Hibernate builds its own tables.
-- Real-schema tests: annotate the class with `@MigratedSchemaTest` instead. It
+- **Real-schema tests:** annotate the class with `@MigratedSchemaTest`. It
   applies the Flyway migrations to a separate `migration_test` schema and runs
   Hibernate `validate` against them. Add a round-trip case for every new or
   changed mapped table and PostgreSQL enum. Use the same setup when defaults,
   constraints, SQL, or transactions depend on the real migrated schema;
-  Hibernate `create-drop` cannot prove Flyway compatibility.
+  **Hibernate `create-drop` cannot prove Flyway compatibility.**
 - MockMvc setup: `standaloneSetup` is appropriate for controller-local
   behaviour. Use `webAppContextSetup(...).apply(springSecurity())` or an
   equivalent context-backed test when framework wiring, security filters, or
@@ -81,10 +84,12 @@ in English.
 
 ### What to test
 
-- New or changed **user-visible UI behaviour** needs browser-level E2E
-  evidence. Existing React Testing Library tests remain valid and may help
-  diagnose local behaviour, but are not a substitute for the E2E acceptance
-  path. Do not require a component test for static markup alone.
+- New or changed **user-visible UI behaviour requires browser-level E2E
+  evidence**.
+
+  Existing React Testing Library tests remain valid and may help diagnose
+  local behaviour, but are not a substitute for the E2E acceptance path. Do
+  not require a component test for static markup alone.
 - Hooks and client data-flow logic can have focused tests for state transitions.
 - Services and utilities can have unit tests with the network stubbed. Choose
   a contract/integration check when an HTTP or auth boundary changes.
@@ -129,16 +134,19 @@ npm --prefix gateway test
 npm --prefix gateway run test:coverage
 ```
 
-The `docker-compose.yml` at the repo root spins up Postgres and Redis for
-local integration tests. The mandatory browser E2E suite and CI gate are the
-target of [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117);
-they do **not** exist yet. Until implemented, record exactly which manual or
-integration path was exercised and do not claim the missing E2E gate passed.
-Passing the current 65% gates is required but does not prove an excluded UI
-path is tested. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118)
+The root `docker-compose.yml` starts PostgreSQL and Redis for local
+integration tests.
+
+> **Current E2E gap:** The mandatory browser suite and CI gate are tracked in
+> [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117); they do
+> **not** exist yet. Record exactly which manual or integration path was
+> exercised. Do not claim the missing gate passed.
+
+**The current 65% gates must pass**, but do not prove that excluded UI code is
+tested. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118)
 will measure the baseline, review executable-code exclusions, choose
 service-specific metrics and thresholds, and verify that the gates reject an
-insufficient result. The number 65% is not the approved long-term threshold.
+insufficient result. *65% is not the approved long-term threshold.*
 
 ## When to add tests
 
@@ -153,3 +161,168 @@ insufficient result. The number 65% is not the approved long-term threshold.
 - Refactors without behaviour change can rely on the existing suite unless
   the refactor exposes an unprotected contract. The applicable coverage gate
   still must pass.
+
+<a id="ru"></a>
+
+## Русская версия — временная вспомогательная локализация
+
+> Это вспомогательный перевод для раннего этапа. **Канонический источник —
+> английский текст выше.** При изменении правил обновляйте обе версии.
+> Удаление русского раздела в конце проекта или при взрослении процесса:
+> [PWDRZ-139](https://project-wdrz.atlassian.net/browse/PWDRZ-139).
+
+У каждого workspace свой test runner. Правила ниже — **командная политика для
+новой и изменяемой работы**. Текущее coverage и отсутствие E2E отделены от
+целевого состояния.
+
+1. **Тесты находятся рядом с кодом или повторяют его дерево.** Например,
+   `…/forum/service/PostService.java` проверяется в
+   `…/forum/service/PostServiceTest.java`.
+2. **Coverage gates обязательны.** PR, опустившийся ниже настроенного
+   порога, проваливает CI и должен быть исправлен до merge.
+3. **Тесты пишутся на английском.** Имена описывают наблюдаемое поведение.
+4. **Процента покрытия недостаточно.** Для нового поведения нужен тест на
+   подходящей границе, даже если общий процент уже достаточен.
+
+### Backend — JUnit 5 + Mockito + Spring Boot Test
+
+| Вопрос | Текущий выбор |
+| --- | --- |
+| Runner | JUnit 5 (`org.junit.jupiter`) |
+| Mocking | Mockito (`@ExtendWith(MockitoExtension.class)`) |
+| Assertions | AssertJ (`assertThat`, `assertThatThrownBy`) |
+| Проверка controller | `standaloneSetup` для локального поведения controller; Spring context/security setup — когда контракт зависит от wiring, filters или authorization |
+| Реальная схема | `@MigratedSchemaTest` (`com.devpulse.support`), подробности ниже |
+| Coverage | JaCoCo, ≥ **65%** по строкам, проверяется через `./mvnw verify` |
+| Исключённые пакеты | Указаны в execution `check` плагина `jacoco-maven-plugin` в `backend/pom.xml` |
+
+#### Имена
+
+Новым Java test methods давайте описательные `camelCase`-имена, например:
+
+```text
+replayingARotatedTokenRevokesTheWholeFamily
+```
+
+В старых backend-тестах смешаны `camelCase` и имена с `_`; не
+переименовывайте их при несвязанной работе. Cleanup —
+[PWDRZ-135](https://project-wdrz.atlassian.net/browse/PWDRZ-135).
+Имена `it(...)` во frontend и gateway должны по-английски описывать
+ожидаемое поведение.
+
+#### Размещение и настройка
+
+- Unit-тесты: чистый Mockito без Spring context; быстрые проверки services
+  и простых helpers.
+- Integration-тесты: `@SpringBootTest` с `@ActiveProfiles("test")` против
+  настоящего PostgreSQL. CI поднимает `postgres:16`; локально укажите
+  `SPRING_DATASOURCE_URL` на PostgreSQL 16. Профиль использует
+  `ddl-auto=create-drop`, то есть таблицы создаёт Hibernate.
+- **Тест реальной схемы:** `@MigratedSchemaTest` применяет Flyway-миграции к
+  отдельной схеме `migration_test` и запускает Hibernate `validate`. Для
+  каждой новой/изменённой mapped table и PostgreSQL enum добавляйте
+  round-trip case. Используйте такой тест и для defaults, constraints, SQL
+  или transactions, когда важна настоящая migrated schema. `create-drop`
+  **`create-drop` не доказывает совместимость с Flyway.**
+- MockMvc: `standaloneSetup` подходит для локального поведения controller.
+  Когда контракт зависит от wiring Spring, security filters или
+  `@PreAuthorize`, используйте `webAppContextSetup(...).apply(springSecurity())`
+  либо эквивалентный context-backed test. Универсального setup для всех
+  controller tests нет.
+
+#### Антипаттерны
+
+- Не тестируйте getters/setters или код, сгенерированный Lombok.
+- Не проверяйте точную строку внутреннего log message. Проверка
+  `ProblemDetail.detail`, видимого клиенту, допустима: это часть API.
+- Предпочитайте наблюдаемый результат проверке только вызова вроде
+  `Mockito.verify(repo).save(...)`. Проверка взаимодействия уместна, когда
+  само взаимодействие и есть проверяемый контракт.
+
+### Frontend — Vitest + React Testing Library
+
+| Вопрос | Текущий выбор |
+| --- | --- |
+| Runner | Vitest 3 (`jsdom`) |
+| DOM helpers | `@testing-library/react` |
+| Setup | `src/test/setup.ts` |
+| Coverage | Сейчас ≥ **65%** строк/functions/branches/statements по включённому коду (`frontend/vitest.config.ts`); PWDRZ-118 пересмотрит правило |
+| Typecheck | `npm run typecheck` (`tsc --noEmit`) отдельным шагом frontend build workflow |
+| Имена | `*.test.ts` / `*.test.tsx` рядом с source, в `__tests__/` |
+
+#### Что проверять
+
+- Новое или изменённое **видимое пользователю поведение UI требует
+  browser-level E2E evidence**.
+
+  React Testing Library остаётся полезной для локальной диагностики, но не
+  заменяет E2E acceptance path. Статичная разметка сама по себе не требует
+  component test.
+- Для hooks и client data flow полезны прицельные тесты переходов state.
+- Services и utilities можно проверять unit-тестами с заглушкой сети.
+  При изменении HTTP или auth boundary добавляйте contract/integration check.
+- Избегайте snapshot tests для динамического поведения и проверок Tailwind
+  class strings вместо результата для пользователя.
+
+#### Что не тестировать
+
+- Строки Tailwind-классов.
+- Внутреннюю реализацию Next.js (routing, image optimisation).
+- Сторонние компоненты без собственной project wrapper.
+
+### Gateway — Jest + ts-jest
+
+| Вопрос | Текущий выбор |
+| --- | --- |
+| Runner | Jest с `ts-jest` |
+| Setup | `gateway/src/test/setup.ts` |
+| Coverage | Сейчас ≥ **65%** строк/functions/branches/statements (`gateway/jest.config.js`); PWDRZ-118 пересмотрит правило |
+| Размещение | `gateway/src/__tests__/*.test.ts` и локальные `__tests__/`, например `src/middleware/__tests__/` |
+
+Приоритетные области: композиция middleware (auth, rate limiter, error
+handler); поведение proxy (передача headers, преобразование ошибок);
+bootstrap config (ошибка при отсутствии обязательных env vars).
+
+### Запуск тестов
+
+Каждую строку запускайте независимо из корня репозитория:
+
+```bash
+# Backend: нужен PostgreSQL и согласованные POSTGRES_* / JWT_SECRET
+cd backend && ./mvnw verify
+
+# Frontend: configured script запускает Vitest один раз, без watch
+npm --prefix frontend test
+npm --prefix frontend run test:coverage
+
+# Gateway
+npm --prefix gateway test
+npm --prefix gateway run test:coverage
+```
+
+Корневой `docker-compose.yml` поднимает PostgreSQL и Redis для локальных
+integration tests.
+
+> **Текущий пробел E2E:** Обязательный browser suite и CI gate — задача
+> [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117); сейчас
+> их **нет**. Фиксируйте, какой ручной или интеграционный путь проверен. Не
+> заявляйте о прохождении отсутствующего gate.
+
+**Текущий порог 65% обязателен**, но не доказывает проверку исключённого
+UI-кода. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118)
+измерит базовый уровень, проверит исключения исполняемого кода, выберет
+метрики и пороги каждого сервиса и подтвердит, что gate отклоняет
+недостаточный результат. *65% не является утверждённым долгосрочным порогом.*
+
+### Когда добавлять тесты
+
+- Новое наблюдаемое поведение проверяйте на ближайшей полезной границе.
+  Для межсервисной функции нужно также воспроизводимое integration evidence;
+  для изменённого UI-пути — браузерное. См. [Definition of Done](README.md#definition-of-done).
+- Воспроизводимый поведенческий bug требует regression test. Если
+  автоматизировать его невозможно, объясните исключение и выполненную
+  проверку в PR. Писать тест до кода можно, но порядок не является
+  обязательным правилом команды.
+- Рефакторинг без изменения поведения может опираться на имеющийся suite,
+  если не обнаружен незащищённый контракт. Применимый coverage gate всё
+  равно должен пройти.
