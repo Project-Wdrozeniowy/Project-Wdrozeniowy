@@ -298,4 +298,13 @@ No permission is granted to use, copy, modify, distribute, or publish its
 source code or related materials without written consent from all copyright
 holders listed in [NOTICE.md](NOTICE.md).
 
+## License and ownership
+
+Proprietary — All rights reserved.
+
+This is a private educational project with potential commercial use.
+No permission is granted to use, copy, modify, distribute, or publish its
+source code or related materials without written consent from all copyright
+holders listed in [NOTICE](NOTICE).
+
 See [LICENSE](LICENSE) for terms.

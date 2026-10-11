@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.*;
@@ -58,6 +61,19 @@ class JwtUtilTest {
         String token = jwtUtil.generateAccessToken(userDetails);
         String extractedUsername = jwtUtil.extractUsername(token);
         assertThat(extractedUsername).isEqualTo("testuser");
+    }
+
+    @Test
+    void accessTokenIsSignedWithHs256WhateverTheSecretLength() {
+        // The gateway only accepts HS256; jjwt would choose HS512 for a 64-byte key on its own.
+        byte[] secret = new byte[64];
+        new SecureRandom().nextBytes(secret);
+        String token = new JwtUtil(Base64.getEncoder().encodeToString(secret), 900L)
+                .generateAccessToken(userDetails);
+
+        String header = new String(Base64.getUrlDecoder().decode(token.split("\\.")[0]), StandardCharsets.UTF_8);
+
+        assertThat(header).contains("\"alg\":\"HS256\"");
     }
 
     @Test

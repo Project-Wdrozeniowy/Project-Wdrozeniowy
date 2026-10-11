@@ -27,8 +27,10 @@ const handleProxyError: ProxyErrorHandler = (err, req, res): void => {
 const proxyMiddleware = createProxyMiddleware({
   target: config.backendUrl,
   changeOrigin: true,
+  // Forward the path unchanged: the backend serves its API under the same /api
+  // context path (server.servlet.context-path), and the refresh cookie's
+  // Path=/api/auth relies on both sides using the same prefix.
   pathFilter: '/api',
-  pathRewrite: { '^/api': '' },
   on: {
     error: handleProxyError,
   },

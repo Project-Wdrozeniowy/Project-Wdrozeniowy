@@ -10,8 +10,6 @@ module.exports = {
     '!src/index.ts',
     // Auth redirect guard — integration-level behaviour, no unit tests yet
     '!src/middleware/authGuard.ts',
-    // Proxy routes — integration-level behaviour, tested via app.test.ts
-    '!src/routes/proxy.ts',
   ],
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
