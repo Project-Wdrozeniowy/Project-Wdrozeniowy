@@ -1,5 +1,12 @@
 # GitHub Copilot Instructions
 
+This is tooling context, not a second source of team policy. Start with the
+[developer guide index](../docs/guides/README.md), especially its
+[architecture](../docs/guides/architecture.md),
+[naming](../docs/guides/naming-conventions.md), and
+[testing](../docs/guides/testing.md) guides. Code/configuration establish
+current behaviour; a documented target may have Jira-tracked cleanup debt.
+
 ## Stack & Versions
 
 Manual monorepo — three fully independent services. Use exact versions listed; do not upgrade or use features beyond them.
@@ -21,12 +28,12 @@ Never import across service boundaries (`frontend/`, `gateway/`, `backend/` are 
 
 ```
 frontend/src/
-  app/               ← Next.js App Router pages only; no logic here
+  app/               ← Next.js route files and composition; move feature orchestration out
     (auth)/          ← unauthenticated pages (login, register)
     (main)/          ← authenticated pages with layout
     _components/     ← page-local shared components
   services/          ← API call functions (thin ApiClient wrappers)
-  store/slices/      ← Zustand slices only
+  store/slices/      ← shared application-state slices
   shared/types/      ← domain TypeScript types
   lib/validations/   ← Zod schemas
   components/        ← layout/ and ui/ reusable components
@@ -35,7 +42,7 @@ frontend/src/
 
 gateway/src/
   middleware/        ← auth, cors, rateLimiter, logger
-  routes/            ← proxy.ts only
+  routes/            ← proxy.ts and wsProxy.ts
   config/            ← env validation
   types/             ← GatewayConfig, Express extensions
 
@@ -47,6 +54,8 @@ backend/src/main/java/com/devpulse/
 ```
 
 Tests live in `__tests__/` subdirectories next to the module (frontend/gateway) or mirror the source tree (backend).
+This frontend layout is a hybrid with feature-local UI and centralized
+`services/` and `store/`, **not** a full FSD implementation.
 
 ---
 
@@ -61,6 +70,11 @@ Tests live in `__tests__/` subdirectories next to the module (frontend/gateway) 
 | Java classes              | PascalCase                  | `AuthController`, `JwtUtil`     |
 | Java packages             | `com.devpulse.<domain>.<layer>` | `com.devpulse.auth.service` |
 | Custom React hooks        | camelCase `use` prefix      | `usePosts.ts`                   |
+
+Project-owned acronyms follow word casing (`ApiClient`, `JwtUtil`, `clientIp`).
+Name component props `<ComponentName>Props`; gateway modules target named
+exports. The source currently contains exceptions, so do not describe a
+cleanup target as already implemented.
 
 ---
 
@@ -88,7 +102,8 @@ npm run lint     # eslint src (--fix for gateway)
 ### Java (backend)
 
 - PascalCase classes, camelCase methods/variables.
-- Use Lombok: `@Data`, `@Builder`, `@RequiredArgsConstructor`, `@Slf4j`.
+- Use Lombok annotations when appropriate for the actual Java type; do not
+  impose one recipe on every JPA entity or request DTO.
 - Error responses **must** use `ProblemDetail` (RFC 9457, Spring 6 native). Never return raw strings or custom error objects.
 - Follow the existing style in `com.devpulse.*`.
 
@@ -98,9 +113,9 @@ npm run lint     # eslint src (--fix for gateway)
 
 1. **Do not add browser-persistent token storage.** Access tokens use in-memory `tokenMemory`; refresh tokens use an `HttpOnly` cookie. Do not add `localStorage` or `sessionStorage` token handling.
 
-2. **Do not remove Redis** from Docker Compose or remove any `depends_on` referencing it. Provisioned for future caching/sessions.
+2. **Do not remove Redis** from Docker Compose or remove any `depends_on` referencing it as a documentation cleanup. It is provisioned for future integration, but its first use case is not yet selected.
 
-3. **Do not remove Socket.IO** from gateway dependencies. Planned for real-time forum notifications.
+3. **Do not remove Socket.IO** from gateway dependencies as a documentation cleanup. It is planned for future real-time work; no integrated Socket.IO path exists yet.
 
 4. **Do not edit existing Flyway migrations.** Only add new `V<n>__description.sql` files.
 
@@ -112,7 +127,7 @@ npm run lint     # eslint src (--fix for gateway)
 
 ## Task Backlog Tracking
 
-- Use [docs/agent-task-backlog/pwdrz-jira-tasks.json](docs/agent-task-backlog/pwdrz-jira-tasks.json) as the shared execution backlog.
+- Use [docs/agent-task-backlog/pwdrz-jira-tasks.json](../docs/agent-task-backlog/pwdrz-jira-tasks.json) as the shared execution backlog.
 - The file contains the full Jira export plus a separate `localTracking` block on each issue.
 - Treat Jira fields as read-only for execution tracking; only `localTracking.status`, `localTracking.updatedAt`, `localTracking.owner`, and `localTracking.notes` change during agent work.
 - Before starting a task, pick the next issue with `localTracking.status = pending` unless the user requested a specific issue key.
@@ -140,6 +155,9 @@ npm run lint     # eslint src (--fix for gateway)
 | Backend  | JUnit 5 + Mockito + Spring Boot Test | mirrors `src/main/java/`                              |
 
 - Current configured coverage thresholds: ≥ 65% frontend/gateway (all metrics) and ≥ 65% backend (JaCoCo line coverage). PWDRZ-118 owns any policy change.
-- Coverage-excluded folders (frontend): `app/`, `components/`, `hooks/`, `types/`, `constants/`.
-- Backend tests use `src/test/resources/application-test.properties` — no Flyway, no real DB.
+- Coverage-excluded folders (frontend): `app/`, `components/`, `hooks/`, `lib/`, `utils/`, `shared/`, and `constants/` (see `frontend/vitest.config.ts` for the exact globs).
+- Backend Spring tests use PostgreSQL. The default test profile disables Flyway and uses Hibernate `create-drop`; tests annotated with `@MigratedSchemaTest` apply real Flyway migrations to `migration_test` and validate mappings.
+- Coverage is not a substitute for behaviour-specific evidence. The mandatory
+  browser E2E gate is planned under PWDRZ-117 but is not configured yet;
+  PWDRZ-118 owns review of executable-code exclusions and thresholds.
 - In gateway config tests, use `jest.mock('dotenv/config', () => {})` when calling `jest.resetModules()` to prevent `.env` from polluting isolated test env vars.

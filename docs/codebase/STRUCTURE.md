@@ -1,6 +1,6 @@
 # Codebase Structure
 
-> Snapshot scope: verified against the repository tree and entry configuration on 2026-10-08. This is a manual multi-project repository; root task orchestration is tracked separately.
+> Snapshot scope: verified against the repository tree and entry configuration on 2026-10-11. This is a manual multi-project repository; root task orchestration is tracked separately. The table below describes existing files, not the approved extension rules in the [developer architecture guide](../guides/architecture.md).
 
 ## Core Sections (Required)
 
@@ -8,21 +8,21 @@
 
 | Path | Purpose | Evidence |
 |------|---------|----------|
-| `frontend/` | Next.js 16 App Router SPA — UI, routing, client auth | [frontend/package.json](../../frontend/package.json) |
+| `frontend/` | Next.js 16 App Router application — UI, routing, client auth | [frontend/package.json](../../frontend/package.json) |
 | `gateway/` | Node.js/Express reverse proxy — JWT verification, rate limiting, CORS, proxying to backend | [gateway/src/app.ts](../../gateway/src/app.ts) |
 | `backend/` | Spring Boot REST API — business logic, auth endpoints, DB persistence | [backend/src/main/java/com/devpulse/](../../backend/src/main/java/com/devpulse/) |
-| `docs/` | Architecture diagrams (Mermaid + PNG), developer guides | [docs/guides/](../../docs/guides/) |
+| `docs/` | Developer guides, dated codebase reference, ER diagrams and agent backlog | [docs/README.md](../../docs/README.md) |
 | `docker-compose.yml` | Orchestrates PostgreSQL 16, Redis 7, backend, and gateway; frontend runs separately | [docker-compose.yml](../../docker-compose.yml) |
 | `.github/workflows/` | CI pipelines: build, lint, and test for each service | [.github/workflows/](../../.github/workflows/) |
 | `.env.example` | Root-level env template for shared secrets | [.env.example](../../.env.example) |
-| `AGENTS.md` | Contributor and agent instructions, including workflow and testing expectations | [AGENTS.md](../../AGENTS.md) |
+| `AGENTS.md` | AI-agent instructions, including repository workflow and testing expectations | [AGENTS.md](../../AGENTS.md) |
 
 ---
 
 ### 2) Entry Points
 
 #### Frontend
-- **Main runtime entry**: [frontend/src/app/layout.tsx](../../frontend/src/app/layout.tsx) — root layout, wraps all pages in `QueryProvider`
+- **Main runtime entry**: [frontend/src/app/layout.tsx](../../frontend/src/app/layout.tsx) — root layout, wraps pages in `QueryProvider` and `AuthProvider`, and mounts `ToastProvider`
 - **Auth pages**: `frontend/src/app/(auth)/login/` and `(auth)/register/`
 - **Main app pages**: `frontend/src/app/(main)/` — home feed, forum, dashboard, profile
 - **How selected**: Next.js App Router file-system routing; route groups `(auth)` and `(main)` group layouts without URL segments
@@ -36,56 +36,56 @@
 
 ---
 
-### 3) Module Boundaries
+### 3) Observed Module Layout
 
 #### Frontend
 
-| Boundary | What belongs here | What must not be here |
-|----------|-------------------|------------------------|
-| `src/app/` | Page components, layouts, route groups | Business logic, direct API calls |
-| `src/services/` | API call functions (thin wrappers over `apiClient`) | UI rendering, state management |
-| `src/store/` | Zustand slices (auth, UI state) | API calls, component rendering |
-| `src/components/` | Shared/reusable UI components (`layout/`, `ui/`) | Route-specific page logic |
-| `src/shared/types/` | Shared TypeScript types (domain models, API shapes) | Runtime logic |
-| `src/lib/validations/` | Zod schemas for form input validation | Component rendering |
-| `src/providers/` | React context / library providers (QueryProvider) | Business logic |
-| `src/constants/` | Static data (categories, nav items, mock content) | Dynamic state |
-| `src/hooks/` | Custom React hooks | Non-React logic |
+| Boundary | What is currently found here |
+|----------|------------------------------|
+| `src/app/` | Route files, layouts, route-local components; login/register pages also contain submit orchestration |
+| `src/services/` | API wrappers and shared `ApiClient` |
+| `src/store/` | Zustand auth and UI slices; access token itself lives in `src/lib/tokenMemory.ts` |
+| `src/components/` | Reusable layout, guard and UI components |
+| `src/shared/types/` | Hand-maintained domain/API TypeScript types |
+| `src/lib/validations/` | Zod schemas for form input validation |
+| `src/providers/` | Query, auth and toast providers; `AuthProvider` orchestrates session restoration |
+| `src/constants/` | Static and mock data |
+| `src/hooks/` | React Query/custom hooks, including mock-backed `usePosts` |
 
 #### Gateway
 
-| Boundary | What belongs here | What must not be here |
-|----------|-------------------|------------------------|
-| `src/middleware/` | Express middleware (auth, cors, rate-limit, logger) | Business logic, DB calls |
-| `src/routes/` | Proxy routing configuration | Auth logic |
-| `src/config/` | Environment-variable loading and defaults | Runtime decisions |
-| `src/types/` | TypeScript interfaces for config and Express extensions | Implementation |
+| Boundary | What is currently found here |
+|----------|------------------------------|
+| `src/middleware/` | Express auth, CORS, rate-limit, logger and error middleware |
+| `src/routes/` | HTTP and WebSocket proxy routing |
+| `src/config/` | Environment-variable loading, defaults and public-route list |
+| `src/types/` | TypeScript interfaces for config and Express extensions |
 
 #### Backend
 
-| Boundary | What belongs here | What must not be here |
-|----------|-------------------|------------------------|
-| `com.devpulse.auth.controller/` | REST controllers (HTTP request/response mapping) | Business logic |
-| `com.devpulse.auth.service/` | Business logic (register, login, refresh) | HTTP/persistence concerns |
-| `com.devpulse.auth.repository/` | Spring Data JPA repositories | Business logic |
-| `com.devpulse.auth.entity/` | JPA entities (User, Role, RefreshToken) | Business logic |
-| `com.devpulse.auth.dto/` | Request/response DTOs | Entities, business logic |
-| `com.devpulse.auth.filter/` | Spring Security JWT filter | Business logic |
-| `com.devpulse.security/` | JWT utility (sign, verify, parse) | HTTP handlers |
-| `com.devpulse.config/` | Spring configuration beans (SecurityConfig, OpenApiConfig) | Business logic |
-| `com.devpulse.exception/` | Global exception handler (`@RestControllerAdvice`) | Business logic |
-| `resources/db/migration/` | Flyway SQL migration scripts | Application code |
+| Boundary | What is currently found here |
+|----------|------------------------------|
+| `com.devpulse.auth.controller/` | REST request/response mapping |
+| `com.devpulse.auth.service/` | Registration, login and refresh operations |
+| `com.devpulse.auth.repository/` | Spring Data JPA repositories |
+| `com.devpulse.auth.entity/` | JPA entities and auth enums |
+| `com.devpulse.auth.dto/` | Request/response DTOs |
+| `com.devpulse.auth.filter/` | Spring Security JWT filter |
+| `com.devpulse.security/` | JWT utility (sign, verify, parse) |
+| `com.devpulse.config/` | Spring configuration beans |
+| `com.devpulse.exception/` | Global exception handler |
+| `resources/db/migration/` | Flyway SQL migrations |
 
 ---
 
-### 4) Naming and Organization Rules
+### 4) Naming and Organization Observed
 
 #### TypeScript (frontend + gateway)
 - **File naming**: PascalCase for React components (`.tsx`), camelCase for services/hooks/utils (`.ts`)
   - Examples: `PostCard.tsx`, `authService.ts`, `usePosts.ts`, `format.ts`
 - **Directory organization**: feature/role hybrid — `services/`, `store/slices/`, `components/layout/`, `components/ui/`, `app/(main)/forum/`
 - **Import alias**: `@/*` maps to `frontend/src/*` (configured in [frontend/tsconfig.json](../../frontend/tsconfig.json)); gateway uses relative imports only
-- **Test files**: placed in `__tests__/` subdirectory alongside the module they test
+- **Test files**: usually placed in `__tests__/` subdirectories near their source
 
 #### Java (backend)
 - **File naming**: PascalCase for all Java classes, matching class name
@@ -106,7 +106,7 @@
 
 ```
 frontend/src/app/
-  layout.tsx                     ← root layout (QueryProvider)
+  layout.tsx                     ← root layout (QueryProvider, AuthProvider, ToastProvider)
   globals.css
   (auth)/
     layout.tsx                   ← auth-only layout (no header/sidebar)
@@ -133,7 +133,7 @@ com.devpulse/
   BackendApplication.java
   auth/
     controller/AuthController.java
-    dto/            (AuthRequest, AuthResponse, RegisterRequest, RefreshRequest)
+    dto/            (AuthRequest, AuthResponse, RegisterRequest)
     entity/         (User, Role, RefreshToken)
     filter/         (JwtAuthenticationFilter)
     repository/     (UserRepository, RefreshTokenRepository)
