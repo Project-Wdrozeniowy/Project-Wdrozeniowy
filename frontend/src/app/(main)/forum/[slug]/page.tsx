@@ -1,4 +1,4 @@
-import CommentSection from '../_components/CommentSection';
+import { CommentSection } from '../_components/CommentSection';
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

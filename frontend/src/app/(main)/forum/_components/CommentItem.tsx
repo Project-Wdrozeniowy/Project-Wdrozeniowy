@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { canDeleteComment, canReplyToComment, isCommentDeleted } from '@/lib/comments';
 import type { Comment, UserProfile } from '@/shared/types';
-import CommentForm from './CommentForm';
+import { CommentForm } from './CommentForm';
 
 interface CommentItemProps {
   comment: Comment;
@@ -13,7 +13,7 @@ interface CommentItemProps {
   getErrorMessage: (error: unknown) => string;
 }
 
-export default function CommentItem({
+export function CommentItem({
   comment,
   user,
   onReply,

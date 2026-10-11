@@ -1,10 +1,4 @@
-import { AxiosError } from 'axios';
-import {
-  canDeleteComment,
-  canReplyToComment,
-  getApiErrorMessage,
-  isCommentDeleted,
-} from '../comments';
+import { canDeleteComment, canReplyToComment, isCommentDeleted } from '../comments';
 import type { Comment, UserProfile } from '@/shared/types';
 
 function makeUser(overrides: Partial<UserProfile> = {}): UserProfile {
@@ -84,30 +78,5 @@ describe('canReplyToComment', () => {
 
   it('is blocked for deleted comments', () => {
     expect(canReplyToComment(makeComment({ status: 'DELETED' }), makeUser())).toBe(false);
-  });
-});
-
-describe('getApiErrorMessage', () => {
-  it('returns the ProblemDetail detail from an API error', () => {
-    const error = new AxiosError('failed', 'ERR_BAD_REQUEST', undefined, undefined, {
-      status: 422,
-      statusText: 'Unprocessable Entity',
-      headers: {},
-      config: {} as never,
-      data: { status: 422, detail: 'Maximum comment nesting depth (5) exceeded' },
-    });
-    expect(getApiErrorMessage(error, 'fallback')).toBe(
-      'Maximum comment nesting depth (5) exceeded'
-    );
-  });
-
-  it('falls back when the API error has no detail', () => {
-    const error = new AxiosError('network down');
-    expect(getApiErrorMessage(error, 'fallback')).toBe('fallback');
-  });
-
-  it('falls back for non-API errors', () => {
-    expect(getApiErrorMessage(new Error('boom'), 'fallback')).toBe('fallback');
-    expect(getApiErrorMessage('weird', 'fallback')).toBe('fallback');
   });
 });

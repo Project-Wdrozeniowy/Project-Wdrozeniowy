@@ -3,24 +3,37 @@
 import Link from 'next/link';
 import { useCallback } from 'react';
 import { useComments } from '@/hooks/useComments';
-import { getApiErrorMessage } from '@/lib/comments';
+import { apiErrorMessage, apiErrorStatus } from '@/lib/apiError';
 import { useStore } from '@/store';
-import CommentForm from './CommentForm';
-import CommentItem from './CommentItem';
+import { CommentForm } from './CommentForm';
+import { CommentItem } from './CommentItem';
 
-export default function CommentSection({ slug }: { slug: string }) {
+const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
+
+interface CommentSectionProps {
+  slug: string;
+}
+
+export function CommentSection({ slug }: CommentSectionProps) {
   const user = useStore((state) => state.user);
   const isAuthenticated = useStore((state) => state.isAuthenticated);
+  // False until the session restore after a reload has finished. Until then we do not know yet
+  // whether the visitor is signed in, so the sign-in prompt must not flash.
+  const isInitialized = useStore((state) => state.isInitialized);
   const { query, addComment, deleteComment } = useComments(slug);
 
   const { data, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage } = query;
   const comments = data?.pages.flatMap((page) => page.content) ?? [];
   const totalRoots = data?.pages[0]?.totalElements ?? 0;
 
-  const getErrorMessage = useCallback(
-    (error: unknown) => getApiErrorMessage(error, 'Something went wrong. Please try again.'),
-    []
-  );
+  const getErrorMessage = useCallback((error: unknown) => {
+    // The server explains client errors usefully (for example the nesting depth limit). Anything
+    // else (5xx, network) could expose internals, so it gets a fixed message.
+    const status = apiErrorStatus(error);
+    return status !== undefined && status < 500
+      ? apiErrorMessage(error, GENERIC_ERROR_MESSAGE)
+      : GENERIC_ERROR_MESSAGE;
+  }, []);
 
   async function handleAdd(content: string) {
     await addComment.mutateAsync({ content });
@@ -37,18 +50,21 @@ export default function CommentSection({ slug }: { slug: string }) {
   return (
     <section aria-labelledby="comments-heading" className="flex flex-col gap-4">
       <h2 id="comments-heading" className="text-lg font-semibold text-gray-50">
-        Comments{data ? ` (${totalRoots})` : ''}
+        {/* totalElements counts the top-level comments only, replies are not in it. */}
+        Comments{data ? ` (${totalRoots} ${totalRoots === 1 ? 'thread' : 'threads'})` : ''}
       </h2>
 
       {isAuthenticated ? (
         <CommentForm onSubmit={handleAdd} getErrorMessage={getErrorMessage} />
       ) : (
-        <p className="text-sm text-slate-400">
-          <Link href="/login" className="text-blue-400 hover:text-blue-300">
-            Sign in
-          </Link>{' '}
-          to leave a comment.
-        </p>
+        isInitialized && (
+          <p className="text-sm text-slate-400">
+            <Link href="/login" className="text-blue-400 hover:text-blue-300">
+              Sign in
+            </Link>{' '}
+            to leave a comment.
+          </p>
+        )
       )}
 
       {isLoading && <p className="text-sm text-slate-400">Loading comments…</p>}

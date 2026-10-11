@@ -1,6 +1,5 @@
-import axios from 'axios';
 import { MAX_COMMENT_DEPTH } from '@/constants/comments';
-import type { Comment, ProblemDetail, UserProfile } from '@/shared/types';
+import type { Comment, UserProfile } from '@/shared/types';
 
 const STAFF_ROLES: ReadonlyArray<UserProfile['role']> = ['ADMIN', 'MODERATOR'];
 
@@ -17,12 +16,4 @@ export function canDeleteComment(comment: Comment, user: UserProfile | null): bo
 
 export function canReplyToComment(comment: Comment, user: UserProfile | null): boolean {
   return user !== null && !isCommentDeleted(comment) && comment.depth < MAX_COMMENT_DEPTH;
-}
-
-/** Prefers the server's RFC 9457 `detail`, falling back to a caller-provided message. */
-export function getApiErrorMessage(error: unknown, fallback: string): string {
-  if (axios.isAxiosError<ProblemDetail>(error)) {
-    return error.response?.data?.detail ?? fallback;
-  }
-  return fallback;
 }

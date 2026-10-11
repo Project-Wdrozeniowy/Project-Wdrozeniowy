@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
-import CommentForm from '../CommentForm';
+import { CommentForm } from '../CommentForm';
 
 function setup(onSubmit = vi.fn().mockResolvedValue(undefined)) {
   const getErrorMessage = vi.fn(() => 'Could not post');

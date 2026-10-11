@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
-import CommentItem from '../CommentItem';
+import { CommentItem } from '../CommentItem';
 import type { Comment, UserProfile } from '@/shared/types';
 
 const alice: UserProfile = {

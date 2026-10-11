@@ -16,7 +16,7 @@ interface CommentFormProps {
   onCancel?: () => void;
 }
 
-export default function CommentForm({
+export function CommentForm({
   onSubmit,
   getErrorMessage,
   label = 'Add a comment',
