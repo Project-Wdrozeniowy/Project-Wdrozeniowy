@@ -73,3 +73,22 @@ describe('authSlice >-65 logout', () => {
     expect(tokenMemory.get()).toBeNull();
   });
 });
+
+describe('authSlice >-65 updateUser', () => {
+  it('replaces the user of a signed-in session and keeps the token', () => {
+    const store = makeStore();
+    store.getState().setAuth(mockUser, 'access-token');
+    store.getState().updateUser({ ...mockUser, displayName: 'New name' });
+
+    expect(store.getState().user?.displayName).toBe('New name');
+    expect(store.getState().isAuthenticated).toBe(true);
+  });
+
+  it('ignores updates for a guest, so a late response cannot sign anyone in', () => {
+    const store = makeStore();
+    store.getState().updateUser(mockUser);
+
+    expect(store.getState().user).toBeNull();
+    expect(store.getState().isAuthenticated).toBe(false);
+  });
+});

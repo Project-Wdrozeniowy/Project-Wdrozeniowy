@@ -17,8 +17,16 @@ export default function FormField({
         {label}
       </label>
       {children}
-      {hint && <p className="text-gray-500 text-xs">{hint}</p>}
-      {error && <p className="text-red-500 text-xs">{error}</p>}
+      {hint && (
+        <p id={id ? `${id}-hint` : undefined} className="text-gray-500 text-xs">
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={id ? `${id}-error` : undefined} role="alert" className="text-red-500 text-xs">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

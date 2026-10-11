@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios';
 import { apiClient } from './api';
 import type {
   ChangePasswordRequest,
@@ -10,10 +11,11 @@ export const userService = {
   getProfile: (username: string): Promise<UserProfile> =>
     apiClient.get<UserProfile>(`/users/${username}`),
 
-  getMyProfile: (): Promise<MyProfile> => apiClient.get<MyProfile>('/users/me'),
+  getMyProfile: (config?: AxiosRequestConfig): Promise<MyProfile> =>
+    apiClient.get<MyProfile>('/users/me', config),
 
-  updateMyProfile: (data: UpdateProfileRequest): Promise<MyProfile> =>
-    apiClient.patch<MyProfile>('/users/me', data),
+  updateMyProfile: (data: UpdateProfileRequest, config?: AxiosRequestConfig): Promise<MyProfile> =>
+    apiClient.patch<MyProfile>('/users/me', data, config),
 
   changePassword: (data: ChangePasswordRequest): Promise<void> =>
     apiClient.post<void>('/users/me/password', data),

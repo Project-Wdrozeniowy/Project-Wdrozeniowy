@@ -3,7 +3,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useStore } from '@/store';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -12,7 +13,11 @@ const ReactQueryDevtools = dynamic(
   { ssr: false }
 );
 
-export default function QueryProvider({ children }: { children: ReactNode }) {
+interface QueryProviderProps {
+  children: ReactNode;
+}
+
+export default function QueryProvider({ children }: QueryProviderProps) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -23,6 +28,23 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
           },
         },
       })
+  );
+
+  // Cached data belongs to the signed-in user. Without this, the next account in the same tab
+  // could be served the previous one's profile (or any other per-user query). That covers a
+  // sign-out and also another account replacing the session without one. Updates to the same
+  // user (a profile edit, a session refresh) keep the cache.
+  useEffect(
+    () =>
+      useStore.subscribe((state, previous) => {
+        if (!previous.isAuthenticated) return;
+        const signedOut = !state.isAuthenticated;
+        const anotherUser = state.user?.id !== previous.user?.id;
+        if (signedOut || anotherUser) {
+          queryClient.clear();
+        }
+      }),
+    [queryClient]
   );
 
   return (

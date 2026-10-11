@@ -48,8 +48,14 @@ describe('userService.getMyProfile >-65 GET /users/me', () => {
   it('calls apiClient.get with /users/me', async () => {
     mockApiClient.get.mockResolvedValue(mockMyProfile);
     const result = await userService.getMyProfile();
-    expect(mockApiClient.get).toHaveBeenCalledWith('/users/me');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/users/me', undefined);
     expect(result.email).toBe('john@example.com');
+  });
+
+  it('forwards request options', async () => {
+    mockApiClient.get.mockResolvedValue(mockMyProfile);
+    await userService.getMyProfile({ skipErrorToast: true });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/users/me', { skipErrorToast: true });
   });
 });
 
@@ -59,8 +65,18 @@ describe('userService.updateMyProfile >-65 PATCH /users/me', () => {
     const updated = { ...mockMyProfile, displayName: 'Jane Doe' };
     mockApiClient.patch.mockResolvedValue(updated);
     const result = await userService.updateMyProfile(updateData);
-    expect(mockApiClient.patch).toHaveBeenCalledWith('/users/me', updateData);
+    expect(mockApiClient.patch).toHaveBeenCalledWith('/users/me', updateData, undefined);
     expect(result.displayName).toBe('Jane Doe');
+  });
+
+  it('forwards request options', async () => {
+    mockApiClient.patch.mockResolvedValue(mockMyProfile);
+    await userService.updateMyProfile({ bio: '' }, { skipErrorToast: true });
+    expect(mockApiClient.patch).toHaveBeenCalledWith(
+      '/users/me',
+      { bio: '' },
+      { skipErrorToast: true }
+    );
   });
 });
 
