@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios';
 import { apiClient } from './api';
 import type {
   Category,
@@ -44,8 +45,11 @@ export interface ListPostsParams {
 }
 
 export const postService = {
-  list: (params: ListPostsParams = {}): Promise<PagedResponse<PostSummary>> =>
-    apiClient.get<PagedResponse<PostSummary>>('/forum/posts', { params }),
+  list: (
+    params: ListPostsParams = {},
+    config?: AxiosRequestConfig
+  ): Promise<PagedResponse<PostSummary>> =>
+    apiClient.get<PagedResponse<PostSummary>>('/forum/posts', { params, ...config }),
 
   get: (slug: string): Promise<Post> => apiClient.get<Post>(`/forum/posts/${slug}`),
 

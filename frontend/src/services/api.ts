@@ -10,6 +10,16 @@ import { tokenMemory } from '@/lib/tokenMemory';
 import { API_ERROR_TOAST_ID, toast } from '@/lib/toast';
 import type { AuthResponse, ProblemDetail } from '@/shared/types';
 
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    /**
+     * Skip the global error toast. Use it when the caller shows its own message,
+     * so server error text never reaches the screen through the toast.
+     */
+    skipErrorToast?: boolean;
+  }
+}
+
 type RequestBody = object | FormData | null;
 
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retried?: boolean };
@@ -93,7 +103,7 @@ class ApiClient {
           return this.client.request(config);
         }
 
-        if (status === undefined || status >= 500) {
+        if (!config?.skipErrorToast && (status === undefined || status >= 500)) {
           // 4xx errors are handled by the caller (form errors etc.); only unexpected failures toast.
           toast.error(error.response?.data?.detail ?? FALLBACK_ERROR_MESSAGE, API_ERROR_TOAST_ID);
         }

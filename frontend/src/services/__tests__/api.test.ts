@@ -181,6 +181,22 @@ describe('ApiClient response interceptor (error toasts)', () => {
     expect(errorSpy).toHaveBeenCalledWith('Something went wrong. Please try again.', 'api-error');
   });
 
+  it('does not toast when the request opts out, so the caller can show its own message', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    mock.onGet('/boom').reply(500, { status: 500, detail: 'PSQLException: internal' });
+
+    await expect(apiClient.get('/boom', { skipErrorToast: true })).rejects.toBeDefined();
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not toast a network error when the request opts out', async () => {
+    const { apiClient, mock, errorSpy } = await setup();
+    mock.onGet('/offline').networkError();
+
+    await expect(apiClient.get('/offline', { skipErrorToast: true })).rejects.toBeDefined();
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
   it('does not toast 4xx errors', async () => {
     const { apiClient, mock, errorSpy } = await setup();
     mock.onGet('/missing').reply(404, { status: 404, detail: 'Not found' });
