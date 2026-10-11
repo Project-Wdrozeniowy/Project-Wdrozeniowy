@@ -213,4 +213,13 @@ docker compose down -v && docker compose up -d
 
 **`NEXT_PUBLIC_API_URL` missing** — the frontend falls back to `http://localhost:3000/api` in development. In production this variable is required; the build will throw at startup if it is not set.
 
-# Project-Wdrozeniowy
+## License and ownership
+
+Proprietary — All rights reserved.
+
+This is a private educational project with potential commercial use.
+No permission is granted to use, copy, modify, distribute, or publish its
+source code or related materials without written consent from all copyright
+holders listed in [NOTICE](NOTICE).
+
+See [LICENSE](LICENSE) for terms.
