@@ -32,7 +32,6 @@ describe('toPostCardData', () => {
   it('maps the API summary to what the card renders', () => {
     expect(toPostCardData(summary, NOW)).toEqual({
       id: '42',
-      href: '/forum/hello%20world',
       username: 'Alice A.',
       userInitial: 'A',
       timeAgo: '2 hours ago',
@@ -43,6 +42,7 @@ describe('toPostCardData', () => {
       excerpt: null,
       votes: 7,
       comments: 3,
+      actionsEnabled: false,
     });
   });
 
@@ -111,7 +111,6 @@ describe('toPostCardData with a real API response', () => {
     const now = Date.parse('2026-10-10T22:49:13Z');
     expect(toPostCardData(REAL_API_ITEM, now)).toEqual({
       id: '8',
-      href: '/forum/gaming-post-3',
       username: 'alice',
       userInitial: 'A',
       timeAgo: '10 minutes ago',
@@ -122,6 +121,7 @@ describe('toPostCardData with a real API response', () => {
       excerpt: null,
       votes: 0,
       comments: 0,
+      actionsEnabled: false,
     });
   });
 });
@@ -138,6 +138,7 @@ describe('mockToPostCardData', () => {
       comments: first.comments,
       category: first.category,
     });
-    expect(data.href).toBeUndefined();
+    // Only the fixtures keep the local demo behaviour of votes, share and save.
+    expect(data.actionsEnabled).toBe(true);
   });
 });

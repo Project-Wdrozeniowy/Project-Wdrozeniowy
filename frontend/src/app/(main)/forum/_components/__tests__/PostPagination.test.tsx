@@ -48,4 +48,24 @@ describe('PostPagination', () => {
 
     expect(onPageChange).not.toHaveBeenCalled();
   });
+
+  it('while busy, keeps the buttons focusable but ignores clicks', async () => {
+    const onPageChange = vi.fn();
+    const user = userEvent.setup();
+    render(<PostPagination page={1} totalPages={5} onPageChange={onPageChange} busy />);
+    const next = screen.getByRole('button', { name: 'Next' });
+
+    next.focus();
+    await user.click(next);
+
+    expect(onPageChange).not.toHaveBeenCalled();
+    expect(next).toHaveFocus();
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    expect(next).toBeEnabled();
+  });
+
+  it('is not marked busy by default', () => {
+    render(<PostPagination page={1} totalPages={5} onPageChange={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Next' })).not.toHaveAttribute('aria-disabled');
+  });
 });

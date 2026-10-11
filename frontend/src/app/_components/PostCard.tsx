@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
+import { ACTION_UNAVAILABLE_HINT, VOTING_UNAVAILABLE_HINT } from '@/constants/forum';
 import { getCategoryColor } from '@/lib/categoryColor';
 import type { PostCardData } from '@/lib/postCard';
 import { cn } from '@/lib/cn';
@@ -15,8 +15,15 @@ import {
 import ActionButton from './ActionButton';
 import VoteButton from './VoteButton';
 
-export default function PostCard({ post }: { post: PostCardData }) {
+interface PostCardProps {
+  post: PostCardData;
+}
+
+export default function PostCard({ post }: PostCardProps) {
   const [voted, setVoted] = useState<'up' | 'down' | null>(null);
+  const { actionsEnabled } = post;
+  const voteHint = actionsEnabled ? undefined : VOTING_UNAVAILABLE_HINT;
+  const actionHint = actionsEnabled ? undefined : ACTION_UNAVAILABLE_HINT;
   // Derived, so a refetched vote count is never hidden behind a stale copy in state.
   const votes = post.votes + (voted === 'up' ? 1 : voted === 'down' ? -1 : 0);
 
@@ -31,7 +38,13 @@ export default function PostCard({ post }: { post: PostCardData }) {
   return (
     <article className="bg-slate-800 rounded-xl p-5 flex gap-4 hover:bg-slate-800/80 transition-colors">
       <div className="flex flex-col items-center gap-1 pt-1 shrink-0">
-        <VoteButton direction="up" active={voted === 'up'} onClick={() => handleVote('up')}>
+        <VoteButton
+          direction="up"
+          active={voted === 'up'}
+          onClick={() => handleVote('up')}
+          disabled={!actionsEnabled}
+          title={voteHint}
+        >
           <ChevronUpVoteIcon />
         </VoteButton>
         <span
@@ -45,7 +58,13 @@ export default function PostCard({ post }: { post: PostCardData }) {
         >
           {votes >= 1000 ? `${(votes / 1000).toFixed(1)}k` : votes}
         </span>
-        <VoteButton direction="down" active={voted === 'down'} onClick={() => handleVote('down')}>
+        <VoteButton
+          direction="down"
+          active={voted === 'down'}
+          onClick={() => handleVote('down')}
+          disabled={!actionsEnabled}
+          title={voteHint}
+        >
           <ChevronDownVoteIcon />
         </VoteButton>
       </div>
@@ -66,13 +85,7 @@ export default function PostCard({ post }: { post: PostCardData }) {
 
         <div className="flex flex-col gap-1.5">
           <h2 className="text-gray-50 font-semibold text-xl leading-snug break-words">
-            {post.href ? (
-              <Link href={post.href} className="hover:text-blue-400 transition-colors">
-                {post.title}
-              </Link>
-            ) : (
-              post.title
-            )}
+            {post.title}
           </h2>
           {post.category && (
             <span
@@ -90,9 +103,24 @@ export default function PostCard({ post }: { post: PostCardData }) {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <ActionButton icon={<CommentIcon />} label={`${post.comments} Comments`} />
-          <ActionButton icon={<ShareIcon />} label="Share" />
-          <ActionButton icon={<SaveIcon />} label="Save" />
+          <ActionButton
+            icon={<CommentIcon />}
+            label={`${post.comments} Comments`}
+            disabled={!actionsEnabled}
+            title={actionHint}
+          />
+          <ActionButton
+            icon={<ShareIcon />}
+            label="Share"
+            disabled={!actionsEnabled}
+            title={actionHint}
+          />
+          <ActionButton
+            icon={<SaveIcon />}
+            label="Save"
+            disabled={!actionsEnabled}
+            title={actionHint}
+          />
         </div>
       </div>
     </article>

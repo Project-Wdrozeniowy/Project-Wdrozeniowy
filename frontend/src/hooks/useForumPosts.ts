@@ -8,6 +8,13 @@ interface FeedQuery {
   categorySlug?: string;
 }
 
+/**
+ * One page of the forum feed.
+ *
+ * While another page of the same topic loads, the previous result is kept as `placeholderData`
+ * (`isPlaceholderData` is true) only so the pagination can stay mounted and keep keyboard focus.
+ * ForumFeed must never render that result's posts as if they were the new page.
+ */
 export function useForumPosts({ page, categorySlug }: FeedQuery) {
   return useQuery({
     queryKey: ['forum-posts', { page, categorySlug }],
@@ -17,7 +24,7 @@ export function useForumPosts({ page, categorySlug }: FeedQuery) {
         // The feed shows its own fixed error message; the global toast would print server text.
         { skipErrorToast: true }
       ),
-    // Keep the current page on screen while the next one loads, but never show another topic's posts.
+    // Never carry another topic's result over: it has a different number of pages.
     placeholderData: (previous, previousQuery) => {
       const previousFilter = previousQuery?.queryKey[1] as FeedQuery | undefined;
       return previousFilter?.categorySlug === categorySlug ? previous : undefined;

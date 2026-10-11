@@ -3,6 +3,7 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import ForumFeed from '../ForumFeed';
+import { ACTION_UNAVAILABLE_HINT, VOTING_UNAVAILABLE_HINT } from '@/constants/forum';
 import { postService } from '@/services/forumService';
 import type { PagedResponse, PostSummary } from '@/shared/types';
 
@@ -107,14 +108,42 @@ describe('ForumFeed – data flow', () => {
     expect(postTitles()).toEqual(['Post 30', 'Post 20', 'Post 10']);
   });
 
-  it('links each title to its post page', async () => {
+  it('does not link titles: the post page is a placeholder until it is implemented', async () => {
     list.mockResolvedValue(pageOf([7]));
     renderFeed();
 
-    expect(await screen.findByRole('link', { name: 'Post 7' })).toHaveAttribute(
-      'href',
-      '/forum/post-7'
-    );
+    await screen.findByText('Post 7');
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('disables voting, sharing and saving on real posts, and says why', async () => {
+    list.mockResolvedValue(pageOf([7]));
+    renderFeed();
+    await screen.findByText('Post 7');
+    const card = within(screen.getByRole('article'));
+
+    for (const name of ['Upvote', 'Downvote']) {
+      const button = card.getByRole('button', { name });
+      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute('title', VOTING_UNAVAILABLE_HINT);
+    }
+    for (const name of ['Share', 'Save', '2 Comments']) {
+      const button = card.getByRole('button', { name });
+      expect(button).toBeDisabled();
+      expect(button).toHaveAttribute('title', ACTION_UNAVAILABLE_HINT);
+    }
+  });
+
+  it('shows the score from the server and a vote click cannot change it', async () => {
+    list.mockResolvedValue(pageOf([7]));
+    renderFeed();
+    await screen.findByText('Post 7');
+    const card = within(screen.getByRole('article'));
+
+    await userEvent.setup().click(card.getByRole('button', { name: 'Upvote' }));
+
+    expect(card.getByText('3')).toBeInTheDocument();
+    expect(card.queryByText('4')).not.toBeInTheDocument();
   });
 
   it('shows a post without a category and without an author display name', async () => {
@@ -143,7 +172,7 @@ describe('ForumFeed – pagination', () => {
     expect(screen.getByText('Page 2 of 3')).toBeInTheDocument();
   });
 
-  it('shows only the new page after navigating: nothing duplicated, nothing from the old page', async () => {
+  it('shows only the posts of the new page after navigating', async () => {
     list.mockResolvedValue(pageOf([8, 7, 6], { page: 0, totalPages: 3, totalElements: 8 }));
     const { rerenderFeed } = renderFeed();
     await screen.findByText('Post 8');
@@ -156,7 +185,7 @@ describe('ForumFeed – pagination', () => {
     expect(postTitles()).toEqual(['Post 5', 'Post 4', 'Post 3']);
   });
 
-  it('shows the page that is being loaded, not the previous one, while it loads', async () => {
+  it('says which page is loading and does not leave the previous posts on screen', async () => {
     list.mockResolvedValue(pageOf([8, 7, 6], { page: 0, totalPages: 3, totalElements: 8 }));
     const { rerenderFeed } = renderFeed();
     await screen.findByText('Post 8');
@@ -166,9 +195,70 @@ describe('ForumFeed – pagination', () => {
     list.mockReturnValue(new Promise(() => {}));
     rerenderFeed();
 
-    // The old posts stay visible (dimmed), but the indicator already follows the URL.
-    expect(await screen.findByText('Page 2 of 3')).toBeInTheDocument();
-    expect(screen.getByText('Post 8')).toBeInTheDocument();
+    // A visible, announced message, and nothing that looks like the content of page 2.
+    const loading = await screen.findByRole('status', { name: 'Loading page 2…' });
+    expect(loading).toHaveTextContent('Loading page 2…');
+    expect(loading).toHaveAttribute('aria-busy', 'true');
+    expect(screen.queryByText('Post 8')).not.toBeInTheDocument();
+    expect(screen.queryByText('Post 7')).not.toBeInTheDocument();
+    // The indicator names the page being loaded, never the old one.
+    expect(screen.getByText('Page 2 of 3')).toBeInTheDocument();
+    expect(screen.queryByText('Page 1 of 3')).not.toBeInTheDocument();
+  });
+
+  it('keeps the pagination (and keyboard focus on it) while the next page loads', async () => {
+    list.mockResolvedValue(pageOf([8, 7, 6], { page: 0, totalPages: 3, totalElements: 8 }));
+    const { rerenderFeed } = renderFeed();
+    await screen.findByText('Post 8');
+    const next = screen.getByRole('button', { name: 'Next' });
+    next.focus();
+
+    search = 'page=2';
+    list.mockReturnValue(new Promise(() => {}));
+    rerenderFeed();
+    await screen.findByRole('status', { name: 'Loading page 2…' });
+
+    // The same element survived, so a keyboard user does not have to tab back to it.
+    expect(screen.getByRole('button', { name: 'Next' })).toBe(next);
+    expect(next).toHaveFocus();
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('ignores page changes while a page is still loading', async () => {
+    list.mockResolvedValue(pageOf([8, 7, 6], { page: 0, totalPages: 3, totalElements: 8 }));
+    const { rerenderFeed } = renderFeed();
+    await screen.findByText('Post 8');
+    search = 'page=2';
+    list.mockReturnValue(new Promise(() => {}));
+    rerenderFeed();
+    await screen.findByRole('status', { name: 'Loading page 2…' });
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('shows the new page and its controls once it has loaded', async () => {
+    list.mockResolvedValue(pageOf([8, 7, 6], { page: 0, totalPages: 3, totalElements: 8 }));
+    const { rerenderFeed } = renderFeed();
+    await screen.findByText('Post 8');
+
+    search = 'page=2';
+    list.mockResolvedValue(pageOf([5, 4, 3], { page: 1, totalPages: 3, totalElements: 8 }));
+    rerenderFeed();
+
+    expect(await screen.findByText('Post 5')).toBeInTheDocument();
+    expect(screen.getByText('Page 2 of 3')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('does not claim a page number on the first load or after a topic switch', async () => {
+    search = 'topic=Gaming';
+    list.mockReturnValue(new Promise(() => {}));
+    renderFeed();
+
+    expect(screen.getByRole('status', { name: 'Loading posts…' })).toBeInTheDocument();
+    expect(screen.queryByText(/Loading page/)).not.toBeInTheDocument();
   });
 
   it('pushes the next page into the URL', async () => {
@@ -303,7 +393,7 @@ describe('ForumFeed – states', () => {
     list.mockReturnValue(new Promise(() => {}));
     renderFeed();
 
-    const loading = screen.getByRole('status', { name: 'Loading posts' });
+    const loading = screen.getByRole('status', { name: 'Loading posts…' });
     expect(loading).toHaveAttribute('aria-busy', 'true');
   });
 
@@ -361,7 +451,7 @@ describe('ForumFeed – states', () => {
     list.mockReturnValue(new Promise(() => {}));
     await userEvent.setup().click(within(alert).getByRole('button', { name: 'Try again' }));
 
-    expect(await screen.findByRole('status', { name: 'Loading posts' })).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: 'Loading posts…' })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(list).toHaveBeenCalledTimes(2);
   });

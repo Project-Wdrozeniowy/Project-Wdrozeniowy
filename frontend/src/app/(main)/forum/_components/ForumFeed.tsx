@@ -71,13 +71,26 @@ export default function ForumFeed() {
     }, 'push');
   }
 
+  // The pagination has its own fixed slot below the content, so it is the same element while the
+  // content changes between the posts and the loading state. That keeps keyboard focus on it.
+  const loadingAnotherPage = !isLoadingError && !isPending && isPlaceholderData;
+  const showPagination =
+    !isLoadingError &&
+    !isPending &&
+    (loadingAnotherPage || (data.content.length > 0 && !isPlaceholderData));
+
   return (
     <>
       <CategoryFilter active={activeTopic} onSelect={handleSelectTopic} />
       {isLoadingError ? (
         <PostFeedError onRetry={() => refetch()} retrying={isFetching} />
       ) : isPending ? (
+        // First load or a new topic: nothing to show yet.
         <PostFeedSkeleton />
+      ) : loadingAnotherPage ? (
+        // Another page of the same topic is loading. The previous page's posts are not shown,
+        // they would look like this page.
+        <PostFeedSkeleton label={`Loading page ${page + 1}…`} />
       ) : data.content.length === 0 ? (
         <EmptyFeed
           topic={activeTopic}
@@ -88,22 +101,20 @@ export default function ForumFeed() {
         <>
           {/* A failed refresh must not take away what the user is reading. */}
           {isRefetchError && <PostFeedError onRetry={() => refetch()} retrying={isFetching} />}
-          <div
-            aria-busy={isPlaceholderData}
-            className={isPlaceholderData ? 'flex flex-col gap-3 opacity-60' : 'flex flex-col gap-3'}
-          >
+          <div className="flex flex-col gap-3">
             {data.content.map((post) => (
               <PostCard key={post.id} post={toPostCardData(post)} />
             ))}
           </div>
-          <PostPagination
-            // The URL is the source of truth: while the next page loads, the old posts stay
-            // on screen but the indicator already shows where the user is going.
-            page={page}
-            totalPages={data.totalPages}
-            onPageChange={handlePageChange}
-          />
         </>
+      )}
+      {showPagination && (
+        <PostPagination
+          page={page}
+          totalPages={data.totalPages}
+          onPageChange={handlePageChange}
+          busy={loadingAnotherPage}
+        />
       )}
     </>
   );

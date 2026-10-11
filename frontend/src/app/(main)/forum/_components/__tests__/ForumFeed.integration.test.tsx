@@ -87,10 +87,8 @@ describe('ForumFeed over the real API client', () => {
     mock.onGet('/forum/posts').reply(200, REAL_PAGE);
     renderFeed();
 
-    expect(await screen.findByRole('link', { name: 'Gaming post 3' })).toHaveAttribute(
-      'href',
-      '/forum/gaming-post-3'
-    );
+    expect(await screen.findByRole('heading', { name: 'Gaming post 3' })).toBeInTheDocument();
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
     expect(screen.getByText('alice')).toBeInTheDocument();
     expect(screen.getByText('4 Comments')).toBeInTheDocument();
     expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();

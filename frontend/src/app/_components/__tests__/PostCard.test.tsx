@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PostCard from '../PostCard';
+import { ACTION_UNAVAILABLE_HINT, VOTING_UNAVAILABLE_HINT } from '@/constants/forum';
 import type { PostCardData } from '@/lib/postCard';
 
 const post: PostCardData = {
   id: '1',
-  href: '/forum/hello',
   username: 'alice',
   userInitial: 'A',
   timeAgo: '2 hours ago',
@@ -16,19 +16,12 @@ const post: PostCardData = {
   excerpt: null,
   votes: 12,
   comments: 3,
+  actionsEnabled: true,
 };
 
 describe('PostCard', () => {
-  it('links the title to the post page when there is an href', () => {
+  it('renders the title as a heading, not a link', () => {
     render(<PostCard post={post} />);
-    expect(screen.getByRole('link', { name: 'Hello world' })).toHaveAttribute(
-      'href',
-      '/forum/hello'
-    );
-  });
-
-  it('renders the title as plain text without an href', () => {
-    render(<PostCard post={{ ...post, href: undefined }} />);
     expect(screen.getByRole('heading', { name: 'Hello world' })).toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
@@ -108,4 +101,47 @@ describe('PostCard', () => {
       expect(screen.getByText(name)).toHaveClass('border-slate-500');
     }
   );
+
+  describe('when actions are not available (real posts)', () => {
+    const real = { ...post, actionsEnabled: false, votes: 10 };
+
+    it('disables both vote buttons with an explanation, but keeps them visible', () => {
+      render(<PostCard post={real} />);
+      for (const name of ['Upvote', 'Downvote']) {
+        const button = screen.getByRole('button', { name });
+        expect(button).toBeDisabled();
+        expect(button).toHaveAttribute('title', VOTING_UNAVAILABLE_HINT);
+      }
+    });
+
+    it('never changes the score, so nothing looks like a saved vote', async () => {
+      render(<PostCard post={real} />);
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole('button', { name: 'Upvote' }));
+      await user.click(screen.getByRole('button', { name: 'Downvote' }));
+
+      expect(screen.getByText('10')).toBeInTheDocument();
+    });
+
+    it('disables comments, share and save with an explanation', () => {
+      render(<PostCard post={real} />);
+      for (const name of ['3 Comments', 'Share', 'Save']) {
+        const button = screen.getByRole('button', { name });
+        expect(button).toBeDisabled();
+        expect(button).toHaveAttribute('title', ACTION_UNAVAILABLE_HINT);
+      }
+    });
+  });
+
+  describe('when actions are available (fixtures)', () => {
+    it('enables the buttons without a tooltip', () => {
+      render(<PostCard post={post} />);
+      for (const name of ['Upvote', 'Downvote', 'Share', 'Save']) {
+        const button = screen.getByRole('button', { name });
+        expect(button).toBeEnabled();
+        expect(button).not.toHaveAttribute('title');
+      }
+    });
+  });
 });

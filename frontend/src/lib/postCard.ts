@@ -6,8 +6,6 @@ import { formatTimeAgo } from '@/utils/format';
 /** What `PostCard` renders. Both the real API and the mock feed are mapped to it. */
 export interface PostCardData {
   id: string;
-  /** Link to the post page; the title is plain text when absent. */
-  href?: string;
   username: string;
   userInitial: string;
   timeAgo: string;
@@ -21,13 +19,18 @@ export interface PostCardData {
   excerpt: string | null;
   votes: number;
   comments: number;
+  /**
+   * Voting, sharing and saving work only for the fixtures. Real posts have no API for them yet,
+   * so their controls are disabled instead of pretending to succeed.
+   */
+  actionsEnabled: boolean;
 }
 
 export function toPostCardData(post: PostSummary, now?: number): PostCardData {
   const username = post.author.displayName?.trim() || post.author.username;
   return {
+    // No link to the post: the post page is a placeholder until the view page is implemented.
     id: String(post.id),
-    href: `/forum/${encodeURIComponent(post.slug)}`,
     username,
     // Array.from keeps a surrogate pair (emoji) whole, unlike charAt(0).
     userInitial: (Array.from(username)[0] ?? '').toUpperCase(),
@@ -39,6 +42,7 @@ export function toPostCardData(post: PostSummary, now?: number): PostCardData {
     excerpt: null,
     votes: post.voteScore,
     comments: post.commentCount,
+    actionsEnabled: false,
   };
 }
 
@@ -55,5 +59,6 @@ export function mockToPostCardData(post: MockPost): PostCardData {
     excerpt: post.excerpt,
     votes: post.votes,
     comments: post.comments,
+    actionsEnabled: true,
   };
 }
