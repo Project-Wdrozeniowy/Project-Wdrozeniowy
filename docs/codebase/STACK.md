@@ -77,7 +77,7 @@ This is a manual multi-project repository. Each service has its own runtime and 
 | spring-boot-starter-data-jpa | 4.0.4 | JPA/Hibernate ORM layer | [backend/pom.xml](../../backend/pom.xml) |
 | spring-boot-starter-validation | 4.0.4 | Bean Validation (`@Valid`, JSR-380) | [backend/pom.xml](../../backend/pom.xml) |
 | postgresql | (runtime) | JDBC driver for PostgreSQL 16 | [backend/pom.xml](../../backend/pom.xml) |
-| flyway-core + flyway-database-postgresql | (BOM) | Database schema migration | [backend/pom.xml](../../backend/pom.xml) |
+| spring-boot-starter-flyway + flyway-database-postgresql | (BOM) | Database schema migration and Boot auto-configuration | [backend/pom.xml](../../backend/pom.xml) |
 | jjwt-api / jjwt-impl / jjwt-jackson | 0.12.6 | JWT signing and parsing | [backend/pom.xml](../../backend/pom.xml) |
 | springdoc-openapi-starter-webmvc-ui | 2.8.3 | Swagger UI / OpenAPI 3 docs | [backend/pom.xml](../../backend/pom.xml) |
 | lombok | optional | Code generation (getters, constructors, logging) | [backend/pom.xml](../../backend/pom.xml) |

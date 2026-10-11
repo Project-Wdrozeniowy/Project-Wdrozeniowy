@@ -1,38 +1,37 @@
 # Coding Conventions
 
-> Snapshot scope: verified against repository configuration on 2026-10-09. `develop` is the documented integration branch. Local test configuration currently enforces 65%; CI job labels that say 50% are stale labels. GitHub rulesets remain authoritative for enforcement; PWDRZ-118 owns threshold policy.
+> Snapshot scope: verified against repository files and configuration on 2026-10-11. This is an observed-state reference, not the source of approved team rules. The [developer guides](../guides/README.md) hold target conventions, which may differ from old code. Current test configuration enforces 65%; CI job labels that say 50% are stale. GitHub ruleset enforcement could not be verified from this checkout.
 
 ## Core Sections (Required)
 
-### 1) Naming Rules
+### 1) Naming Observed in Source
 
 #### TypeScript / TSX (frontend + gateway)
 
-| Item | Rule | Example | Evidence |
+| Item | Observed shape | Example | Evidence |
 |------|------|---------|----------|
 | React component files | PascalCase `.tsx` | `PostCard.tsx`, `ProfileTabs.tsx` | [frontend/src/app/_components/](../../frontend/src/app/_components/) |
 | Non-component TS files | camelCase `.ts` | `authService.ts`, `usePosts.ts`, `format.ts` | [frontend/src/services/](../../frontend/src/services/) |
 | Interfaces/types | PascalCase, no `I` prefix | `AuthResponse`, `GatewayConfig`, `User` | [frontend/src/shared/types/index.ts](../../frontend/src/shared/types/index.ts), [gateway/src/types/index.ts](../../gateway/src/types/index.ts) |
 | Zustand slices | camelCase, suffix `Slice` | `createAuthSlice`, `AuthSlice` | [frontend/src/store/slices/authSlice.ts](../../frontend/src/store/slices/authSlice.ts) |
-| Constants / env keys | `UPPER_SNAKE_CASE` for env vars; `camelCase` for ordinary TS constants | `JWT_SECRET`, `tokenMemory` | [.env.example](../../.env.example), [frontend/src/lib/tokenMemory.ts](../../frontend/src/lib/tokenMemory.ts) |
-| Enums | PascalCase name, uppercase members | `CategoryKey.AI`, `CategoryKey.GAMING` | [frontend/src/shared/types/index.ts](../../frontend/src/shared/types/index.ts) |
+| Constants / env keys | `UPPER_SNAKE_CASE` for env vars; both upper-case predefined values and camelCase runtime values occur in TS | `JWT_SECRET`, `MOCK_POSTS`, `tokenMemory` | [.env.example](../../.env.example), [frontend/src/constants/posts.ts](../../frontend/src/constants/posts.ts), [frontend/src/lib/tokenMemory.ts](../../frontend/src/lib/tokenMemory.ts) |
+| Domain value unions | String-literal unions, not a `CategoryKey` enum | `UserRole`, `VoteType` | [frontend/src/shared/types/index.ts](../../frontend/src/shared/types/index.ts) |
 
 #### Java (backend)
 
-| Item | Rule | Example | Evidence |
+| Item | Observed shape | Example | Evidence |
 |------|------|---------|----------|
 | Classes / interfaces | PascalCase | `AuthController`, `JwtUtil`, `AppException` | [backend/src/main/java/com/devpulse/](../../backend/src/main/java/com/devpulse/) |
 | Methods / variables | camelCase | `register()`, `accessExpirySeconds` | [backend/.../AuthController.java](../../backend/src/main/java/com/devpulse/auth/controller/AuthController.java) |
-| Constants | `UPPER_SNAKE_CASE` | n/a (none observed in production code) | — |
+| Constants | No project-wide production naming pattern established by this snapshot | — | [backend/src/main/java/com/devpulse/](../../backend/src/main/java/com/devpulse/) |
 | Packages | `com.devpulse.<domain>.<layer>` | `com.devpulse.auth.service` | [backend/src/main/java/com/devpulse/](../../backend/src/main/java/com/devpulse/) |
 
 #### Git / Branches / Commits
 
-| Item | Rule | Example | Evidence |
-|------|------|---------|----------|
-| Branch name | `type/PWDRZ-<ticket>-short-description` | `feature/PWDRZ-30-login-page` | [docs/guides/git-workflow.md](../../docs/guides/git-workflow.md) |
-| Commit message | `[PWDRZ-<n>]: Short imperative description` | `[PWDRZ-33]: Fix prettier formatting` | git log (scan output) |
-| PR title | `[PWDRZ-<n>]: Short description` | `[PWDRZ-28]: Implement routing and application layout` | [.github/pull_request_template.md](../../.github/pull_request_template.md) |
+Historical branch names include both `type/PWDRZ-...` and other forms; they
+do not establish the newly approved branch pattern or prove GitHub ruleset
+behaviour. Jira-prefixed commit subjects are visible in Git history. For new
+branches, commits, and PRs, follow the [Git workflow](../guides/git-workflow.md).
 
 ---
 
@@ -64,7 +63,7 @@
 
 #### Backend (Java)
 
-- No formatter config found in the repository. [ASK USER] Is a Java formatter (e.g., google-java-format, Spotless Maven plugin) planned?
+- No Java formatter configuration or formatting CI gate is present. This is an observation, not a decision to add one.
 
 ---
 
@@ -73,7 +72,8 @@
 #### Frontend
 - **Path alias**: `@/*` resolves to `./src/*` — defined in [frontend/tsconfig.json](../../frontend/tsconfig.json) and mirrored in [frontend/vitest.config.ts](../../frontend/vitest.config.ts)
   - Example: `import type { User } from '@/shared/types'` → `frontend/src/shared/types/index.ts`
-- **Relative imports**: used only within the same module/folder; cross-module imports use `@/`
+- **Relative imports**: also occur in local tests and nearby modules; the guide
+  defines how new cross-module imports should be written.
 - **Barrel exports**: `frontend/src/shared/types/index.ts` acts as a barrel for domain types; `frontend/src/services/` does not have a barrel file
 
 #### Gateway
@@ -88,18 +88,20 @@
 ### 4) Error and Logging Conventions
 
 #### Backend
-- **Error strategy**: All domain exceptions are thrown as `AppException` (carries `HttpStatus` + message). `GlobalExceptionHandler` catches it and returns RFC 9457 `ProblemDetail`. Validation errors return `ProblemDetail` with a field-level `errors` map.
+- **Error strategy**: `AppException` carries a status and message for handled
+  application failures. `GlobalExceptionHandler` also handles validation and
+  other framework errors and returns RFC 9457 `ProblemDetail` responses.
 - **Response format**: RFC 9457 ProblemDetail (Spring 6 native) — `type`, `title`, `status`, `detail`, optional `errors` property.
-- **Logging**: Lombok `@Slf4j` on `JwtUtil`; [ASK USER] no structured logging config observed — is a log aggregator (e.g., ELK, Loki) planned?
+- **Logging**: Lombok `@Slf4j` on `JwtUtil`; no structured/JSON logging configuration or log aggregator is observed. This snapshot does not prescribe one.
 
 #### Gateway
 - **Request logging**: morgan HTTP logger in [gateway/src/middleware/logger.ts](../../gateway/src/middleware/logger.ts)
-- **Error logging**: `console.error` in proxy error handler; no structured logging
-- **Auth errors**: explicit JSON responses (`{ error: "..." }`) with appropriate HTTP status codes (401, 429, 500)
+- **Error logging**: the HTTP proxy and error handler use the gateway's `logger.error`; the separate WebSocket proxy still uses `console.error`. No structured/JSON logging configuration is present
+- **Auth errors**: `sendError` returns JSON containing `status`, `error`, `message`, `path`, and `timestamp` with the corresponding HTTP status
 
 #### Frontend
 - **HTTP error handling**: axios response interceptor in [frontend/src/services/api.ts](../../frontend/src/services/api.ts) — on a protected request's 401, refreshes once and retries; redirects to `/login` if refresh or the retry fails
-- **Sensitive data**: access JWTs are held in `tokenMemory`; refresh tokens are sent only in an `HttpOnly; SameSite=Strict` cookie. Do not introduce browser-persistent token storage.
+- **Sensitive data**: access JWTs are held in `tokenMemory`; refresh tokens are sent only in an `HttpOnly; SameSite=Strict` cookie. The developer/agent guides own the prohibition on browser-persistent token storage.
 
 ---
 
@@ -127,4 +129,4 @@
 - [frontend/src/shared/types/index.ts](../../frontend/src/shared/types/index.ts)
 - [backend/src/main/java/com/devpulse/exception/GlobalExceptionHandler.java](../../backend/src/main/java/com/devpulse/exception/GlobalExceptionHandler.java)
 - [docs/guides/git-workflow.md](../../docs/guides/git-workflow.md)
-- [docs/guides/branch_namings.md](../../docs/guides/branch_namings.md)
+- [.github/pull_request_template.md](../../.github/pull_request_template.md)

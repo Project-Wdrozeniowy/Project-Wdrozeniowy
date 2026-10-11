@@ -1,6 +1,12 @@
 # Architecture
 
-> Snapshot scope: verified against source and runtime configuration on 2026-10-09. Source/configuration remain authoritative after this snapshot. Docker Compose starts PostgreSQL, Redis, backend, and gateway; the frontend runs separately.
+> Snapshot scope: verified against source and runtime configuration on 2026-10-11. Source/configuration remain authoritative after this snapshot. Docker Compose starts PostgreSQL, Redis, backend, and gateway; the frontend runs separately. Approved extension rules are in the [developer architecture guide](../guides/architecture.md), not in this snapshot.
+
+This documentation checkout predates PWDRZ-123 and PWDRZ-124. Its gateway
+still strips `/api` and its backend still selects the JWT HMAC algorithm from
+key length. Both fixes are present on `origin/develop`; bring them into this
+branch before merging. The flow below describes the corrected integration
+target, not a successful end-to-end check on this older checkout.
 
 ## Core Sections (Required)
 
@@ -79,21 +85,21 @@ follow-ups do not change the implementation status of the original tickets.
 
 ---
 
-### 3) Layer/Module Responsibilities
+### 3) Observed Layer/Module Responsibilities
 
-| Layer or module | Owns | Must not own | Evidence |
-|-----------------|------|--------------|----------|
-| Frontend `src/app/` | Page components, routing layout | API calls, token storage | [frontend/src/app/layout.tsx](../../frontend/src/app/layout.tsx) |
-| Frontend `src/services/` | HTTP calls via `ApiClient` | UI state, component logic | [frontend/src/services/api.ts](../../frontend/src/services/api.ts) |
-| Frontend `src/store/` | Auth state (token, user), UI state | HTTP calls | [frontend/src/store/slices/authSlice.ts](../../frontend/src/store/slices/authSlice.ts) |
-| Gateway middleware | JWT check, rate limiting, CORS, logging | Business logic, DB access | [gateway/src/middleware/auth.ts](../../gateway/src/middleware/auth.ts) |
-| Gateway proxy route | Request forwarding to backend | Token generation, business logic | [gateway/src/routes/proxy.ts](../../gateway/src/routes/proxy.ts) |
-| Backend `controller/` | HTTP contract (request parsing, response mapping) | Business logic | [backend/.../AuthController.java](../../backend/src/main/java/com/devpulse/auth/controller/AuthController.java) |
-| Backend `service/` | Business logic (registration, login, token issuance) | HTTP/persistence concerns | [backend/.../AuthService.java](../../backend/src/main/java/com/devpulse/auth/service/AuthService.java) |
-| Backend `repository/` | JPA database access | Business logic | `com.devpulse.auth.repository` |
-| Backend `security/JwtUtil` | Token signing, verification, parsing | Auth flow logic | [backend/.../JwtUtil.java](../../backend/src/main/java/com/devpulse/security/JwtUtil.java) |
-| Backend `exception/` | Unified error response (RFC 9457 ProblemDetail) | Business logic | [backend/.../GlobalExceptionHandler.java](../../backend/src/main/java/com/devpulse/exception/GlobalExceptionHandler.java) |
-| Database (Flyway) | Schema lifecycle management | Application logic | [backend/src/main/resources/db/migration/](../../backend/src/main/resources/db/migration/) |
+| Layer or module | Current responsibility and overlap | Evidence |
+|-----------------|------------------------------------|----------|
+| Frontend `src/app/` | Routes and layout; login/register pages also perform form submission orchestration today | [login page](../../frontend/src/app/(auth)/login/page.tsx), [register page](../../frontend/src/app/(auth)/register/page.tsx) |
+| Frontend `src/services/` | HTTP calls through `ApiClient`, including bearer-token injection and refresh/retry | [frontend/src/services/api.ts](../../frontend/src/services/api.ts) |
+| Frontend `src/store/` | User/auth flags and UI state; access token itself is stored in `tokenMemory` | [authSlice](../../frontend/src/store/slices/authSlice.ts), [tokenMemory](../../frontend/src/lib/tokenMemory.ts) |
+| Gateway middleware | JWT check, rate limiting, CORS, and logging | [gateway/src/middleware/](../../gateway/src/middleware/) |
+| Gateway proxy routes | HTTP and WebSocket request forwarding to backend | [proxy.ts](../../gateway/src/routes/proxy.ts), [wsProxy.ts](../../gateway/src/routes/wsProxy.ts) |
+| Backend `controller/` | HTTP request/response mapping | [AuthController.java](../../backend/src/main/java/com/devpulse/auth/controller/AuthController.java) |
+| Backend `service/` | Domain operations and persistence coordination | [AuthService.java](../../backend/src/main/java/com/devpulse/auth/service/AuthService.java), [PostService.java](../../backend/src/main/java/com/devpulse/forum/service/PostService.java) |
+| Backend `repository/` | Spring Data JPA repository access | [PostRepository.java](../../backend/src/main/java/com/devpulse/forum/repository/PostRepository.java) |
+| Backend `security/JwtUtil` | Token signing, verification, parsing | [JwtUtil.java](../../backend/src/main/java/com/devpulse/security/JwtUtil.java) |
+| Backend `exception/` | Error response mapping to RFC 9457 ProblemDetail | [GlobalExceptionHandler.java](../../backend/src/main/java/com/devpulse/exception/GlobalExceptionHandler.java) |
+| Flyway migrations | Schema definition and versioning | [db/migration/](../../backend/src/main/resources/db/migration/) |
 
 ---
 
@@ -114,7 +120,7 @@ follow-ups do not change the implementation status of the original tickets.
 ### 5) Known Architectural Risks
 
 - **Dual JWT verification (gateway + backend)**: Both the gateway and Spring Security verify the JWT. If the shared `JWT_SECRET` diverges between services, 100% of authenticated requests will fail with no obvious error. There is no documented secret rotation or distribution procedure.
-- **Redis declared but unused**: `docker-compose.yml` provisions Redis 7 and the backend `depends_on: redis`, but neither the backend `pom.xml` nor the gateway `package.json` has a Redis client. The intended use (sessions, caching, pub/sub) is undocumented. See [CONCERNS.md](CONCERNS.md).
+- **Redis declared but unused**: `docker-compose.yml` provisions Redis 7 and the backend `depends_on: redis`, but neither the backend `pom.xml` nor the gateway `package.json` has a Redis client. It is retained for future use; the first integration use case has not yet been selected. See [CONCERNS.md](CONCERNS.md).
 - **API availability is uneven**: Auth, users, and forum posts have implementation paths. Several controller contracts (comments, votes, notifications, analytics, AI, recommendations) intentionally return `501 NOT_IMPLEMENTED`; OpenAPI must not be treated as proof that every advertised operation is usable.
 - **Forum UI remains mocked at the query boundary**: [frontend/src/services/forumService.ts](../../frontend/src/services/forumService.ts) has real adapters for `/forum/posts`, but [frontend/src/hooks/usePosts.ts](../../frontend/src/hooks/usePosts.ts) still resolves `MOCK_POSTS` until the feed is migrated.
 

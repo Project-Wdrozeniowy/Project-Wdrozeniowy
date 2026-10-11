@@ -167,6 +167,11 @@ cd backend && ./mvnw verify
 ```
 
 PWDRZ-118 will measure coverage and decide whether these thresholds should change.
+Passing these percentages does not prove new behaviour is tested: the frontend
+coverage configuration currently excludes executable UI and hook code.
+Browser E2E tests and their CI gate are planned in PWDRZ-117 but are not yet
+available. See the [testing guide](docs/guides/testing.md) for the agreed
+completion criteria and current gap.
 
 Run a specific test from the relevant service directory (each block starts at the repository root):
 
@@ -235,13 +240,15 @@ backend/src/main/resources/db/migration/
   V5__add_replaced_by_to_refresh_tokens.sql
 ```
 
-Detailed architecture, conventions, and the evidence-backed current-state map are documented in [docs/README.md](docs/README.md).
+Start with the [developer guides](docs/guides/README.md) for architecture,
+naming, testing, Git and PR rules. The [documentation map](docs/README.md)
+also points to the separate dated codebase reference and agent/tooling files.
 
 ## Pull Requests
 
-- **Base branch**: `develop`
-- **Branch name**: `type/PWDRZ-<ticket>-short-description`  
-  Types: `feature`, `bugfix`, `hotfix`
+- **Normal base branch**: `develop`; release promotion, hotfixes and exceptional
+  stacked PRs follow the [Git workflow](docs/guides/git-workflow.md).
+- **New task branch name**: `PWDRZ-<ticket>-short-description`
 - **PR title**: `[PWDRZ-<n>]: Short imperative description`
 - **Commit messages**: same format — `[PWDRZ-123]: Add login form validation`
 
@@ -258,7 +265,11 @@ cd backend && ./mvnw verify
 The `frontend/.env` created during setup supplies `NEXT_PUBLIC_API_URL` to
 the local frontend build. CI supplies it as a workflow environment variable.
 
-GitHub rulesets are authoritative for branch protection and merge restrictions. Repository documentation describes the contribution workflow but must not be used to infer ruleset enforcement.
+Every applicable CI check must pass before merge. The
+[PR guide](docs/guides/pr-guidelines.md) explains what to include in the
+description and how to report verification. GitHub rulesets are authoritative
+for technical branch protection and merge restrictions; their current
+enforcement must be checked rather than inferred from this README.
 
 ## Troubleshooting
 
@@ -285,6 +296,6 @@ Proprietary — All rights reserved.
 This is a private educational project with potential commercial use.
 No permission is granted to use, copy, modify, distribute, or publish its
 source code or related materials without written consent from all copyright
-holders listed in [NOTICE](NOTICE).
+holders listed in [NOTICE.md](NOTICE.md).
 
 See [LICENSE](LICENSE) for terms.

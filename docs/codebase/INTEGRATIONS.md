@@ -1,6 +1,11 @@
 # External Integrations
 
-> Snapshot scope: verified against runtime configuration and source on 2026-10-09. PostgreSQL/Flyway, gateway proxy/JWT, cookie refresh, Springdoc and STOMP WebSocket configuration exist. Redis, Socket.IO and `INTERNAL_SECRET` are provisioned or declared but are not application integrations yet.
+> Snapshot scope: verified against runtime configuration and source on 2026-10-11. PostgreSQL/Flyway, gateway proxy/JWT, cookie refresh, Springdoc and STOMP WebSocket configuration exist. Redis, Socket.IO and `INTERNAL_SECRET` are provisioned or declared but are not application integrations yet.
+
+Branch caveat: this checkout predates the merged PWDRZ-123 proxy-prefix and
+PWDRZ-124 explicit-HS256 fixes on `origin/develop`. The JWT algorithm row
+below describes the corrected `develop` contract; this branch must take those
+commits before its runtime behaviour matches that contract.
 
 ## Core Sections (Required)
 
@@ -32,10 +37,10 @@ Five Flyway migrations define the current schema:
 
 | Migration | Tables created | Evidence |
 |-----------|---------------|----------|
-| V1 — users | `users`, `roles`, `user_roles`, `refresh_tokens` | [V1__create_users.sql](../../backend/src/main/resources/db/migration/V1__create_users.sql) |
+| V1 — users | `users`, `refresh_tokens`; role/status are enum columns on `users`, not separate tables | [V1__create_users.sql](../../backend/src/main/resources/db/migration/V1__create_users.sql) |
 | V2 — forum | `categories`, `posts`, `comments`, `tags`, `post_tags`, `votes` | [V2__create_forum_tables.sql](../../backend/src/main/resources/db/migration/V2__create_forum_tables.sql) |
-| V3 — notifications | `notifications` | [V3__create_notifications.sql](../../backend/src/main/resources/db/migration/V3__create_notifications.sql) |
-| V4 — analytics | analytics-related tables | [V4__create_analytics_tables.sql](../../backend/src/main/resources/db/migration/V4__create_analytics_tables.sql) |
+| V3 — notifications | `notifications`, `post_subscriptions` | [V3__create_notifications.sql](../../backend/src/main/resources/db/migration/V3__create_notifications.sql) |
+| V4 — analytics | `activity_events` | [V4__create_analytics_tables.sql](../../backend/src/main/resources/db/migration/V4__create_analytics_tables.sql) |
 | V5 — refresh-token rotation | `refresh_tokens.replaced_by_token_id` self-reference | [V5__add_replaced_by_to_refresh_tokens.sql](../../backend/src/main/resources/db/migration/V5__add_replaced_by_to_refresh_tokens.sql) |
 
 ER diagrams available: [docs/db-schema.mmd](../../docs/db-schema.mmd), [docs/db-schema-auth.mmd](../../docs/db-schema-auth.mmd), [docs/db-schema-forum.mmd](../../docs/db-schema-forum.mmd), [docs/db-schema-social.mmd](../../docs/db-schema-social.mmd).
@@ -54,10 +59,12 @@ ER diagrams available: [docs/db-schema.mmd](../../docs/db-schema.mmd), [docs/db-
 
 ### 5) Reliability and Failure Behavior
 
-- **Retry/backoff**: No retry logic implemented in frontend (`axios`), gateway proxy, or backend service calls.
+- **Retry/backoff**: The frontend retries a protected request once after a
+  successful auth-cookie refresh; no general retry/backoff policy is configured
+  for frontend, gateway proxy, or backend service calls.
 - **Timeout policy**: Frontend axios client has a 10-second timeout (`timeout: 10000`) configured in [frontend/src/services/api.ts](../../frontend/src/services/api.ts). Gateway proxy has no explicit timeout configured.
 - **Circuit breaker**: None implemented.
-- **Proxy error fallback**: Gateway returns `{ error: "Backend unavailable" }` with HTTP 502 if the backend is unreachable — implemented in [gateway/src/routes/proxy.ts](../../gateway/src/routes/proxy.ts).
+- **Proxy error fallback**: Gateway returns HTTP 502 with `message: "Backend unavailable"` in its standard error body if the backend is unreachable — implemented in [gateway/src/routes/proxy.ts](../../gateway/src/routes/proxy.ts) and [sendError](../../gateway/src/middleware/errorHandler.ts).
 - **Frontend auth error fallback**: the axios interceptor refreshes once using the HttpOnly cookie, retries the request, then clears in-memory state and redirects to `/login` only if refresh fails — [frontend/src/services/api.ts](../../frontend/src/services/api.ts).
 - **Docker health checks**: PostgreSQL and Redis have health checks; backend `depends_on` waits for both to be healthy before starting.
 

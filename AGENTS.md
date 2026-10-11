@@ -1,5 +1,10 @@
 # AGENTS.md
 
+> Agent/tooling entry point. Developers should start with [README.md](README.md)
+> and the [documentation map](docs/README.md); team contribution rules live in
+> [docs/guides/README.md](docs/guides/README.md). Commands and architecture
+> notes below are agent context, not a replacement for source/configuration.
+
 ## Project Overview
 
 **Orbita** is a full-stack community forum platform. Users can register, post articles, comment, vote, and receive real-time notifications.
@@ -38,6 +43,9 @@ cp .env.example .env
 
 # Gateway environment
 cp gateway/.env.example gateway/.env
+
+# Frontend API base URL
+cp frontend/.env.example frontend/.env
 
 # Edit .env — the only required change before running locally:
 # POSTGRES_PASSWORD=<any password>
@@ -83,7 +91,7 @@ and from source on the same port.
 ```bash
 cd frontend
 # Copy the template to frontend/.env if needed; set NEXT_PUBLIC_API_URL to the gateway.
-# The root setup section already creates this file.
+# The root setup section creates this file.
 
 npm run dev -- -p 3001  # Next.js dev server with hot reload on port 3001
 ```
@@ -217,7 +225,10 @@ npm run format:check  # prettier --check src (used as CI gate)
 npm run typecheck     # tsc --noEmit
 ```
 
-> Always run `format` and `lint` before committing. The CI `lint` workflow enforces `format:check` and `lint` on push to `main`/`develop` and on all PRs.
+> Run the affected service's `format:check` and `lint` before submitting. Use
+> `format` when a file needs formatting. The CI `lint` workflow enforces both
+> checks on push to `main`/`develop` and on PRs. The [developer guides](docs/guides/README.md)
+> own team conventions; this file is agent operating context.
 
 ### Java (backend)
 
@@ -278,9 +289,10 @@ backend/src/main/resources/
   db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics), V5 (refresh-token rotation)
 
 docs/
-  codebase/        ← generated reference docs (STACK, STRUCTURE, ARCHITECTURE, etc.)
-  db-schema*.mmd   ← Mermaid ER diagrams
-  guides/          ← branch naming, PR description guides
+  README.md        ← documentation map by audience and purpose
+  codebase/        ← generated current-state reference (fixed seven-file layout)
+  db-schema*.mmd   ← Mermaid ER diagrams (PNG viewing copies alongside)
+  guides/README.md ← team contribution rules and Definition of Done
 ```
 
 ---
@@ -293,9 +305,9 @@ docs/
 
 3. **Forum feed is currently mocked** — `frontend/src/hooks/usePosts.ts` returns `MOCK_POSTS`, although `frontend/src/services/forumService.ts` has typed adapters and the backend implements `/api/forum/posts`. PWDRZ-81 owns connecting the feed; adjacent comment, vote, category, and tag endpoints still contain `501` stubs.
 
-4. **Redis** — provisioned in Docker Compose, not yet wired in application code. It will be used for caching and/or session management. Do not remove it or the `depends_on` from compose.
+4. **Redis** — provisioned in Docker Compose, not yet wired in application code. It is reserved for future integration; the first use case has not been selected. Do not remove it or the `depends_on` from compose as a documentation cleanup.
 
-5. **Socket.IO is installed in the gateway** but not yet connected to any route. It will be used for real-time forum notifications (new replies, votes, mentions). Do not remove the dependency.
+5. **Socket.IO is installed in the gateway** but not yet connected to a server/client flow. It is reserved for a future real-time integration, which must reconcile the current Spring STOMP/WebSocket path. Do not remove the dependency as a documentation cleanup.
 
 6. **Swagger UI** — available at `http://localhost:8080/swagger-ui.html` in development. It must be **disabled in production**. Check `OpenApiConfig.java` when adding new endpoints.
 
@@ -323,13 +335,13 @@ docs/
 
 ## Pull Request Guidelines
 
-- **Branch name**: `type/PWDRZ-<ticket>-short-description`
-  - Types: `feature`, `bugfix`, `hotfix`
-  - Example: `feature/PWDRZ-30-forum-post-list`
-- **Base branch**: `develop` (not `main`)
-- **PR title**: `[PWDRZ-<n>]: Short imperative description`
-  - Example: `[PWDRZ-30]: Add forum post list endpoint`
-- **Commit messages**: same format as PR title — `[PWDRZ-123]: Add login form validation`
+Use the [Git workflow](docs/guides/git-workflow.md) for the approved branch,
+commit, review, and merge policy and the [PR guide](docs/guides/pr-guidelines.md)
+for description examples. New task branches use
+`PWDRZ-<ticket>-short-description`; normal PRs target `develop`. Release,
+hotfix, and exceptional stacked PRs have separate rules. Do not treat an old
+branch name or this agent summary as proof of current GitHub ruleset
+enforcement.
 
 ### Required checks before submitting
 
@@ -344,7 +356,12 @@ cd gateway && npm run typecheck && npm run lint && npm run format:check && npm r
 cd backend && ./mvnw test
 ```
 
-All three CI workflows must pass: **Build**, **Lint**, and **Tests**. Current test configurations enforce 65% for frontend/gateway (all four metrics) and 65% backend line coverage; PWDRZ-118 owns the threshold review. The `≥50%` labels in the Tests workflow are stale labels, not the active gate.
+Every applicable Build, Lint, and Tests job must pass. Current test
+configurations enforce 65% for frontend/gateway (all four metrics) and 65%
+backend line coverage; PWDRZ-118 owns the threshold review. The `≥50%`
+labels in the Tests workflow are stale labels, not the active gate. The
+mandatory E2E gate is not yet configured; PWDRZ-117 owns it. Never report an
+absent gate as passed.
 
 ---
 

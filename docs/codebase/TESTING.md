@@ -1,6 +1,6 @@
 # Testing Patterns
 
-> Snapshot scope: verified against the local test configuration and CI on 2026-10-09. All three local configurations currently enforce 65%; the CI job labels that say 50% are stale labels, not the active thresholds. PWDRZ-118 owns the future threshold decision.
+> Snapshot scope: verified against the local test configuration and CI on 2026-10-11. All three local configurations currently enforce 65%; the CI job labels that say 50% are stale labels, not the active thresholds. PWDRZ-118 owns the future threshold decision. This describes current tests, not the target policy in the [testing guide](../guides/testing.md).
 
 ## Core Sections (Required)
 
@@ -53,7 +53,7 @@ cd backend
 
 #### Gateway
 - **Test file placement**: `src/__tests__/` (top-level) and `src/middleware/__tests__/` (co-located)
-  - `gateway/src/__tests__/app.test.ts` — integration-level Express app test
+  - `gateway/src/__tests__/app.test.ts` — HTTP-level Express app test; its proxy is mocked
   - `gateway/src/__tests__/config.test.ts` — config loading tests
   - `gateway/src/middleware/__tests__/` — per-middleware unit tests
 - **Naming convention**: `<filename>.test.ts`
@@ -93,7 +93,7 @@ cd backend
 #### Gateway
 - Express middleware tested in isolation by calling handler functions directly or via `supertest`
 - JWT operations mocked with Jest `jest.mock('jsonwebtoken')` or tested with real tokens (test secret in setup)
-- Proxy routes excluded from coverage (`!src/routes/proxy.ts`, `!src/middleware/authGuard.ts` in [gateway/jest.config.js](../../gateway/jest.config.js)) — marked as integration-level behaviour
+- In this checkout, proxy routing and `authGuard.ts` are excluded from coverage in [gateway/jest.config.js](../../gateway/jest.config.js); `app.test.ts` mocks the proxy and cannot verify upstream path forwarding. The newer `origin/develop` includes a real proxy regression test from PWDRZ-123 and removes the proxy exclusion. Synchronize this documentation branch with `develop` before merge, then regenerate this snapshot.
 
 #### Backend
 - Focused Mockito tests mock service/repository dependencies; for example, `AuthControllerTest` uses `MockMvcBuilders.standaloneSetup` without starting Spring

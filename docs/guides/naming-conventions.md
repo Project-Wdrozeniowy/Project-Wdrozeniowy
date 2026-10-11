@@ -1,18 +1,20 @@
 # Naming conventions
 
-The rules below are the ones already followed in the codebase. Anything new
-should match. When in doubt, prefer the convention that produces grep-friendly
-identifiers.
+These are approved conventions for new and changed work, not a claim that the
+existing code has already been fully migrated. See the [architecture guide](architecture.md)
+for placement and service boundaries. Cleanup that changes application code is
+tracked separately in Jira.
 
 ## Universal
 
-- **English only** in code, comments, commit messages, branch names and PR
-  titles. Localised user-facing strings live in resource bundles / i18n files,
-  not in identifiers.
-- **No abbreviations** that aren't industry standard (`Repo`, `Mgr`, `Svc` are
-  banned; `DTO`, `JWT`, `URL`, `JSON` are fine).
-- **Acronyms are PascalCase**, not UPPERCASE — `JwtUtil`, not `JWTUtil`;
-  `ApiClient`, not `APIClient`.
+- Use English for identifiers, test names, branch names, commit subjects and
+  PR metadata. Developer guides may use English or Polish, and temporarily
+  Russian as described in the [guide index](README.md#language-and-maintenance).
+- Use abbreviations only when their meaning is clear to the team. Do not
+  invent ambiguous short forms for public names.
+- In project-owned identifiers, treat acronyms as words: `JwtUtil`,
+  `ApiClient`, `clientIp`, not `JWTUtil`, `APIClient`, `clientIP`. Preserve
+  externally defined names at integration boundaries.
 
 ## Backend (Java)
 
@@ -48,20 +50,27 @@ com.devpulse.auth.repository.UserRepository
 | Exception advice| `Handler`      | `GlobalExceptionHandler` |
 | Test            | `Test`         | `PostServiceTest`      |
 
+The DTO suffix table is the target convention. Existing outbound classes with
+`Response` outside a generic wrapper must be reviewed by the backend owner;
+do not rename a public Java type without updating serialization, OpenAPI,
+tests, and its consumers. [PWDRZ-133](https://project-wdrz.atlassian.net/browse/PWDRZ-133)
+owns the backend cleanup, not this documentation edit.
+
 ### Methods
 
-| Layer        | Verb conventions                                          |
-| ------------ | --------------------------------------------------------- |
-| Repository   | Spring Data derivation: `findBy*`, `existsBy*`, `deleteBy*`, `countBy*`. Custom queries use `@Query` with the same name shape. |
-| Service      | One verb + noun phrase. Standard verbs: `create`, `update`, `delete` (or `softDelete`), `getById`, `getBySlug`, `search`, `revokeAllActiveByUser`, ... Avoid `do*`, `handle*`. |
-| Controller   | Match the HTTP verb intent: `create`, `update`, `delete`, `getById`, `search`. The method should usually delegate to a service method of the same name. |
+- Repository method names follow Spring Data's query intent (`findBy*`,
+  `existsBy*`, `deleteBy*`, `countBy*`) where those forms apply.
+- Controller methods name the HTTP operation; service methods name the domain
+  operation. They need not have identical names. Prefer clear action names
+  over a fixed verb vocabulary.
 
 ### Variables
 
 - `camelCase`
-- Boolean fields and parameters prefixed with `is`, `has`, `should`, `can`.
-- Time-related fields use `OffsetDateTime` and the suffix `At`:
-  `createdAt`, `updatedAt`, `expiresAt`, `revokedAt`.
+- Boolean fields and parameters read as predicates; `is`, `has`, `should`, or
+  `can` are useful when natural, but not required for names such as `read`.
+- Choose temporal type and suffix by meaning. `createdAt` is an instant;
+  a calendar date or duration need not be `OffsetDateTime` or end in `At`.
 
 ### JPA / database
 
@@ -69,24 +78,23 @@ com.devpulse.auth.repository.UserRepository
 - Tables: plural `snake_case` (`users`, `refresh_tokens`).
 - Postgres enums: `snake_case` type name, `UPPER_CASE` values
   (`user_role`, `USER`/`MODERATOR`/`ADMIN`).
-- Audit columns are always `created_at` (immutable) and `updated_at`
-  (auto-managed). Use Hibernate `@CreationTimestamp` / `@UpdateTimestamp`.
+- The target schema convention is `created_at` and `updated_at` on every
+  table. For append-only rows, `updated_at` begins at creation and changes
+  only if the row is updated. Existing tables do not all comply; add columns
+  through a new Flyway migration and coordinate mappings/tests with the
+  backend owner under [PWDRZ-134](https://project-wdrz.atlassian.net/browse/PWDRZ-134).
+  Never edit an already-applied migration.
 - Flyway files: `V{N}__short_description.sql` (e.g.
   `V2__create_forum_tables.sql`).
 
 ### Lombok
 
-- Entities: `@Builder @NoArgsConstructor @AllArgsConstructor` plus `@Data`, or
-  `@Getter @Setter` when the entity has collections or bidirectional
-  associations (generated `equals`/`hashCode`/`toString` would walk them).
-- Response DTOs: `@Getter @Builder` (`@SuperBuilder` when one extends another)
-  with a static `from(entity)` factory.
-- Request DTOs: `@Data @NoArgsConstructor`, **without** `@AllArgsConstructor`.
-  Jackson 3 would deserialize through the all-args constructor and fail on a
-  missing primitive field.
-- `@RequiredArgsConstructor` on services/controllers (`final` field injection
-  — no `@Autowired`).
-- `@Slf4j` for loggers in new code.
+Choose Lombok annotations for the type's actual behaviour and verify JSON
+binding for request/response DTOs. In particular, generated equality and
+`toString` on JPA relationships need care; no single entity annotation recipe
+is mandatory. Do not ban `@AllArgsConstructor` globally for requests without
+a failing binding case. Constructor injection remains the default for services
+and controllers. The backend owner reviews Java-specific choices.
 
 ## Frontend (TypeScript / React)
 
@@ -99,36 +107,43 @@ com.devpulse.auth.repository.UserRepository
 | Hook                 | `useThing.ts`         |
 | Service / API client | `camelCase.ts` (e.g. `userService.ts`) |
 | Store slice          | `camelCaseSlice.ts` under `store/slices/` |
-| Type declarations    | `src/shared/types/index.ts` (single entry)  |
+| Shared type declarations | `src/shared/types/index.ts` (current entry point; new files may be introduced when ownership is clear) |
 | Test                 | `__tests__/Thing.test.tsx`, sibling to source |
 
 ### Functions and variables
 
 - React components: `PascalCase`.
 - Hooks: `useThing` (must follow rules of hooks).
-- Event handlers passed as props: `onAction` (`onClick`, `onSubmit`).
-  Event handlers defined inside a component: `handleAction`
-  (`handleSubmit`, `handleClose`).
-- Async API helpers in services: verb-first, lowercase verb, plural for
-  collections: `getUsers`, `createPost`, `updateProfile`, `deletePost`.
-  Reserve `fetch*` for hooks that internally call the service.
-- Booleans: `isOpen`, `hasError`, `canEdit`, `shouldRedirect`.
-- Constants: `UPPER_SNAKE_CASE` only for truly immutable, exported values
-  (HTTP status codes, route keys). Otherwise `camelCase`.
+- Event handlers have no project-specific `on*` versus `handle*` naming rule;
+  use a name that explains the callback or action in its context.
+- Service helpers use an action plus a domain noun, such as `getUsers`,
+  `createPost`, or `updateProfile`. `fetch*` is not reserved for hooks; use it
+  when it accurately describes a network retrieval.
+- Booleans read as predicates; `isOpen`, `hasError`, and `canEdit` are useful
+  examples, not an exhaustive prefix list.
+- Use `UPPER_SNAKE_CASE` for predefined values intended to stay fixed, such
+  as `HOURS_IN_DAY` or `DAYS_OF_WEEK`. A runtime-derived value remains
+  `camelCase` even if declared with `const`: `currentWeek`, `hoursLeft`,
+  `clientIp`. `const` alone does not make an object deeply immutable.
 
 ### Types
 
-- `interface` for shapes the app **owns** and may extend.
-- `type` for unions, intersections and mapped types.
+- Prefer `interface` for project-owned object shapes and contracts. A `type`
+  alias is suitable for unions, intersections, mapped types, and deliberately
+  closed DTO shapes that are not intended to be extended as contracts.
+  `type` does **not** make fields immutable; use `readonly` where needed.
 - **No `I` prefix**. `User`, not `IUser`.
-- Component props named `<ComponentName>Props`:
-  `interface PostCardProps { … }`.
+- Component props are named `<ComponentName>Props`, including local props
+  shapes: `interface PostCardProps { … }`. Existing inline `Props` forms need
+  [PWDRZ-132](https://project-wdrz.atlassian.net/browse/PWDRZ-132), not a
+  documentation-only rename.
 - Generic wrappers reused across resources: `PagedResponse<T>`, matching the
   backend's `PagedResponse`. API responses are not wrapped in an envelope.
 
 ### State (Zustand)
 
-- One slice per bounded concern. File name `<name>Slice.ts`, exported
+- One slice per cohesive shared client-state responsibility; split when
+  unrelated state starts coupling. File name `<name>Slice.ts`, exported
   interface `<Name>Slice`, factory function `create<Name>Slice`.
 - Actions inside a slice are camelCase verbs:
   setters use `set<Field>` (`setUser`, `setLoading`); domain actions use a
@@ -138,33 +153,32 @@ com.devpulse.auth.repository.UserRepository
 
 - Use the `@/*` alias for all cross-folder imports. Relative imports only
   inside the same folder.
-- Import order (recommended convention — not currently enforced by an ESLint
-  rule): external packages → `@/*` imports → relative imports → type-only
-  imports last (`import type { … } from …`).
+- No additional project-specific import-order rule is imposed. Formatter and
+  linter configuration remain the enforceable style source.
 
 ### Styling
 
-- Tailwind utility classes inline. No CSS modules.
-- Conditional or long class lists go through `cn()` from `@/lib/cn` (a thin
-  wrapper around `clsx`).
+- Use Tailwind utility classes; do not introduce CSS Modules in new code.
+- Use `cn()` from `@/lib/cn` for conditional or long class lists. A short
+  static `className` does not need a wrapper.
 
 ## Gateway (TypeScript / Node)
 
 ### Files and folders
 
-- Same casing rules as the frontend: `PascalCase` is reserved for classes /
-  constructors (rare here); everything else is `camelCase.ts`.
+- Use `PascalCase` for classes/constructors and `camelCase.ts` for other files.
 - Middleware filenames describe what they do: `auth.ts`, `logger.ts`,
   `rateLimiter.ts`, `errorHandler.ts`.
-- Route files: today the gateway is a thin proxy with a single
-  `routes/proxy.ts`. Once routes are split per resource, name each file
-  after the resource it owns: `postsRoutes.ts`, `authRoutes.ts`.
+- Route filenames describe the responsibility they actually own. The current
+  proxy uses `routes/proxy.ts` and `routes/wsProxy.ts`; no resource-route
+  filename is prescribed before such a split exists.
 
 ### Functions
 
-- Middleware modules default-export the middleware, named after what it does
-  (`authMiddleware`, `corsMiddleware`, `rateLimiter`, `errorHandler`).
-- Proxies: `proxyMiddleware`, `wsProxyMiddleware`.
+- Use named exports for gateway modules, including middleware and proxy
+  functions (`authMiddleware`, `errorHandler`, `proxyMiddleware`). Existing
+  default exports require a separate migration of imports and tests under
+  [PWDRZ-136](https://project-wdrz.atlassian.net/browse/PWDRZ-136).
 - Express handlers: `(req, res, next) => …` typed with Express's
   `Request` / `Response` / `NextFunction`.
 
@@ -176,7 +190,4 @@ com.devpulse.auth.repository.UserRepository
 
 ## Pull request / branch naming
 
-See [git-workflow.md](./git-workflow.md). Quick summary:
-
-- Branch: `type/PWDRZ-XX-short-description` (`feature`, `bugfix`, `hotfix`, `docs`)
-- Commit & PR title: `[PWDRZ-XX]: Short imperative summary`
+The [Git workflow](git-workflow.md) owns branch, commit, and PR naming rules.
