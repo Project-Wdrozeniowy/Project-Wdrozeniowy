@@ -6,7 +6,11 @@ import type { MyProfile } from '@/shared/types';
 
 const joinedFormat = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' });
 
-export default function ProfileCard({ profile }: { profile: MyProfile }) {
+interface ProfileCardProps {
+  profile: MyProfile;
+}
+
+export default function ProfileCard({ profile }: ProfileCardProps) {
   // The link that failed, not a flag: a new link gets its own chance to load.
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
 

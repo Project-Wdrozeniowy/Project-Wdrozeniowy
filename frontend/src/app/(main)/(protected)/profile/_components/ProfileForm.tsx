@@ -18,7 +18,11 @@ const SUBMIT_CLASS =
 const DISCARD_CLASS =
   'text-gray-600 hover:text-gray-900 font-semibold text-sm px-3 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
 
-export default function ProfileForm({ profile }: { profile: MyProfile }) {
+interface ProfileFormProps {
+  profile: MyProfile;
+}
+
+export default function ProfileForm({ profile }: ProfileFormProps) {
   const { mutateAsync, isPending } = useUpdateProfile();
   const [formError, setFormError] = useState<string | null>(null);
   const alertRef = useRef<HTMLDivElement>(null);
