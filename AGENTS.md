@@ -155,14 +155,14 @@ npm run test              # single run
 npm run test:coverage     # with HTML + lcov coverage report
 
 # Run a specific test file
-npx vitest run src/services/__tests__/authService.test.ts
+npx vitest run src/shared/api/auth/__tests__/authClient.test.ts
 
 # Run tests matching a name pattern
 npx vitest run -t "login"
 ```
 
 Test files live in `__tests__/` subdirectories next to the module under test.  
-Example: `src/services/__tests__/authService.test.ts` tests `src/services/authService.ts`.
+Example: `src/shared/api/auth/__tests__/authClient.test.ts` tests `src/shared/api/auth/authClient.ts`.
 
 Current Vitest coverage excludes: `app/`, `components/`, `hooks/`, `lib/`,
 `utils/`, `shared/`, and `constants/`. Several of these contain executable
@@ -183,7 +183,9 @@ npx jest src/middleware/__tests__/auth.test.ts
 npx jest --testNamePattern "should return 401"
 ```
 
-Test files: `src/__tests__/` (top-level app/config) and `src/middleware/__tests__/` (per-middleware).
+Test files live beside their source modules: `src/__tests__/app.test.ts`,
+`src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts`,
+and `src/middleware/__tests__/`.
 
 ### Backend tests (JUnit 5 + Mockito + Spring Boot Test)
 
@@ -262,7 +264,6 @@ frontend/src/
   app/
     (auth)/        ← login, register pages (no header/sidebar)
     (main)/        ← home feed, forum, dashboard, profile (with Header + Sidebar)
-    _components/   ← shared components used across pages (e.g. PostCard)
     layout.tsx     ← root layout, wraps everything in QueryProvider
   services/        ← API call functions (thin wrappers over ApiClient)
   store/slices/    ← Zustand slices: authSlice, uiSlice

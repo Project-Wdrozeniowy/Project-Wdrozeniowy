@@ -8,6 +8,12 @@ existing code has been fully migrated. See the
 [architecture guide](architecture.md) for placement and service boundaries.
 Application-code cleanup is tracked separately in Jira.
 
+For the **planned** frontend FSD layout and TypeScript file-role suffixes in
+[PWDRZ-149](https://project-wdrz.atlassian.net/browse/PWDRZ-149), see the
+[frontend target architecture](frontend/README.md). The legacy paths below
+describe the migration starting point, not a requirement to retain
+`services/` or `store/slices/` after that task.
+
 ## Universal
 
 - Use English for identifiers, test names, branch names, commit subjects and
@@ -106,15 +112,20 @@ controllers. The backend owner reviews Java-specific choices.
 
 ### Files
 
+The paths in this table reflect the current code layout. During PWDRZ-149,
+apply `.type.ts`, `.dto.ts`, `.const.ts`, and `.schema.ts` by a module's primary
+role as specified in its Jira criteria; retain framework, tooling, test, and
+useful existing public-entry filenames.
+
 | Kind                 | Naming                |
 | -------------------- | --------------------- |
 | Page route           | `app/<route>/page.tsx`, `app/<route>/layout.tsx` |
 | React component      | `PascalCase.tsx`      |
 | Hook                 | `useThing.ts`         |
-| Service / API client | `camelCase.ts` (e.g. `userService.ts`) |
+| Service / API client | `camelCase.ts` (e.g. `userClient.ts`) |
 | Store slice          | `camelCaseSlice.ts` under `store/slices/` |
-| Shared type declarations | `src/shared/types/index.ts` (current entry point; new files may be introduced when ownership is clear) |
-| Test                 | `__tests__/Thing.test.tsx`, sibling to source |
+| API DTO declarations | Domain-owned `*.dto.ts` under `src/shared/api/<domain>/` (e.g. `user/user.dto.ts`); no central DTO barrel |
+| Test                 | `__tests__/Thing.test.tsx` beside `Thing.tsx`; integration suites may add `.integration` |
 
 ### Functions and variables
 
@@ -210,6 +221,12 @@ The [Git workflow](git-workflow.md) owns branch, commit, and PR naming rules.
 что весь старый код уже приведён к ним. Размещение кода и границы сервисов
 описаны в [архитектурном гайде](architecture.md). Cleanup application code
 отслеживается в Jira отдельно.
+
+Для **целевой** frontend FSD-структуры и суффиксов TypeScript-файлов в
+[PWDRZ-149](https://project-wdrz.atlassian.net/browse/PWDRZ-149) см.
+[целевую архитектуру frontend](frontend/README.md). Старые пути ниже —
+отправная точка миграции, а не требование сохранить `services/` или
+`store/slices/` после этой задачи.
 
 ### Общие правила
 
@@ -309,15 +326,20 @@ constructor injection. Java-решения проверяет backend-разра
 
 #### Файлы
 
+Пути в таблице описывают текущий layout. В рамках PWDRZ-149 применяйте
+`.type.ts`, `.dto.ts`, `.const.ts` и `.schema.ts` по основной роли модуля,
+сохраняя специальные имена framework/tooling, тестов и полезных существующих
+public entry points.
+
 | Вид | Имя |
 | --- | --- |
 | Route | `app/<route>/page.tsx`, `app/<route>/layout.tsx` |
 | React component | `PascalCase.tsx` |
 | Hook | `useThing.ts` |
-| Service / API client | `camelCase.ts`, например `userService.ts` |
+| Service / API client | `camelCase.ts`, например `userClient.ts` |
 | Store slice | `camelCaseSlice.ts` в `store/slices/` |
-| Общие типы | Сейчас `src/shared/types/index.ts`; новые файлы допустимы при ясной ответственности |
-| Test | `__tests__/Thing.test.tsx` рядом с source |
+| API DTO | Принадлежащий домену `*.dto.ts` в `src/shared/api/<domain>/`, например `user/user.dto.ts`; без общего DTO barrel |
+| Test | `__tests__/Thing.test.tsx` рядом с `Thing.tsx`; отдельный integration suite может содержать `.integration` |
 
 #### Функции и переменные
 

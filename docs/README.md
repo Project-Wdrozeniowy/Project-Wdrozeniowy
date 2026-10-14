@@ -9,7 +9,7 @@ authoritative for actual behaviour.
 
 | Reader or task | Start here | Then, if relevant |
 | --- | --- | --- |
-| New developer | [Root README](../README.md), then [developer guides](guides/README.md) | [Architecture and extension guide](guides/architecture.md), then the [frontend](../frontend/README.md) or [gateway](../gateway/README.md) README for your service |
+| New developer | [Root README](../README.md), then [developer guides](guides/README.md) | [Architecture and extension guide](guides/architecture.md), the [frontend architecture target](guides/frontend/README.md) for FSD work, then the [frontend](../frontend/README.md) or [gateway](../gateway/README.md) runbook |
 | Preparing a PR | [Developer guides and Definition of Done](guides/README.md#definition-of-done) | [Git workflow](guides/git-workflow.md), [PR guide](guides/pr-guidelines.md), [testing guide](guides/testing.md), and the [PR template](../.github/pull_request_template.md) |
 | Investigating architecture or a feature boundary | [Human-facing architecture guide](guides/architecture.md) | [Current-state capability map](codebase/ARCHITECTURE.md), [structure map](codebase/STRUCTURE.md), and the service source code |
 | Investigating the database | [Flyway migrations](../backend/src/main/resources/db/migration/) | [ER diagrams](#database-diagrams) for visual orientation |
@@ -20,6 +20,7 @@ authoritative for actual behaviour.
 [`guides/README.md`](guides/README.md) is the entry point for rules developers
 are expected to follow. Its focused companions are the
 [architecture and extension guide](guides/architecture.md),
+[frontend architecture target](guides/frontend/README.md),
 [naming conventions](guides/naming-conventions.md),
 [Git workflow](guides/git-workflow.md), [PR guide](guides/pr-guidelines.md),
 and [testing](guides/testing.md). These are contribution guidance, not

@@ -130,7 +130,6 @@ frontend\src
 frontend\src\app
 frontend\src\app\(auth)
 frontend\src\app\(main)
-frontend\src\app\_components
 frontend\src\app\favicon.ico
 frontend\src\app\globals.css
 frontend\src\app\layout.tsx

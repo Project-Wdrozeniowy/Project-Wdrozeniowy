@@ -1,6 +1,6 @@
 import { useStore } from '../index';
-import type { UserProfile } from '@/shared/types';
-import { tokenMemory } from '@/lib/tokenMemory';
+import type { UserProfile } from '@/shared/api/user/user.dto';
+import { tokenMemory } from '@/shared/auth/tokenMemory';
 
 const mockUser: UserProfile = {
   id: 42,

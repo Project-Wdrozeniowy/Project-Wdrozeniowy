@@ -10,7 +10,7 @@
 
 | Item | Observed shape | Example | Evidence |
 |------|------|---------|----------|
-| React component files | PascalCase `.tsx` | `PostCard.tsx`, `ProfileTabs.tsx` | [frontend/src/app/_components/](../../frontend/src/app/_components/) |
+| React component files | PascalCase `.tsx` | `PostCard.tsx`, `ProfileTabs.tsx` |
 | Non-component TS files | camelCase `.ts` | `authService.ts`, `usePosts.ts`, `format.ts` | [frontend/src/services/](../../frontend/src/services/) |
 | Interfaces/types | PascalCase, no `I` prefix | `AuthResponse`, `GatewayConfig`, `User` | [frontend/src/shared/types/index.ts](../../frontend/src/shared/types/index.ts), [gateway/src/types/index.ts](../../gateway/src/types/index.ts) |
 | Zustand slices | camelCase, suffix `Slice` | `createAuthSlice`, `AuthSlice` | [frontend/src/store/slices/authSlice.ts](../../frontend/src/store/slices/authSlice.ts) |

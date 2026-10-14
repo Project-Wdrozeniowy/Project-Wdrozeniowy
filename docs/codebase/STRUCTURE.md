@@ -121,8 +121,7 @@ frontend/src/app/
       dashboard/
       profile/
     forum/
-      _components/CategoryFilter.tsx
-  _components/
+      _ui/CategoryFilter.tsx
     PostCard.tsx                 ← shared post display component
 ```
 

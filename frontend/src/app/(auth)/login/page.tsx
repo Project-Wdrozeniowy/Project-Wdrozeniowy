@@ -7,14 +7,14 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema } from '@/lib/validations/auth';
-import type { LoginFormData } from '@/lib/validations/auth';
-import { authService } from '@/services/authService';
+import { loginSchema } from '@/features/sign-in/login.schema';
+import type { LoginFormData } from '@/features/sign-in/login.schema';
+import { authService } from '@/shared/api/auth/authClient';
 import { useStore } from '@/store';
-import OrbitaLogo from '@/components/ui/OrbitaLogo';
-import { apiErrorMessage, apiErrorStatus } from '@/lib/apiError';
-import { cn } from '@/lib/cn';
-import { toast } from '@/lib/toast';
+import OrbitaLogo from '@/shared/ui/OrbitaLogo';
+import { apiErrorMessage, apiErrorStatus } from '@/shared/api/client/apiError';
+import { cn } from '@/shared/lib/cn';
+import { toast } from '@/shared/lib/toast';
 
 export default function LoginPage() {
   const router = useRouter();
