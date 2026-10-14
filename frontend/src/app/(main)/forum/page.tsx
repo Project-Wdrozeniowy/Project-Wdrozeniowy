@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
-import ForumFeed from './_components/ForumFeed';
-import PostFeedSkeleton from './_components/PostFeedSkeleton';
+import ForumFeed from './_ui/ForumFeed';
+import PostFeedSkeleton from './_ui/PostFeedSkeleton';
 
 export default function ForumPage() {
   return (

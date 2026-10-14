@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
-import type { UserProfile } from '@/shared/types';
-import { tokenMemory } from '@/lib/tokenMemory';
+import type { UserProfile } from '@/shared/api/user/user.dto';
+import { tokenMemory } from '@/shared/auth/tokenMemory';
 
 export interface AuthSlice {
   user: UserProfile | null;

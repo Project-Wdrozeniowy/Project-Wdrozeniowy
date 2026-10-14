@@ -80,7 +80,7 @@ in English.
 | Setup file     | `src/test/setup.ts`                   |
 | Coverage       | Currently ≥ **65%** lines/functions/branches/statements on included source (see `frontend/vitest.config.ts`); PWDRZ-118 will reassess the policy |
 | Typecheck      | `npm run typecheck` (`tsc --noEmit`) runs as a separate step in the frontend build workflow |
-| Naming         | `*.test.ts`/`*.test.tsx` next to the source, inside `__tests__/` directories |
+| Naming         | `__tests__/<source-name>.test.ts(x)` in the source file's directory; distinct integration suites may use `<source-name>.integration.test.ts(x)` |
 
 ### What to test
 
@@ -109,7 +109,7 @@ in English.
 | Runner         | Jest with `ts-jest`                 |
 | Setup file     | `gateway/src/test/setup.ts`         |
 | Coverage       | Currently ≥ **65%** lines/functions/branches/statements (see `gateway/jest.config.js`); PWDRZ-118 will reassess the policy |
-| Layout         | `gateway/src/__tests__/*.test.ts` and feature-local `__tests__/` folders (e.g. `src/middleware/__tests__/`) |
+| Layout         | `__tests__/<source-name>.test.ts` beside the source (e.g. `src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts`) |
 
 Focus areas:
 
@@ -248,7 +248,7 @@ replayingARotatedTokenRevokesTheWholeFamily
 | Setup | `src/test/setup.ts` |
 | Coverage | Сейчас ≥ **65%** строк/functions/branches/statements по включённому коду (`frontend/vitest.config.ts`); PWDRZ-118 пересмотрит правило |
 | Typecheck | `npm run typecheck` (`tsc --noEmit`) отдельным шагом frontend build workflow |
-| Имена | `*.test.ts` / `*.test.tsx` рядом с source, в `__tests__/` |
+| Имена | `__tests__/<имя-source>.test.ts(x)` в директории исходного файла; отдельный integration suite может называться `<имя-source>.integration.test.ts(x)` |
 
 #### Что проверять
 
@@ -277,7 +277,7 @@ replayingARotatedTokenRevokesTheWholeFamily
 | Runner | Jest с `ts-jest` |
 | Setup | `gateway/src/test/setup.ts` |
 | Coverage | Сейчас ≥ **65%** строк/functions/branches/statements (`gateway/jest.config.js`); PWDRZ-118 пересмотрит правило |
-| Размещение | `gateway/src/__tests__/*.test.ts` и локальные `__tests__/`, например `src/middleware/__tests__/` |
+| Размещение | `__tests__/<имя-source>.test.ts` рядом с исходным файлом, например `src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts` |
 
 Приоритетные области: композиция middleware (auth, rate limiter, error
 handler); поведение proxy (передача headers, преобразование ошибок);

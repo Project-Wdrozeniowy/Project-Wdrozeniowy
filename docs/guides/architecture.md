@@ -60,23 +60,21 @@ see the [testing guide](testing.md).
 ## Frontend: thin routes, shared transport and state
 
 The current frontend is **not a full Feature-Sliced Design implementation**.
-For new work, group cohesive feature UI and data-flow code by responsibility
-where it makes the feature easier to extend, but keep the project's central
-transport and application-state boundaries:
+The [PWDRZ-149 frontend architecture target](frontend/README.md) defines the
+approved FSD/Next.js destination. The paths below describe **current ownership
+before migration**, not new placement rules:
 
 - `src/app/` contains Next.js route files and route composition. Move form
   submission, data-fetch orchestration, and other feature behaviour into
   components or hooks rather than growing route files.
-- `src/services/` owns HTTP requests and the shared `ApiClient`. Do not call
-  `fetch` or Axios directly from routes or UI components. Generated contract
-  bindings must preserve the existing authentication and refresh behaviour.
-- `src/store/` owns shared client/application state, with slices divided by
-  cohesive responsibility. Component-local display state can remain local;
-  React Query owns server-cache state. Neither is a reason to duplicate the
-  same shared state in a page.
-- Reusable UI belongs in `src/components/`; a component used only by one
-  route or feature may live next to that consumer. Keep imports through public
-  interfaces where a feature boundary exists.
+- `src/services/` currently holds HTTP requests and the shared `ApiClient`.
+  The target moves these responsibilities under `shared/api/`; routes and UI
+  must not create a second client or bypass token-refresh behaviour.
+- `src/store/` currently holds shared client/application state. React Query
+  owns server-cache state; the overlapping user profile copies are tracked in
+  [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150).
+- `src/components/` currently contains reusable UI. PWDRZ-149 will distribute
+  it by actual `widgets`, `features`, `shared`, or route-local responsibility.
 
 > **Existing gap:** These are architectural responsibilities, not a claim
 > that all files comply. Login and registration routes still contain
@@ -189,23 +187,22 @@ PostgreSQL enum mapping **обязателен round-trip тест с мигра
 ### Frontend: тонкие routes, общий transport и state
 
 Текущий frontend **не является полной реализацией Feature-Sliced Design**.
-Для нового кода группируйте связанные UI и data-flow части по ответственности,
-когда так функцию проще расширять, но сохраняйте центральные границы
-transport и application state:
+[Целевая архитектура PWDRZ-149](frontend/README.md) определяет согласованный
+вариант FSD вместе с Next.js. Пути ниже описывают **нынешних владельцев кода
+до миграции**, а не новые правила размещения:
 
 - `src/app/` содержит файлы маршрутов и их композицию. Submission форм,
   orchestration загрузки данных и другое feature-поведение выносите в
   компоненты или hooks, а не наращивайте route files.
-- `src/services/` владеет HTTP-запросами и общим `ApiClient`. Не вызывайте
-  `fetch` или Axios напрямую из routes/UI-компонентов. Сгенерированные
-  contract bindings должны сохранить текущую логику auth и refresh.
-- `src/store/` владеет общим клиентским/application state; slices делятся
-  по связным ответственностям. Локальное display state может остаться в
-  компоненте, server-cache state принадлежит React Query. Ни то ни другое
-  не повод дублировать общий state в странице.
-- Повторно используемый UI находится в `src/components/`; компонент одной
-  route или feature может лежать рядом с потребителем. При наличии границы
-  feature импортируйте через её публичный интерфейс.
+- `src/services/` сейчас содержит HTTP-запросы и общий `ApiClient`. В целевой
+  структуре они переходят в `shared/api/`; routes/UI не должны создавать
+  второй клиент или обходить refresh.
+- `src/store/` сейчас содержит общее клиентское/application state. Серверный
+  кеш принадлежит React Query; перекрывающиеся копии профиля вынесены в
+  [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150).
+- `src/components/` сейчас содержит повторно используемый UI. PWDRZ-149
+  распределит его по реальной ответственности `widgets`, `features`, `shared`
+  или локального route UI.
 
 > **Существующее расхождение:** Это правила ответственности, а не заявление,
 > что старый код уже им следует. Login/register routes пока содержат

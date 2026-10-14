@@ -1,11 +1,17 @@
-import { STATS, ENGAGEMENT_PER_MONTH, ACTIVITY_BY_HOUR, MONTHS } from '@/constants/dashboard';
-import { TOPIC_LABELS } from '@/constants/categories';
-import { POSTS_PER_MONTH, POSTS_BY_TOPIC } from '@/constants/posts';
-import StatCard from './_components/StatCard';
-import ChartCard from './_components/ChartCard';
-import PostsCard from './_components/PostsCard';
-import LineChart from './_components/LineChart';
-import BarChart from './_components/BarChart';
+import {
+  STATS,
+  ENGAGEMENT_PER_MONTH,
+  ACTIVITY_BY_HOUR,
+  MONTHS,
+  POSTS_PER_MONTH,
+  POSTS_BY_TOPIC,
+} from './_lib/dashboard.const';
+import { TOPIC_LABELS } from '@/shared/constants/categories.const';
+import StatCard from './_ui/StatCard';
+import ChartCard from './_ui/ChartCard';
+import PostsCard from './_ui/PostsCard';
+import LineChart from './_ui/LineChart';
+import BarChart from './_ui/BarChart';
 
 export default function DashboardPage() {
   return (

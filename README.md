@@ -177,7 +177,7 @@ Run a specific test from the relevant service directory (each block starts at th
 
 ```bash
 cd frontend
-npx vitest run src/services/__tests__/authService.test.ts
+npx vitest run src/shared/api/auth/__tests__/authClient.test.ts
 npx vitest run -t "login"
 ```
 

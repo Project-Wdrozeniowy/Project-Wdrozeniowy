@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import PostCardSkeleton from './_components/PostCardSkeleton';
-import PostCard from '@/app/_components/PostCard';
-import { usePosts } from '@/hooks/usePosts';
-import { cn } from '@/lib/cn';
+import PostCardSkeleton from './_ui/PostCardSkeleton';
+import PostCard from './_ui/PostCard';
+import { usePosts } from '@/shared/api/forum/usePosts';
+import { cn } from '@/shared/lib/cn';
 
 const SORT_TABS = ['Hot', 'New', 'Top'] as const;
 

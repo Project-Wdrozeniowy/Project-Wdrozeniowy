@@ -7,16 +7,16 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { registerSchema } from '@/lib/validations/auth';
-import type { RegisterFormData } from '@/lib/validations/auth';
-import { authService } from '@/services/authService';
+import { registerSchema } from '@/features/sign-up/register.schema';
+import type { RegisterFormData } from '@/features/sign-up/register.schema';
+import { authService } from '@/shared/api/auth/authClient';
 import { useStore } from '@/store';
-import { CATEGORIES } from '@/constants/categories';
-import OrbitaLogo from '@/components/ui/OrbitaLogo';
-import FormField from '@/components/ui/FormField';
-import { apiErrorMessage } from '@/lib/apiError';
-import { cn } from '@/lib/cn';
-import { toast } from '@/lib/toast';
+import { CATEGORIES } from '@/shared/constants/categories.const';
+import OrbitaLogo from '@/shared/ui/OrbitaLogo';
+import FormField from '@/shared/ui/FormField';
+import { apiErrorMessage } from '@/shared/api/client/apiError';
+import { cn } from '@/shared/lib/cn';
+import { toast } from '@/shared/lib/toast';
 
 export default function RegisterPage() {
   const router = useRouter();
