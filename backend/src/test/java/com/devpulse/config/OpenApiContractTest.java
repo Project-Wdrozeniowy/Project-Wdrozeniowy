@@ -4,6 +4,7 @@ import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.exceptions.base.MockitoException;
 import org.skyscreamer.jsonassert.JSONCompare;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.skyscreamer.jsonassert.JSONCompareResult;
@@ -144,7 +145,7 @@ class OpenApiContractTest {
     private static boolean answersNotImplemented(HandlerMethod handler) {
         Method method = handler.getMethod();
         Object[] emptyArguments = Arrays.stream(method.getParameterTypes())
-                .map(type -> type.isPrimitive() ? Array.get(Array.newInstance(type, 1), 0) : null)
+                .map(OpenApiContractTest::emptyValue)
                 .toArray();
         try {
             method.invoke(controllerWithMockedCollaborators(handler.getBeanType()), emptyArguments);
@@ -161,7 +162,27 @@ class OpenApiContractTest {
         Constructor<?> constructor = Arrays.stream(controllerType.getDeclaredConstructors())
                 .max(Comparator.comparingInt(Constructor::getParameterCount))
                 .orElseThrow();
-        Object[] collaborators = Arrays.stream(constructor.getParameterTypes()).map(Mockito::mock).toArray();
+        constructor.setAccessible(true);
+        Object[] collaborators = Arrays.stream(constructor.getParameterTypes())
+                .map(OpenApiContractTest::collaborator)
+                .toArray();
         return constructor.newInstance(collaborators);
+    }
+
+    /** A Mockito mock, or the empty value of a type Mockito cannot mock, such as a primitive or {@code String}. */
+    private static Object collaborator(Class<?> type) {
+        if (type.isPrimitive()) {
+            return emptyValue(type);
+        }
+        try {
+            return Mockito.mock(type);
+        } catch (MockitoException e) {
+            return null;
+        }
+    }
+
+    /** The default value of a primitive type, otherwise {@code null}. */
+    private static Object emptyValue(Class<?> type) {
+        return type.isPrimitive() ? Array.get(Array.newInstance(type, 1), 0) : null;
     }
 }
