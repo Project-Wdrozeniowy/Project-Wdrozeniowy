@@ -59,7 +59,9 @@ public class PostController {
      *
      * <p>Pagination defaults: size 20, sorted by {@code lastActivityAt} descending.
      */
-    @Operation(summary = "List posts with optional filtering and pagination")
+    @Operation(summary = "List posts with optional filtering and pagination",
+            description = "Public. Without a status filter only published and locked posts are listed. "
+                    + "A bearer token is optional and only widens what the status filter may return.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Posts returned"),
         @ApiResponse(responseCode = "400", description = "Invalid pagination or unsupported sort field")
@@ -73,7 +75,9 @@ public class PostController {
             @Parameter(description = "Filter by category slug") @RequestParam(required = false) String categorySlug,
             @Parameter(description = "Filter by tag slug") @RequestParam(required = false) String tag,
             @Parameter(description = "Filter by author username") @RequestParam(required = false) String author,
-            @Parameter(description = "Filter by status: DELETED for staff, DRAFT for admins or your own drafts")
+            @Parameter(description = "Filter by status. PUBLISHED and LOCKED work for everyone, DELETED for moderators "
+                    + "and admins, DRAFT for admins or for your own drafts together with author=<your username>; "
+                    + "a status the caller may not see is ignored")
                 @RequestParam(required = false) PostStatus status,
             @Parameter(description = "Sort field", schema = @Schema(type = "string", allowableValues = {"createdAt", "voteScore", "lastActivityAt"}, defaultValue = "lastActivityAt"))
                 @RequestParam(defaultValue = "lastActivityAt") String sort) {
@@ -110,10 +114,11 @@ public class PostController {
     }
 
     /** Returns the post identified by slug. */
-    @Operation(summary = "Get a post by slug")
+    @Operation(summary = "Get a post by slug",
+            description = "Public. A draft is visible only to its author and to admins, who need to send their bearer token.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Post found"),
-        @ApiResponse(responseCode = "404", description = "Not found")
+        @ApiResponse(responseCode = "404", description = "Not found, deleted, or a draft the caller may not see")
     })
     @GetMapping("/{slug}")
     public PostDto getPost(

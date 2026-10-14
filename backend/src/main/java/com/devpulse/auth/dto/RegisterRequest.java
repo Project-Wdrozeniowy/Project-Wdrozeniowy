@@ -1,5 +1,6 @@
 package com.devpulse.auth.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -38,6 +39,7 @@ public class RegisterRequest {
     @NotBlank
     @Email
     @Size(max = 100)
+    @Schema(format = "email")
     private String email;
 
     /**

@@ -73,7 +73,7 @@ This table is a documentation baseline, not a product roadmap. “Implemented”
 | Login, registration, refresh-token rotation, logout | Implemented in source; cross-service regression coverage remains | [AuthController](../../backend/src/main/java/com/devpulse/auth/controller/AuthController.java), [AuthProvider](../../frontend/src/providers/AuthProvider.tsx), [gateway public routes](../../gateway/src/config/index.ts); PWDRZ-114 and PWDRZ-117 track additional checks |
 | User profile and account settings API | Implemented API; frontend page incomplete | [UserController](../../backend/src/main/java/com/devpulse/user/controller/UserController.java) exists; the [profile page](../../frontend/src/app/(main)/(protected)/profile/page.tsx) is still a placeholder; PWDRZ-60 owns the FE page |
 | Forum post CRUD, pagination, search/filter API | Implemented API; frontend feed mocked | [PostController](../../backend/src/main/java/com/devpulse/forum/controller/PostController.java) and [PostService](../../backend/src/main/java/com/devpulse/forum/service/PostService.java) exist; [usePosts](../../frontend/src/hooks/usePosts.ts) returns `MOCK_POSTS` |
-| Categories, comments, tags, votes, notifications, analytics, AI, recommendations | Contract stubs / deferred | Corresponding controllers return `501 NOT_IMPLEMENTED`, for example [CommentController](../../backend/src/main/java/com/devpulse/forum/controller/CommentController.java) |
+| Categories, comments, tags, votes, notifications, analytics, AI, recommendations | Contract stubs / deferred | Corresponding controllers return `501 NOT_IMPLEMENTED` and are `@Hidden` from the published OpenAPI contract, for example [CommentController](../../backend/src/main/java/com/devpulse/forum/controller/CommentController.java) |
 | WebSocket / real-time notifications | Provisioned, not end-to-end | Spring WebSocket and gateway proxy paths exist; Socket.IO is not wired and subscriptions contain TODOs |
 | Redis | Provisioned, not integrated | Compose service exists; no Redis client dependency or runtime use is present |
 
@@ -82,7 +82,7 @@ contract. PWDRZ-91–94 and PWDRZ-98 have audit comments explaining the current
 auth/profile implementations and any changed design. PWDRZ-68 records that the
 forum adapters are implemented but the feed still uses mocks; PWDRZ-81 owns
 the feed integration. PWDRZ-114 owns missing gateway refresh/logout regression
-checks, and PWDRZ-127 owns OpenAPI availability for `501` stubs. These
+checks. PWDRZ-127 removed the `501` stubs from the published OpenAPI contract. These
 follow-ups do not change the implementation status of the original tickets.
 
 ---
@@ -123,7 +123,7 @@ follow-ups do not change the implementation status of the original tickets.
 
 - **Dual JWT verification (gateway + backend)**: Both the gateway and Spring Security verify the JWT. If the shared `JWT_SECRET` diverges between services, 100% of authenticated requests will fail with no obvious error. There is no documented secret rotation or distribution procedure.
 - **Redis declared but unused**: `docker-compose.yml` provisions Redis 7 and the backend `depends_on: redis`, but neither the backend `pom.xml` nor the gateway `package.json` has a Redis client. It is retained for future use; the first integration use case has not yet been selected. See [CONCERNS.md](CONCERNS.md).
-- **API availability is uneven**: Auth, users, and forum posts have implementation paths. Several controller contracts (comments, votes, notifications, analytics, AI, recommendations) intentionally return `501 NOT_IMPLEMENTED`; OpenAPI must not be treated as proof that every advertised operation is usable.
+- **API availability is uneven**: Auth, users, and forum posts have implementation paths. Several controller contracts (comments, votes, notifications, analytics, AI, recommendations) intentionally return `501 NOT_IMPLEMENTED`. They are hidden from the published contract, [backend/openapi.json](../../backend/openapi.json), which `OpenApiContractTest` keeps limited to implemented operations.
 - **Forum UI remains mocked at the query boundary**: [frontend/src/services/forumService.ts](../../frontend/src/services/forumService.ts) has real adapters for `/forum/posts`, but [frontend/src/hooks/usePosts.ts](../../frontend/src/hooks/usePosts.ts) still resolves `MOCK_POSTS` until the feed is migrated.
 
 ---

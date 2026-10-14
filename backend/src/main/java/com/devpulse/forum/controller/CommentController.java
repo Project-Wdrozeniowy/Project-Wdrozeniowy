@@ -4,6 +4,7 @@ import com.devpulse.common.dto.PagedResponse;
 import com.devpulse.forum.dto.CommentDto;
 import com.devpulse.forum.dto.CreateCommentRequest;
 import com.devpulse.forum.dto.UpdateCommentRequest;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -15,6 +16,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Planned comment endpoints, implemented under PWDRZ-142.
+ *
+ * <p>Every operation still answers {@code 501 Not Implemented}, so the
+ * controller is hidden from the published OpenAPI contract and its
+ * annotations serve as the design reference. When an operation is
+ * implemented, move {@code @Hidden} from the class to the operations that
+ * are still stubs; {@code OpenApiContractTest} fails while an implemented
+ * operation is hidden or a stub is published.
+ */
+@Hidden
 @Tag(name = "Forum – Comments", description = "Read and manage comments on forum posts")
 @RestController
 @RequestMapping("/forum")

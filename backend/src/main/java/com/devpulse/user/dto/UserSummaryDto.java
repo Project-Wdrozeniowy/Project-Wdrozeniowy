@@ -20,10 +20,10 @@ public class UserSummaryDto {
     @Schema(description = "Unique username", example = "johndoe")
     private String username;
 
-    @Schema(description = "Display name shown in the UI", example = "John Doe")
+    @Schema(description = "Display name shown in the UI", example = "John Doe", nullable = true)
     private String displayName;
 
-    @Schema(description = "URL of the user's avatar image")
+    @Schema(description = "URL of the user's avatar image", nullable = true)
     private String avatarUrl;
 
     @Schema(description = "User role", example = "USER", allowableValues = {"USER", "MODERATOR", "ADMIN"})

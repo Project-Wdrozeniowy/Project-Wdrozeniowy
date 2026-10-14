@@ -41,7 +41,7 @@ public class PostSummaryDto {
     @Schema(description = "Number of comments")
     private int commentCount;
 
-    @Schema(description = "Category this post belongs to")
+    @Schema(description = "Category this post belongs to; null once the category is deleted", nullable = true)
     private CategoryDto category;
 
     @Schema(description = "Post author")

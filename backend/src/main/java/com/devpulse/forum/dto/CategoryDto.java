@@ -25,7 +25,7 @@ public class CategoryDto {
     @Schema(description = "URL slug", example = "general-discussion")
     private String slug;
 
-    @Schema(description = "Category description")
+    @Schema(description = "Category description", nullable = true)
     private String description;
 
     @Schema(description = "Display order for sorting", example = "1")

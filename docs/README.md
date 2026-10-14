@@ -79,6 +79,7 @@ is a development convention.
 | --- | --- |
 | What does the application do now? | Source code and tests; use the codebase maps to find them |
 | What is the database schema? | Immutable Flyway migrations |
+| Which HTTP operations can a client use? | [`backend/openapi.json`](../backend/openapi.json), generated from the backend and kept current by `OpenApiContractTest` |
 | Which checks run? | Package/Maven configuration and `.github/workflows/` |
 | What are the team contribution rules? | [Developer guides](guides/README.md); GitHub rulesets determine technical enforcement, which must be checked separately |
 | What work is planned or complete? | Live Jira; treat the local backlog export and dated snapshots as context |
