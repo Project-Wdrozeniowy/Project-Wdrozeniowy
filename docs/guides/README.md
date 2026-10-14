@@ -17,7 +17,7 @@ that all existing code already follows them.*
 | Situation | Read |
 | --- | --- |
 | Every contributor, before a first PR | This page, [architecture and extension guide](architecture.md), [Git workflow](git-workflow.md), and [testing](testing.md) |
-| Adding a backend domain, frontend feature, gateway middleware, or API operation | [Architecture and extension guide](architecture.md), then [naming conventions](naming-conventions.md) |
+| Adding a backend domain, frontend feature, gateway middleware, or API operation | [Architecture and extension guide](architecture.md), then [frontend target architecture](frontend/README.md) for frontend work and [naming conventions](naming-conventions.md) |
 | Naming a file, type, function, table, or export | [Naming conventions](naming-conventions.md) |
 | Creating a branch, commit, or PR; resolving review feedback | [Git workflow](git-workflow.md), [PR guide](pr-guidelines.md), and the short [PR template](../../.github/pull_request_template.md) |
 | Adding tests or assessing completion | [Testing guide](testing.md) and the Definition of Done below |
@@ -110,7 +110,7 @@ descriptive and regenerate them only from verified evidence.
 | Ситуация | Документы |
 | --- | --- |
 | Перед первым PR | Эта страница, [архитектура и расширение проекта](architecture.md), [Git workflow](git-workflow.md), [тестирование](testing.md) |
-| Новый backend-домен, frontend-функция, gateway middleware или API-операция | [Архитектура](architecture.md), затем [правила именования](naming-conventions.md) |
+| Новый backend-домен, frontend-функция, gateway middleware или API-операция | [Архитектура](architecture.md), для frontend — [целевая архитектура](frontend/README.md), затем [правила именования](naming-conventions.md) |
 | Имя файла, типа, функции, таблицы или экспорта | [Правила именования](naming-conventions.md) |
 | Ветка, коммит, PR или ответ на review | [Git workflow](git-workflow.md), [PR guide](pr-guidelines.md), краткий [PR template](../../.github/pull_request_template.md) |
 | Тесты или оценка готовности | [Тестирование](testing.md) и Definition of Done ниже |

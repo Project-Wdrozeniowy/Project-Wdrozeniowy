@@ -31,7 +31,6 @@ frontend/src/
   app/               ← Next.js route files and composition; move feature orchestration out
     (auth)/          ← unauthenticated pages (login, register)
     (main)/          ← authenticated pages with layout
-    _components/     ← page-local shared components
   services/          ← API call functions (thin ApiClient wrappers)
   store/slices/      ← shared application-state slices
   shared/types/      ← domain TypeScript types
@@ -151,7 +150,7 @@ npm run lint     # eslint src (--fix for gateway)
 | Service  | Framework                           | Test location                                          |
 | -------- | ----------------------------------- | ------------------------------------------------------ |
 | Frontend | Vitest 3 + React Testing Library    | `src/**/__tests__/*.test.ts(x)`                        |
-| Gateway  | Jest 29 + ts-jest + supertest       | `src/__tests__/` and `src/middleware/__tests__/`       |
+| Gateway  | Jest 29 + ts-jest + supertest       | source-local `__tests__/` (including `src/config/` and `src/routes/`); root `src/__tests__/` for `app.ts` |
 | Backend  | JUnit 5 + Mockito + Spring Boot Test | mirrors `src/main/java/`                              |
 
 - Current configured coverage thresholds: ≥ 65% frontend/gateway (all metrics) and ≥ 65% backend (JaCoCo line coverage). PWDRZ-118 owns any policy change.

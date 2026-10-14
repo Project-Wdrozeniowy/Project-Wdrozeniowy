@@ -2,6 +2,8 @@
 
 Next.js 16 application served on port `3001` in local development. It communicates with the gateway, not directly with Spring Boot.
 
+The source layout is being migrated under PWDRZ-149. See the [frontend target architecture](../docs/guides/frontend/README.md) for the approved FSD/Next.js ownership plan; some moves are already in progress.
+
 ## Quick start
 
 ```bash
@@ -32,11 +34,11 @@ Tests use Vitest and React Testing Library. The configured coverage threshold is
 ## Authentication and API boundary
 
 - Access tokens stay in memory; refresh tokens are `HttpOnly` cookies. Do not add browser storage for tokens.
-- All requests use `src/services/api.ts` and `NEXT_PUBLIC_API_URL`.
-- The forum service has API adapters, but the feed currently still uses mock data through `src/hooks/usePosts.ts`; see the relevant Jira task before replacing it.
+- API requests use `src/shared/api/client/api.ts` and `NEXT_PUBLIC_API_URL`; API DTOs are grouped by domain under `src/shared/api/`.
+- The forum feed loads paginated data through `src/shared/api/forum/useForumPosts.ts`. The home page still uses mock data through `src/shared/api/forum/usePosts.ts` (PWDRZ-111).
 
 ## Evidence
 
 - [package.json](package.json)
-- [src/services/api.ts](src/services/api.ts)
+- [src/shared/api/client/api.ts](src/shared/api/client/api.ts)
 - [vitest.config.ts](vitest.config.ts)

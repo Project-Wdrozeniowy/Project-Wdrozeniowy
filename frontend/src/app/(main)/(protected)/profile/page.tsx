@@ -1,6 +1,6 @@
-import ProfileTabs from './_components/ProfileTabs';
-import PostsSkeleton from './_components/PostsSkeleton';
-import ProfileView from './_components/ProfileView';
+import ProfileTabs from './_ui/ProfileTabs';
+import PostsSkeleton from './_ui/PostsSkeleton';
+import ProfileView from './_ui/ProfileView';
 
 export default function ProfilePage() {
   return (
