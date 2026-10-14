@@ -97,8 +97,16 @@ describe('categoryService.list >-65 GET /forum/categories', () => {
   it('calls apiClient.get with /forum/categories', async () => {
     mockApiClient.get.mockResolvedValue([mockCategory]);
     const result = await categoryService.list();
-    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/categories');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/categories', undefined);
     expect(result).toEqual([mockCategory]);
+  });
+
+  it('passes the request config through', async () => {
+    mockApiClient.get.mockResolvedValue([mockCategory]);
+    await categoryService.list({ skipErrorToast: true });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/categories', {
+      skipErrorToast: true,
+    });
   });
 });
 
@@ -182,8 +190,17 @@ describe('postService.create >-65 POST /forum/posts', () => {
     const data = { title: 'Hello World', content: 'Content', categoryId: 1 };
     mockApiClient.post.mockResolvedValue(mockPost);
     const result = await postService.create(data);
-    expect(mockApiClient.post).toHaveBeenCalledWith('/forum/posts', data);
+    expect(mockApiClient.post).toHaveBeenCalledWith('/forum/posts', data, undefined);
     expect(result).toEqual(mockPost);
+  });
+
+  it('passes the request config through', async () => {
+    const data = { title: 'Hello World', content: 'Content', categoryId: 1 };
+    mockApiClient.post.mockResolvedValue(mockPost);
+    await postService.create(data, { skipErrorToast: true });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/forum/posts', data, {
+      skipErrorToast: true,
+    });
   });
 });
 
