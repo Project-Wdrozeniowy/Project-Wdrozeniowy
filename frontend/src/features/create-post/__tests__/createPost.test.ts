@@ -8,7 +8,7 @@ import {
 } from '../createPost';
 import {
   CREATE_POST_ERRORS,
-  CREATE_POST_FORBIDDEN_MESSAGE,
+  CATEGORY_NOT_FOUND_MESSAGE,
   MAX_TAGS,
   TAG_MAX_LENGTH,
 } from '../createPost.const';
@@ -121,12 +121,16 @@ describe('buildCreatePostRequest', () => {
 });
 
 describe('getCreatePostError', () => {
-  it('explains a 403', () => {
-    expect(getCreatePostError(httpError(403)).form).toBe(CREATE_POST_FORBIDDEN_MESSAGE);
+  it('maps the 400 "Category not found" to the category field', () => {
+    const error = httpError(400, { status: 400, detail: 'Category not found' });
+    expect(getCreatePostError(error)).toEqual({
+      fields: { categoryId: CATEGORY_NOT_FOUND_MESSAGE },
+    });
   });
 
-  it('maps 404 to the category field', () => {
-    expect(getCreatePostError(httpError(404)).fields.categoryId).toBeDefined();
+  it('does not treat other 404/403 answers as a category problem', () => {
+    expect(getCreatePostError(httpError(404)).form).toBeDefined();
+    expect(getCreatePostError(httpError(403)).form).toBeDefined();
   });
 
   it('maps 400 field errors, including indexed keys, to our own wording', () => {

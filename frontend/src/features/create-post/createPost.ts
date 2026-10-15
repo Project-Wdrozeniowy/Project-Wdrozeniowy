@@ -1,7 +1,7 @@
 import {
+  CATEGORY_NOT_FOUND_DETAIL,
   CATEGORY_NOT_FOUND_MESSAGE,
   CREATE_POST_ERROR_MESSAGE,
-  CREATE_POST_FORBIDDEN_MESSAGE,
   CREATE_POST_ERRORS,
   CREATE_POST_FIELDS,
   CREATE_POST_SERVER_FIELD_ERRORS,
@@ -71,12 +71,12 @@ function isCreatePostField(key: string): key is CreatePostField {
 export function getCreatePostError(error: unknown): CreatePostError {
   const status = apiErrorStatus(error);
 
-  if (status === 403) return { fields: {}, form: CREATE_POST_FORBIDDEN_MESSAGE };
-
-  if (status === 404) return { fields: { categoryId: CATEGORY_NOT_FOUND_MESSAGE } };
-
   if (status === 400) {
     const body = (error as { response?: { data?: ProblemDetail } }).response?.data;
+    // The API reports an unknown category as a plain 400, not a field error.
+    if (body?.detail === CATEGORY_NOT_FOUND_DETAIL) {
+      return { fields: { categoryId: CATEGORY_NOT_FOUND_MESSAGE } };
+    }
     const fields: CreatePostError['fields'] = {};
     for (const key of Object.keys(body?.errors ?? {})) {
       const name = key.replace(/\[\d+\]$/, '');

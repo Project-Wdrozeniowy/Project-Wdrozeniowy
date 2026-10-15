@@ -117,8 +117,10 @@ describe('CreatePostForm', () => {
     expect(screen.queryByText('Post published!')).not.toBeInTheDocument();
   });
 
-  it('puts a 404 on the category field', async () => {
-    vi.mocked(postService.create).mockRejectedValue(httpError(404));
+  it('puts an unknown category (400 Category not found) on the category field', async () => {
+    vi.mocked(postService.create).mockRejectedValue(
+      httpError(400, { status: 400, detail: 'Category not found' })
+    );
     const { user } = setup();
     await fillValid(user);
     await user.click(screen.getByRole('button', { name: 'Publish post' }));

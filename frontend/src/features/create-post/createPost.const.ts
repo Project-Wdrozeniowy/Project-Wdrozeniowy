@@ -33,9 +33,10 @@ export const CREATE_POST_SERVER_FIELD_ERRORS: Record<CreatePostField, string> = 
   tags: CREATE_POST_ERRORS.tagInvalid,
 };
 
+/** The `detail` the API sends with a 400 when `categoryId` does not exist. */
+export const CATEGORY_NOT_FOUND_DETAIL = 'Category not found';
 export const CATEGORY_NOT_FOUND_MESSAGE =
   'This category no longer exists. Please pick another one.';
-export const CREATE_POST_FORBIDDEN_MESSAGE = 'Your account is not allowed to publish posts.';
 export const CREATE_POST_ERROR_MESSAGE = 'We could not publish your post. Please try again.';
 export const CATEGORIES_ERROR_MESSAGE = 'We could not load the categories.';
 export const CATEGORIES_EMPTY_MESSAGE = 'No categories are available yet.';
