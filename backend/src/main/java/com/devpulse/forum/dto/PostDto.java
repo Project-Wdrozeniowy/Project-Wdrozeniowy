@@ -27,9 +27,9 @@ public class PostDto extends PostSummaryDto {
     @Schema(description = "Last update timestamp")
     private OffsetDateTime updatedAt;
 
-    /** Builds the full representation of {@code post}, including content and tags. */
-    public static PostDto from(Post post) {
-        return fill(PostDto.builder(), post)
+    /** Builds the full representation of {@code post}, including content, tags and the caller's vote. */
+    public static PostDto from(Post post, MyVoteDto myVote) {
+        return fill(PostDto.builder(), post, myVote)
                 .content(post.getContent())
                 .tags(post.getTags().stream()
                         .map(TagDto::from)

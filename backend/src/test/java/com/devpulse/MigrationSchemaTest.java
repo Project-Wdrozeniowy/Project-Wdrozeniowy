@@ -10,9 +10,12 @@ import com.devpulse.forum.entity.Category;
 import com.devpulse.forum.entity.Post;
 import com.devpulse.forum.entity.PostStatus;
 import com.devpulse.forum.entity.Tag;
+import com.devpulse.forum.entity.Vote;
+import com.devpulse.forum.enums.VoteType;
 import com.devpulse.forum.repository.CategoryRepository;
 import com.devpulse.forum.repository.PostRepository;
 import com.devpulse.forum.repository.TagRepository;
+import com.devpulse.forum.repository.VoteRepository;
 import com.devpulse.support.MigratedSchemaTest;
 import jakarta.persistence.EntityManager;
 import org.flywaydb.core.Flyway;
@@ -57,6 +60,9 @@ class MigrationSchemaTest {
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private VoteRepository voteRepository;
 
     @Autowired
     private EntityManager entityManager;
@@ -192,6 +198,35 @@ class MigrationSchemaTest {
 
         refreshTokenRepository.revokeAllActiveByUser(owner, OffsetDateTime.now());
         assertThat(tokenUpdatedAt(token.getId())).isAfter(past);
+    }
+
+    /** {@code votes.vote_type} is the native {@code vote_type} enum, for votes on posts and on comments. */
+    @Test
+    void votesRoundTripForBothTargetTypes() {
+        User owner = userRepository.saveAndFlush(user("schema-voter", Role.USER));
+        Long postId = postRepository.saveAndFlush(Post.builder()
+                .author(owner)
+                .title("Votes")
+                .slug("schema-votes")
+                .content("content")
+                .build()).getId();
+        Long commentId = jdbc.queryForObject(
+                "INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, 'c') RETURNING id",
+                Long.class, postId, owner.getId());
+
+        assertThat(voteRepository.insertPostVote(owner.getId(), postId, VoteType.UP.name())).isOne();
+        assertThat(voteRepository.insertPostVote(owner.getId(), postId, VoteType.DOWN.name())).isZero();
+        assertThat(voteRepository.insertCommentVote(owner.getId(), commentId, VoteType.DOWN.name())).isOne();
+
+        assertThat(voteRepository.findByUserIdAndPostId(owner.getId(), postId)).get()
+                .extracting(Vote::getVoteType, Vote::getCommentId)
+                .containsExactly(VoteType.UP, null);
+        assertThat(voteRepository.findByUserIdAndCommentId(owner.getId(), commentId)).get()
+                .satisfies(vote -> {
+                    assertThat(vote.getVoteType()).isEqualTo(VoteType.DOWN);
+                    assertThat(vote.getPostId()).isNull();
+                    assertThat(vote.getCreatedAt()).isNotNull();
+                });
     }
 
     private OffsetDateTime tokenUpdatedAt(Long id) {
