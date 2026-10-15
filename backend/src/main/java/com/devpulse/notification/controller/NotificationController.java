@@ -2,6 +2,7 @@ package com.devpulse.notification.controller;
 
 import com.devpulse.common.dto.PagedResponse;
 import com.devpulse.notification.dto.NotificationDto;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -12,6 +13,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Planned notification endpoints, implemented under PWDRZ-144.
+ *
+ * <p>Every operation still answers {@code 501 Not Implemented}, so the
+ * controller is hidden from the published OpenAPI contract and its
+ * annotations serve as the design reference. When an operation is
+ * implemented, move {@code @Hidden} from the class to the operations that
+ * are still stubs; {@code OpenApiContractTest} fails while an implemented
+ * operation is hidden or a stub is published.
+ */
+@Hidden
 @Tag(name = "Notifications", description = "Manage user notifications")
 @RestController
 @RequestMapping("/notifications")

@@ -95,25 +95,38 @@ is described as an available product path.
 
 ## API contract: current state and target
 
-**Target:** One published OpenAPI contract for **implemented operations**.
-Planned or `501`-only endpoints belong in Jira or a separate design reference,
-not among usable published operations.
-[PWDRZ-127](https://project-wdrz.atlassian.net/browse/PWDRZ-127) owns the
-backend cleanup and verification.
+The published OpenAPI contract lists **implemented operations only**. Its
+committed copy, [`backend/openapi.json`](../../backend/openapi.json), is the
+input for clients and code generation; the backend serves the same document
+at `/api/v3/api-docs` when `SWAGGER_ENABLED=true`.
 
-> **Current limitation:** Until PWDRZ-127 is complete, appearance in OpenAPI
-> does **not** prove availability. Check the controller, DTO, tests, and
-> observed HTTP response before integrating an operation.
+- Planned endpoints stay in their controllers as `501` stubs annotated with
+  `@Hidden`, so their annotations remain the design reference. Each such
+  controller names the Jira task that implements it.
+- Error responses carry an RFC 9457 `ProblemDetail` body
+  (`application/problem+json`). Every property of a response DTO is present;
+  the ones that can be `null` are marked `@Schema(nullable = true)`.
+- `OpenApiContractTest` fails when a `501` stub is published, when an
+  implemented operation is hidden, or when `backend/openapi.json` differs
+  from the generated document.
+
+**For every API change**, align backend behaviour, the published contract,
+and frontend usage. Regenerate the committed document from `backend/`, with
+the same PostgreSQL setup as the other backend tests, and review its diff in
+the PR:
+
+```bash
+./mvnw test -Dtest=OpenApiContractTest -Dopenapi.contract.update=true
+```
+
+Cross-service evidence is part of the
+[Definition of Done](README.md#definition-of-done).
 
 **Technical debt:** Frontend contract types are maintained by hand.
 [PWDRZ-130](https://project-wdrz.atlassian.net/browse/PWDRZ-130) targets
-derived types and endpoint bindings from corrected OpenAPI by the end of
+derived types and endpoint bindings from `backend/openapi.json` by the end of
 Sprint 5, without bypassing `ApiClient`'s token/cookie/401 handling. *The
 generator is not implemented yet.*
-
-**For every API change**, align backend behaviour, the published contract,
-and frontend usage. Cross-service evidence is part of the
-[Definition of Done](README.md#definition-of-done).
 
 ## Where to look next
 
@@ -222,25 +235,38 @@ Socket.IO можно назвать работающей продуктовой 
 
 ### API-контракт: текущее состояние и цель
 
-**Цель:** Один опубликованный OpenAPI-контракт только для **реализованных
-операций**. Планируемые и возвращающие только `501` endpoints должны быть в
-Jira либо отдельном design reference, а не среди пригодных к использованию
-опубликованных операций. Backend cleanup и проверка —
-[PWDRZ-127](https://project-wdrz.atlassian.net/browse/PWDRZ-127).
+Опубликованный OpenAPI-контракт содержит **только реализованные операции**.
+Его закоммиченная копия, [`backend/openapi.json`](../../backend/openapi.json),
+служит входом для клиентов и генерации кода; при `SWAGGER_ENABLED=true`
+backend отдаёт тот же документ по `/api/v3/api-docs`.
 
-> **Текущее ограничение:** Пока PWDRZ-127 не завершена, наличие операции в
-> OpenAPI **не доказывает её доступность**. Перед интеграцией проверьте
-> controller, DTO, тесты и фактический HTTP-ответ.
+- Планируемые endpoints остаются в своих controllers как `501`-заглушки с
+  `@Hidden`, поэтому их аннотации остаются design reference. Каждый такой
+  controller называет Jira-задачу, которая его реализует.
+- Ответы с ошибкой содержат RFC 9457 `ProblemDetail`
+  (`application/problem+json`). Все свойства response DTO присутствуют в
+  ответе; те, что могут быть `null`, отмечены `@Schema(nullable = true)`.
+- `OpenApiContractTest` падает, если опубликована `501`-заглушка, если
+  реализованная операция скрыта или если `backend/openapi.json` отличается
+  от сгенерированного документа.
+
+**При каждом изменении API** согласуйте backend behaviour, опубликованный
+контракт и frontend usage. Перегенерируйте закоммиченный документ из
+`backend/` (нужен тот же PostgreSQL, что и для остальных backend-тестов) и
+проверьте его diff в PR:
+
+```bash
+./mvnw test -Dtest=OpenApiContractTest -Dopenapi.contract.update=true
+```
+
+Подтверждение межсервисной работы входит в
+[Definition of Done](README.md#definition-of-done).
 
 **Technical debt:** Сейчас frontend contract types поддерживаются вручную.
 [PWDRZ-130](https://project-wdrz.atlassian.net/browse/PWDRZ-130) нацелена к
-концу Sprint 5 на генерацию типов и endpoint bindings из исправленного
-OpenAPI без обхода обработки token/cookie/401 в `ApiClient`. *Генератор ещё
-не реализован.*
-
-**При каждом изменении API** согласуйте backend behaviour, опубликованный
-контракт и frontend usage. Подтверждение межсервисной работы входит в
-[Definition of Done](README.md#definition-of-done).
+концу Sprint 5 на генерацию типов и endpoint bindings из
+`backend/openapi.json` без обхода обработки token/cookie/401 в `ApiClient`.
+*Генератор ещё не реализован.*
 
 ### Что читать дальше
 

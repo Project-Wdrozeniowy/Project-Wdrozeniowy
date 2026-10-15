@@ -2,6 +2,7 @@ package com.devpulse.ai.controller;
 
 import com.devpulse.ai.dto.SuggestTagsRequest;
 import com.devpulse.ai.dto.SuggestTagsResponse;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -13,13 +14,16 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * REST controller exposing AI-powered features.
+ * Planned AI endpoints, implemented under PWDRZ-147.
  *
- * <p>Available routes:
- * <ul>
- *   <li>{@code POST /ai/suggest-tags} — suggest tags for post content via AI API</li>
- * </ul>
+ * <p>Every operation still answers {@code 501 Not Implemented}, so the
+ * controller is hidden from the published OpenAPI contract and its
+ * annotations serve as the design reference. When an operation is
+ * implemented, move {@code @Hidden} from the class to the operations that
+ * are still stubs; {@code OpenApiContractTest} fails while an implemented
+ * operation is hidden or a stub is published.
  */
+@Hidden
 @Tag(name = "AI", description = "AI-powered features: automatic tag suggestions")
 @RestController
 @RequestMapping("/ai")

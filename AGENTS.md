@@ -310,7 +310,7 @@ docs/
 
 5. **Socket.IO is installed in the gateway** but not yet connected to a server/client flow. It is reserved for a future real-time integration, which must reconcile the current Spring STOMP/WebSocket path. Do not remove the dependency as a documentation cleanup.
 
-6. **Swagger UI** — available at `http://localhost:8080/swagger-ui.html` in development. It must be **disabled in production**. Check `OpenApiConfig.java` when adding new endpoints.
+6. **OpenAPI contract** — `backend/openapi.json` is the committed copy of the published contract and lists implemented operations only; `501` stubs are `@Hidden`. After an API change, regenerate it from `backend/` with `./mvnw test -Dtest=OpenApiContractTest -Dopenapi.contract.update=true`; `OpenApiContractTest` fails while it is stale. Swagger UI is at `http://localhost:8080/api/swagger-ui/index.html` when `SWAGGER_ENABLED=true` and must be **disabled in production**.
 
 ## Task Backlog Tracking
 

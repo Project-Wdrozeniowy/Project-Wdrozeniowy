@@ -132,6 +132,29 @@ class UserControllerTest {
     }
 
     @Test
+    void updateProfileRejectsAnAvatarUrlThatIsNotHttp() throws Exception {
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"avatarUrl\":\"ftp://files.example.com/a.png\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.avatarUrl").exists());
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void updateProfileAcceptsAnEmptyAvatarUrlThatClearsIt() throws Exception {
+        when(userService.updateProfile(any())).thenReturn(MyProfileDto.builder().id(1L).username("alice").build());
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"avatarUrl\":\"\"}"))
+                .andExpect(status().isOk());
+
+        verify(userService).updateProfile(any());
+    }
+
+    @Test
     void updateProfile_emailTakenByAnotherAccount_returns409() throws Exception {
         when(userService.updateProfile(any()))
                 .thenThrow(new AppException("Email already registered", HttpStatus.CONFLICT));

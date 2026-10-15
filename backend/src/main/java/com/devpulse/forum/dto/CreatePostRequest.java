@@ -21,8 +21,12 @@ public class CreatePostRequest {
     /** Most tags a single post may carry. */
     public static final int MAX_TAGS = 5;
 
-    /** A tag is one or more words of letters and digits joined by single hyphens. */
-    public static final String TAG_PATTERN = "[A-Za-z0-9]+(-[A-Za-z0-9]+)*";
+    /**
+     * A tag is one or more words of letters and digits joined by single hyphens.
+     * Anchored, because OpenAPI clients search for a pattern while Bean
+     * Validation matches it against the whole value.
+     */
+    public static final String TAG_PATTERN = "^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$";
 
     @NotBlank
     @Size(max = 255)
@@ -43,6 +47,6 @@ public class CreatePostRequest {
             example = "[\"spring\", \"postgresql\"]")
     private List<@NotBlank @Size(max = 50) @Pattern(regexp = TAG_PATTERN) String> tags;
 
-    @Schema(description = "Post as draft instead of publishing immediately", defaultValue = "false")
+    @Schema(description = "Post as draft instead of publishing immediately; false when omitted")
     private boolean draft = false;
 }

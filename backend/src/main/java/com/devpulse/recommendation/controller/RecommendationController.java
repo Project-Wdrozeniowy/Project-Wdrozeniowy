@@ -2,6 +2,7 @@ package com.devpulse.recommendation.controller;
 
 import com.devpulse.forum.dto.TagDto;
 import com.devpulse.recommendation.dto.RecommendedPostDto;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -15,6 +16,17 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * Planned recommendation endpoints, implemented under PWDRZ-146.
+ *
+ * <p>Every operation still answers {@code 501 Not Implemented}, so the
+ * controller is hidden from the published OpenAPI contract and its
+ * annotations serve as the design reference. When an operation is
+ * implemented, move {@code @Hidden} from the class to the operations that
+ * are still stubs; {@code OpenApiContractTest} fails while an implemented
+ * operation is hidden or a stub is published.
+ */
+@Hidden
 @Tag(name = "Recommendations", description = "Content recommendations based on activity and trends")
 @RestController
 @RequestMapping("/recommendations")

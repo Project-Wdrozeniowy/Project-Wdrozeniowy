@@ -140,6 +140,7 @@ com.devpulse/
   config/
     SecurityConfig.java
     OpenApiConfig.java
+    OpenApiContractCustomizer.java  ← error, required and nullable details of the published contract
   exception/
     AppException.java
     GlobalExceptionHandler.java
@@ -148,5 +149,6 @@ com.devpulse/
   forum/                         ← post implementation plus controller contracts for adjacent forum features
   user/                          ← profile and password-management API
   notification/, analytics/, ai/, recommendation/, websocket/
-                                  ← controller contracts; some endpoints return 501
+                                  ← controller contracts; some endpoints return 501 and are @Hidden
+                                    from the published contract, backend/openapi.json
 ```

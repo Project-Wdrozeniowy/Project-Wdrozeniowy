@@ -3,6 +3,7 @@ package com.devpulse.forum.controller;
 import com.devpulse.common.dto.PagedResponse;
 import com.devpulse.forum.dto.PostSummaryDto;
 import com.devpulse.forum.dto.TagDto;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,6 +15,17 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * Planned tag browsing endpoints, implemented under PWDRZ-143.
+ *
+ * <p>Every operation still answers {@code 501 Not Implemented}, so the
+ * controller is hidden from the published OpenAPI contract and its
+ * annotations serve as the design reference. When an operation is
+ * implemented, move {@code @Hidden} from the class to the operations that
+ * are still stubs; {@code OpenApiContractTest} fails while an implemented
+ * operation is hidden or a stub is published.
+ */
+@Hidden
 @Tag(name = "Forum – Tags", description = "Browse tags and tag-filtered posts")
 @RestController
 @RequestMapping("/forum/tags")

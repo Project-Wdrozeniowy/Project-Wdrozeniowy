@@ -22,13 +22,13 @@ public class UserProfileDto {
     @Schema(description = "Unique username", example = "johndoe")
     private String username;
 
-    @Schema(description = "Display name", example = "John Doe")
+    @Schema(description = "Display name", example = "John Doe", nullable = true)
     private String displayName;
 
-    @Schema(description = "URL of the avatar image")
+    @Schema(description = "URL of the avatar image", nullable = true)
     private String avatarUrl;
 
-    @Schema(description = "User bio")
+    @Schema(description = "User bio", nullable = true)
     private String bio;
 
     @Schema(description = "User role", example = "USER", allowableValues = {"USER", "MODERATOR", "ADMIN"})
