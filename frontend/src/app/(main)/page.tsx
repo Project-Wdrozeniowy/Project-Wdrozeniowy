@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CreatePostButton } from '@/features/create-post/CreatePostButton';
 import PostCardSkeleton from './_ui/PostCardSkeleton';
 import PostCard from './_ui/PostCard';
 import { usePosts } from '@/shared/api/forum/usePosts';
@@ -30,10 +31,7 @@ export default function HomePage() {
           ))}
         </div>
 
-        <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded transition-colors shrink-0">
-          <span>+</span>
-          <span>Create Post</span>
-        </button>
+        <CreatePostButton />
       </div>
 
       <div className="flex flex-col gap-3">

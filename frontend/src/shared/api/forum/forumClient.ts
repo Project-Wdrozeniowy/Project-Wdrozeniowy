@@ -10,7 +10,8 @@ import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 // ─── Categories ───────────────────────────────────────────────────────────────
 
 export const categoryService = {
-  list: (): Promise<Category[]> => apiClient.get<Category[]>('/forum/categories'),
+  list: (config?: AxiosRequestConfig): Promise<Category[]> =>
+    apiClient.get<Category[]>('/forum/categories', config),
 
   get: (slug: string): Promise<Category> => apiClient.get<Category>(`/forum/categories/${slug}`),
 
@@ -43,7 +44,8 @@ export const postService = {
 
   get: (slug: string): Promise<Post> => apiClient.get<Post>(`/forum/posts/${slug}`),
 
-  create: (data: CreatePostRequest): Promise<Post> => apiClient.post<Post>('/forum/posts', data),
+  create: (data: CreatePostRequest, config?: AxiosRequestConfig): Promise<Post> =>
+    apiClient.post<Post>('/forum/posts', data, config),
 
   update: (slug: string, data: UpdatePostRequest): Promise<Post> =>
     apiClient.patch<Post>(`/forum/posts/${slug}`, data),
