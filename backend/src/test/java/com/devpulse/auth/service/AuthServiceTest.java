@@ -66,7 +66,7 @@ class AuthServiceTest {
     // ───────────────────────── register ─────────────────────────
 
     @Test
-    void register_happyPath_returnsTokenPair() {
+    void registerReturnsATokenPair() {
         RegisterRequest req = new RegisterRequest();
         req.setUsername("alice");
         req.setEmail("alice@example.com");
@@ -116,7 +116,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void register_duplicateUsername_throwsConflict() {
+    void registerRejectsATakenUsernameWithConflict() {
         RegisterRequest req = new RegisterRequest();
         req.setUsername("alice");
         req.setEmail("alice@example.com");
@@ -134,7 +134,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void register_duplicateEmail_throwsConflict() {
+    void registerRejectsATakenEmailWithConflict() {
         RegisterRequest req = new RegisterRequest();
         req.setUsername("alice");
         req.setEmail("alice@example.com");
@@ -155,7 +155,7 @@ class AuthServiceTest {
     // ───────────────────────── login ─────────────────────────
 
     @Test
-    void login_happyPath_returnsTokensAndDeletesOldRefreshTokens() {
+    void loginReturnsTokensAndRevokesTheOldRefreshTokens() {
         AuthRequest req = new AuthRequest();
         req.setUsername("alice");
         req.setPassword("password123");
@@ -183,7 +183,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void login_badCredentials_propagatesAuthenticationException() {
+    void loginPropagatesTheAuthenticationExceptionForBadCredentials() {
         AuthRequest req = new AuthRequest();
         req.setUsername("alice");
         req.setPassword("wrong-password");
@@ -200,7 +200,7 @@ class AuthServiceTest {
     // ───────────────────────── refresh ─────────────────────────
 
     @Test
-    void refresh_validToken_rotatesAccessAndRefreshTokens() {
+    void refreshRotatesTheAccessAndRefreshTokens() {
         User user = User.builder()
                 .id(1L).username("alice").passwordHash("hashed").role(Role.USER).build();
         RefreshToken stored = RefreshToken.builder()
@@ -228,12 +228,12 @@ class AuthServiceTest {
     }
 
     @Test
-    void refresh_tokenNotFound_throwsUnauthorized() {
+    void refreshRejectsAnUnknownTokenAsUnauthorized() {
         when(refreshTokenRepository.findByToken("unknown-token")).thenReturn(Optional.empty());
 
         // The client-facing message is deliberately generic so that an
         // unauthenticated caller can't tell "never existed" apart from
-        // "expired" or "revoked" — see refresh_expiredToken_throwsUnauthorized
+        // "expired" or "revoked" — see refreshRejectsAnExpiredTokenAsUnauthorized
         // and AuthServiceRefreshTest for the other two cases.
         assertThatThrownBy(() -> authService.refresh("unknown-token"))
                 .isInstanceOf(AppException.class)
@@ -243,7 +243,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void refresh_expiredToken_throwsUnauthorized() {
+    void refreshRejectsAnExpiredTokenAsUnauthorized() {
         User user = User.builder()
                 .id(1L).username("alice").passwordHash("hashed").role(Role.USER).build();
         RefreshToken expired = RefreshToken.builder()

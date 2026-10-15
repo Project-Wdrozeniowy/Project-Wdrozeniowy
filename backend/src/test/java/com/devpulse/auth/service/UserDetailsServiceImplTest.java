@@ -28,7 +28,7 @@ class UserDetailsServiceImplTest {
     private UserDetailsServiceImpl userDetailsService;
 
     @Test
-    void loadUserByUsername_returnsCorrectUsernameAndPassword() {
+    void loadUserByUsernameReturnsTheUsernameAndPasswordHash() {
         User user = User.builder()
                 .id(1L)
                 .username("alice")
@@ -45,7 +45,7 @@ class UserDetailsServiceImplTest {
     }
 
     @Test
-    void loadUserByUsername_userRole_mapsToRoleUserAuthority() {
+    void userRoleMapsToRoleUserAuthority() {
         User user = User.builder()
                 .username("alice")
                 .passwordHash("hashed")
@@ -61,7 +61,7 @@ class UserDetailsServiceImplTest {
     }
 
     @Test
-    void loadUserByUsername_adminRole_mapsToRoleAdminAuthority() {
+    void adminRoleMapsToRoleAdminAuthority() {
         User user = User.builder()
                 .username("admin")
                 .passwordHash("hashed")
@@ -77,7 +77,7 @@ class UserDetailsServiceImplTest {
     }
 
     @Test
-    void loadUserByUsername_moderatorRole_mapsToRoleModeratorAuthority() {
+    void moderatorRoleMapsToRoleModeratorAuthority() {
         User user = User.builder()
                 .username("mod")
                 .passwordHash("hashed")
@@ -93,7 +93,7 @@ class UserDetailsServiceImplTest {
     }
 
     @Test
-    void loadUserByUsername_unknownUser_throwsUsernameNotFoundException() {
+    void unknownUsernameThrowsUsernameNotFoundException() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userDetailsService.loadUserByUsername("ghost"))
