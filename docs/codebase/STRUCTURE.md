@@ -137,6 +137,9 @@ com.devpulse/
     filter/         (JwtAuthenticationFilter)
     repository/     (UserRepository, RefreshTokenRepository)
     service/        (AuthService, UserDetailsServiceImpl)
+  common/
+    dto/PagedResponse.java
+    validation/ValidationPatterns.java  ← regex constants shared by request DTOs
   config/
     SecurityConfig.java
     OpenApiConfig.java

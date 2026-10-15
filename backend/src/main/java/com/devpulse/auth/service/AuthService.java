@@ -95,7 +95,10 @@ public class AuthService {
     /**
      * Registers a new user and returns a token pair.
      *
-     * @param request registration data (username, email, password)
+     * <p>The display name is optional; without it the user has none and
+     * clients show the username.
+     *
+     * @param request registration data (username, email, password, optional display name)
      * @return {@link AuthResponse} containing access and refresh tokens
      * @throws AppException HTTP 409 if the username or email is already taken
      */
@@ -112,6 +115,7 @@ public class AuthService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .displayName(request.getDisplayName())
                 .build());
 
         return buildAuthResponse(user);

@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -144,6 +145,54 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void registerPassesTheDisplayNameToTheService() throws Exception {
+        RegisterRequest req = new RegisterRequest();
+        req.setUsername("alice");
+        req.setEmail("alice@example.com");
+        req.setPassword("password123");
+        req.setDisplayName("Alice Liddell");
+
+        when(authService.register(any(RegisterRequest.class))).thenReturn(SAMPLE_RESPONSE);
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated());
+
+        verify(authService).register(argThat(sent -> "Alice Liddell".equals(sent.getDisplayName())));
+    }
+
+    @Test
+    void registerRejectsABlankDisplayName() throws Exception {
+        RegisterRequest req = new RegisterRequest();
+        req.setUsername("alice");
+        req.setEmail("alice@example.com");
+        req.setPassword("password123");
+        req.setDisplayName("   ");
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.displayName").value("must not be blank"));
+    }
+
+    @Test
+    void registerRejectsADisplayNameLongerThan100Characters() throws Exception {
+        RegisterRequest req = new RegisterRequest();
+        req.setUsername("alice");
+        req.setEmail("alice@example.com");
+        req.setPassword("password123");
+        req.setDisplayName("a".repeat(101));
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.displayName").exists());
     }
 
     // ───────────────────────── POST /auth/login ─────────────────────────

@@ -13,6 +13,7 @@ import com.devpulse.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -99,6 +100,19 @@ class AuthServiceTest {
         assertThat(response.getTokenType()).isEqualTo("Bearer");
         verify(userRepository).save(any(User.class));
         verify(refreshTokenRepository).save(any(RefreshToken.class));
+    }
+
+    @Test
+    void registerStoresTheDisplayName() {
+        RegisterRequest req = registerRequest();
+        req.setDisplayName("Alice Liddell");
+
+        assertThat(registeredUser(req).getDisplayName()).isEqualTo("Alice Liddell");
+    }
+
+    @Test
+    void registerWithoutDisplayNameLeavesItEmpty() {
+        assertThat(registeredUser(registerRequest()).getDisplayName()).isNull();
     }
 
     @Test
@@ -245,5 +259,30 @@ class AuthServiceTest {
                 .hasMessageContaining("Invalid refresh token")
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.UNAUTHORIZED));
+    }
+
+    private static RegisterRequest registerRequest() {
+        RegisterRequest req = new RegisterRequest();
+        req.setUsername("alice");
+        req.setEmail("alice@example.com");
+        req.setPassword("password123");
+        return req;
+    }
+
+    /** Registers {@code req} against stubbed collaborators and returns the user it saved. */
+    private User registeredUser(RegisterRequest req) {
+        when(passwordEncoder.encode(req.getPassword())).thenReturn("hashed");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        UserDetails ud = org.springframework.security.core.userdetails.User
+                .withUsername(req.getUsername()).password("hashed").authorities(Collections.emptyList()).build();
+        when(userDetailsService.loadUserByUsername(req.getUsername())).thenReturn(ud);
+        when(jwtUtil.generateAccessToken(ud)).thenReturn("access-token");
+        when(jwtUtil.generateRefreshToken()).thenReturn("refresh-token");
+
+        authService.register(req);
+
+        ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(saved.capture());
+        return saved.getValue();
     }
 }
