@@ -27,8 +27,14 @@ public class PostDto extends PostSummaryDto {
     @Schema(description = "Last update timestamp")
     private OffsetDateTime updatedAt;
 
-    /** Builds the full representation of {@code post}, including content, tags and the caller's vote. */
-    public static PostDto from(Post post, MyVoteDto myVote) {
+    @Schema(description = "Whether the caller is subscribed to new comments on this post; false for anonymous callers")
+    private boolean subscribed;
+
+    /**
+     * Builds the full representation of {@code post}, including content, tags,
+     * the caller's vote and whether the caller is subscribed to it.
+     */
+    public static PostDto from(Post post, MyVoteDto myVote, boolean subscribed) {
         return fill(PostDto.builder(), post, myVote)
                 .content(post.getContent())
                 .tags(post.getTags().stream()
@@ -36,6 +42,7 @@ public class PostDto extends PostSummaryDto {
                         .sorted(Comparator.comparing(TagDto::getSlug))
                         .toList())
                 .updatedAt(post.getUpdatedAt())
+                .subscribed(subscribed)
                 .build();
     }
 }
