@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AxiosError } from 'axios';
 import { vi } from 'vitest';
@@ -155,5 +155,124 @@ describe('CreatePostForm', () => {
     const { user, onCancel } = setup();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onCancel).toHaveBeenCalled();
+  });
+
+  it('clears the "category no longer exists" error when the user picks a category, and reloads the list', async () => {
+    vi.mocked(postService.create).mockRejectedValue(
+      httpError(400, { status: 400, detail: 'Category not found' })
+    );
+    const { user } = setup();
+    await fillValid(user);
+    const calls = vi.mocked(categoryService.list).mock.calls.length;
+    await user.click(screen.getByRole('button', { name: 'Publish post' }));
+    expect(await screen.findByText(/no longer exists/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(vi.mocked(categoryService.list).mock.calls.length).toBeGreaterThan(calls)
+    );
+
+    await user.selectOptions(screen.getByLabelText(/^Category/), '1');
+    expect(screen.queryByText(/no longer exists/)).not.toBeInTheDocument();
+  });
+
+  it('clears a server tag error when the tags change', async () => {
+    vi.mocked(postService.create).mockRejectedValue(
+      httpError(400, { status: 400, errors: { 'tags[0]': 'must match' } })
+    );
+    const { user } = setup();
+    await fillValid(user);
+    await user.type(screen.getByLabelText('Tags'), 'ok{Enter}');
+    await user.click(screen.getByRole('button', { name: 'Publish post' }));
+    expect(await screen.findByText(/letters, numbers and single hyphens/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Remove tag ok' }));
+    expect(screen.queryByText(/letters, numbers and single hyphens/)).not.toBeInTheDocument();
+  });
+
+  it('keeps using cached categories when a background refresh fails', async () => {
+    const { user, queryClient } = setup();
+    await screen.findByRole('option', { name: 'Gaming' });
+    vi.mocked(categoryService.list).mockRejectedValue(httpError(500));
+    await act(async () => {
+      await queryClient.invalidateQueries({ queryKey: ['forum-categories'] });
+      // Let the screen react to the failed refresh before looking at it.
+      // (React Query tells its observers from a zero-delay timer; this one is queued after it.)
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    // The refresh failed, but the screen must have had time to react to it.
+    expect(queryClient.getQueryState(['forum-categories'])?.status).toBe('error');
+
+    expect(screen.queryByText(/could not load the categories/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^Category/)).toBeEnabled();
+    await user.selectOptions(screen.getByLabelText(/^Category/), '3');
+  });
+
+  it('gives every mounted form its own field ids', () => {
+    const client = new QueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <CreatePostForm onCancel={vi.fn()} />
+        <CreatePostForm onCancel={vi.fn()} />
+      </QueryClientProvider>
+    );
+    const ids = screen.getAllByLabelText(/^Title/).map((el) => el.id);
+    expect(new Set(ids).size).toBe(2);
+  });
+
+  it('forgets a rejected category so the same id is not sent again', async () => {
+    vi.mocked(postService.create).mockRejectedValue(
+      httpError(400, { status: 400, detail: 'Category not found' })
+    );
+    const { user } = setup();
+    await fillValid(user);
+    await user.click(screen.getByRole('button', { name: 'Publish post' }));
+    await screen.findByText(/no longer exists/);
+
+    expect(screen.getByLabelText(/^Category/)).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Publish post' })).toBeDisabled();
+    expect(postService.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('moves focus to the category select after the category is rejected', async () => {
+    vi.mocked(postService.create).mockRejectedValue(
+      httpError(400, { status: 400, detail: 'Category not found' })
+    );
+    const { user } = setup();
+    await fillValid(user);
+    await user.click(screen.getByRole('button', { name: 'Publish post' }));
+    await screen.findByText(/no longer exists/);
+    await waitFor(() => expect(screen.getByLabelText(/^Category/)).toHaveFocus());
+  });
+
+  it('stops offering a rejected category even when reloading the list fails', async () => {
+    vi.mocked(postService.create).mockRejectedValue(
+      httpError(400, { status: 400, detail: 'Category not found' })
+    );
+    const { user } = setup();
+    await fillValid(user);
+    vi.mocked(categoryService.list).mockRejectedValue(httpError(500));
+    await user.click(screen.getByRole('button', { name: 'Publish post' }));
+    await screen.findByText(/no longer exists/);
+
+    await waitFor(() =>
+      expect(screen.queryByRole('option', { name: 'Gaming' })).not.toBeInTheDocument()
+    );
+    expect(screen.getByRole('option', { name: 'AI / Tech' })).toBeInTheDocument();
+  });
+
+  it('does not announce "no categories" while the list reloads after the only category was rejected', async () => {
+    vi.mocked(categoryService.list).mockResolvedValue([categories[0]] as never);
+    vi.mocked(postService.create).mockRejectedValue(
+      httpError(400, { status: 400, detail: 'Category not found' })
+    );
+    const { user } = setup();
+    await user.type(screen.getByLabelText(/^Title/), 'T');
+    await user.selectOptions(await screen.findByLabelText(/^Category/), '1');
+    await user.type(screen.getByLabelText(/^Body/), 'B');
+    vi.mocked(categoryService.list).mockReturnValue(new Promise(() => {}) as never);
+    await user.click(screen.getByRole('button', { name: 'Publish post' }));
+    await screen.findByText(/no longer exists/);
+
+    expect(screen.queryByText('No categories are available yet.')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText(/^Category/)).toHaveFocus());
   });
 });

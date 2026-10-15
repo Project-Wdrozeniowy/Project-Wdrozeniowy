@@ -2,7 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import {
   emptyFormValues,
@@ -16,11 +17,13 @@ import {
   CONTENT_MAX_LENGTH,
   TITLE_MAX_LENGTH,
 } from '@/features/create-post/createPost.const';
+import type { CreatePostField } from '@/features/create-post/createPost.const';
 import { createPostSchema } from '@/features/create-post/createPost.schema';
 import type { CreatePostFormData } from '@/features/create-post/createPost.schema';
 import { FieldLabel } from '@/features/create-post/FieldLabel';
 import { TagInput } from '@/features/create-post/TagInput';
-import { useCategories } from '@/shared/api/forum/useCategories';
+import { categoriesQueryKey, useCategories } from '@/shared/api/forum/useCategories';
+import type { Category } from '@/shared/api/forum/category.dto';
 import { useCreatePost } from '@/shared/api/forum/useCreatePost';
 import { cn } from '@/shared/lib/cn';
 
@@ -46,7 +49,17 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 }
 
 export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePostFormProps) {
+  const baseId = useId();
+  const ids = {
+    title: `${baseId}-title`,
+    category: `${baseId}-category`,
+    categoryError: `${baseId}-category-error`,
+    content: `${baseId}-content`,
+  };
   const categories = useCategories();
+  const queryClient = useQueryClient();
+  // Which field should get the focus once the form is editable again (see the effect below).
+  const [focusRequest, setFocusRequest] = useState<CreatePostField | null>(null);
   const { mutateAsync, isPending } = useCreatePost();
   const [formError, setFormError] = useState<string | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
@@ -58,6 +71,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
     reset,
     setError,
     setFocus,
+    setValue,
     control,
     formState: { errors, isValid },
   } = useForm<CreatePostFormData>({
@@ -75,10 +89,17 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
     if (formError) alertRef.current?.focus();
   }, [formError]);
 
+  // The select is disabled while publishing and the catch block runs before the re-render that
+  // enables it again, so the focus move waits until the form is editable.
+  useEffect(() => {
+    if (!isPending && focusRequest) setFocus(focusRequest);
+  }, [isPending, focusRequest, setFocus]);
+
   async function onSubmit(values: CreatePostFormData) {
     if (isPending) return;
     setFormError(null);
     setPublishedSlug(null);
+    setFocusRequest(null);
     try {
       const post = await mutateAsync(buildCreatePostRequest(values));
       reset(emptyFormValues());
@@ -87,17 +108,28 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
     } catch (error: unknown) {
       const { fields, form } = getCreatePostError(error);
       const rejected = CREATE_POST_FIELDS.filter((field) => fields[field]);
+      // The rejected category is gone: forget it, so the form cannot resend the same id.
+      if (fields.categoryId) setValue('categoryId', '');
       for (const field of rejected) {
         setError(field, { type: 'server', message: fields[field] });
       }
-      if (rejected.length > 0 && rejected[0] !== 'tags') setFocus(rejected[0]);
+      if (rejected.length > 0 && rejected[0] !== 'tags') setFocusRequest(rejected[0]);
+      if (fields.categoryId) {
+        // The chosen category is gone: stop offering it right away, then reload the real list.
+        queryClient.setQueryData<Category[]>(categoriesQueryKey, (list) =>
+          list?.filter((category) => String(category.id) !== values.categoryId)
+        );
+        void categories.refetch();
+      }
       setFormError(form ?? null);
     }
   }
 
   const categoryList = categories.data ?? [];
+  // A failed background refetch keeps the cached list; only an empty result is a problem.
+  // While the list reloads (after a rejected category) an empty cache is not yet a verdict.
   const categoriesUnavailable =
-    categories.isError || (categories.isSuccess && categoryList.length === 0);
+    categoryList.length === 0 && !categories.isPending && !categories.isFetching;
 
   return (
     <form
@@ -138,33 +170,33 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
 
       <div className="flex flex-col gap-1.5">
         <FieldLabel
-          htmlFor="create-post-title"
+          htmlFor={ids.title}
           label="Title"
           required
           counter={{ used: title.trim().length, max: TITLE_MAX_LENGTH }}
         />
         <input
           {...register('title')}
-          id="create-post-title"
+          id={ids.title}
           type="text"
           placeholder="Give your post a clear title"
           readOnly={isPending}
           aria-invalid={Boolean(errors.title)}
-          aria-describedby={errors.title ? 'create-post-title-error' : undefined}
+          aria-describedby={errors.title ? `${ids.title}-error` : undefined}
           className={inputClass(Boolean(errors.title))}
         />
-        <FieldError id="create-post-title-error" message={errors.title?.message} />
+        <FieldError id={`${ids.title}-error`} message={errors.title?.message} />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <FieldLabel htmlFor="create-post-category" label="Category" required />
+        <FieldLabel htmlFor={ids.category} label="Category" required />
         <select
           {...register('categoryId')}
-          id="create-post-category"
+          id={ids.category}
           disabled={isPending || categories.isPending || categoriesUnavailable}
           aria-invalid={Boolean(errors.categoryId)}
           aria-describedby={
-            errors.categoryId || categoriesUnavailable ? 'create-post-category-error' : undefined
+            errors.categoryId || categoriesUnavailable ? ids.categoryError : undefined
           }
           className={inputClass(Boolean(errors.categoryId))}
         >
@@ -178,11 +210,11 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
           ))}
         </select>
         <FieldError
-          id="create-post-category-error"
+          id={ids.categoryError}
           message={categoriesUnavailable ? undefined : errors.categoryId?.message}
         />
         {categoriesUnavailable && (
-          <p id="create-post-category-error" role="alert" className="text-xs text-red-500">
+          <p id={ids.categoryError} role="alert" className="text-xs text-red-500">
             {categories.isError ? CATEGORIES_ERROR_MESSAGE : CATEGORIES_EMPTY_MESSAGE}
             {categories.isError && (
               <>
@@ -202,22 +234,22 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
 
       <div className="flex flex-col gap-1.5">
         <FieldLabel
-          htmlFor="create-post-content"
+          htmlFor={ids.content}
           label="Body"
           required
           counter={{ used: content.trim().length, max: CONTENT_MAX_LENGTH }}
         />
         <textarea
           {...register('content')}
-          id="create-post-content"
+          id={ids.content}
           rows={8}
           placeholder="Share your thoughts…"
           readOnly={isPending}
           aria-invalid={Boolean(errors.content)}
-          aria-describedby={errors.content ? 'create-post-content-error' : undefined}
+          aria-describedby={errors.content ? `${ids.content}-error` : undefined}
           className={cn(inputClass(Boolean(errors.content)), 'resize-y')}
         />
-        <FieldError id="create-post-content-error" message={errors.content?.message} />
+        <FieldError id={`${ids.content}-error`} message={errors.content?.message} />
       </div>
 
       <Controller

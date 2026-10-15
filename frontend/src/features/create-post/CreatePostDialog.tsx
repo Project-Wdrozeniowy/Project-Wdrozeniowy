@@ -23,6 +23,9 @@ export function CreatePostDialog({ open, onClose }: CreatePostDialogProps) {
   // A published post starts the next draft from a clean form; an unpublished draft survives a close.
   const [formKey, setFormKey] = useState(0);
   const publishedRef = useRef(false);
+  // A press that starts on the scrollbar of the overlay must not count as a click on the backdrop.
+  const pressStartedOnBackdrop = useRef(false);
+  const pressEndedOnBackdrop = useRef(false);
   // Nothing is mounted (and no category request is made) until the dialog is first opened.
   const [everOpened, setEverOpened] = useState(open);
   if (open && !everOpened) setEverOpened(true);
@@ -59,14 +62,29 @@ export function CreatePostDialog({ open, onClose }: CreatePostDialogProps) {
     if (items.length === 0) return;
     const first = items[0];
     const last = items[items.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
+    const active = document.activeElement;
+    // The panel itself holds focus when a button disabled itself: Tab goes to the first control.
+    if (event.shiftKey && (active === first || active === panelRef.current)) {
       event.preventDefault();
       last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
+    } else if (!event.shiftKey && (active === last || active === panelRef.current)) {
       event.preventDefault();
       first.focus();
     }
   }
+
+  // A button that disables itself (Publish, Cancel, Close while publishing) drops the focus to the
+  // page behind the dialog; keep it inside so the keyboard trap keeps working.
+  useEffect(() => {
+    if (!open || !publishing) return;
+    const keepFocusInside = () => {
+      if (!panelRef.current?.contains(document.activeElement)) panelRef.current?.focus();
+    };
+    keepFocusInside();
+    // Some browsers drop the focus from a disabled button only after this effect has run.
+    const frame = requestAnimationFrame(keepFocusInside);
+    return () => cancelAnimationFrame(frame);
+  }, [open, publishing]);
 
   if (!everOpened) return null;
 
@@ -78,7 +96,30 @@ export function CreatePostDialog({ open, onClose }: CreatePostDialogProps) {
         open ? 'flex' : 'hidden'
       )}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) close();
+        const overlay = event.currentTarget;
+        const scrollbarWidth = overlay.offsetWidth - overlay.clientWidth;
+        // The scrollbar sits on the right, or on the left in right-to-left layouts.
+        const onScrollbar =
+          scrollbarWidth > 0 &&
+          (event.clientX < overlay.clientLeft ||
+            event.clientX >= overlay.clientLeft + overlay.clientWidth);
+        pressStartedOnBackdrop.current = event.target === overlay && !onScrollbar;
+        pressEndedOnBackdrop.current = false;
+      }}
+      onMouseUp={(event) => {
+        pressEndedOnBackdrop.current = event.target === event.currentTarget;
+      }}
+      onClick={(event) => {
+        // Only a press that starts AND ends on the bare backdrop counts as a click on it.
+        if (
+          event.target === event.currentTarget &&
+          pressStartedOnBackdrop.current &&
+          pressEndedOnBackdrop.current
+        ) {
+          close();
+        }
+        pressStartedOnBackdrop.current = false;
+        pressEndedOnBackdrop.current = false;
       }}
       onKeyDown={handleKeyDown}
     >
@@ -87,13 +128,15 @@ export function CreatePostDialog({ open, onClose }: CreatePostDialogProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative my-8 w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl"
+        tabIndex={-1}
+        className="relative my-8 w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl outline-none"
       >
         <button
           type="button"
           onClick={close}
+          disabled={publishing}
           aria-label="Close"
-          className="absolute right-4 top-4 text-gray-500 transition-colors hover:text-gray-900"
+          className="absolute right-4 top-4 text-gray-500 transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
         >
           ✕
         </button>

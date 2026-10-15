@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { addTag, removeTag } from '@/features/create-post/createPost';
 import { FieldLabel } from '@/features/create-post/FieldLabel';
@@ -21,12 +21,14 @@ interface TagInputProps {
 
 export function TagInput({ tags, onChange, serverError, disabled }: TagInputProps) {
   const id = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
   const [typedError, setTypedError] = useState<string | null>(null);
   const error = typedError ?? serverError;
   const full = tags.length >= MAX_TAGS;
 
   function commit() {
+    if (disabled) return;
     const result = addTag(tags, text);
     if (result.error) {
       setTypedError(result.error);
@@ -40,6 +42,7 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
   // Leaving the field adds what is typed when it is a good tag. A bad one is left alone and
   // reported only on Enter, so clicking Publish or Cancel never raises an error as a side effect.
   function commitIfValid() {
+    if (disabled) return;
     const result = addTag(tags, text);
     if (result.error || result.tags === tags) return;
     setText('');
@@ -51,7 +54,7 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
       // Enter must not submit the form; a comma must not end up in the text.
       event.preventDefault();
       commit();
-    } else if (event.key === 'Backspace' && text === '' && tags.length > 0) {
+    } else if (event.key === 'Backspace' && text === '' && tags.length > 0 && !disabled) {
       onChange(tags.slice(0, -1));
     }
   }
@@ -75,7 +78,12 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
             #{tag}
             <button
               type="button"
-              onClick={() => onChange(removeTag(tags, tag))}
+              onClick={(event) => {
+                onChange(removeTag(tags, tag));
+                // The × button disappears with its tag, so a keyboard user would lose their place.
+                // A tap (detail > 0) is left alone: moving focus would open the on-screen keyboard.
+                if (event.detail === 0) inputRef.current?.focus();
+              }}
               disabled={disabled}
               aria-label={`Remove tag ${tag}`}
               className="text-blue-400 hover:text-blue-700 disabled:opacity-50"
@@ -85,6 +93,7 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
           </span>
         ))}
         <input
+          ref={inputRef}
           id={id}
           value={text}
           onChange={(event) => {
@@ -93,7 +102,8 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
           }}
           onKeyDown={handleKeyDown}
           onBlur={commitIfValid}
-          disabled={disabled || full}
+          // readOnly, not disabled: a disabled input would throw focus out of the dialog.
+          readOnly={disabled || full}
           placeholder={full ? '' : 'Add tags and press Enter'}
           autoComplete="off"
           aria-invalid={Boolean(error)}

@@ -17,6 +17,7 @@ export function useCreatePost() {
       // Cached feed pages may now be missing the new post (it sorts first). Not awaited: the
       // form must report success as soon as the post exists, not after the feeds refetch.
       void queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
+      // The home feed (mock data until PWDRZ-111, then the API) lives under ['posts'].
       void queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
