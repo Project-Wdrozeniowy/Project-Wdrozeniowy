@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import { FEED_QUERY_KEY } from '@/shared/api/forum/feedQuery.const';
 import { useStore } from '@/store';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -37,7 +38,16 @@ export default function QueryProvider({ children }: QueryProviderProps) {
   useEffect(
     () =>
       useStore.subscribe((state, previous) => {
-        if (!previous.isAuthenticated) return;
+        if (!previous.isAuthenticated) {
+          // Feed pages loaded as a guest (or before the session was restored) carry no `myVote`.
+          // Pages on screen are refetched in place (no skeleton flash); pages that are not on
+          // screen are dropped, or they would come back with guest data when opened later.
+          if (state.isAuthenticated) {
+            queryClient.removeQueries({ queryKey: FEED_QUERY_KEY, type: 'inactive' });
+            void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+          }
+          return;
+        }
         const signedOut = !state.isAuthenticated;
         const anotherUser = state.user?.id !== previous.user?.id;
         if (signedOut || anotherUser) {

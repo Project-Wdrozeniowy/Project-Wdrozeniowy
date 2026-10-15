@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { FEED_PAGE_SIZE, FEED_SORT } from '@/shared/api/forum/feedQuery.const';
+import { FEED_PAGE_SIZE, FEED_QUERY_KEY, FEED_SORT } from '@/shared/api/forum/feedQuery.const';
 import { postService } from '@/shared/api/forum/forumClient';
 
 interface FeedQuery {
@@ -17,7 +17,7 @@ interface FeedQuery {
  */
 export function useForumPosts({ page, categorySlug }: FeedQuery) {
   return useQuery({
-    queryKey: ['forum-posts', { page, categorySlug }],
+    queryKey: [...FEED_QUERY_KEY, { page, categorySlug }],
     queryFn: () =>
       postService.list(
         { page, size: FEED_PAGE_SIZE, sort: FEED_SORT, categorySlug },

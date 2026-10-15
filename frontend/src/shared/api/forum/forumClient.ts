@@ -85,8 +85,9 @@ export const tagService = {
 // ─── Votes ────────────────────────────────────────────────────────────────────
 
 export const voteService = {
-  cast: (data: VoteRequest): Promise<VoteResponse> =>
-    apiClient.post<VoteResponse>('/forum/votes', data),
+  cast: (data: VoteRequest, config?: AxiosRequestConfig): Promise<VoteResponse> =>
+    apiClient.post<VoteResponse>('/forum/votes', data, config),
 
-  retract: (id: number): Promise<void> => apiClient.delete<void>(`/forum/votes/${id}`),
+  retract: (id: number, config?: AxiosRequestConfig): Promise<void> =>
+    apiClient.delete<void>(`/forum/votes/${id}`, config),
 };
