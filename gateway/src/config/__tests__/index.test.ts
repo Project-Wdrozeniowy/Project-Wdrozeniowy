@@ -80,6 +80,11 @@ describe('Gateway config', () => {
     expect(config.publicRoutes).toContainEqual({ method: 'POST', path: '/api/auth/register' });
   });
 
+  it('includes GET /api/search in publicRoutes', () => {
+    const config = loadConfig();
+    expect(config.publicRoutes).toContainEqual({ method: 'GET', path: '/api/search' });
+  });
+
   it('uses custom rate limit window', () => {
     process.env.RATE_LIMIT_WINDOW_MS = '30000';
     const config = loadConfig();

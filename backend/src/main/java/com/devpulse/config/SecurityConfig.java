@@ -89,7 +89,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/forum/posts", "/forum/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/forum/tags", "/forum/tags/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/forum/comments/**").permitAll()
-                        // Recommendations and public user profiles
+                        // Search, recommendations and public user profiles
+                        .requestMatchers(HttpMethod.GET, "/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/recommendations/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/users/me").authenticated()
