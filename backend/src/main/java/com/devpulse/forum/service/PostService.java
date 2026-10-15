@@ -5,6 +5,7 @@ import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.auth.util.AuthenticatedUserResolver;
 import com.devpulse.exception.AppException;
 import com.devpulse.forum.dto.CreatePostRequest;
+import com.devpulse.forum.dto.MyVoteDto;
 import com.devpulse.forum.dto.PostDto;
 import com.devpulse.forum.dto.PostSummaryDto;
 import com.devpulse.forum.dto.UpdatePostRequest;
@@ -12,9 +13,11 @@ import com.devpulse.forum.entity.Category;
 import com.devpulse.forum.entity.Post;
 import com.devpulse.forum.entity.PostStatus;
 import com.devpulse.forum.entity.Tag;
+import com.devpulse.forum.entity.Vote;
 import com.devpulse.forum.repository.CategoryRepository;
 import com.devpulse.forum.repository.PostRepository;
 import com.devpulse.forum.repository.TagRepository;
+import com.devpulse.forum.repository.VoteRepository;
 import com.devpulse.forum.util.SlugUtil;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.ConstraintViolationException;
@@ -44,6 +47,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.devpulse.forum.security.ForumAuthorities.isAdmin;
+import static com.devpulse.forum.security.ForumAuthorities.isAuthenticated;
 import static com.devpulse.forum.security.ForumAuthorities.isStaff;
 import static com.devpulse.forum.security.ForumAuthorities.isUser;
 
@@ -84,6 +88,7 @@ public class PostService {
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
+    private final VoteRepository voteRepository;
     private final AuthenticatedUserResolver currentUser;
     private final TransactionTemplate transactionTemplate;
 
@@ -130,7 +135,7 @@ public class PostService {
         postRepository.save(post);
 
         adjustCounters(author.getId(), Set.of(), false, post.getTags(), isPublic(post.getStatus()));
-        return PostDto.from(reload(post.getSlug()));
+        return PostDto.from(reload(post.getSlug()), null);
     }
 
     /**
@@ -141,7 +146,8 @@ public class PostService {
      */
     @Transactional(readOnly = true)
     public PostDto getBySlug(String slug) {
-        return PostDto.from(loadReadable(slug));
+        Post post = loadReadable(slug);
+        return PostDto.from(post, myVote(post.getId()));
     }
 
     /**
@@ -186,7 +192,8 @@ public class PostService {
 
         adjustCounters(post.getAuthor().getId(),
                 tagsBefore, isPublic(statusBefore), post.getTags(), isPublic(post.getStatus()));
-        return PostDto.from(reload(slug));
+        Post updated = reload(slug);
+        return PostDto.from(updated, myVote(updated.getId()));
     }
 
     /**
@@ -219,7 +226,8 @@ public class PostService {
     public PostDto togglePin(String slug) {
         Post post = loadReadable(slug);
         post.setPinned(!post.isPinned());
-        return PostDto.from(postRepository.save(post));
+        Post saved = postRepository.save(post);
+        return PostDto.from(saved, myVote(saved.getId()));
     }
 
     /**
@@ -253,7 +261,43 @@ public class PostService {
                 ? PostSpecifications.statusEquals(filter.status())
                 : PostSpecifications.statusIn(PUBLIC_STATUSES));
 
-        return postRepository.findAll(Specification.allOf(specs), pageable).map(PostSummaryDto::from);
+        Page<Post> posts = postRepository.findAll(Specification.allOf(specs), pageable);
+        Map<Long, MyVoteDto> myVotes = myVotes(posts.map(Post::getId).getContent());
+        return posts.map(post -> PostSummaryDto.from(post, myVotes.get(post.getId())));
+    }
+
+    /**
+     * Loads a post the caller may vote on, which is a published post.
+     *
+     * @throws AppException HTTP 404 if it does not exist or the caller may not
+     *                      read it; HTTP 403 if it is locked; HTTP 409 if it
+     *                      is a draft
+     */
+    public Post loadVotable(Long id) {
+        Post post = postRepository.findById(id).orElseThrow(PostService::notFound);
+        requireReadable(post);
+        if (post.getStatus() == PostStatus.LOCKED) {
+            throw new AppException("Post is locked", HttpStatus.FORBIDDEN);
+        }
+        if (post.getStatus() != PostStatus.PUBLISHED) {
+            throw new AppException("Only published posts can be voted on", HttpStatus.CONFLICT);
+        }
+        return post;
+    }
+
+    /** The caller's vote on the post, or {@code null} for anonymous callers and posts without one. */
+    private MyVoteDto myVote(Long postId) {
+        return myVotes(List.of(postId)).get(postId);
+    }
+
+    /** The caller's votes on {@code postIds} by post id; empty for anonymous callers. */
+    private Map<Long, MyVoteDto> myVotes(List<Long> postIds) {
+        Authentication auth = auth();
+        if (postIds.isEmpty() || !isAuthenticated(auth)) {
+            return Map.of();
+        }
+        return voteRepository.findPostVotesOf(auth.getName(), postIds).stream()
+                .collect(Collectors.toMap(Vote::getPostId, MyVoteDto::from));
     }
 
     private static boolean mayList(PostStatus status, String author) {
@@ -272,6 +316,12 @@ public class PostService {
     private Post loadReadable(String slug) {
         Post post = postRepository.findBySlug(slug)
                 .orElseThrow(PostService::notFound);
+        requireReadable(post);
+        return post;
+    }
+
+    /** Deleted posts and other users' drafts (except for admins) read as 404. */
+    private static void requireReadable(Post post) {
         if (post.getStatus() == PostStatus.DELETED) {
             throw notFound();
         }
@@ -279,7 +329,6 @@ public class PostService {
                 && !isAdmin(auth()) && !isUser(auth(), post.getAuthor().getUsername())) {
             throw notFound();
         }
-        return post;
     }
 
     /** Locked posts may only be changed by staff. */

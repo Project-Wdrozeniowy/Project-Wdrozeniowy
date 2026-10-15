@@ -53,13 +53,17 @@ public class PostSummaryDto {
     @Schema(description = "Creation timestamp")
     private OffsetDateTime createdAt;
 
-    /** Builds the listing representation of {@code post}. */
-    public static PostSummaryDto from(Post post) {
-        return fill(PostSummaryDto.builder(), post).build();
+    @Schema(description = "The caller's vote on this post; null for anonymous callers and posts they have not voted on",
+            nullable = true)
+    private MyVoteDto myVote;
+
+    /** Builds the listing representation of {@code post} with the caller's vote on it, if any. */
+    public static PostSummaryDto from(Post post, MyVoteDto myVote) {
+        return fill(PostSummaryDto.builder(), post, myVote).build();
     }
 
-    /** Copies the summary fields of {@code post} into {@code builder}. */
-    static <B extends PostSummaryDtoBuilder<?, ?>> B fill(B builder, Post post) {
+    /** Copies the summary fields of {@code post} and the caller's vote into {@code builder}. */
+    static <B extends PostSummaryDtoBuilder<?, ?>> B fill(B builder, Post post, MyVoteDto myVote) {
         builder.id(post.getId())
                 .title(post.getTitle())
                 .slug(post.getSlug())
@@ -71,7 +75,8 @@ public class PostSummaryDto {
                 .category(CategoryDto.from(post.getCategory()))
                 .author(UserSummaryDto.from(post.getAuthor()))
                 .lastActivityAt(post.getLastActivityAt())
-                .createdAt(post.getCreatedAt());
+                .createdAt(post.getCreatedAt())
+                .myVote(myVote);
         return builder;
     }
 }
