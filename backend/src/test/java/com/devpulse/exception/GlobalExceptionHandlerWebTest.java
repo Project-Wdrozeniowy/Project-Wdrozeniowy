@@ -4,11 +4,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -30,6 +34,9 @@ class GlobalExceptionHandlerWebTest {
 
     @Autowired
     private WebApplicationContext context;
+
+    @Autowired
+    private GlobalExceptionHandler exceptionHandler;
 
     private MockMvc mockMvc;
 
@@ -74,9 +81,25 @@ class GlobalExceptionHandlerWebTest {
 
     @Test
     void responseStatusExceptionKeepsItsStatus() throws Exception {
-        // Contract stubs throw ResponseStatusException(NOT_IMPLEMENTED).
-        mockMvc.perform(get("/forum/categories"))
+        MockMvc stubMvc = MockMvcBuilders.standaloneSetup(new StubController())
+                .setControllerAdvice(exceptionHandler)
+                .build();
+
+        stubMvc.perform(get("/stub"))
                 .andExpect(status().isNotImplemented())
                 .andExpect(jsonPath("$.status").value(501));
+    }
+
+    /**
+     * Answers like the contract stubs, which throw ResponseStatusException(NOT_IMPLEMENTED).
+     * A real stub would turn this test red as soon as its endpoint is implemented.
+     */
+    @RestController
+    static class StubController {
+
+        @GetMapping("/stub")
+        void stub() {
+            throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        }
     }
 }
