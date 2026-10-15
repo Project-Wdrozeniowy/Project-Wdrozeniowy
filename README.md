@@ -189,7 +189,7 @@ npx jest src/middleware/__tests__/auth.test.ts
 ```bash
 cd backend
 ./mvnw test -Dtest=AuthServiceTest
-./mvnw test -Dtest=AuthControllerTest#register_success
+./mvnw test -Dtest=AuthControllerTest#registerRejectsABlankUsername
 ```
 
 ## Code Style

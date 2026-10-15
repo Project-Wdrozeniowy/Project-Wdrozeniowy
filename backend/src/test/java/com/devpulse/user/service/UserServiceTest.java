@@ -59,7 +59,7 @@ class UserServiceTest {
     }
 
     @Test
-    void getCurrentProfile_returnsFullProfile() {
+    void getCurrentProfileReturnsTheFullProfile() {
         when(currentUser.currentUser()).thenReturn(principal);
 
         MyProfileDto response = userService.getCurrentProfile();
@@ -72,7 +72,7 @@ class UserServiceTest {
     }
 
     @Test
-    void getPublicProfile_hidesPrivateFields() {
+    void publicProfileHidesPrivateFields() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(principal));
 
         UserProfileDto response = userService.getPublicProfile("alice");
@@ -85,7 +85,7 @@ class UserServiceTest {
     }
 
     @Test
-    void getPublicProfile_throwsNotFound() {
+    void publicProfileOfAnUnknownUserThrowsNotFound() {
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getPublicProfile("ghost"))
@@ -95,7 +95,7 @@ class UserServiceTest {
     }
 
     @Test
-    void updateProfile_appliesNonNullFields() {
+    void updateProfileAppliesNonNullFields() {
         when(currentUser.currentUser()).thenReturn(principal);
 
         UpdateProfileRequest req = new UpdateProfileRequest();
@@ -113,7 +113,7 @@ class UserServiceTest {
     }
 
     @Test
-    void updateProfile_emptyStringClearsOptionalFields() {
+    void updateProfileClearsOptionalFieldsGivenAnEmptyString() {
         when(currentUser.currentUser()).thenReturn(principal);
 
         UpdateProfileRequest req = new UpdateProfileRequest();
@@ -129,7 +129,7 @@ class UserServiceTest {
     }
 
     @Test
-    void updateProfile_emailTakenConcurrently_returnsConflict() {
+    void updateProfileAnswersConflictWhenTheEmailIsTakenConcurrently() {
         // Both requests pass the existsByEmail check; the unique constraint
         // rejects the second one when it is flushed.
         when(currentUser.currentUser()).thenReturn(principal);
@@ -147,7 +147,7 @@ class UserServiceTest {
     }
 
     @Test
-    void updateProfile_rejectsDuplicateEmail() {
+    void updateProfileRejectsADuplicateEmail() {
         when(currentUser.currentUser()).thenReturn(principal);
         when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
 
@@ -162,7 +162,7 @@ class UserServiceTest {
     }
 
     @Test
-    void updateProfile_changesEmailWhenUnique() {
+    void updateProfileChangesTheEmailWhenUnique() {
         when(currentUser.currentUser()).thenReturn(principal);
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
 
@@ -176,7 +176,7 @@ class UserServiceTest {
     }
 
     @Test
-    void changePassword_rejectsWrongCurrent() {
+    void changePasswordRejectsAWrongCurrentPassword() {
         when(currentUser.currentUser()).thenReturn(principal);
         when(passwordEncoder.matches("nope", "hashed")).thenReturn(false);
 
@@ -191,7 +191,7 @@ class UserServiceTest {
     }
 
     @Test
-    void changePassword_hashesAndInvalidatesRefreshTokens() {
+    void changePasswordHashesAndInvalidatesRefreshTokens() {
         when(currentUser.currentUser()).thenReturn(principal);
         when(passwordEncoder.matches("oldPass", "hashed")).thenReturn(true);
         when(passwordEncoder.encode("brandNew123")).thenReturn("newHash");

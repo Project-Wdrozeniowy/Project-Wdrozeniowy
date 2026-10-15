@@ -193,7 +193,7 @@ and `src/middleware/__tests__/`.
 cd backend
 ./mvnw test                                              # all tests
 ./mvnw test -Dtest=AuthServiceTest                       # single class
-./mvnw test -Dtest=AuthControllerTest#register_success   # single method
+./mvnw test -Dtest=AuthControllerTest#registerRejectsABlankUsername   # single method
 ```
 
 Test config: `src/test/resources/application-test.properties` — overrides datasource, disables Flyway, uses `create-drop` DDL.

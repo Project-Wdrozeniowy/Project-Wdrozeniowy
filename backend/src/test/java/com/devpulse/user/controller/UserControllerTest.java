@@ -59,7 +59,7 @@ class UserControllerTest {
     // ───────────────────────── GET /users/me ─────────────────────────
 
     @Test
-    void currentProfile_returnsFullProfile() throws Exception {
+    void currentProfileReturnsTheFullProfile() throws Exception {
         when(userService.getCurrentProfile()).thenReturn(MyProfileDto.builder()
                 .id(1L)
                 .username("alice")
@@ -79,7 +79,7 @@ class UserControllerTest {
     // ───────────────────────── PATCH /users/me ─────────────────────────
 
     @Test
-    void updateProfile_validRequest_returnsUpdatedProfile() throws Exception {
+    void updateProfileReturnsTheUpdatedProfile() throws Exception {
         when(userService.updateProfile(any())).thenReturn(MyProfileDto.builder()
                 .id(1L)
                 .username("alice")
@@ -99,7 +99,7 @@ class UserControllerTest {
     }
 
     @Test
-    void updateProfile_bioOverContractLimit_returns400() throws Exception {
+    void updateProfileRejectsABioOverTheContractLimit() throws Exception {
         mockMvc.perform(patch("/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"bio\":\"" + "x".repeat(1001) + "\"}"))
@@ -110,7 +110,7 @@ class UserControllerTest {
     }
 
     @Test
-    void updateProfile_invalidEmail_returns400WithFieldError() throws Exception {
+    void updateProfileRejectsAnInvalidEmailWithAFieldError() throws Exception {
         mockMvc.perform(patch("/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"not-an-email\"}"))
@@ -121,7 +121,7 @@ class UserControllerTest {
     }
 
     @Test
-    void updateProfile_invalidAvatarUrl_returns400WithFieldError() throws Exception {
+    void updateProfileRejectsAnInvalidAvatarUrlWithAFieldError() throws Exception {
         mockMvc.perform(patch("/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"avatarUrl\":\"not a url\"}"))
@@ -155,7 +155,7 @@ class UserControllerTest {
     }
 
     @Test
-    void updateProfile_emailTakenByAnotherAccount_returns409() throws Exception {
+    void updateProfileAnswers409ForAnEmailOfAnotherAccount() throws Exception {
         when(userService.updateProfile(any()))
                 .thenThrow(new AppException("Email already registered", HttpStatus.CONFLICT));
 
@@ -169,7 +169,7 @@ class UserControllerTest {
     // ───────────────────────── POST /users/me/password ─────────────────────────
 
     @Test
-    void changePassword_validRequest_returns204() throws Exception {
+    void changePasswordReturns204() throws Exception {
         mockMvc.perform(post("/users/me/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"currentPassword\":\"old-password\",\"newPassword\":\"new-password-123\"}"))
@@ -179,7 +179,7 @@ class UserControllerTest {
     }
 
     @Test
-    void changePassword_newPasswordTooShort_returns400() throws Exception {
+    void changePasswordRejectsANewPasswordThatIsTooShort() throws Exception {
         mockMvc.perform(post("/users/me/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"currentPassword\":\"old-password\",\"newPassword\":\"short\"}"))
@@ -190,7 +190,7 @@ class UserControllerTest {
     }
 
     @Test
-    void changePassword_blankCurrentPassword_returns400() throws Exception {
+    void changePasswordRejectsABlankCurrentPassword() throws Exception {
         mockMvc.perform(post("/users/me/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"currentPassword\":\"\",\"newPassword\":\"new-password-123\"}"))
@@ -199,7 +199,7 @@ class UserControllerTest {
     }
 
     @Test
-    void changePassword_wrongCurrentPassword_returns400() throws Exception {
+    void changePasswordRejectsAWrongCurrentPassword() throws Exception {
         doThrow(new AppException("Current password is incorrect", HttpStatus.BAD_REQUEST))
                 .when(userService).changePassword(any());
 
@@ -213,7 +213,7 @@ class UserControllerTest {
     // ───────────────────────── GET /users/{username} ─────────────────────────
 
     @Test
-    void publicProfile_returnsContractFieldsWithoutEmail() throws Exception {
+    void publicProfileReturnsTheContractFieldsWithoutEmail() throws Exception {
         when(userService.getPublicProfile("alice")).thenReturn(UserProfileDto.builder()
                 .id(1L)
                 .username("alice")
@@ -233,7 +233,7 @@ class UserControllerTest {
     }
 
     @Test
-    void publicProfile_unknownUser_returns404() throws Exception {
+    void publicProfileOfAnUnknownUserIs404() throws Exception {
         when(userService.getPublicProfile("ghost"))
                 .thenThrow(new AppException("User not found", HttpStatus.NOT_FOUND));
 

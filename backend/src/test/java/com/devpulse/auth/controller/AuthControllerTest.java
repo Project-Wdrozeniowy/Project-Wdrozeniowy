@@ -68,7 +68,7 @@ class AuthControllerTest {
     // ───────────────────────── POST /auth/register ─────────────────────────
 
     @Test
-    void register_validRequest_returns201WithTokens() throws Exception {
+    void registerReturns201WithTokensAndSetsTheRefreshCookie() throws Exception {
         RegisterRequest req = new RegisterRequest();
         req.setUsername("alice");
         req.setEmail("alice@example.com");
@@ -93,7 +93,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_blankUsername_returns400() throws Exception {
+    void registerRejectsABlankUsername() throws Exception {
         RegisterRequest req = new RegisterRequest();
         req.setUsername("");
         req.setEmail("alice@example.com");
@@ -106,7 +106,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_invalidEmail_returns400() throws Exception {
+    void registerRejectsAnInvalidEmail() throws Exception {
         RegisterRequest req = new RegisterRequest();
         req.setUsername("alice");
         req.setEmail("not-an-email");
@@ -119,7 +119,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_passwordTooShort_returns400() throws Exception {
+    void registerRejectsAPasswordThatIsTooShort() throws Exception {
         RegisterRequest req = new RegisterRequest();
         req.setUsername("alice");
         req.setEmail("alice@example.com");
@@ -132,7 +132,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_duplicateUsername_returns409() throws Exception {
+    void registerAnswers409ForATakenUsername() throws Exception {
         RegisterRequest req = new RegisterRequest();
         req.setUsername("alice");
         req.setEmail("alice@example.com");
@@ -198,7 +198,7 @@ class AuthControllerTest {
     // ───────────────────────── POST /auth/login ─────────────────────────
 
     @Test
-    void login_validCredentials_returns200WithTokens() throws Exception {
+    void loginReturns200WithTokensForValidCredentials() throws Exception {
         AuthRequest req = new AuthRequest();
         req.setUsername("alice");
         req.setPassword("password123");
@@ -215,7 +215,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void login_blankUsername_returns400() throws Exception {
+    void loginRejectsABlankUsername() throws Exception {
         AuthRequest req = new AuthRequest();
         req.setUsername("");
         req.setPassword("password123");
@@ -227,7 +227,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void login_blankPassword_returns400() throws Exception {
+    void loginRejectsABlankPassword() throws Exception {
         AuthRequest req = new AuthRequest();
         req.setUsername("alice");
         req.setPassword("");
@@ -239,7 +239,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void login_badCredentials_returns401ProblemDetail() throws Exception {
+    void loginAnswersBadCredentialsWith401ProblemDetail() throws Exception {
         AuthRequest req = new AuthRequest();
         req.setUsername("alice");
         req.setPassword("wrong-password");
@@ -259,7 +259,7 @@ class AuthControllerTest {
     // ───────────────────────── POST /auth/refresh ─────────────────────────
 
     @Test
-    void refresh_validCookie_returns200AndRotatesCookie() throws Exception {
+    void refreshWithAValidCookieReturns200AndRotatesIt() throws Exception {
         when(authService.refresh("valid-refresh-token")).thenReturn(SAMPLE_RESPONSE);
 
         mockMvc.perform(post("/auth/refresh")
@@ -270,7 +270,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void refresh_missingCookie_returns401AndClearsCookie() throws Exception {
+    void refreshWithoutCookieReturns401AndClearsIt() throws Exception {
         when(authService.refresh(isNull()))
                 .thenThrow(new AppException("Invalid refresh token", HttpStatus.UNAUTHORIZED));
 
@@ -280,7 +280,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void refresh_invalidToken_returns401AndClearsCookie() throws Exception {
+    void refreshWithAnInvalidTokenReturns401AndClearsTheCookie() throws Exception {
         when(authService.refresh("unknown-token"))
                 .thenThrow(new AppException("Invalid refresh token", HttpStatus.UNAUTHORIZED));
 
@@ -291,7 +291,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void refresh_nonAuthFailure_doesNotClearCookie() throws Exception {
+    void refreshFailingForAnotherReasonKeepsTheCookie() throws Exception {
         when(authService.refresh("token"))
                 .thenThrow(new AppException("Boom", HttpStatus.INTERNAL_SERVER_ERROR));
 
@@ -304,7 +304,7 @@ class AuthControllerTest {
     // ───────────────────────── POST /auth/logout ─────────────────────────
 
     @Test
-    void logout_withCookie_revokesTokenAndClearsCookie() throws Exception {
+    void logoutRevokesTheTokenAndClearsTheCookie() throws Exception {
         mockMvc.perform(post("/auth/logout")
                         .cookie(new Cookie(RefreshTokenCookies.NAME, "live-token")))
                 .andExpect(status().isNoContent())
@@ -315,7 +315,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void logout_withoutCookie_isIdempotent() throws Exception {
+    void logoutWithoutCookieIsIdempotent() throws Exception {
         mockMvc.perform(post("/auth/logout"))
                 .andExpect(status().isNoContent())
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")));

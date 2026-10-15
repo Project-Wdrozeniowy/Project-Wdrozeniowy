@@ -36,7 +36,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void noAuthorizationHeader_passesRequestThrough() throws Exception {
+    void requestWithoutAuthorizationHeaderPassesThrough() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
@@ -48,7 +48,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void authorizationHeaderWithoutBearerPrefix_passesRequestThrough() throws Exception {
+    void authorizationHeaderWithoutBearerPrefixPassesThrough() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Basic dXNlcjpwYXNz");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -61,7 +61,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void bearerTokenWithInvalidJwt_passesRequestThroughWithoutAuthentication() throws Exception {
+    void invalidBearerJwtPassesThroughWithoutAuthentication() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer not.a.valid.token");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -77,7 +77,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void validBearerToken_setsAuthenticationInSecurityContext() throws Exception {
+    void validBearerTokenSetsTheAuthentication() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer valid.jwt.token");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -102,7 +102,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void bearerTokenFailsValidation_doesNotSetAuthentication() throws Exception {
+    void bearerTokenFailingValidationSetsNoAuthentication() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer expired.jwt.token");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -125,7 +125,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void alreadyAuthenticated_skipsTokenValidationAndPassesThrough() throws Exception {
+    void alreadyAuthenticatedRequestSkipsTokenValidation() throws Exception {
         // Pre-set an existing authentication in the context
         org.springframework.security.core.Authentication existing =
                 new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(

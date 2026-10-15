@@ -30,15 +30,15 @@ separately from that target.
 
 ### Naming
 
-Use descriptive camelCase method names for new Java tests, such as:
+Java test methods use descriptive camelCase names, such as:
 
 ```
 replayingARotatedTokenRevokesTheWholeFamily
 ```
 
-Older backend tests mix camelCase and underscore-separated names. Do not
-rename them as part of unrelated work; [PWDRZ-135](https://project-wdrz.atlassian.net/browse/PWDRZ-135)
-owns that backend cleanup.
+Do not use underscores to separate the parts of a name
+(`register_blankUsername_returns400`); all backend tests follow this since
+[PWDRZ-135](https://project-wdrz.atlassian.net/browse/PWDRZ-135).
 Frontend and gateway `it(...)` names should describe the expected behaviour
 in English.
 
@@ -198,15 +198,16 @@ insufficient result. *65% is not the approved long-term threshold.*
 
 #### Имена
 
-Новым Java test methods давайте описательные `camelCase`-имена, например:
+Java test methods называйте описательно в `camelCase`, например:
 
 ```text
 replayingARotatedTokenRevokesTheWholeFamily
 ```
 
-В старых backend-тестах смешаны `camelCase` и имена с `_`; не
-переименовывайте их при несвязанной работе. Cleanup —
-[PWDRZ-135](https://project-wdrz.atlassian.net/browse/PWDRZ-135).
+Не разделяйте части имени подчёркиванием
+(`register_blankUsername_returns400`); с
+[PWDRZ-135](https://project-wdrz.atlassian.net/browse/PWDRZ-135) так названы
+все backend-тесты.
 Имена `it(...)` во frontend и gateway должны по-английски описывать
 ожидаемое поведение.
 
