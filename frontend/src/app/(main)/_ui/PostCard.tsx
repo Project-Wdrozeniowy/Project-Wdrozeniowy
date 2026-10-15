@@ -1,10 +1,9 @@
 import { ACTION_UNAVAILABLE_HINT } from '@/app/(main)/_ui/postCard.const';
-import { getCategoryColor } from '@/app/(main)/forum/_lib/categoryColor';
-import type { PostCardData } from '@/app/(main)/forum/_lib/postCard';
+import { getCategoryColor } from '@/app/(main)/_lib/categoryColor';
+import type { PostCardData } from '@/app/(main)/_lib/postCard';
 import { cn } from '@/shared/lib/cn';
 import { CommentIcon, ShareIcon, SaveIcon } from '@/shared/ui/icons';
 import ActionButton from '@/features/post-interactions/ActionButton';
-import { LocalVoteColumn } from '@/features/post-interactions/LocalVoteColumn';
 import { PostVoteColumn } from '@/features/post-interactions/PostVoteColumn';
 
 interface PostCardProps {
@@ -12,20 +11,13 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const { actionsEnabled, voting } = post;
-  const actionHint = actionsEnabled ? undefined : ACTION_UNAVAILABLE_HINT;
-
   const categoryColor = post.category
     ? getCategoryColor({ name: post.category, slug: post.categorySlug })
     : '';
 
   return (
     <article className="bg-slate-800 rounded-xl p-5 flex gap-4 hover:bg-slate-800/80 transition-colors">
-      {voting ? (
-        <PostVoteColumn postId={voting.postId} score={post.votes} myVote={voting.myVote} />
-      ) : (
-        <LocalVoteColumn score={post.votes} />
-      )}
+      <PostVoteColumn postId={post.voting.postId} score={post.votes} myVote={post.voting.myVote} />
 
       <div className="flex-1 min-w-0 flex flex-col gap-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -64,21 +56,16 @@ export default function PostCard({ post }: PostCardProps) {
           <ActionButton
             icon={<CommentIcon />}
             label={`${post.comments} Comments`}
-            disabled={!actionsEnabled}
-            title={actionHint}
+            disabled
+            title={ACTION_UNAVAILABLE_HINT}
           />
           <ActionButton
             icon={<ShareIcon />}
             label="Share"
-            disabled={!actionsEnabled}
-            title={actionHint}
+            disabled
+            title={ACTION_UNAVAILABLE_HINT}
           />
-          <ActionButton
-            icon={<SaveIcon />}
-            label="Save"
-            disabled={!actionsEnabled}
-            title={actionHint}
-          />
+          <ActionButton icon={<SaveIcon />} label="Save" disabled title={ACTION_UNAVAILABLE_HINT} />
         </div>
       </div>
     </article>

@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { CreatePostButton } from '@/features/create-post/CreatePostButton';
 import ForumFeed from './_ui/ForumFeed';
-import PostFeedSkeleton from './_ui/PostFeedSkeleton';
+import PostFeedSkeleton from '@/app/(main)/_ui/PostFeedSkeleton';
 
 export default function ForumPage() {
   return (

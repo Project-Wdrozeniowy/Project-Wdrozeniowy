@@ -28,7 +28,7 @@ export const CATEGORY_COLOR: Record<CategoryKey, string> = Object.fromEntries(
   CATEGORIES.map(({ key, color }) => [key, color])
 ) as Record<CategoryKey, string>;
 
-// Display-name enum used by mock post data and forum components
+// Display-name enum used by the forum components
 export enum Topic {
   AI = 'AI / Tech',
   Gaming = 'Gaming',

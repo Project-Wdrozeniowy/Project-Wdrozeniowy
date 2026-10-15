@@ -1,5 +1,4 @@
-import type { MockPost } from '@/shared/api/forum/mockPosts.const';
-import { PINNED_BADGE_LABEL } from '@/app/(main)/forum/_lib/postCard.const';
+import { PINNED_BADGE_LABEL } from '@/app/(main)/_lib/postCard.const';
 import type { PostSummary } from '@/shared/api/forum/post.dto';
 import type { MyVote } from '@/shared/api/forum/vote.dto';
 import { formatTimeAgo } from '@/utils/format';
@@ -20,13 +19,8 @@ export interface PostCardData {
   excerpt: string | null;
   votes: number;
   comments: number;
-  /**
-   * Sharing, saving and the comments button work only for the fixtures. Real posts have no API for
-   * them yet, so those controls are disabled instead of pretending to succeed.
-   */
-  actionsEnabled: boolean;
-  /** Set for posts from the API: what voting needs. `null` for fixtures, which vote locally. */
-  voting: { postId: number; myVote: MyVote | null } | null;
+  /** What voting needs: the post to vote on and the user's current vote. */
+  voting: { postId: number; myVote: MyVote | null };
 }
 
 export function toPostCardData(post: PostSummary, now?: number): PostCardData {
@@ -45,25 +39,6 @@ export function toPostCardData(post: PostSummary, now?: number): PostCardData {
     excerpt: null,
     votes: post.voteScore,
     comments: post.commentCount,
-    actionsEnabled: false,
     voting: { postId: post.id, myVote: post.myVote },
-  };
-}
-
-/** The home page still renders fixtures (PWDRZ-111 migrates it to the API). */
-export function mockToPostCardData(post: MockPost): PostCardData {
-  return {
-    id: post.id,
-    username: post.username,
-    userInitial: post.userInitial,
-    timeAgo: post.timeAgo,
-    badge: post.badge,
-    category: post.category,
-    title: post.title,
-    excerpt: post.excerpt,
-    votes: post.votes,
-    comments: post.comments,
-    actionsEnabled: true,
-    voting: null,
   };
 }

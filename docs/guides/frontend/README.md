@@ -30,7 +30,7 @@ frontend/src/
 │   ├── _guards/                      # Route access guards
 │   ├── (auth)/                       # login and register route entries
 │   ├── (main)/
-│   │   ├── _ui/                      # route-group PostCard and skeleton
+│   │   ├── _ui/                      # route-group PostCard, HomeFeed, feed states
 │   │   ├── forum/
 │   │   │   ├── _ui/                  # feed, filter, pagination, states
 │   │   │   └── [slug]/              # post route composition

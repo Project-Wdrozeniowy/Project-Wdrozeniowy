@@ -35,7 +35,7 @@ Tests use Vitest and React Testing Library. The configured coverage threshold is
 
 - Access tokens stay in memory; refresh tokens are `HttpOnly` cookies. Do not add browser storage for tokens.
 - API requests use `src/shared/api/client/api.ts` and `NEXT_PUBLIC_API_URL`; API DTOs are grouped by domain under `src/shared/api/`.
-- The forum feed loads paginated data through `src/shared/api/forum/useForumPosts.ts`. The home page still uses mock data through `src/shared/api/forum/usePosts.ts` (PWDRZ-111).
+- The forum feed loads paginated data through `src/shared/api/forum/useForumPosts.ts`. The home page shows the first page of the same feed (`src/app/(main)/_ui/HomeFeed.tsx`).
 
 ## Evidence
 

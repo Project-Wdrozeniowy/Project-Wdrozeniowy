@@ -2,16 +2,13 @@
 
 import { useState } from 'react';
 import { CreatePostButton } from '@/features/create-post/CreatePostButton';
-import PostCardSkeleton from './_ui/PostCardSkeleton';
-import PostCard from './_ui/PostCard';
-import { usePosts } from '@/shared/api/forum/usePosts';
+import HomeFeed from './_ui/HomeFeed';
 import { cn } from '@/shared/lib/cn';
 
 const SORT_TABS = ['Hot', 'New', 'Top'] as const;
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState(0);
-  const { data: posts, isLoading } = usePosts();
 
   return (
     <div className="flex flex-col gap-4">
@@ -34,11 +31,7 @@ export default function HomePage() {
         <CreatePostButton />
       </div>
 
-      <div className="flex flex-col gap-3">
-        {isLoading || !posts
-          ? Array.from({ length: 5 }).map((_, i) => <PostCardSkeleton key={i} />)
-          : posts.map((post) => <PostCard key={post.id} post={post} />)}
-      </div>
+      <HomeFeed />
     </div>
   );
 }
