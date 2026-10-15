@@ -21,6 +21,9 @@
     "description" : "Browse and manage forum posts",
     "name" : "Forum – Posts"
   }, {
+    "description" : "Search posts, users and tags",
+    "name" : "Search"
+  }, {
     "description" : "Administration endpoints, ADMIN role only",
     "name" : "Admin"
   }, {
@@ -894,6 +897,79 @@
         "tags" : [ "Forum – Votes" ]
       }
     },
+    "/search" : {
+      "get" : {
+        "description" : "Public. Case-insensitive substring match of the trimmed query. Without a type every kind is searched and paged on its own; with a type only that kind is returned and the others are null. A term that matches nothing returns empty pages.",
+        "operationId" : "search",
+        "parameters" : [ {
+          "description" : "Search term, 2 to 100 characters after trimming",
+          "example" : "spring",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : ""
+          }
+        }, {
+          "description" : "Return only this kind of result",
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "Kind of search result",
+            "enum" : [ "POST", "USER", "TAG" ]
+          }
+        }, {
+          "description" : "Page number of each kind (0-based)",
+          "example" : 0,
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "description" : "Page size of each kind, 1 to 50",
+          "example" : 5,
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 5
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SearchResultsDto"
+                }
+              }
+            },
+            "description" : "Results returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Query shorter than 2 or longer than 100 characters, unknown type, or invalid pagination"
+          }
+        },
+        "summary" : "Search posts, users and tags",
+        "tags" : [ "Search" ]
+      }
+    },
     "/users/me" : {
       "get" : {
         "operationId" : "currentProfile",
@@ -1327,6 +1403,98 @@
         },
         "required" : [ "content", "first", "last", "page", "size", "totalElements", "totalPages" ]
       },
+      "PagedResponseTagDto" : {
+        "type" : "object",
+        "description" : "Generic paginated response wrapper",
+        "properties" : {
+          "content" : {
+            "type" : "array",
+            "description" : "Page content",
+            "items" : {
+              "$ref" : "#/components/schemas/TagDto"
+            }
+          },
+          "first" : {
+            "type" : "boolean",
+            "description" : "Whether this is the first page"
+          },
+          "last" : {
+            "type" : "boolean",
+            "description" : "Whether this is the last page"
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Current page number (0-based)",
+            "example" : 0
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Page size",
+            "example" : 20
+          },
+          "totalElements" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Total number of elements",
+            "example" : 100
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Total number of pages",
+            "example" : 5
+          }
+        },
+        "required" : [ "content", "first", "last", "page", "size", "totalElements", "totalPages" ]
+      },
+      "PagedResponseUserSummaryDto" : {
+        "type" : "object",
+        "description" : "Generic paginated response wrapper",
+        "properties" : {
+          "content" : {
+            "type" : "array",
+            "description" : "Page content",
+            "items" : {
+              "$ref" : "#/components/schemas/UserSummaryDto"
+            }
+          },
+          "first" : {
+            "type" : "boolean",
+            "description" : "Whether this is the first page"
+          },
+          "last" : {
+            "type" : "boolean",
+            "description" : "Whether this is the last page"
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Current page number (0-based)",
+            "example" : 0
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Page size",
+            "example" : 20
+          },
+          "totalElements" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Total number of elements",
+            "example" : 100
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Total number of pages",
+            "example" : 5
+          }
+        },
+        "required" : [ "content", "first", "last", "page", "size", "totalElements", "totalPages" ]
+      },
       "PostDto" : {
         "type" : "object",
         "description" : "Full post details — extends PostSummaryDto with content, tags and updatedAt",
@@ -1569,6 +1737,42 @@
           }
         },
         "required" : [ "email", "password", "username" ]
+      },
+      "SearchResultsDto" : {
+        "type" : "object",
+        "description" : "Search results, one page per kind; a kind left out by the type filter is null",
+        "properties" : {
+          "posts" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/PagedResponsePostSummaryDto"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Published and locked posts whose title or content contains the query, most recent activity first; navigate with the slug"
+          },
+          "query" : {
+            "type" : "string",
+            "description" : "The query as it was matched, without surrounding whitespace",
+            "example" : "spring"
+          },
+          "tags" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/PagedResponseTagDto"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Tags in use whose name contains the query, most used first; navigate with the slug"
+          },
+          "users" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/PagedResponseUserSummaryDto"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Active users whose username or display name contains the query, by username; navigate with the username"
+          }
+        },
+        "required" : [ "posts", "query", "tags", "users" ]
       },
       "TagDto" : {
         "type" : "object",

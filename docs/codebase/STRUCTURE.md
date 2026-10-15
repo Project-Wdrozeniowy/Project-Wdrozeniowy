@@ -151,6 +151,7 @@ com.devpulse/
     JwtUtil.java
   forum/                         ← post implementation plus controller contracts for adjacent forum features
   user/                          ← profile and password-management API
+  search/                        ← GET /search across posts, users and tags
   notification/, analytics/, ai/, recommendation/, websocket/
                                   ← controller contracts; some endpoints return 501 and are @Hidden
                                     from the published contract, backend/openapi.json

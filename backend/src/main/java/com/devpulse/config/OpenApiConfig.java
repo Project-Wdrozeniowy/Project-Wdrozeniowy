@@ -74,6 +74,7 @@ public class OpenApiConfig {
                 new Tag().name("Users").description("User profile endpoints"),
                 new Tag().name("Forum \u2013 Categories").description("Browse and manage forum categories"),
                 new Tag().name("Forum \u2013 Posts").description("Browse and manage forum posts"),
+                new Tag().name("Search").description("Search posts, users and tags"),
                 new Tag().name("Admin").description("Administration endpoints, ADMIN role only")
         );
     }

@@ -1,6 +1,7 @@
 package com.devpulse.forum.service;
 
 import com.devpulse.auth.entity.User;
+import com.devpulse.common.util.LikePatterns;
 import com.devpulse.forum.entity.Category;
 import com.devpulse.forum.entity.Post;
 import com.devpulse.forum.entity.PostStatus;
@@ -25,19 +26,16 @@ public final class PostSpecifications {
     private PostSpecifications() {
     }
 
-    /** Escape character for LIKE patterns built from user input. */
-    private static final char LIKE_ESCAPE = '\\';
-
     /**
      * Case-insensitive substring search across title <em>and</em> content.
      * {@code %} and {@code _} in {@code q} match literally, so searching for
      * "100%" doesn't turn into a wildcard.
      */
     public static Specification<Post> textMatches(String q) {
-        String pattern = "%" + escapeLike(q.toLowerCase(Locale.ROOT)) + "%";
+        String pattern = LikePatterns.containing(q);
         return (root, query, cb) -> cb.or(
-                cb.like(cb.lower(root.get("title")), pattern, LIKE_ESCAPE),
-                cb.like(cb.lower(root.get("content")), pattern, LIKE_ESCAPE));
+                cb.like(cb.lower(root.get("title")), pattern, LikePatterns.ESCAPE),
+                cb.like(cb.lower(root.get("content")), pattern, LikePatterns.ESCAPE));
     }
 
     /** Restrict to posts carrying the tag with the given slug. */
@@ -80,11 +78,5 @@ public final class PostSpecifications {
     /** Restrict to any of the given statuses. */
     public static Specification<Post> statusIn(Collection<PostStatus> statuses) {
         return (root, query, cb) -> root.get("status").in(statuses);
-    }
-
-    private static String escapeLike(String value) {
-        return value.replace("\\", "\\\\")
-                .replace("%", "\\%")
-                .replace("_", "\\_");
     }
 }

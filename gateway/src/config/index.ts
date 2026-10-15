@@ -57,6 +57,9 @@ const config: GatewayConfig = {
     // User profiles — public read
     { method: 'GET', pathPrefix: '/api/users' },
 
+    // Search across posts, users and tags — public
+    { method: 'GET', path: '/api/search' },
+
     // Recommendations — always public
     { method: 'GET', pathPrefix: '/api/recommendations' },
 

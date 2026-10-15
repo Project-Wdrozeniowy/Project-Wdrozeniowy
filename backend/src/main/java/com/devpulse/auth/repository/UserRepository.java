@@ -1,6 +1,9 @@
 package com.devpulse.auth.repository;
 
 import com.devpulse.auth.entity.User;
+import com.devpulse.auth.entity.UserStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -55,4 +58,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.postCount = u.postCount + :delta WHERE u.id = :userId")
     int adjustPostCount(@Param("userId") Long userId, @Param("delta") int delta);
+
+    /**
+     * Users with {@code status} whose username or display name matches
+     * {@code pattern}, a lower-case {@code LIKE} pattern from
+     * {@link com.devpulse.common.util.LikePatterns#containing}.
+     */
+    @Query("SELECT u FROM User u WHERE u.status = :status "
+            + "AND (LOWER(u.username) LIKE :pattern ESCAPE '\\' OR LOWER(u.displayName) LIKE :pattern ESCAPE '\\')")
+    Page<User> searchByStatus(@Param("pattern") String pattern, @Param("status") UserStatus status,
+                              Pageable pageable);
 }

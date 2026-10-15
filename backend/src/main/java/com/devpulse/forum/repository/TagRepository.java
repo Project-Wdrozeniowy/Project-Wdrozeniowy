@@ -1,6 +1,8 @@
 package com.devpulse.forum.repository;
 
 import com.devpulse.forum.entity.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -34,4 +36,12 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Tag t SET t.postCount = t.postCount + :delta WHERE t.id IN :ids")
     int adjustPostCount(@Param("ids") Collection<Long> ids, @Param("delta") int delta);
+
+    /**
+     * Tags on at least one public post whose name matches {@code pattern}, a
+     * lower-case {@code LIKE} pattern from
+     * {@link com.devpulse.common.util.LikePatterns#containing}.
+     */
+    @Query("SELECT t FROM Tag t WHERE t.postCount > 0 AND LOWER(t.name) LIKE :pattern ESCAPE '\\'")
+    Page<Tag> searchInUse(@Param("pattern") String pattern, Pageable pageable);
 }
