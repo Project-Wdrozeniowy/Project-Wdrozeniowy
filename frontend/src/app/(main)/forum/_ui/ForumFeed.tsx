@@ -5,11 +5,11 @@ import PostCard from '@/app/(main)/_ui/PostCard';
 import { ALL_TOPICS, isTopic } from '@/shared/constants/categories.const';
 import { useForumPosts } from '@/shared/api/forum/useForumPosts';
 import { parsePageParam, topicToCategorySlug } from '@/app/(main)/forum/_lib/forumFeed';
-import { toPostCardData } from '@/app/(main)/forum/_lib/postCard';
+import { toPostCardData } from '@/app/(main)/_lib/postCard';
 import CategoryFilter from './CategoryFilter';
 import EmptyFeed from './EmptyFeed';
-import PostFeedError from './PostFeedError';
-import PostFeedSkeleton from './PostFeedSkeleton';
+import PostFeedError from '@/app/(main)/_ui/PostFeedError';
+import PostFeedSkeleton from '@/app/(main)/_ui/PostFeedSkeleton';
 import PostPagination from './PostPagination';
 
 /**

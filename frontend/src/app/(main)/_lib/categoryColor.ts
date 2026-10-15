@@ -5,7 +5,7 @@ const FALLBACK_CATEGORY_COLOR = 'border-slate-500 text-slate-400';
 /**
  * Border and text color of a category chip.
  * The slug is stable while the name can be edited ("AI / Tech" -> "Technology"), so it decides first;
- * the name is only used when there is no slug (the home page fixtures).
+ * the name is only used when there is no slug.
  */
 export function getCategoryColor(category: { name: string; slug?: string | null }): string {
   const bySlug = CATEGORIES.find((known) => known.key === category.slug)?.label;

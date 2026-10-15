@@ -1,4 +1,4 @@
-import { FEED_ERROR_MESSAGE } from '@/app/(main)/forum/_ui/forumFeed.const';
+import { FEED_ERROR_MESSAGE } from '@/app/(main)/_ui/forumFeed.const';
 
 interface PostFeedErrorProps {
   onRetry: () => void;

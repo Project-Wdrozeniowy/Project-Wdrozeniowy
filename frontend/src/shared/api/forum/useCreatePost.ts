@@ -14,11 +14,9 @@ export function useCreatePost() {
     mutationFn: (request: CreatePostRequest) =>
       postService.create(request, { skipErrorToast: true }),
     onSuccess: () => {
-      // Cached feed pages may now be missing the new post (it sorts first). Not awaited: the
+      // Cached feed pages (forum and home share them) may now be missing the new post (it sorts first). Not awaited: the
       // form must report success as soon as the post exists, not after the feeds refetch.
       void queryClient.invalidateQueries({ queryKey: ['forum-posts'] });
-      // The home feed (mock data until PWDRZ-111, then the API) lives under ['posts'].
-      void queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 }

@@ -89,7 +89,6 @@ describe('CreatePostForm', () => {
     expect(screen.getByLabelText(/^Title/)).toHaveValue('');
     expect(screen.queryByText('#react')).not.toBeInTheDocument();
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['forum-posts'] });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['posts'] });
   });
 
   it('shows Publishing… and blocks a second submit while the request is pending', async () => {

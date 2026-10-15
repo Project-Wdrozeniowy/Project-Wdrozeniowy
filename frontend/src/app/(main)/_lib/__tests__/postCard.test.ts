@@ -1,6 +1,5 @@
-import { MOCK_POSTS } from '@/shared/api/forum/mockPosts.const';
-import { PINNED_BADGE_LABEL } from '@/app/(main)/forum/_lib/postCard.const';
-import { mockToPostCardData, toPostCardData } from '../postCard';
+import { PINNED_BADGE_LABEL } from '@/app/(main)/_lib/postCard.const';
+import { toPostCardData } from '../postCard';
 import type { PostSummary } from '@/shared/api/forum/post.dto';
 
 const NOW = Date.parse('2026-10-10T12:00:00Z');
@@ -43,7 +42,6 @@ describe('toPostCardData', () => {
       excerpt: null,
       votes: 7,
       comments: 3,
-      actionsEnabled: false,
       voting: { postId: 42, myVote: null },
     });
   });
@@ -124,7 +122,6 @@ describe('toPostCardData with a real API response', () => {
       excerpt: null,
       votes: 0,
       comments: 0,
-      actionsEnabled: false,
       voting: { postId: 8, myVote: null },
     });
   });
@@ -134,26 +131,5 @@ describe('voting data', () => {
   it("carries the user's own vote of an API post", () => {
     const myVote = { id: 9, voteType: 'DOWN' as const };
     expect(toPostCardData({ ...summary, myVote }, NOW).voting).toEqual({ postId: 42, myVote });
-  });
-});
-
-describe('mockToPostCardData', () => {
-  it('has no API voting data: fixtures vote locally', () => {
-    expect(mockToPostCardData(MOCK_POSTS[0]).voting).toBeNull();
-  });
-
-  it('keeps the fixture values for the home page', () => {
-    const [first] = MOCK_POSTS;
-    const data = mockToPostCardData(first);
-    expect(data).toMatchObject({
-      id: first.id,
-      title: first.title,
-      excerpt: first.excerpt,
-      votes: first.votes,
-      comments: first.comments,
-      category: first.category,
-    });
-    // Only the fixtures keep the local demo behaviour of votes, share and save.
-    expect(data.actionsEnabled).toBe(true);
   });
 });
