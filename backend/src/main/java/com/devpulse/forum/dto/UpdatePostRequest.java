@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+import static com.devpulse.common.validation.ValidationPatterns.NOT_BLANK;
 import static com.devpulse.forum.dto.CreatePostRequest.MAX_TAGS;
 import static com.devpulse.forum.dto.CreatePostRequest.TAG_PATTERN;
 
@@ -20,13 +21,6 @@ import static com.devpulse.forum.dto.CreatePostRequest.TAG_PATTERN;
 @NoArgsConstructor
 @Schema(description = "Request body for updating a post (all fields optional)")
 public class UpdatePostRequest {
-
-    /**
-     * Matches any text with at least one non-whitespace character. Written
-     * without inline flags, so it is also a valid ECMAScript pattern in the
-     * published OpenAPI document.
-     */
-    private static final String NOT_BLANK = "[\\s\\S]*\\S[\\s\\S]*";
 
     @Size(max = 255)
     @Pattern(regexp = NOT_BLANK, message = "must not be blank")

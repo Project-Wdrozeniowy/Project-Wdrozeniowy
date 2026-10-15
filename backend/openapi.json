@@ -1347,6 +1347,14 @@
       "RegisterRequest" : {
         "type" : "object",
         "properties" : {
+          "displayName" : {
+            "type" : "string",
+            "description" : "Public display name; omit it to show the username instead",
+            "example" : "Ivan Petrov",
+            "maxLength" : 100,
+            "minLength" : 0,
+            "pattern" : "[\\s\\S]*\\S[\\s\\S]*"
+          },
           "email" : {
             "type" : "string",
             "format" : "email",
