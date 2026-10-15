@@ -67,7 +67,7 @@ apiClient.post('/api/forum/unknown-feature')
 
 🛑 Critical — Mutating an applied migration
 Editing a migration that has already run will cause a Flyway checksum mismatch and block all future application startups.
-Fix: Add the next numbered migration instead; V1–V6 files are immutable.
+Fix: Add the next numbered migration instead; V1–V7 files are immutable.
 
 ```
 # Flag edits to:
@@ -77,6 +77,7 @@ backend/src/main/resources/db/migration/V3__*.sql
 backend/src/main/resources/db/migration/V4__*.sql
 backend/src/main/resources/db/migration/V5__*.sql
 backend/src/main/resources/db/migration/V6__*.sql
+backend/src/main/resources/db/migration/V7__*.sql
 ```
 
 ---

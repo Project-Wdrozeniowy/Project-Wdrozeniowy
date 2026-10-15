@@ -21,7 +21,7 @@ Frontend (Next.js 16)  →  Gateway (Express 5)  →  Backend (Spring Boot 4)  �
 - **Backend** (`backend/`) — Java 17, Spring Boot 4, Spring Security, Spring Data JPA, PostgreSQL, Flyway migrations, JWT (jjwt 0.12.6)
 - **Infra** — PostgreSQL 16 + Redis 7 (via Docker Compose); Redis is provisioned but not yet wired in application code
 
-Database schema is managed by Flyway (V1–V6: users, forum, notifications, analytics, refresh-token rotation, and the default forum categories).
+Database schema is managed by Flyway (V1–V7: users, forum, notifications, analytics, refresh-token rotation, the default forum categories, and audit timestamps).
 ER diagrams live in `docs/db-schema*.mmd`.
 
 ---
@@ -287,7 +287,7 @@ backend/src/main/java/com/devpulse/
 
 backend/src/main/resources/
   application.properties
-  db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics), V5 (refresh-token rotation), V6 (default categories)
+  db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics), V5 (refresh-token rotation), V6 (default categories), V7 (audit timestamps)
 
 docs/
   README.md        ← documentation map by audience and purpose

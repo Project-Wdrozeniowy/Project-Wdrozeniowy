@@ -12,6 +12,10 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.OffsetDateTime;
 
 /**
  * A tag that can be attached to posts.
@@ -46,4 +50,14 @@ public class Tag {
     @Column(name = "post_count", nullable = false)
     @Builder.Default
     private Integer postCount = 0;
+
+    /** Timestamp of creation — set automatically, immutable. */
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    /** Timestamp of the last record update — updated automatically. */
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
 }

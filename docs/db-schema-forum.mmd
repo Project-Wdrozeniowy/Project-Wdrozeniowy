@@ -12,6 +12,7 @@ erDiagram
         int display_order
         boolean is_visible
         timestamptz created_at
+        timestamptz updated_at
     }
 
     posts {
@@ -49,12 +50,15 @@ erDiagram
         varchar_50 name UK
         varchar_50 slug UK
         int post_count
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     post_tags {
         bigint post_id FK
         bigint tag_id FK
         timestamptz created_at
+        timestamptz updated_at
     }
 
     votes {
@@ -64,6 +68,7 @@ erDiagram
         bigint comment_id FK
         vote_type vote_type
         timestamptz created_at
+        timestamptz updated_at
     }
 
     users ||--o{ posts : "creates"
