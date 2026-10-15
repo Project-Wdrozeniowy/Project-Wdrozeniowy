@@ -19,12 +19,14 @@ erDiagram
         text message
         boolean is_read
         timestamptz created_at
+        timestamptz updated_at
     }
 
     post_subscriptions {
         bigint user_id FK
         bigint post_id FK
         timestamptz created_at
+        timestamptz updated_at
     }
 
     activity_events {
@@ -36,6 +38,7 @@ erDiagram
         jsonb metadata
         inet ip_address
         timestamptz created_at
+        timestamptz updated_at
     }
 
     users ||--o{ notifications : "receives"

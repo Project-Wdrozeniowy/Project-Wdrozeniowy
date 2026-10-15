@@ -33,7 +33,7 @@ commits before its runtime behaviour matches that contract.
 
 ### 3) Database Schema
 
-Five Flyway migrations define the current schema:
+Seven Flyway migrations define the current schema:
 
 | Migration | Tables created | Evidence |
 |-----------|---------------|----------|
@@ -43,6 +43,7 @@ Five Flyway migrations define the current schema:
 | V4 — analytics | `activity_events` | [V4__create_analytics_tables.sql](../../backend/src/main/resources/db/migration/V4__create_analytics_tables.sql) |
 | V5 — refresh-token rotation | `refresh_tokens.replaced_by_token_id` self-reference | [V5__add_replaced_by_to_refresh_tokens.sql](../../backend/src/main/resources/db/migration/V5__add_replaced_by_to_refresh_tokens.sql) |
 | V6 — default categories | Seven `categories` rows whose slugs the frontend topic filter uses | [V6__seed_default_categories.sql](../../backend/src/main/resources/db/migration/V6__seed_default_categories.sql) |
+| V7 — audit timestamps | `created_at` and `updated_at` on every table; the `set_updated_at()` trigger moves `updated_at` on updates that do not set it | [V7__add_audit_timestamps.sql](../../backend/src/main/resources/db/migration/V7__add_audit_timestamps.sql) |
 
 ER diagrams available: [docs/db-schema.mmd](../../docs/db-schema.mmd), [docs/db-schema-auth.mmd](../../docs/db-schema-auth.mmd), [docs/db-schema-forum.mmd](../../docs/db-schema-forum.mmd), [docs/db-schema-social.mmd](../../docs/db-schema-social.mmd).
 

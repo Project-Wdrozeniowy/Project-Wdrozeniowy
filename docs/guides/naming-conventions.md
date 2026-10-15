@@ -88,11 +88,12 @@ com.devpulse.auth.repository.UserRepository
 - Tables: plural `snake_case` (`users`, `refresh_tokens`).
 - Postgres enums: `snake_case` type name, `UPPER_CASE` values
   (`user_role`, `USER`/`MODERATOR`/`ADMIN`).
-- **Target schema convention:** `created_at` and `updated_at` on every table.
-  For append-only rows, `updated_at` begins at creation and changes only if
-  the row is updated. Existing tables do not all comply; add columns through
-  a new Flyway migration and coordinate mappings/tests with the backend owner
-  under [PWDRZ-134](https://project-wdrz.atlassian.net/browse/PWDRZ-134).
+- **Schema convention:** `created_at` and `updated_at` on every table, both
+  `NOT NULL DEFAULT now()` (V7). `updated_at` begins at creation and changes
+  only when the row is updated; append-only rows keep it equal to
+  `created_at`. A new table also gets the `set_updated_at()` trigger, which
+  moves `updated_at` on updates that do not set it themselves (bulk JPQL or
+  SQL updates); mapped entities use `@CreationTimestamp`/`@UpdateTimestamp`.
   **Never edit an already-applied migration.**
 - Flyway files: `V{N}__short_description.sql` (e.g.
   `V2__create_forum_tables.sql`).
@@ -303,11 +304,12 @@ com.devpulse.auth.repository.UserRepository
   множественное число и `snake_case` (`users`, `refresh_tokens`).
 - PostgreSQL enum: имя типа в `snake_case`, значения в `UPPER_CASE`, например
   `user_role` и `USER`/`MODERATOR`/`ADMIN`.
-- **Целевая схема:** `created_at` и `updated_at` в каждой таблице. У
-  append-only строк `updated_at` при создании равен времени создания и
-  меняется лишь при обновлении строки. Не все нынешние таблицы соответствуют
-  правилу; добавляйте поля **новой** Flyway-миграцией, согласуя mappings и
-  тесты с backend-разработчиком в [PWDRZ-134](https://project-wdrz.atlassian.net/browse/PWDRZ-134).
+- **Схема:** `created_at` и `updated_at` в каждой таблице, обе
+  `NOT NULL DEFAULT now()` (V7). `updated_at` при создании равен времени
+  создания и меняется лишь при обновлении строки; у append-only строк он
+  остаётся равен `created_at`. Новой таблице нужен и триггер `set_updated_at()`:
+  он обновляет `updated_at`, если UPDATE сам его не задал (bulk JPQL или SQL);
+  сущности используют `@CreationTimestamp`/`@UpdateTimestamp`.
   **Никогда не редактируйте уже применённую миграцию.**
 - Имена Flyway-файлов: `V{N}__short_description.sql`, например
   `V2__create_forum_tables.sql`.

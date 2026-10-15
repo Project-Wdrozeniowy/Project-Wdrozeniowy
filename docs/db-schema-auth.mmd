@@ -25,6 +25,7 @@ erDiagram
         timestamptz revoked_at
         bigint replaced_by_token_id FK
         timestamptz created_at
+        timestamptz updated_at
     }
 
     users ||--o{ refresh_tokens : "has"

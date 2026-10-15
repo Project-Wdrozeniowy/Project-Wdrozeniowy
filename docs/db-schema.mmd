@@ -25,6 +25,7 @@ erDiagram
         timestamptz revoked_at
         bigint replaced_by_token_id FK
         timestamptz created_at
+        timestamptz updated_at
     }
 
     categories {
@@ -35,6 +36,7 @@ erDiagram
         int display_order
         boolean is_visible
         timestamptz created_at
+        timestamptz updated_at
     }
 
     posts {
@@ -72,12 +74,15 @@ erDiagram
         varchar_50 name UK
         varchar_50 slug UK
         int post_count
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     post_tags {
         bigint post_id FK
         bigint tag_id FK
         timestamptz created_at
+        timestamptz updated_at
     }
 
     votes {
@@ -87,6 +92,7 @@ erDiagram
         bigint comment_id FK
         vote_type vote_type
         timestamptz created_at
+        timestamptz updated_at
     }
 
     notifications {
@@ -99,12 +105,14 @@ erDiagram
         text message
         boolean is_read
         timestamptz created_at
+        timestamptz updated_at
     }
 
     post_subscriptions {
         bigint user_id FK
         bigint post_id FK
         timestamptz created_at
+        timestamptz updated_at
     }
 
     activity_events {
@@ -116,6 +124,7 @@ erDiagram
         jsonb metadata
         inet ip_address
         timestamptz created_at
+        timestamptz updated_at
     }
 
     users ||--o{ refresh_tokens : "has"
