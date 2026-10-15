@@ -21,7 +21,7 @@ Frontend (Next.js 16)  →  Gateway (Express 5)  →  Backend (Spring Boot 4)  �
 - **Backend** (`backend/`) — Java 17, Spring Boot 4, Spring Security, Spring Data JPA, PostgreSQL, Flyway migrations, JWT (jjwt 0.12.6)
 - **Infra** — PostgreSQL 16 + Redis 7 (via Docker Compose); Redis is provisioned but not yet wired in application code
 
-Database schema is managed by Flyway (V1–V5: users, forum, notifications, analytics, and refresh-token rotation).
+Database schema is managed by Flyway (V1–V6: users, forum, notifications, analytics, refresh-token rotation, and the default forum categories).
 ER diagrams live in `docs/db-schema*.mmd`.
 
 ---
@@ -287,7 +287,7 @@ backend/src/main/java/com/devpulse/
 
 backend/src/main/resources/
   application.properties
-  db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics), V5 (refresh-token rotation)
+  db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics), V5 (refresh-token rotation), V6 (default categories)
 
 docs/
   README.md        ← documentation map by audience and purpose
@@ -304,7 +304,7 @@ docs/
 
 2. **Token storage** — the access token lives only in memory (`frontend/src/lib/tokenMemory.ts`). The refresh token is an `HttpOnly; SameSite=Strict` cookie (`/api/auth` path) set by the backend and never appears in a request or response body. On page load `AuthProvider` calls `POST /auth/refresh`, then `GET /users/me`. Never write tokens to `localStorage`/`sessionStorage`. Set `COOKIE_SECURE=false` for plain-HTTP local dev (Safari ignores `Secure` cookies on `http://localhost`).
 
-3. **Forum feed is currently mocked** — `frontend/src/hooks/usePosts.ts` returns `MOCK_POSTS`, although `frontend/src/services/forumService.ts` has typed adapters and the backend implements `/api/forum/posts`. PWDRZ-81 owns connecting the feed; adjacent comment, vote, category, and tag endpoints still contain `501` stubs.
+3. **Forum feed is currently mocked** — `frontend/src/hooks/usePosts.ts` returns `MOCK_POSTS`, although `frontend/src/services/forumService.ts` has typed adapters and the backend implements `/api/forum/posts`. PWDRZ-81 owns connecting the feed; adjacent comment, vote, tag, and category-management endpoints still contain `501` stubs.
 
 4. **Redis** — provisioned in Docker Compose, not yet wired in application code. It is reserved for future integration; the first use case has not been selected. Do not remove it or the `depends_on` from compose as a documentation cleanup.
 

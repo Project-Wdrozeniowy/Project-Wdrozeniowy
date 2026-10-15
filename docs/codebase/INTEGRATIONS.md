@@ -42,6 +42,7 @@ Five Flyway migrations define the current schema:
 | V3 — notifications | `notifications`, `post_subscriptions` | [V3__create_notifications.sql](../../backend/src/main/resources/db/migration/V3__create_notifications.sql) |
 | V4 — analytics | `activity_events` | [V4__create_analytics_tables.sql](../../backend/src/main/resources/db/migration/V4__create_analytics_tables.sql) |
 | V5 — refresh-token rotation | `refresh_tokens.replaced_by_token_id` self-reference | [V5__add_replaced_by_to_refresh_tokens.sql](../../backend/src/main/resources/db/migration/V5__add_replaced_by_to_refresh_tokens.sql) |
+| V6 — default categories | Seven `categories` rows whose slugs the frontend topic filter uses | [V6__seed_default_categories.sql](../../backend/src/main/resources/db/migration/V6__seed_default_categories.sql) |
 
 ER diagrams available: [docs/db-schema.mmd](../../docs/db-schema.mmd), [docs/db-schema-auth.mmd](../../docs/db-schema-auth.mmd), [docs/db-schema-forum.mmd](../../docs/db-schema-forum.mmd), [docs/db-schema-social.mmd](../../docs/db-schema-social.mmd).
 

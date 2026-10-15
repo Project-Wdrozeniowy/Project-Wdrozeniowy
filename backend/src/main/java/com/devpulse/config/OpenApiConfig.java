@@ -72,6 +72,7 @@ public class OpenApiConfig {
         return List.of(
                 new Tag().name("Auth").description("Registration, login, token management"),
                 new Tag().name("Users").description("User profile endpoints"),
+                new Tag().name("Forum \u2013 Categories").description("Browse and manage forum categories"),
                 new Tag().name("Forum \u2013 Posts").description("Browse and manage forum posts"),
                 new Tag().name("Admin").description("Administration endpoints, ADMIN role only")
         );
