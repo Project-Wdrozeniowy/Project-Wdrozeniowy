@@ -48,7 +48,7 @@ public class AuthController {
     private static final String SETS_REFRESH_COOKIE = "Sets the refreshToken cookie: HttpOnly, SameSite=Strict, "
             + "limited to the auth path, Secure unless COOKIE_SECURE=false";
     private static final String CLEARS_REFRESH_COOKIE = "Clears the refreshToken cookie (Max-Age=0)";
-    private static final String REFRESH_COOKIE = "Refresh token cookie set by register, login and refresh; "
+    private static final String REFRESH_COOKIE_PARAMETER = "Refresh token cookie set by register, login and refresh; "
             + "the browser sends it automatically";
 
     private final AuthService authService;
@@ -62,8 +62,8 @@ public class AuthController {
      */
     @Operation(summary = "Register a new account")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Registered successfully",
-                headers = @Header(name = HttpHeaders.SET_COOKIE, description = SETS_REFRESH_COOKIE, schema = @Schema(types = "string"))),
+        @ApiResponse(responseCode = "201", description = "Registered successfully", headers = @Header(
+                name = HttpHeaders.SET_COOKIE, description = SETS_REFRESH_COOKIE, schema = @Schema(types = "string"))),
         @ApiResponse(responseCode = "400", description = "Validation error"),
         @ApiResponse(responseCode = "409", description = "Username or email already taken")
     })
@@ -81,8 +81,8 @@ public class AuthController {
      */
     @Operation(summary = "Login and receive an access token")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Authenticated successfully",
-                headers = @Header(name = HttpHeaders.SET_COOKIE, description = SETS_REFRESH_COOKIE, schema = @Schema(types = "string"))),
+        @ApiResponse(responseCode = "200", description = "Authenticated successfully", headers = @Header(
+                name = HttpHeaders.SET_COOKIE, description = SETS_REFRESH_COOKIE, schema = @Schema(types = "string"))),
         @ApiResponse(responseCode = "400", description = "Validation error"),
         @ApiResponse(responseCode = "401", description = "Bad credentials")
     })
@@ -102,14 +102,14 @@ public class AuthController {
      */
     @Operation(summary = "Refresh the access token using the refresh cookie")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Token refreshed",
-                headers = @Header(name = HttpHeaders.SET_COOKIE, description = SETS_REFRESH_COOKIE, schema = @Schema(types = "string"))),
-        @ApiResponse(responseCode = "401", description = "Refresh cookie missing, invalid or expired",
-                headers = @Header(name = HttpHeaders.SET_COOKIE, description = CLEARS_REFRESH_COOKIE, schema = @Schema(types = "string")))
+        @ApiResponse(responseCode = "200", description = "Token refreshed", headers = @Header(
+                name = HttpHeaders.SET_COOKIE, description = SETS_REFRESH_COOKIE, schema = @Schema(types = "string"))),
+        @ApiResponse(responseCode = "401", description = "Refresh cookie missing, invalid or expired", headers = @Header(
+                name = HttpHeaders.SET_COOKIE, description = CLEARS_REFRESH_COOKIE, schema = @Schema(types = "string")))
     })
     @PostMapping("/refresh")
     public AuthResponse refresh(
-            @Parameter(in = ParameterIn.COOKIE, description = REFRESH_COOKIE)
+            @Parameter(in = ParameterIn.COOKIE, description = REFRESH_COOKIE_PARAMETER)
             @CookieValue(name = RefreshTokenCookies.NAME, required = false) String refreshToken,
             HttpServletResponse response) {
         try {
@@ -133,12 +133,12 @@ public class AuthController {
     @Operation(summary = "Logout — revoke the refresh token and clear the cookie",
             description = "The refresh cookie itself acts as the credential, so no access token is required. "
                     + "Idempotent: a missing, unknown or already-revoked token also returns 204.")
-    @ApiResponse(responseCode = "204", description = "Logged out",
-            headers = @Header(name = HttpHeaders.SET_COOKIE, description = CLEARS_REFRESH_COOKIE, schema = @Schema(types = "string")))
+    @ApiResponse(responseCode = "204", description = "Logged out", headers = @Header(
+            name = HttpHeaders.SET_COOKIE, description = CLEARS_REFRESH_COOKIE, schema = @Schema(types = "string")))
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(
-            @Parameter(in = ParameterIn.COOKIE, description = REFRESH_COOKIE)
+            @Parameter(in = ParameterIn.COOKIE, description = REFRESH_COOKIE_PARAMETER)
             @CookieValue(name = RefreshTokenCookies.NAME, required = false) String refreshToken,
             HttpServletResponse response) {
         authService.logout(refreshToken);

@@ -104,9 +104,14 @@ public class OpenApiContractCustomizer implements OpenApiCustomizer {
         }
         List<String> order = OpenApiConfig.tags().stream().map(Tag::getName).toList();
         List<Tag> tags = new ArrayList<>(openApi.getTags());
-        tags.sort(Comparator.comparingInt((Tag tag) -> order.contains(tag.getName()) ? order.indexOf(tag.getName()) : order.size())
-                .thenComparing(Tag::getName));
+        tags.sort(Comparator.comparingInt((Tag tag) -> position(order, tag.getName())).thenComparing(Tag::getName));
         openApi.setTags(tags);
+    }
+
+    /** Index of {@code name} in {@code order}; names not listed come after all listed ones. */
+    private static int position(List<String> order, String name) {
+        int index = order.indexOf(name);
+        return index < 0 ? order.size() : index;
     }
 
     private static Schema<?> withNull(Schema<?> property) {
