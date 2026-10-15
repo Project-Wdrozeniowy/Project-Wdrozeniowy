@@ -15,6 +15,9 @@
     "description" : "User profile endpoints",
     "name" : "Users"
   }, {
+    "description" : "Browse and manage forum categories",
+    "name" : "Forum – Categories"
+  }, {
     "description" : "Browse and manage forum posts",
     "name" : "Forum – Posts"
   }, {
@@ -268,6 +271,67 @@
         },
         "summary" : "Register a new account",
         "tags" : [ "Auth" ]
+      }
+    },
+    "/forum/categories" : {
+      "get" : {
+        "operationId" : "listCategories",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CategoryDto"
+                  }
+                }
+              }
+            },
+            "description" : "Category list returned"
+          }
+        },
+        "summary" : "List the visible categories in display order",
+        "tags" : [ "Forum – Categories" ]
+      }
+    },
+    "/forum/categories/{slug}" : {
+      "get" : {
+        "operationId" : "getCategory",
+        "parameters" : [ {
+          "description" : "Category slug",
+          "example" : "ai",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryDto"
+                }
+              }
+            },
+            "description" : "Category found"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found or hidden"
+          }
+        },
+        "summary" : "Get a category by slug",
+        "tags" : [ "Forum – Categories" ]
       }
     },
     "/forum/posts" : {
