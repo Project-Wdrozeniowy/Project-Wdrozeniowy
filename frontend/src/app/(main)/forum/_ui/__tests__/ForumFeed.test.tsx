@@ -3,8 +3,9 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import ForumFeed from '../ForumFeed';
-import { ACTION_UNAVAILABLE_HINT, VOTING_UNAVAILABLE_HINT } from '@/app/(main)/_ui/postCard.const';
-import { postService } from '@/shared/api/forum/forumClient';
+import { ACTION_UNAVAILABLE_HINT } from '@/app/(main)/_ui/postCard.const';
+import { postService, voteService } from '@/shared/api/forum/forumClient';
+import { useStore } from '@/store';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import type { PostSummary } from '@/shared/api/forum/post.dto';
 
@@ -20,6 +21,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/shared/api/forum/forumClient', () => ({
   postService: { list: vi.fn() },
+  voteService: { cast: vi.fn(), retract: vi.fn() },
 }));
 
 const list = vi.mocked(postService.list);
@@ -33,6 +35,7 @@ function makePost(id: number, overrides: Partial<PostSummary> = {}): PostSummary
     pinned: false,
     viewCount: 0,
     voteScore: 3,
+    myVote: null,
     commentCount: 2,
     category: {
       id: 1,
@@ -85,6 +88,7 @@ function postTitles() {
 beforeEach(() => {
   vi.clearAllMocks();
   search = '';
+  useStore.setState({ user: null, isAuthenticated: false, isInitialized: true });
 });
 
 describe('ForumFeed – data flow', () => {
@@ -117,17 +121,12 @@ describe('ForumFeed – data flow', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 
-  it('disables voting, sharing and saving on real posts, and says why', async () => {
+  it('disables sharing, saving and comments on real posts, and says why', async () => {
     list.mockResolvedValue(pageOf([7]));
     renderFeed();
     await screen.findByText('Post 7');
     const card = within(screen.getByRole('article'));
 
-    for (const name of ['Upvote', 'Downvote']) {
-      const button = card.getByRole('button', { name });
-      expect(button).toBeDisabled();
-      expect(button).toHaveAttribute('title', VOTING_UNAVAILABLE_HINT);
-    }
     for (const name of ['Share', 'Save', '2 Comments']) {
       const button = card.getByRole('button', { name });
       expect(button).toBeDisabled();
@@ -135,16 +134,43 @@ describe('ForumFeed – data flow', () => {
     }
   });
 
-  it('shows the score from the server and a vote click cannot change it', async () => {
+  it('sends a guest to the login page instead of voting', async () => {
     list.mockResolvedValue(pageOf([7]));
     renderFeed();
     await screen.findByText('Post 7');
-    const card = within(screen.getByRole('article'));
 
-    await userEvent.setup().click(card.getByRole('button', { name: 'Upvote' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Upvote' }));
 
-    expect(card.getByText('3')).toBeInTheDocument();
-    expect(card.queryByText('4')).not.toBeInTheDocument();
+    expect(mockPush).toHaveBeenCalledWith('/login');
+    expect(voteService.cast).not.toHaveBeenCalled();
+  });
+
+  it('casts a vote for a signed-in user and shows the score the server answers with', async () => {
+    useStore.setState({ user: { id: 1 } as never, isAuthenticated: true });
+    // The server answers the refresh that follows a vote with the updated post, as a real one does.
+    list.mockResolvedValueOnce(pageOf([7])).mockResolvedValue({
+      ...pageOf([7]),
+      content: [makePost(7, { voteScore: 4, myVote: { id: 55, voteType: 'UP' } })],
+    });
+    vi.mocked(voteService.cast).mockResolvedValue({
+      id: 55,
+      entityType: 'POST',
+      entityId: 7,
+      voteType: 'UP',
+      newScore: 4,
+      createdAt: '2026-10-15T10:00:00Z',
+    });
+    renderFeed();
+    await screen.findByText('Post 7');
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Upvote' }));
+
+    expect(voteService.cast).toHaveBeenCalledWith(
+      { entityType: 'POST', entityId: 7, voteType: 'UP' },
+      { skipErrorToast: true }
+    );
+    expect(await screen.findByText('4')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Upvote' })).toHaveClass('text-blue-400');
   });
 
   it('shows a post without a category and without an author display name', async () => {

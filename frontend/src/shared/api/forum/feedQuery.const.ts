@@ -1,3 +1,6 @@
+/** Root of every cached feed page: `['forum-posts', { page, categorySlug }]`. */
+export const FEED_QUERY_KEY = ['forum-posts'] as const;
+
 /** Posts per page in the forum feed. The API accepts 1–100. */
 export const FEED_PAGE_SIZE = 10;
 

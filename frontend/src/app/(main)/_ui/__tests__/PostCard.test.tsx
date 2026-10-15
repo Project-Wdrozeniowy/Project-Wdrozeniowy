@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PostCard from '../PostCard';
-import { ACTION_UNAVAILABLE_HINT, VOTING_UNAVAILABLE_HINT } from '@/app/(main)/_ui/postCard.const';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { vi } from 'vitest';
+import { useStore } from '@/store';
+import { ACTION_UNAVAILABLE_HINT } from '@/app/(main)/_ui/postCard.const';
 import type { PostCardData } from '@/app/(main)/forum/_lib/postCard';
 
 const post: PostCardData = {
@@ -17,7 +20,12 @@ const post: PostCardData = {
   votes: 12,
   comments: 3,
   actionsEnabled: true,
+  voting: null,
 };
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+
+beforeEach(() => useStore.setState({ user: null, isAuthenticated: false, isInitialized: true }));
 
 describe('PostCard', () => {
   it('renders the title as a heading, not a link', () => {
@@ -103,29 +111,45 @@ describe('PostCard', () => {
   );
 
   describe('when actions are not available (real posts)', () => {
-    const real = { ...post, actionsEnabled: false, votes: 10 };
+    const real: PostCardData = {
+      ...post,
+      actionsEnabled: false,
+      votes: 10,
+      voting: { postId: 5, myVote: null },
+    };
 
-    it('disables both vote buttons with an explanation, but keeps them visible', () => {
-      render(<PostCard post={real} />);
+    function renderReal(data: PostCardData) {
+      return render(
+        <QueryClientProvider client={new QueryClient()}>
+          <PostCard post={data} />
+        </QueryClientProvider>
+      );
+    }
+
+    it('keeps the vote buttons enabled: voting works through the API', () => {
+      renderReal(real);
       for (const name of ['Upvote', 'Downvote']) {
         const button = screen.getByRole('button', { name });
-        expect(button).toBeDisabled();
-        expect(button).toHaveAttribute('title', VOTING_UNAVAILABLE_HINT);
+        expect(button).toBeEnabled();
+        expect(button).not.toHaveAttribute('title');
       }
     });
 
-    it('never changes the score, so nothing looks like a saved vote', async () => {
-      render(<PostCard post={real} />);
-      const user = userEvent.setup();
+    it('highlights the direction the user already voted', () => {
+      renderReal({ ...real, voting: { postId: 5, myVote: { id: 9, voteType: 'DOWN' } } });
+      expect(screen.getByRole('button', { name: 'Downvote' })).toHaveClass('text-red-400');
+      expect(screen.getByRole('button', { name: 'Upvote' })).not.toHaveClass('text-blue-400');
+    });
 
-      await user.click(screen.getByRole('button', { name: 'Upvote' }));
-      await user.click(screen.getByRole('button', { name: 'Downvote' }));
-
+    it('does not move the score by itself when the vote is not saved', async () => {
+      renderReal(real);
+      // Not signed in here, so the click only navigates (covered in the feed tests).
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Upvote' }));
       expect(screen.getByText('10')).toBeInTheDocument();
     });
 
     it('disables comments, share and save with an explanation', () => {
-      render(<PostCard post={real} />);
+      renderReal(real);
       for (const name of ['3 Comments', 'Share', 'Save']) {
         const button = screen.getByRole('button', { name });
         expect(button).toBeDisabled();

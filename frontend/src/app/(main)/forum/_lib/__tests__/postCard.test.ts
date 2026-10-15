@@ -13,6 +13,7 @@ const summary: PostSummary = {
   pinned: false,
   viewCount: 5,
   voteScore: 7,
+  myVote: null,
   commentCount: 3,
   category: {
     id: 1,
@@ -43,6 +44,7 @@ describe('toPostCardData', () => {
       votes: 7,
       comments: 3,
       actionsEnabled: false,
+      voting: { postId: 42, myVote: null },
     });
   });
 
@@ -104,6 +106,7 @@ const REAL_API_ITEM: PostSummary = {
   title: 'Gaming post 3',
   viewCount: 0,
   voteScore: 0,
+  myVote: null,
 };
 
 describe('toPostCardData with a real API response', () => {
@@ -122,11 +125,23 @@ describe('toPostCardData with a real API response', () => {
       votes: 0,
       comments: 0,
       actionsEnabled: false,
+      voting: { postId: 8, myVote: null },
     });
   });
 });
 
+describe('voting data', () => {
+  it("carries the user's own vote of an API post", () => {
+    const myVote = { id: 9, voteType: 'DOWN' as const };
+    expect(toPostCardData({ ...summary, myVote }, NOW).voting).toEqual({ postId: 42, myVote });
+  });
+});
+
 describe('mockToPostCardData', () => {
+  it('has no API voting data: fixtures vote locally', () => {
+    expect(mockToPostCardData(MOCK_POSTS[0]).voting).toBeNull();
+  });
+
   it('keeps the fixture values for the home page', () => {
     const [first] = MOCK_POSTS;
     const data = mockToPostCardData(first);

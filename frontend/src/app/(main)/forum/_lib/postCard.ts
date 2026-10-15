@@ -1,6 +1,7 @@
 import type { MockPost } from '@/shared/api/forum/mockPosts.const';
 import { PINNED_BADGE_LABEL } from '@/app/(main)/forum/_lib/postCard.const';
 import type { PostSummary } from '@/shared/api/forum/post.dto';
+import type { MyVote } from '@/shared/api/forum/vote.dto';
 import { formatTimeAgo } from '@/utils/format';
 
 /** What `PostCard` renders. Both the real API and the mock feed are mapped to it. */
@@ -20,10 +21,12 @@ export interface PostCardData {
   votes: number;
   comments: number;
   /**
-   * Voting, sharing and saving work only for the fixtures. Real posts have no API for them yet,
-   * so their controls are disabled instead of pretending to succeed.
+   * Sharing, saving and the comments button work only for the fixtures. Real posts have no API for
+   * them yet, so those controls are disabled instead of pretending to succeed.
    */
   actionsEnabled: boolean;
+  /** Set for posts from the API: what voting needs. `null` for fixtures, which vote locally. */
+  voting: { postId: number; myVote: MyVote | null } | null;
 }
 
 export function toPostCardData(post: PostSummary, now?: number): PostCardData {
@@ -43,6 +46,7 @@ export function toPostCardData(post: PostSummary, now?: number): PostCardData {
     votes: post.voteScore,
     comments: post.commentCount,
     actionsEnabled: false,
+    voting: { postId: post.id, myVote: post.myVote },
   };
 }
 
@@ -60,5 +64,6 @@ export function mockToPostCardData(post: MockPost): PostCardData {
     votes: post.votes,
     comments: post.comments,
     actionsEnabled: true,
+    voting: null,
   };
 }

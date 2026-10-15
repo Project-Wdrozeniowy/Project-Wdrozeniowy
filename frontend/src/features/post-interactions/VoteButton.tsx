@@ -7,6 +7,8 @@ interface VoteButtonProps {
   active: boolean;
   onClick: () => void;
   disabled?: boolean;
+  /** A request is running: looks disabled but stays focusable, so a keyboard user keeps their place. */
+  busy?: boolean;
   /** Tooltip, used to explain why the button is disabled. */
   title?: string;
   children: React.ReactNode;
@@ -17,6 +19,7 @@ export default function VoteButton({
   active,
   onClick,
   disabled = false,
+  busy = false,
   title,
   children,
 }: VoteButtonProps) {
@@ -24,13 +27,15 @@ export default function VoteButton({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={busy ? undefined : onClick}
       disabled={disabled}
+      aria-disabled={busy || undefined}
       title={title}
       aria-label={direction === 'up' ? 'Upvote' : 'Downvote'}
       className={cn(
         'w-8 h-8 flex items-center justify-center rounded transition-colors',
         'hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent',
+        busy && 'opacity-40 cursor-wait',
         active ? activeColor : 'text-slate-400 hover:text-white disabled:hover:text-slate-400'
       )}
     >

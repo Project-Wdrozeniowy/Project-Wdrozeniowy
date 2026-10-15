@@ -45,6 +45,7 @@ const mockPostSummary: PostSummary = {
   pinned: false,
   viewCount: 0,
   voteScore: 0,
+  myVote: null,
   commentCount: 0,
   category: mockCategory,
   author: mockAuthor,
@@ -312,8 +313,15 @@ describe('voteService.cast >-65 POST /forum/votes', () => {
     const response = { id: 10, entityType: 'POST', entityId: 1, voteType: 'UP', newScore: 1 };
     mockApiClient.post.mockResolvedValue(response);
     const result = await voteService.cast(data);
-    expect(mockApiClient.post).toHaveBeenCalledWith('/forum/votes', data);
+    expect(mockApiClient.post).toHaveBeenCalledWith('/forum/votes', data, undefined);
     expect(result).toEqual(response);
+  });
+
+  it('passes the request config through', async () => {
+    const data = { entityType: 'POST' as const, entityId: 1, voteType: 'DOWN' as const };
+    mockApiClient.post.mockResolvedValue({});
+    await voteService.cast(data, { skipErrorToast: true });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/forum/votes', data, { skipErrorToast: true });
   });
 });
 
@@ -321,6 +329,14 @@ describe('voteService.retract >-65 DELETE /forum/votes/:id', () => {
   it('calls apiClient.delete with /forum/votes/:id', async () => {
     mockApiClient.delete.mockResolvedValue(undefined);
     await voteService.retract(10);
-    expect(mockApiClient.delete).toHaveBeenCalledWith('/forum/votes/10');
+    expect(mockApiClient.delete).toHaveBeenCalledWith('/forum/votes/10', undefined);
+  });
+
+  it('passes the request config through', async () => {
+    mockApiClient.delete.mockResolvedValue(undefined);
+    await voteService.retract(10, { skipErrorToast: true });
+    expect(mockApiClient.delete).toHaveBeenCalledWith('/forum/votes/10', {
+      skipErrorToast: true,
+    });
   });
 });

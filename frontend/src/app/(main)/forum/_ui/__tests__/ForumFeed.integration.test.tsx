@@ -50,6 +50,7 @@ const REAL_PAGE = {
       title: 'Gaming post 3',
       viewCount: 0,
       voteScore: 7,
+      myVote: null,
     },
   ],
   page: 0,

@@ -1,33 +1,19 @@
-import { useState } from 'react';
-import { ACTION_UNAVAILABLE_HINT, VOTING_UNAVAILABLE_HINT } from '@/app/(main)/_ui/postCard.const';
+import { ACTION_UNAVAILABLE_HINT } from '@/app/(main)/_ui/postCard.const';
 import { getCategoryColor } from '@/app/(main)/forum/_lib/categoryColor';
 import type { PostCardData } from '@/app/(main)/forum/_lib/postCard';
 import { cn } from '@/shared/lib/cn';
-import {
-  CommentIcon,
-  ShareIcon,
-  SaveIcon,
-  ChevronUpVoteIcon,
-  ChevronDownVoteIcon,
-} from '@/shared/ui/icons';
+import { CommentIcon, ShareIcon, SaveIcon } from '@/shared/ui/icons';
 import ActionButton from '@/features/post-interactions/ActionButton';
-import VoteButton from '@/features/post-interactions/VoteButton';
+import { LocalVoteColumn } from '@/features/post-interactions/LocalVoteColumn';
+import { PostVoteColumn } from '@/features/post-interactions/PostVoteColumn';
 
 interface PostCardProps {
   post: PostCardData;
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const [voted, setVoted] = useState<'up' | 'down' | null>(null);
-  const { actionsEnabled } = post;
-  const voteHint = actionsEnabled ? undefined : VOTING_UNAVAILABLE_HINT;
+  const { actionsEnabled, voting } = post;
   const actionHint = actionsEnabled ? undefined : ACTION_UNAVAILABLE_HINT;
-  // Derived, so a refetched vote count is never hidden behind a stale copy in state.
-  const votes = post.votes + (voted === 'up' ? 1 : voted === 'down' ? -1 : 0);
-
-  function handleVote(dir: 'up' | 'down') {
-    setVoted((current) => (current === dir ? null : dir));
-  }
 
   const categoryColor = post.category
     ? getCategoryColor({ name: post.category, slug: post.categorySlug })
@@ -35,37 +21,11 @@ export default function PostCard({ post }: PostCardProps) {
 
   return (
     <article className="bg-slate-800 rounded-xl p-5 flex gap-4 hover:bg-slate-800/80 transition-colors">
-      <div className="flex flex-col items-center gap-1 pt-1 shrink-0">
-        <VoteButton
-          direction="up"
-          active={voted === 'up'}
-          onClick={() => handleVote('up')}
-          disabled={!actionsEnabled}
-          title={voteHint}
-        >
-          <ChevronUpVoteIcon />
-        </VoteButton>
-        <span
-          className={
-            voted === 'up'
-              ? 'font-semibold text-sm text-blue-400'
-              : voted === 'down'
-                ? 'font-semibold text-sm text-red-400'
-                : 'font-semibold text-sm text-white'
-          }
-        >
-          {votes >= 1000 ? `${(votes / 1000).toFixed(1)}k` : votes}
-        </span>
-        <VoteButton
-          direction="down"
-          active={voted === 'down'}
-          onClick={() => handleVote('down')}
-          disabled={!actionsEnabled}
-          title={voteHint}
-        >
-          <ChevronDownVoteIcon />
-        </VoteButton>
-      </div>
+      {voting ? (
+        <PostVoteColumn postId={voting.postId} score={post.votes} myVote={voting.myVote} />
+      ) : (
+        <LocalVoteColumn score={post.votes} />
+      )}
 
       <div className="flex-1 min-w-0 flex flex-col gap-3">
         <div className="flex items-center gap-2 flex-wrap">

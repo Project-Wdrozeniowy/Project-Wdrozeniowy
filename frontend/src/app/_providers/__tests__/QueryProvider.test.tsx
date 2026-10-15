@@ -1,5 +1,5 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
-import { useQueryClient } from '@tanstack/react-query';
+import { QueryObserver, useQueryClient } from '@tanstack/react-query';
 import QueryProvider from '../QueryProvider';
 import { useStore } from '@/store';
 
@@ -97,10 +97,45 @@ describe('QueryProvider cache and sign-out', () => {
 
   it('does not clear anything when a guest signs in', () => {
     const client = captureClient();
-    client.setQueryData(['forum-posts'], 'public data');
+    client.setQueryData(['forum-categories'], 'public data');
 
     act(() => useStore.setState({ isAuthenticated: true }));
 
-    expect(client.getQueryData(['forum-posts'])).toBe('public data');
+    expect(client.getQueryData(['forum-categories'])).toBe('public data');
+  });
+
+  it("resets the cached feed when a guest signs in, so the user's own votes show", () => {
+    const client = captureClient();
+    client.setQueryData(['forum-posts', { page: 1 }], 'guest page that is not on screen');
+
+    act(() => useStore.setState({ user: { id: 1 } as never, isAuthenticated: true }));
+
+    expect(client.getQueryData(['forum-posts', { page: 1 }])).toBeUndefined();
+  });
+
+  it('keeps a feed page that is on screen in place and marks it stale', () => {
+    const client = captureClient();
+    const unsubscribe = new QueryObserver(client, {
+      queryKey: ['forum-posts', { page: 0 }],
+      queryFn: () => new Promise(() => {}),
+      initialData: 'page',
+      staleTime: Infinity,
+    }).subscribe(() => {});
+
+    act(() => useStore.setState({ user: { id: 1 } as never, isAuthenticated: true }));
+
+    expect(client.getQueryData(['forum-posts', { page: 0 }])).toBe('page');
+    expect(client.getQueryState(['forum-posts', { page: 0 }])?.isInvalidated).toBe(true);
+    unsubscribe();
+  });
+
+  it('keeps the feed for an update of an already signed-in user', () => {
+    useStore.setState({ user: { id: 1 } as never, isAuthenticated: true });
+    const client = captureClient();
+    client.setQueryData(['forum-posts', { page: 0 }], 'page');
+
+    act(() => useStore.setState({ user: { id: 1, displayName: 'New' } as never }));
+
+    expect(client.getQueryData(['forum-posts', { page: 0 }])).toBe('page');
   });
 });
