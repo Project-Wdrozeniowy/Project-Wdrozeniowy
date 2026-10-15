@@ -21,6 +21,9 @@
     "description" : "Browse and manage forum posts",
     "name" : "Forum – Posts"
   }, {
+    "description" : "Subscribe to new comments on posts",
+    "name" : "Forum – Subscriptions"
+  }, {
     "description" : "Search posts, users and tags",
     "name" : "Search"
   }, {
@@ -738,6 +741,96 @@
         "tags" : [ "Forum – Posts" ]
       }
     },
+    "/forum/posts/{slug}/subscription" : {
+      "delete" : {
+        "description" : "Idempotent: unsubscribing without a subscription changes nothing.",
+        "operationId" : "unsubscribe",
+        "parameters" : [ {
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Not subscribed any more"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found, deleted, or a draft the caller may not see"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Unsubscribe from a post",
+        "tags" : [ "Forum – Subscriptions" ]
+      },
+      "put" : {
+        "description" : "Idempotent: subscribing again changes nothing.",
+        "operationId" : "subscribe",
+        "parameters" : [ {
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Subscribed"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found, deleted, or a draft the caller may not see"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Subscribe to a post",
+        "tags" : [ "Forum – Subscriptions" ]
+      }
+    },
     "/forum/votes" : {
       "post" : {
         "description" : "The first vote on a target answers 201. Voting again in the same direction changes nothing and switching direction moves the score by two; both answer 200 with the caller's vote. Votes are accepted on published posts and visible comments of published posts.",
@@ -1105,6 +1198,72 @@
         } ],
         "summary" : "Change own password",
         "tags" : [ "Users" ]
+      }
+    },
+    "/users/me/subscriptions" : {
+      "get" : {
+        "description" : "Posts the caller is subscribed to and can still read, most recent subscription first.",
+        "operationId" : "mySubscriptions",
+        "parameters" : [ {
+          "description" : "Page number (0-based)",
+          "example" : 0,
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "description" : "Page size, 1 to 50",
+          "example" : 20,
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponsePostSummaryDto"
+                }
+              }
+            },
+            "description" : "Subscriptions returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid pagination"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "List my post subscriptions",
+        "tags" : [ "Forum – Subscriptions" ]
       }
     },
     "/users/{username}" : {
@@ -1559,6 +1718,10 @@
             "enum" : [ "PUBLISHED", "DRAFT", "LOCKED", "DELETED" ],
             "example" : "PUBLISHED"
           },
+          "subscribed" : {
+            "type" : "boolean",
+            "description" : "Whether the caller is subscribed to new comments on this post; false for anonymous callers"
+          },
           "tags" : {
             "type" : "array",
             "description" : "Tags attached to this post",
@@ -1587,7 +1750,7 @@
             "description" : "Cumulative vote score"
           }
         },
-        "required" : [ "author", "category", "commentCount", "content", "createdAt", "id", "lastActivityAt", "myVote", "pinned", "slug", "status", "tags", "title", "updatedAt", "viewCount", "voteScore" ]
+        "required" : [ "author", "category", "commentCount", "content", "createdAt", "id", "lastActivityAt", "myVote", "pinned", "slug", "status", "subscribed", "tags", "title", "updatedAt", "viewCount", "voteScore" ]
       },
       "PostSummaryDto" : {
         "type" : "object",

@@ -14,6 +14,7 @@ import com.devpulse.forum.entity.Vote;
 import com.devpulse.forum.enums.VoteType;
 import com.devpulse.forum.repository.CategoryRepository;
 import com.devpulse.forum.repository.PostRepository;
+import com.devpulse.forum.repository.PostSubscriptionRepository;
 import com.devpulse.forum.repository.TagRepository;
 import com.devpulse.forum.repository.VoteRepository;
 import com.devpulse.support.MigratedSchemaTest;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +65,9 @@ class MigrationSchemaTest {
 
     @Autowired
     private VoteRepository voteRepository;
+
+    @Autowired
+    private PostSubscriptionRepository subscriptionRepository;
 
     @Autowired
     private EntityManager entityManager;
@@ -227,6 +232,32 @@ class MigrationSchemaTest {
                     assertThat(vote.getPostId()).isNull();
                     assertThat(vote.getCreatedAt()).isNotNull();
                 });
+    }
+
+    /** {@code post_subscriptions} rows are written once per user and post and read back with their post. */
+    @Test
+    void postSubscriptionsRoundTrip() {
+        User owner = userRepository.saveAndFlush(user("schema-subscriber", Role.USER));
+        Long postId = postRepository.saveAndFlush(Post.builder()
+                .author(owner)
+                .title("Subscriptions")
+                .slug("schema-subscriptions")
+                .content("content")
+                .build()).getId();
+
+        assertThat(subscriptionRepository.subscribe(owner.getId(), postId)).isOne();
+        assertThat(subscriptionRepository.subscribe(owner.getId(), postId)).isZero();
+
+        assertThat(subscriptionRepository.findReadableOf(owner.getId(), List.of(PostStatus.PUBLISHED), List.of(),
+                        PageRequest.of(0, 10)).getContent())
+                .singleElement()
+                .satisfies(subscription -> {
+                    assertThat(subscription.getPostId()).isEqualTo(postId);
+                    assertThat(subscription.getPost().getSlug()).isEqualTo("schema-subscriptions");
+                    assertThat(subscription.getCreatedAt()).isNotNull();
+                    assertThat(subscription.getUpdatedAt()).isNotNull();
+                });
+        assertThat(subscriptionRepository.unsubscribe(owner.getId(), postId)).isOne();
     }
 
     private OffsetDateTime tokenUpdatedAt(Long id) {

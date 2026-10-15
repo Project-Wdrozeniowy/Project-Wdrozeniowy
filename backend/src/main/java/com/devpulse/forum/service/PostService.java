@@ -16,6 +16,7 @@ import com.devpulse.forum.entity.Tag;
 import com.devpulse.forum.entity.Vote;
 import com.devpulse.forum.repository.CategoryRepository;
 import com.devpulse.forum.repository.PostRepository;
+import com.devpulse.forum.repository.PostSubscriptionRepository;
 import com.devpulse.forum.repository.TagRepository;
 import com.devpulse.forum.repository.VoteRepository;
 import com.devpulse.forum.util.SlugUtil;
@@ -89,6 +90,7 @@ public class PostService {
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
     private final VoteRepository voteRepository;
+    private final PostSubscriptionRepository subscriptionRepository;
     private final AuthenticatedUserResolver currentUser;
     private final TransactionTemplate transactionTemplate;
 
@@ -135,7 +137,7 @@ public class PostService {
         postRepository.save(post);
 
         adjustCounters(author.getId(), Set.of(), false, post.getTags(), isPublic(post.getStatus()));
-        return PostDto.from(reload(post.getSlug()), null);
+        return PostDto.from(reload(post.getSlug()), null, false);
     }
 
     /**
@@ -146,8 +148,7 @@ public class PostService {
      */
     @Transactional(readOnly = true)
     public PostDto getBySlug(String slug) {
-        Post post = loadReadable(slug);
-        return PostDto.from(post, myVote(post.getId()));
+        return full(loadReadable(slug));
     }
 
     /**
@@ -192,8 +193,7 @@ public class PostService {
 
         adjustCounters(post.getAuthor().getId(),
                 tagsBefore, isPublic(statusBefore), post.getTags(), isPublic(post.getStatus()));
-        Post updated = reload(slug);
-        return PostDto.from(updated, myVote(updated.getId()));
+        return full(reload(slug));
     }
 
     /**
@@ -226,8 +226,7 @@ public class PostService {
     public PostDto togglePin(String slug) {
         Post post = loadReadable(slug);
         post.setPinned(!post.isPinned());
-        Post saved = postRepository.save(post);
-        return PostDto.from(saved, myVote(saved.getId()));
+        return full(postRepository.save(post));
     }
 
     /**
@@ -261,7 +260,11 @@ public class PostService {
                 ? PostSpecifications.statusEquals(filter.status())
                 : PostSpecifications.statusIn(PUBLIC_STATUSES));
 
-        Page<Post> posts = postRepository.findAll(Specification.allOf(specs), pageable);
+        return summaries(postRepository.findAll(Specification.allOf(specs), pageable));
+    }
+
+    /** Maps a page of posts to their listing representation with the caller's votes. */
+    public Page<PostSummaryDto> summaries(Page<Post> posts) {
         Map<Long, MyVoteDto> myVotes = myVotes(posts.map(Post::getId).getContent());
         return posts.map(post -> PostSummaryDto.from(post, myVotes.get(post.getId())));
     }
@@ -283,6 +286,13 @@ public class PostService {
             throw new AppException("Only published posts can be voted on", HttpStatus.CONFLICT);
         }
         return post;
+    }
+
+    /** The full representation of {@code post} with the caller's vote and subscription. */
+    private PostDto full(Post post) {
+        Authentication auth = auth();
+        boolean subscribed = isAuthenticated(auth) && subscriptionRepository.isSubscribed(auth.getName(), post.getId());
+        return PostDto.from(post, myVote(post.getId()), subscribed);
     }
 
     /** The caller's vote on the post, or {@code null} for anonymous callers and posts without one. */
@@ -312,8 +322,13 @@ public class PostService {
         };
     }
 
-    /** Loads a post the caller may read, or throws 404. */
-    private Post loadReadable(String slug) {
+    /**
+     * Loads a post the caller may read.
+     *
+     * @throws AppException HTTP 404 if it does not exist, is deleted, or is a
+     *                      draft the caller may not see
+     */
+    public Post loadReadable(String slug) {
         Post post = postRepository.findBySlug(slug)
                 .orElseThrow(PostService::notFound);
         requireReadable(post);
