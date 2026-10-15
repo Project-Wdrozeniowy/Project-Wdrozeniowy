@@ -59,12 +59,13 @@ com.devpulse.auth.repository.UserRepository
 | Exception advice| `Handler`      | `GlobalExceptionHandler` |
 | Test            | `Test`         | `PostServiceTest`      |
 
-> **Target convention, not current-state inventory:** The backend owner must
-> review existing outbound classes with `Response` outside a generic wrapper.
-> **Do not rename a public Java type** without updating serialization,
-> OpenAPI, tests, and consumers. Backend cleanup is
-> [PWDRZ-133](https://project-wdrz.atlassian.net/browse/PWDRZ-133), not this
-> documentation edit.
+> The backend DTOs follow this table since
+> [PWDRZ-133](https://project-wdrz.atlassian.net/browse/PWDRZ-133). Accepted
+> exceptions: `AuthResponse` is the token envelope; in `PlatformSummaryDto`
+> and `UserActivitySummaryDto` "summary" is the domain word for aggregates,
+> not the listing role; WebSocket payloads end in `Event`
+> (`NewCommentEvent`, `VoteScoreEvent`). **Do not rename a public Java type**
+> without updating serialization, OpenAPI, tests, and consumers.
 
 ### Methods
 
@@ -274,12 +275,14 @@ com.devpulse.auth.repository.UserRepository
 | Exception advice | `Handler` | `GlobalExceptionHandler` |
 | Test | `Test` | `PostServiceTest` |
 
-> **Целевая convention, не описание всего текущего кода:** Существующие
-> исходящие классы с `Response` вне обобщённой обёртки проверяет
-> backend-разработчик. **Не переименовывайте публичный Java-тип** без
-> одновременного обновления serialization, OpenAPI, тестов и потребителей.
-> Backend cleanup — [PWDRZ-133](https://project-wdrz.atlassian.net/browse/PWDRZ-133),
-> а не эта документационная правка.
+> Backend DTO соответствуют таблице с
+> [PWDRZ-133](https://project-wdrz.atlassian.net/browse/PWDRZ-133). Принятые
+> исключения: `AuthResponse` — обёртка токенов; в `PlatformSummaryDto` и
+> `UserActivitySummaryDto` «summary» — доменное слово для агрегатов, а не роль
+> элемента списка; WebSocket-payload оканчиваются на `Event`
+> (`NewCommentEvent`, `VoteScoreEvent`). **Не переименовывайте публичный
+> Java-тип** без одновременного обновления serialization, OpenAPI, тестов и
+> потребителей.
 
 #### Методы
 

@@ -15,7 +15,7 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Result of casting a vote")
-public class VoteResponse {
+public class VoteDto {
 
     @Schema(description = "Vote record ID", example = "9")
     private Long id;

@@ -1,7 +1,7 @@
 package com.devpulse.forum.controller;
 
 import com.devpulse.forum.dto.VoteRequest;
-import com.devpulse.forum.dto.VoteResponse;
+import com.devpulse.forum.dto.VoteDto;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,7 +40,7 @@ public class VoteController {
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public VoteResponse castVote(@Valid @RequestBody VoteRequest request) {
+    public VoteDto castVote(@Valid @RequestBody VoteRequest request) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
     }
 

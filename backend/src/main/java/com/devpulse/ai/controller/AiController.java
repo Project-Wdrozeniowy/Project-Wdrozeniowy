@@ -1,7 +1,7 @@
 package com.devpulse.ai.controller;
 
 import com.devpulse.ai.dto.SuggestTagsRequest;
-import com.devpulse.ai.dto.SuggestTagsResponse;
+import com.devpulse.ai.dto.TagSuggestionsDto;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -43,7 +43,7 @@ public class AiController {
         @ApiResponse(responseCode = "503", description = "AI provider unavailable and fallback also failed")
     })
     @PostMapping("/suggest-tags")
-    public SuggestTagsResponse suggestTags(@Valid @RequestBody SuggestTagsRequest request) {
+    public TagSuggestionsDto suggestTags(@Valid @RequestBody SuggestTagsRequest request) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
     }
 }
