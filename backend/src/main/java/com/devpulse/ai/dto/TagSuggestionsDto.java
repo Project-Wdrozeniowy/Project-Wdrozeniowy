@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "AI-generated tag suggestions for a piece of content")
-public class SuggestTagsResponse {
+public class TagSuggestionsDto {
 
     @Schema(description = "Suggested tag slugs, ordered by confidence (highest first)",
             example = "[\"spring-boot\", \"postgresql\", \"flyway\", \"java\"]")
