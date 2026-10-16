@@ -21439,8 +21439,8 @@
       "localTracking": {
         "status": "in_progress",
         "owner": "Codex",
-        "notes": "Clean baseline, provider comparison and risk package recorded. Threshold selection and final gate verification remain pending.",
-        "updatedAt": "2026-10-16T09:10:13.360Z"
+        "notes": "Clean baseline, provider comparison and risk package recorded. Threshold selection and final gate verification remain pending. Canonical provisional-functionality post-task workflow added to AGENTS.md; Copilot/backlog instructions link to it. Targeted PWDRZ-118 marker check and instruction links validated; no feature activation/cleanup performed in this instruction-only step.",
+        "updatedAt": "2026-10-16T09:34:42.886Z"
       }
     },
     {

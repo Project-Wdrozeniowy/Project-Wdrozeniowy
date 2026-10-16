@@ -126,6 +126,7 @@ npm run lint     # eslint src (--fix for gateway)
 
 ## Task Backlog Tracking
 
+- Before completing a task, follow the canonical [post-task review of provisional functionality](../AGENTS.md#post-task-review-of-provisional-functionality), including its scope/ownership limits, provisional-test rules and bold dependency handoff notice.
 - Use [docs/agent-task-backlog/pwdrz-jira-tasks.json](../docs/agent-task-backlog/pwdrz-jira-tasks.json) as the shared execution backlog.
 - The file contains the full Jira export plus a separate `localTracking` block on each issue.
 - Treat Jira fields as read-only for execution tracking; only `localTracking.status`, `localTracking.updatedAt`, `localTracking.owner`, and `localTracking.notes` change during agent work.
