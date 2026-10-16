@@ -1,3 +1,4 @@
+// PROVISIONAL (PWDRZ-145/146): analytics/recommendation backends are 501 stubs; shapes await implementation.
 import { apiClient } from '../client/api';
 import type {
   UserActivitySummary,

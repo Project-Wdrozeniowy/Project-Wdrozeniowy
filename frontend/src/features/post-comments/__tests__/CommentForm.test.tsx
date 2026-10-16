@@ -1,3 +1,4 @@
+// PROVISIONAL PWDRZ-142/67: local UI/model scenarios use planned comment fixtures; backend remains a 501 stub.
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';

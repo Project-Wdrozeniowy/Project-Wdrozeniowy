@@ -1,4 +1,6 @@
 import { z } from 'zod';
+// TODO(PWDRZ-128): reconcile the remaining UI-only username/password/displayName
+// restrictions with backend RegisterRequest. These rules are not proof of API parity.
 
 //TODO [PWDRZ-131]: Extract authentication form orchestration from route pages, so that the schema can be imported from a single place and used in both the route page and the form component.
 export const registerSchema = z

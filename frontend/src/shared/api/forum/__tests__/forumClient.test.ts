@@ -1,3 +1,4 @@
+// PROVISIONAL sections: category writes PWDRZ-141, comments PWDRZ-142/67, tags PWDRZ-143/107. Their mocked fixtures are planned adapter behavior, not implemented backend contracts.
 import { vi } from 'vitest';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import type { Category } from '@/shared/api/forum/category.dto';

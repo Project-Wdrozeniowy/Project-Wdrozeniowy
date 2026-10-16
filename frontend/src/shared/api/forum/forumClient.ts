@@ -1,4 +1,7 @@
 import type { AxiosRequestConfig } from 'axios';
+// Provisional adapters: category writes PWDRZ-141; comments PWDRZ-142/67;
+// tags PWDRZ-143/107. Their backend controllers still return 501 and are hidden
+// from OpenAPI. Mocked success fixtures are planned UI behavior, not a live contract.
 import { apiClient } from '../client/api';
 import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from './category.dto';
 import type { Post, PostSummary, CreatePostRequest, UpdatePostRequest } from './post.dto';

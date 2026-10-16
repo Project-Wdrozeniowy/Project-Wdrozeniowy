@@ -39,6 +39,7 @@ export default function RegisterPage() {
     setServerError(null);
     try {
       const { accessToken } = await authService.register({
+        // TODO(PWDRZ-128): pass displayName from the implemented backend contract.
         username: data.username,
         email: data.email,
         password: data.password,
@@ -141,6 +142,7 @@ export default function RegisterPage() {
           />
         </FormField>
 
+        {/* TODO(PWDRZ-154): provisional interests UI; no backend persistence contract yet. */}
         <div className="flex flex-col gap-3">
           <div>
             <p className="text-gray-900 font-semibold text-base">Select Your Interests</p>

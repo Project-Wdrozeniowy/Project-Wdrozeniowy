@@ -8,8 +8,6 @@ module.exports = {
     '!src/**/*.d.ts',
     // Entry point — not unit-testable (starts the server)
     '!src/index.ts',
-    // Auth redirect guard — integration-level behaviour, no unit tests yet
-    '!src/middleware/authGuard.ts',
   ],
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {

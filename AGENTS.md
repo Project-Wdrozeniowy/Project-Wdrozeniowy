@@ -312,6 +312,15 @@ docs/
 
 6. **OpenAPI contract** — `backend/openapi.json` is the committed copy of the published contract and lists implemented operations only; `501` stubs are `@Hidden`. After an API change, regenerate it from `backend/` with `./mvnw test -Dtest=OpenApiContractTest -Dopenapi.contract.update=true`; `OpenApiContractTest` fails while it is stale. Swagger UI is at `http://localhost:8080/api/swagger-ui/index.html` when `SWAGGER_ENABLED=true` and must be **disabled in production**.
 
+### Gateway authentication boundary (PWDRZ-99 / PWDRZ-118)
+
+The gateway verifies Bearer JWTs on API requests; the backend owns token issuance,
+refresh rotation and resource authorization. Next.js serves pages independently,
+so frontend AuthGuard/RoleGuard and session initialization remain UI concerns.
+The unused gateway page redirect guard based on an `orbita_session` cookie was
+removed. Do not reintroduce it as a replacement for the current frontend guards
+without an explicit BFF/SSR architecture decision.
+
 ## Task Backlog Tracking
 
 - The shared executable backlog lives in [docs/agent-task-backlog/pwdrz-jira-tasks.json](docs/agent-task-backlog/pwdrz-jira-tasks.json).

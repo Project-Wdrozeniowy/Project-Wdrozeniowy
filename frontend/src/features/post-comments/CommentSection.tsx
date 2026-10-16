@@ -1,3 +1,4 @@
+// PROVISIONAL PWDRZ-142/67: the reachable UI awaits the implemented comments API (currently 501).
 'use client';
 
 import Link from 'next/link';

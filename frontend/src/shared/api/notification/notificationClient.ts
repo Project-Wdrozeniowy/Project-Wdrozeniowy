@@ -1,3 +1,4 @@
+// PROVISIONAL (PWDRZ-144/152): backend is a 501 stub; no live notification-center contract is certified here.
 import { apiClient } from '../client/api';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import type { Notification } from './notification.dto';

@@ -21,8 +21,15 @@ export const authService = {
    * Makes `accessToken` the active token and loads the signed-in user's profile.
    * The token is set first because the profile request is authenticated with it.
    */
-  loadProfile: (accessToken: string): Promise<UserProfile> => {
+  loadProfile: async (accessToken: string): Promise<UserProfile> => {
     tokenMemory.set(accessToken);
-    return userService.getMyProfile();
+    try {
+      return await userService.getMyProfile();
+    } catch (error) {
+      // PWDRZ-155: a failed bootstrap must not leave a guest sending this token.
+      // A newer session may have replaced it while the profile request was pending.
+      if (tokenMemory.get() === accessToken) tokenMemory.set(null);
+      throw error;
+    }
   },
 };

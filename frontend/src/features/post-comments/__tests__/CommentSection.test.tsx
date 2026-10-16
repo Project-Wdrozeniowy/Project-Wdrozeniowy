@@ -12,7 +12,9 @@ import type { UserProfile } from '@/shared/api/user/user.dto';
 
 /**
  * CommentSection -> useComments -> commentService -> the real ApiClient.
- * Only the network is faked, so URLs, request bodies and error handling are covered.
+ * Only the network is faked, so planned URLs, bodies and UI behavior are covered.
+ * PROVISIONAL: backend comments still return 501 (PWDRZ-142); PWDRZ-67 must
+ * reconcile these fixtures with the implemented contract before live acceptance.
  */
 
 const LIST_URL = '/forum/posts/hello/comments';
@@ -135,13 +137,16 @@ describe('CommentSection – reading', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows a fixed error when loading fails, without server details', async () => {
-    mock.onGet(LIST_URL).reply(500, { status: 500, detail: 'PSQLException at com.devpulse' });
-    renderSection();
+  it.each([500, 501])(
+    'shows a fixed error for %i, including the current backend stub',
+    async (status) => {
+      mock.onGet(LIST_URL).reply(status, { status, detail: 'PSQLException at com.devpulse' });
+      renderSection();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load comments.');
-    expect(document.body).not.toHaveTextContent('PSQLException');
-  });
+      expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load comments.');
+      expect(document.body).not.toHaveTextContent('PSQLException');
+    }
+  );
 
   it('loads the next page and appends it', async () => {
     mock

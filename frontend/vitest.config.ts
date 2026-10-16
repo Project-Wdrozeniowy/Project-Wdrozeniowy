@@ -16,6 +16,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
       exclude: [
         'node_modules/**',
         '.next/**',
@@ -25,19 +26,9 @@ export default defineConfig({
         'tailwind.config.*',
         'vitest.config.*',
         '**/*.d.ts',
-        // Type-only and shared files — no executable code
-        'src/shared/**',
-        // Constants — no executable logic
-        'src/constants/**',
-        // UI components and pages — covered by E2E/integration tests
-        'src/components/**',
-        'src/app/**',
-        // Hooks — depend on React context, no unit tests
-        'src/hooks/**',
-        // Utility libraries
-        'src/lib/**',
-        'src/utils/**',
-        // Test infrastructure
+        'src/**/__tests__/**',
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.spec.{ts,tsx}',
         'src/test/**',
       ],
       thresholds: {

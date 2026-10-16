@@ -1,3 +1,4 @@
+// PROVISIONAL PWDRZ-147: mocked planned adapter behavior only; backend still returns 501.
 import { vi } from 'vitest';
 
 const mockApiClient = {

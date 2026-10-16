@@ -1,3 +1,4 @@
+// PROVISIONAL PWDRZ-144/152: planned mocked fixtures; reconcile with backend before live acceptance.
 import { vi } from 'vitest';
 import type { Notification } from '@/shared/api/notification/notification.dto';
 
