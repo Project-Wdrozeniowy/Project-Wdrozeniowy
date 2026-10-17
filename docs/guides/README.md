@@ -61,7 +61,9 @@ not prove a multi-service path.
 > **Current quality gap:** Existing coverage gates remain mandatory, but are
 > **not proof of sufficient behavioural coverage**.
 > [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) will
-> measure and select meaningful service-specific thresholds and exclusions.
+> has selected and locally verified frontend/gateway coverage gates; see the
+> [coverage policy](testing.md#coverage-policy-pwdrz-118). Backend policy and
+> final GitHub CI verification remain pending.
 > [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117) owns the
 > mandatory E2E/CI gate; it does not exist yet. Do not describe an unrun
 > browser scenario or a non-existent workflow as passed. Unit coverage does
@@ -153,8 +155,9 @@ descriptive and regenerate them only from verified evidence.
 
 > **Текущий пробел качества:** Coverage gates обязательны, но **процент не
 > доказывает достаточного поведенческого покрытия**.
-> [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) исследует
-> и выберет осмысленные пороги и исключения для сервисов.
+> В [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) выбраны и
+> локально проверены frontend/gateway gates; см. [coverage policy](testing.md#coverage-policy-pwdrz-118).
+> Политика backend и финальная проверка GitHub CI ещё не завершены.
 > [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117) отвечает
 > за обязательный E2E/CI gate; пока его нет, нельзя заявлять, что браузерный
 > сценарий или несуществующий workflow пройден. Unit coverage не закрывает

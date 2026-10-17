@@ -115,7 +115,7 @@ Technical enforcement still needs verification under
 
 - `Build Backend`, `Build Frontend`, `Build Gateway`: only run when that
   workspace changed
-- `Backend Tests`, `Frontend Tests`, `Gateway Tests`
+- `Backend Tests`, `Frontend Tests (coverage gates)`, `Gateway Tests (coverage gates)`
 - `Frontend Lint & Format Check`, `Gateway Lint & Format Check`
 
 The E2E gate is not yet present; [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117)
@@ -275,7 +275,7 @@ filter, не считается провалом; комментарий в PR *
 
 - `Build Backend`, `Build Frontend`, `Build Gateway` запускаются только при
   изменении соответствующего workspace.
-- `Backend Tests`, `Frontend Tests`, `Gateway Tests`.
+- `Backend Tests`, `Frontend Tests (coverage gates)`, `Gateway Tests (coverage gates)`.
 - `Frontend Lint & Format Check`, `Gateway Lint & Format Check`.
 
 E2E gate ещё отсутствует; его добавляет [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117).

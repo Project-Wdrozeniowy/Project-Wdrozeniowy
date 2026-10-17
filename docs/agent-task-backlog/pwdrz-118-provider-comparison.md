@@ -1,5 +1,9 @@
 # PWDRZ-118 — coverage provider comparison (existing tests)
 
+> Update 2026-10-17: the user selected Istanbul for implementation. See the
+> [current decision record](pwdrz-118-final-decisions.md) for installation and
+> gate verification. Measurements below describe the preceding experiment.
+
 2026-10-16; source SHA `cc998e7ec9f627be613f902638b96cc780d4f40e`, expanded stage-3 coverage scope. Both runs used Vitest/provider 3.2.4, Node 24.15.0 and the same 46 suites / 496 existing tests. Source/test files and package manifests matched HEAD before the first frontend edit; coverage config SHA-256: `278062AFD4FC43D598881896B34522A1AAFAF5B39B5542F671AFF6DEF6595E45`. Counts are covered/total; no threshold override was used.
 
 | Provider | Statements | Lines | Branches | Functions | Report files |
@@ -19,7 +23,7 @@ The installed/pinned 3.2.4 V8 provider gates AST remapping behind `experimentalA
 
 Recommendation for PWDRZ-118: adopt pinned Istanbul after the configuration decision, use **lines and branches** as the primary frontend gate metrics, and retain functions/statements as diagnostic reports initially. This recommendation follows the more informative unimported-file counters; it does not depend on Istanbul producing a higher line percentage. Numeric thresholds remain undecided. Preserve explicit `src/**/*.{ts,tsx}` inclusion and the narrow infrastructure/test exclusions. Keep auth scenario tables alongside global percentages: even a good aggregate can hide registration branches.
 
-The final config still selects V8. No manifest/lockfile was changed for this experiment. A permanent switch requires declaring matching Vitest/provider versions, keeping the same scope, establishing its accepted baseline, and demonstrating gate rejection/pass. There is no claim that an uncommitted local experiment has passed GitHub CI.
+At the end of this experiment the config still selected V8 and no manifest/lockfile had changed. The subsequently accepted switch is recorded separately in the current decision record. The experiment alone did not demonstrate final CI gate rejection/pass.
 
 ## Reproduction
 

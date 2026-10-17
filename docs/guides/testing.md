@@ -16,6 +16,64 @@ separately from that target.
 4. **Coverage alone is insufficient.** New behaviour needs a test at a useful
    boundary, even when the aggregate percentage already passes.
 
+## Coverage policy (PWDRZ-118)
+
+Frontend and gateway thresholds were selected from the expanded source baseline
+and the verified risk package. Each listed metric is an independent mandatory
+global gate: a higher result elsewhere cannot compensate for a failure.
+
+| Service | Provider | Lines | Branches | Functions | Statements |
+| --- | --- | --- | --- | --- | --- |
+| Frontend | Istanbul, Vitest/provider 3.2.4 | 85% | 85% | 80% | 85% |
+| Gateway | Jest 29 default Babel/Istanbul coverage | 95% | 85% | 90% | 95% |
+
+The verified frontend baseline is 87.03/86.66/81.69/87.46% and the gateway
+baseline is 96.99/86.95/92.30/97.03%, in the table's metric order. The selected
+floors leave approximately 1.7–2.5 percentage points of headroom for frontend
+and 2.0–2.3 for gateway. These deliberately tight regression floors can block
+new uncovered code; they do not certify security or contract correctness.
+Istanbul was selected for frontend because the pinned V8 configuration produced
+misleading branch/function counters for some unimported files in the comparison.
+All four frontend/gateway metrics remain mandatory; none is diagnostic-only.
+
+### Measured source and exclusions
+
+- **Frontend:** `src/**/*.{ts,tsx}` in `frontend/vitest.config.ts`, including
+  executable pages, components, hooks, shared code and utilities even when not
+  imported by tests. Exclude `**/*.d.ts`, `src/**/__tests__/**`,
+  `src/**/*.test.{ts,tsx}`, `src/**/*.spec.{ts,tsx}` and `src/test/**` because
+  declarations and test infrastructure are not production behavior. Existing
+  non-production exclusions `node_modules/**`, `.next/**`, `next.config.*`,
+  `postcss.config.*`, `eslint.config.*`, `tailwind.config.*` and `vitest.config.*`
+  are outside the explicit `src` include. No production-directory exclusion
+  hides executable UI or business logic.
+- **Gateway:** `src/**/*.ts` in `gateway/jest.config.js`, excluding declarations
+  (`src/**/*.d.ts`) and exactly `src/index.ts`, the process bootstrap that starts
+  the listener. Jest omits test files and configured setup files from coverage.
+  Middleware, configuration, proxy and error-handling logic stay measured.
+  The bootstrap exclusion does not exclude `app.ts` or a whole directory.
+- **Backend:** its current JaCoCo line gate remains **65% interim**; final
+  metrics and thresholds are awaiting a separate user decision. Its existing
+  source scope is unchanged in this frontend/gateway update.
+
+### CI and verification
+
+The Tests workflow installs each service with `npm ci`, then runs its existing
+`npm run test:coverage` script. Frontend invokes `vitest run --coverage` and
+gateway invokes `jest --coverage`; provider and gate values come from the
+committed service configuration, not duplicated CLI thresholds. Job display
+names are `Frontend Tests (coverage gates)` and `Gateway Tests (coverage gates)`;
+job IDs, triggers and execution steps are unchanged. Frontend `npm test` alone
+does not enable coverage; gateway `npm test` is an alias of its coverage run.
+
+Local full-suite passes and deliberate failures were verified for both services:
+each metric rejects an isolated 100% override, and a reduced-test invocation
+fails the actual selected floors while retaining the production denominator.
+See the [decision and verification record](../agent-task-backlog/pwdrz-118-final-decisions.md)
+for commands, counters, limitations and logs. A local pass is not a GitHub CI
+pass; new CI evidence is still required after publication. Historical baseline
+and comparison reports remain dated evidence, not the current policy.
+
 ## Backend — JUnit 5 + Mockito + Spring Boot Test
 
 | Concern               | Choice                                       |
@@ -78,7 +136,7 @@ in English.
 | Runner         | Vitest 3 (`jsdom` environment)        |
 | DOM helpers    | `@testing-library/react`              |
 | Setup file     | `src/test/setup.ts`                   |
-| Coverage       | Currently ≥ **65%** lines/functions/branches/statements on included source (see `frontend/vitest.config.ts`); PWDRZ-118 will reassess the policy |
+| Coverage       | Istanbul; all four [service-specific gates](#coverage-policy-pwdrz-118) are mandatory (`frontend/vitest.config.ts`) |
 | Typecheck      | `npm run typecheck` (`tsc --noEmit`) runs as a separate step in the frontend build workflow |
 | Naming         | `__tests__/<source-name>.test.ts(x)` in the source file's directory; distinct integration suites may use `<source-name>.integration.test.ts(x)` |
 
@@ -108,7 +166,7 @@ in English.
 | -------------- | ----------------------------------- |
 | Runner         | Jest with `ts-jest`                 |
 | Setup file     | `gateway/src/test/setup.ts`         |
-| Coverage       | Currently ≥ **65%** lines/functions/branches/statements (see `gateway/jest.config.js`); PWDRZ-118 will reassess the policy |
+| Coverage       | All four [service-specific gates](#coverage-policy-pwdrz-118) are mandatory (`gateway/jest.config.js`) |
 | Layout         | `__tests__/<source-name>.test.ts` beside the source (e.g. `src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts`) |
 
 Focus areas:
@@ -142,11 +200,11 @@ integration tests.
 > **not** exist yet. Record exactly which manual or integration path was
 > exercised. Do not claim the missing gate passed.
 
-**The current 65% gates must pass**, but do not prove that excluded UI code is
-tested. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118)
-will measure the baseline, review executable-code exclusions, choose
-service-specific metrics and thresholds, and verify that the gates reject an
-insufficient result. *65% is not the approved long-term threshold.*
+**The configured service-specific gates must pass.** Frontend executable UI
+code is measured, but aggregate coverage does not prove every behavior is
+tested. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) has
+selected and locally verified frontend/gateway gates; backend policy and the
+final GitHub CI acceptance check remain pending. Backend's 65% is still interim.
 
 ## When to add tests
 
@@ -183,6 +241,33 @@ insufficient result. *65% is not the approved long-term threshold.*
 3. **Тесты пишутся на английском.** Имена описывают наблюдаемое поведение.
 4. **Процента покрытия недостаточно.** Для нового поведения нужен тест на
    подходящей границе, даже если общий процент уже достаточен.
+
+### Coverage policy (PWDRZ-118) — краткое описание
+
+Каноническая [таблица coverage policy](#coverage-policy-pwdrz-118) выше задаёт
+независимые обязательные пороги frontend и gateway. Frontend использует
+Istanbul с Vitest/provider 3.2.4; gateway — стандартный Babel/Istanbul provider
+Jest 29. Все четыре метрики обязательны. Пороги выбраны близко к измеренному
+baseline и могут блокировать добавление непокрытого кода; высокий процент не
+доказывает корректность security или API contract.
+
+Frontend измеряет `src/**/*.{ts,tsx}`, включая не импортированные тестами
+pages, components, hooks и shared logic; исключаются declaration/test/setup
+и непроизводственные tooling/generated paths, перечисленные выше. Gateway
+измеряет `src/**/*.ts`, исключая declarations и точный process bootstrap
+`src/index.ts`; Jest также не измеряет test/setup files. Широких исключений
+production-директорий нет. Политика backend пока не выбрана: 65% line gate
+остаётся промежуточным.
+
+CI выполняет `npm ci` и существующий `npm run test:coverage` каждого сервиса;
+значения берутся из конфигурации. Названия jobs — `Frontend Tests (coverage gates)`
+и `Gateway Tests (coverage gates)`. Локальные pass/fail-проверки завершены,
+включая отказы окончательных gates при сокращённом наборе тестов с неизменным
+production-знаменателем. Команды и ограничения — в
+[журнале решений](../agent-task-backlog/pwdrz-118-final-decisions.md).
+Новый GitHub CI-прогон после публикации ещё требуется; локальный результат
+не считается подтверждением удалённого CI. Исторические отчёты не задают
+текущую политику.
 
 ### Backend — JUnit 5 + Mockito + Spring Boot Test
 
@@ -247,7 +332,7 @@ replayingARotatedTokenRevokesTheWholeFamily
 | Runner | Vitest 3 (`jsdom`) |
 | DOM helpers | `@testing-library/react` |
 | Setup | `src/test/setup.ts` |
-| Coverage | Сейчас ≥ **65%** строк/functions/branches/statements по включённому коду (`frontend/vitest.config.ts`); PWDRZ-118 пересмотрит правило |
+| Coverage | Istanbul; все четыре [посервисных gate](#coverage-policy-pwdrz-118) обязательны (`frontend/vitest.config.ts`) |
 | Typecheck | `npm run typecheck` (`tsc --noEmit`) отдельным шагом frontend build workflow |
 | Имена | `__tests__/<имя-source>.test.ts(x)` в директории исходного файла; отдельный integration suite может называться `<имя-source>.integration.test.ts(x)` |
 
@@ -277,7 +362,7 @@ replayingARotatedTokenRevokesTheWholeFamily
 | --- | --- |
 | Runner | Jest с `ts-jest` |
 | Setup | `gateway/src/test/setup.ts` |
-| Coverage | Сейчас ≥ **65%** строк/functions/branches/statements (`gateway/jest.config.js`); PWDRZ-118 пересмотрит правило |
+| Coverage | Все четыре [посервисных gate](#coverage-policy-pwdrz-118) обязательны (`gateway/jest.config.js`) |
 | Размещение | `__tests__/<имя-source>.test.ts` рядом с исходным файлом, например `src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts` |
 
 Приоритетные области: композиция middleware (auth, rate limiter, error
@@ -309,11 +394,11 @@ integration tests.
 > их **нет**. Фиксируйте, какой ручной или интеграционный путь проверен. Не
 > заявляйте о прохождении отсутствующего gate.
 
-**Текущий порог 65% обязателен**, но не доказывает проверку исключённого
-UI-кода. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118)
-измерит базовый уровень, проверит исключения исполняемого кода, выберет
-метрики и пороги каждого сервиса и подтвердит, что gate отклоняет
-недостаточный результат. *65% не является утверждённым долгосрочным порогом.*
+**Настроенные посервисные gates обязательны.** Исполняемый UI-код frontend
+измеряется, но общий процент не доказывает проверку каждого поведения.
+В [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) выбраны и
+локально проверены frontend/gateway gates; политика backend и финальная
+проверка GitHub CI ещё не завершены. Backend 65% остаётся промежуточным.
 
 ### Когда добавлять тесты
 

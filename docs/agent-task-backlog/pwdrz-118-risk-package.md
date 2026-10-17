@@ -1,5 +1,9 @@
 # PWDRZ-118 — risk package execution record
 
+> Historical execution record from 2026-10-16. The user accepted Istanbul on
+> 2026-10-17; see [final decisions](pwdrz-118-final-decisions.md) for subsequent
+> implementation, metric/threshold choices and verification.
+
 Reference SHA: `cc998e7ec9f627be613f902638b96cc780d4f40e`; 2026-10-16.
 Threshold selection remains pending. This document records implementation and provider experiments following the user's decisions.
 

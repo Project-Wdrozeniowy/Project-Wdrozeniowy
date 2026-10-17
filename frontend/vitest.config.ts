@@ -14,7 +14,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
-      provider: 'v8',
+      provider: 'istanbul',
       reporter: ['text', 'lcov', 'html'],
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
@@ -32,10 +32,10 @@ export default defineConfig({
         'src/test/**',
       ],
       thresholds: {
-        lines: 65,
-        functions: 65,
-        branches: 65,
-        statements: 65,
+        lines: 85,
+        functions: 80,
+        branches: 85,
+        statements: 85,
       },
     },
   },

@@ -154,8 +154,8 @@ npm run lint     # eslint src (--fix for gateway)
 | Gateway  | Jest 29 + ts-jest + supertest       | source-local `__tests__/` (including `src/config/` and `src/routes/`); root `src/__tests__/` for `app.ts` |
 | Backend  | JUnit 5 + Mockito + Spring Boot Test | mirrors `src/main/java/`                              |
 
-- Current configured coverage thresholds: ≥ 65% frontend/gateway (all metrics) and ≥ 65% backend (JaCoCo line coverage). PWDRZ-118 owns any policy change.
-- Coverage-excluded folders (frontend): `app/`, `components/`, `hooks/`, `lib/`, `utils/`, `shared/`, and `constants/` (see `frontend/vitest.config.ts` for the exact globs).
+- Frontend uses Vitest 3.2.4 + Istanbul; frontend and gateway enforce four independent service-specific gates. See the canonical [coverage policy](../docs/guides/testing.md#coverage-policy-pwdrz-118) for values, scope and rationale. Backend's 65% JaCoCo line gate remains interim pending its separate decision.
+- Frontend includes all `src/**/*.{ts,tsx}` production code, including UI, hooks and shared code; do not restore broad directory exclusions. See `frontend/vitest.config.ts` for declaration/test/setup and non-production exclusions.
 - Backend Spring tests use PostgreSQL. The default test profile disables Flyway and uses Hibernate `create-drop`; tests annotated with `@MigratedSchemaTest` apply real Flyway migrations to `migration_test` and validate mappings.
 - Coverage is not a substitute for behaviour-specific evidence. The mandatory
   browser E2E gate is planned under PWDRZ-117 but is not configured yet;

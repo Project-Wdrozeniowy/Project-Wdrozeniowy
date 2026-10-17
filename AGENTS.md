@@ -138,10 +138,10 @@ listed in `gateway/src/config/index.ts`.
 
 ```bash
 # Frontend
-cd frontend && npm run test:coverage   # threshold: 65%
+cd frontend && npm run test:coverage   # Istanbul; service-specific gates
 
 # Gateway
-cd gateway && npm run test:coverage    # threshold: 65%
+cd gateway && npm run test:coverage    # Jest; service-specific gates
 
 # Backend (requires running PostgreSQL — use docker compose up postgres)
 cd backend && ./mvnw test
@@ -164,10 +164,12 @@ npx vitest run -t "login"
 Test files live in `__tests__/` subdirectories next to the module under test.  
 Example: `src/shared/api/auth/__tests__/authClient.test.ts` tests `src/shared/api/auth/authClient.ts`.
 
-Current Vitest coverage excludes: `app/`, `components/`, `hooks/`, `lib/`,
-`utils/`, `shared/`, and `constants/`. Several of these contain executable
-logic; their exclusion does not mean they are tested. PWDRZ-118 will review
-the measured scope and threshold.
+Vitest 3.2.4 uses Istanbul and includes `src/**/*.{ts,tsx}`, including executable
+pages, components, hooks, libraries, shared code and utilities, even when no test
+imports them. Only declaration/test/setup files and dependency/generated/tooling
+paths are excluded. All four metrics are mandatory. The canonical
+[coverage policy](docs/guides/testing.md#coverage-policy-pwdrz-118) owns the exact
+thresholds, source patterns, exclusions and rationale.
 
 ### Gateway tests (Jest 29 + ts-jest + supertest)
 
@@ -442,10 +444,13 @@ cd gateway && npm run typecheck && npm run lint && npm run format:check && npm r
 cd backend && ./mvnw test
 ```
 
-Every applicable Build, Lint, and Tests job must pass. Current test
-configurations enforce 65% for frontend/gateway (all four metrics) and 65%
-backend line coverage; PWDRZ-118 owns the threshold review. The `≥50%`
-labels in the Tests workflow are stale labels, not the active gate. The
+Every applicable Build, Lint, and Tests job must pass. Frontend and gateway
+enforce all four service-specific coverage gates from the canonical
+[coverage policy](docs/guides/testing.md#coverage-policy-pwdrz-118).
+Backend still enforces its interim 65% line gate pending its separate decision.
+Frontend/gateway CI labels say `coverage gates`; exact values live in their
+test configurations and the testing guide. The backend label is still pending
+alignment when its policy is selected. The
 mandatory E2E gate is not yet configured; PWDRZ-117 owns it. Never report an
 absent gate as passed.
 

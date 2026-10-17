@@ -29,7 +29,9 @@ npm run format:check
 npm run test:coverage
 ```
 
-Tests use Vitest and React Testing Library. The configured coverage threshold is 65% across lines, functions, branches, and statements. See [docs/guides/testing.md](../docs/guides/testing.md) for repository-wide conventions.
+Tests use Vitest 3.2.4, Istanbul coverage and React Testing Library. All four
+coverage metrics are mandatory. See the canonical [coverage policy](../docs/guides/testing.md#coverage-policy-pwdrz-118)
+for thresholds, measured source and exclusions.
 
 ## Authentication and API boundary
 
