@@ -157,7 +157,8 @@ npm run lint     # eslint src (--fix for gateway)
 - Frontend uses Vitest 3.2.4 + Istanbul; frontend and gateway enforce four independent service-specific gates. Backend enforces JaCoCo LINE ≥95% and BRANCH ≥85% at `verify`; METHOD/INSTRUCTION are diagnostic. See the canonical [coverage policy](../docs/guides/testing.md#coverage-policy-pwdrz-118) for scope, rationale and execution-data handling.
 - Frontend includes all `src/**/*.{ts,tsx}` production code, including UI, hooks and shared code; do not restore broad directory exclusions. See `frontend/vitest.config.ts` for declaration/test/setup and non-production exclusions.
 - Backend Spring tests use PostgreSQL. The default test profile disables Flyway and uses Hibernate `create-drop`; tests annotated with `@MigratedSchemaTest` apply real Flyway migrations to `migration_test` and validate mappings.
-- Coverage is not a substitute for behaviour-specific evidence. The mandatory
-  browser E2E gate is planned under PWDRZ-117 but is not configured yet;
-  PWDRZ-118 owns review of executable-code exclusions and thresholds.
+- Coverage is not a substitute for behaviour-specific evidence. Use the separate
+  [real browser/integration suite](../e2e/README.md); its managed stack must not use
+  developer data or mocks. See [PWDRZ-117 evidence](../docs/agent-task-backlog/pwdrz-117-execution.md)
+  for actual CI/required-check status; never equate a skipped/unrun job with a pass.
 - In gateway config tests, use `jest.mock('dotenv/config', () => {})` when calling `jest.resetModules()` to prevent `.env` from polluting isolated test env vars.

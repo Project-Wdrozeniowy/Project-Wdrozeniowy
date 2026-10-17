@@ -189,6 +189,17 @@ Test files live beside their source modules: `src/__tests__/app.test.ts`,
 `src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts`,
 and `src/middleware/__tests__/`.
 
+### Browser and cross-service tests (PWDRZ-117)
+
+Use the independent [e2e package](e2e/README.md): after `npm ci` and browser
+installation in `e2e/`, run `npm test` there. Its launcher owns an isolated real
+stack; do not substitute developer servers, production data or mocked API
+responses. Four browser flows and one HTTP integration case use Chromium,
+one worker and no retries. Keep service coverage gates independent.
+`npm run test:probe` must fail a real browser assertion and still clean up.
+Current local/CI/required-check evidence belongs in
+[the PWDRZ-117 execution record](docs/agent-task-backlog/pwdrz-117-execution.md).
+
 ### Backend tests (JUnit 5 + Mockito + Spring Boot Test)
 
 ```bash
@@ -304,9 +315,9 @@ docs/
 
 1. **Dual JWT verification is intentional** — the gateway verifies the token before proxying, and Spring Security re-validates it as defence-in-depth. The same `JWT_SECRET` must be configured in both.
 
-2. **Token storage** — the access token lives only in memory (`frontend/src/lib/tokenMemory.ts`). The refresh token is an `HttpOnly; SameSite=Strict` cookie (`/api/auth` path) set by the backend and never appears in a request or response body. On page load `AuthProvider` calls `POST /auth/refresh`, then `GET /users/me`. Never write tokens to `localStorage`/`sessionStorage`. Set `COOKIE_SECURE=false` for plain-HTTP local dev (Safari ignores `Secure` cookies on `http://localhost`).
+2. **Token storage** — the access token lives only in memory (`frontend/src/shared/auth/tokenMemory.ts`). The refresh token is an `HttpOnly; SameSite=Strict` cookie (`/api/auth` path) set by the backend and never appears in a request or response body. On page load `AuthProvider` calls `POST /auth/refresh`, then `GET /users/me`. Never write tokens to `localStorage`/`sessionStorage`. Set `COOKIE_SECURE=false` for plain-HTTP local dev (Safari ignores `Secure` cookies on `http://localhost`).
 
-3. **Forum feed is currently mocked** — `frontend/src/hooks/usePosts.ts` returns `MOCK_POSTS`, although `frontend/src/services/forumService.ts` has typed adapters and the backend implements `/api/forum/posts`. PWDRZ-81 owns connecting the feed; adjacent comment, tag, and category-management endpoints still contain `501` stubs.
+3. **Forum feed and creation use real APIs** — home/forum read through `src/shared/api/forum/useForumPosts.ts`; `CreatePostForm` publishes through `POST /api/forum/posts` and invalidates feed queries. PWDRZ-81/111/101 delivered these paths, so E2E must exercise their real API flow. The post detail body is still a placeholder; adjacent comments, tag-list and category-management APIs remain provisional under their own tasks.
 
 4. **Redis** — provisioned in Docker Compose, not yet wired in application code. It is reserved for future integration; the first use case has not been selected. Do not remove it or the `depends_on` from compose as a documentation cleanup.
 
@@ -444,7 +455,7 @@ cd gateway && npm run typecheck && npm run lint && npm run format:check && npm r
 cd backend && ./mvnw verify
 ```
 
-Every applicable Build, Lint, and Tests job must pass. Frontend and gateway
+Every applicable Build, Lint, Tests and E2E job must pass. Frontend and gateway
 enforce all four service-specific coverage gates from the canonical
 [coverage policy](docs/guides/testing.md#coverage-policy-pwdrz-118).
 Backend enforces LINE ≥95% and BRANCH ≥85% at `verify`; METHOD and INSTRUCTION
@@ -452,8 +463,9 @@ remain diagnostic. JaCoCo uses `append=false` for the current single test fork
 to prevent accumulation of previous execution sessions.
 Frontend/gateway CI labels say `coverage gates`; exact values live in their
 test configurations and the testing guide; backend uses the same label style. The
-mandatory E2E gate is not yet configured; PWDRZ-117 owns it. Never report an
-absent gate as passed.
+separate E2E workflow declares `E2E (Chromium)`; actual CI and GitHub enforcement
+status is recorded in PWDRZ-117 evidence above. A skipped/unpublished/unrun job
+is not a passed gate. Selective CI and wider branch-rule changes remain PWDRZ-137.
 
 ---
 

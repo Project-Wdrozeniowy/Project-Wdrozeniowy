@@ -172,9 +172,12 @@ passing aggregate coverage does not prove every behaviour is tested.
 See the [coverage policy](docs/guides/testing.md#coverage-policy-pwdrz-118)
 for exact thresholds and source scope. Backend enforces independent JaCoCo
 LINE ≥95% and BRANCH ≥85% gates at `verify`; METHOD/INSTRUCTION are diagnostic.
-Browser E2E tests and their CI gate are planned in PWDRZ-117 but are not yet
-available. See the [testing guide](docs/guides/testing.md) for the agreed
-completion criteria and current gap.
+Browser and cross-service tests live in the independent [e2e package](e2e/README.md).
+After its documented dependency/browser installation, `npm --prefix e2e test`
+starts a separate real stack and runs the Chromium gate. It needs Docker and
+does not use developer databases or `.env` files. See the
+[testing guide](docs/guides/testing.md) and [PWDRZ-117 evidence](docs/agent-task-backlog/pwdrz-117-execution.md)
+for scenario scope and the actual CI/required-check verification status.
 
 Run a specific test from the relevant service directory (each block starts at the repository root):
 

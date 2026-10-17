@@ -118,9 +118,12 @@ Technical enforcement still needs verification under
 - `Backend Tests (coverage gates)`, `Frontend Tests (coverage gates)`, `Gateway Tests (coverage gates)`
 - `Frontend Lint & Format Check`, `Gateway Lint & Format Check`
 
-The E2E gate is not yet present; [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117)
-owns adding it. Do not represent an absent gate as passing. If an applicable
-check fails, fix the cause rather than disabling it.
+The separate `E2E (Chromium)` workflow/check belongs to
+[PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117). See its
+[execution record](../agent-task-backlog/pwdrz-117-execution.md) for actual CI and
+required-check verification. A skipped/unrun check is not a pass. If an
+applicable check fails, fix the cause rather than disabling it. Selective CI
+and wider branch enforcement remain PWDRZ-137.
 
 ## Daily branch commands
 
@@ -278,9 +281,12 @@ filter, не считается провалом; комментарий в PR *
 - `Backend Tests (coverage gates)`, `Frontend Tests (coverage gates)`, `Gateway Tests (coverage gates)`.
 - `Frontend Lint & Format Check`, `Gateway Lint & Format Check`.
 
-E2E gate ещё отсутствует; его добавляет [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117).
-Нельзя считать отсутствующий gate успешно пройденным. При падении применимой
-проверки исправляйте причину, а не отключайте её.
+Отдельный workflow/check `E2E (Chromium)` относится к
+[PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117); фактические CI и
+required-check результаты — в [execution record](../agent-task-backlog/pwdrz-117-execution.md).
+Пропущенный/незапущенный check не считается пройденным. При падении применимой
+проверки исправляйте причину, а не отключайте её. Выборочный CI и остальные
+branch rules остаются PWDRZ-137.
 
 ### Ежедневные команды для веток
 
