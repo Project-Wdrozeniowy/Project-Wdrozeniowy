@@ -118,14 +118,15 @@ allowed-failure CI step. The normal run does not select this probe.
 
 The separate E2E workflow runs on all PRs and pushes to main/develop. Selective
 execution remains PWDRZ-137. Manual workflow input `failure_probe=true` runs the
-same negative probe; default is the real positive suite. Manual dispatch is
-available once GitHub exposes this workflow from the default branch; a
-feature-branch file alone does not guarantee dispatch support.
-Before that, the local probe verifies the identical failing command, or a
-separately published temporary probe command can verify a negative PR run.
+same negative probe; default is the real positive suite. Dispatch was verified
+on the published PWDRZ-117 branch using its registered workflow ID. If GitHub
+does not yet expose a newly added workflow, do not count an unavailable dispatch
+as executed; the local probe runs the identical failing command.
 The stable check name
 is **`E2E (Chromium)`**. A failure is not suppressed; artifacts upload with
 `always()`. Required-check configuration and actual fail/pass evidence are
 recorded in [the execution record](../docs/agent-task-backlog/pwdrz-117-execution.md).
-Until publication and verification, a declared workflow is not proof of a passing
-or GitHub-enforced gate. No screenshot/trace or `artifacts/` output belongs in Git.
+The verified required check uses strict mode on develop/main/staging and the
+GitHub Actions source. Existing organization-admin bypass on develop/main is
+preserved. A declared workflow alone is not proof of a passing or enforced gate.
+No screenshot/trace or `artifacts/` output belongs in Git.

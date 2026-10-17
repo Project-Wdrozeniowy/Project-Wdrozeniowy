@@ -22273,10 +22273,10 @@
       },
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-117",
       "localTracking": {
-        "status": "in_progress",
+        "status": "done",
         "owner": "Codex",
-        "notes": "D0-D8 A implemented from merged develop 62884879. Separate Playwright 1.64.1 package, owned real Docker/production frontend stack, API data fixtures, 4 browser cases + protected-write integration, one worker/no retries, explicit failure probe, E2E workflow and docs. Two clean full passes (5/5 exit 0), intentional browser assertion fail (exit 1), fresh Flyway 7/PG16.14, cleanup and type/format/3 infra checks verified. First locator ambiguity fixed only in test code; no new FE/BE defect. Source/coverage configs unchanged. GitHub run and required-check setting pending user publication/permission flow; strictness choice to be shown before settings change. No commit/push/PR/Jira status changes. See pwdrz-117-execution.md.",
-        "updatedAt": "2026-10-17T17:36:39.275Z"
+        "notes": "All five Jira acceptance criteria verified. PR #58 head 666ba667; PR CI 39054846497 passes 5/5 on test merge 43cfe750. Controlled browser failure CI 39055451049 exits 1 with artifacts and cleanup; subsequent normal CI 39055714957 passes 5/5 exit 0 on same head. Strict E2E (Chromium), GitHub Actions app 15368, required on develop/main/staging; readback preserves original rules/bypass. gh pr checks --required recognizes passing E2E. Existing admin bypass remains; no negative PR merge rejection claimed. No new FE/BE defect. Final evidence docs uncommitted; no agent commit/push/merge/Jira transition. See pwdrz-117-execution.md.",
+        "updatedAt": "2026-10-17T17:56:51.294Z"
       }
     }
   ]
