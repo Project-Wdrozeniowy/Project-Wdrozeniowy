@@ -42,9 +42,10 @@ not prove a multi-service path.
 - **Local frontend or gateway change:** the intended behaviour is verified at
   a useful boundary; affected typecheck, lint, formatting, tests, coverage
   gate, and production build pass. New UI behaviour requires browser-level
-  E2E evidence. PWDRZ-117 must establish its automated CI gate; until then,
-  record reproducible browser verification and do not claim that the missing
-  gate passed. Current React Testing Library tests remain useful but do not
+  E2E evidence from the [managed real stack](../../e2e/README.md). Check the
+  [PWDRZ-117 record](../agent-task-backlog/pwdrz-117-execution.md) for actual
+  CI/required-check status; an unrun or skipped gate is not a pass.
+  Current React Testing Library tests remain useful but do not
   substitute for browser verification.
 - **Local backend change:** relevant Java tests and `./mvnw verify` pass;
   controller, service, security, or persistence behaviour is checked at the
@@ -65,9 +66,9 @@ not prove a multi-service path.
 > the [coverage policy](testing.md#coverage-policy-pwdrz-118) and
 > [final evidence](../agent-task-backlog/pwdrz-118-final-decisions.md#final-ci-verification-and-acceptance-sign-off).
 > [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117) owns the
-> mandatory E2E/CI gate; it does not exist yet. Do not describe an unrun
-> browser scenario or a non-existent workflow as passed. Unit coverage does
-> not close this gap.
+> separate browser/integration suite and CI check. Its implemented flows and
+> actual gate verification are recorded in [PWDRZ-117 evidence](../agent-task-backlog/pwdrz-117-execution.md).
+> Unit coverage does not establish browser or cross-service correctness.
 
 When a task previously treated as implemented reveals additional work, track
 the residual in a separate owner-specific Jira task rather than rewriting its
@@ -137,9 +138,9 @@ descriptive and regenerate them only from verified evidence.
 - **Локальное изменение frontend или gateway:** поведение проверено на
   подходящей границе; применимые typecheck, lint, formatting, tests, coverage
   gate и production build проходят. Для нового поведения UI нужно
-  подтверждение в браузере. PWDRZ-117 должна добавить автоматический E2E
-  gate в CI; до этого фиксируйте воспроизводимую браузерную проверку и не
-  заявляйте, что отсутствующий gate пройден. React Testing Library полезен,
+  подтверждение в браузере на [отдельном реальном стенде](../../e2e/README.md).
+  Фактические CI/required-check результаты — в [PWDRZ-117](../agent-task-backlog/pwdrz-117-execution.md).
+  Пропущенный или незапущенный gate не считается пройденным. React Testing Library полезен,
   но не заменяет браузерную проверку.
 - **Локальное изменение backend:** релевантные Java-тесты и `./mvnw verify`
   проходят; поведение controller, service, security или persistence проверено
@@ -160,9 +161,9 @@ descriptive and regenerate them only from verified evidence.
 > [coverage policy](testing.md#coverage-policy-pwdrz-118) и
 > [финальные результаты](../agent-task-backlog/pwdrz-118-final-decisions.md#final-ci-verification-and-acceptance-sign-off).
 > [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117) отвечает
-> за обязательный E2E/CI gate; пока его нет, нельзя заявлять, что браузерный
-> сценарий или несуществующий workflow пройден. Unit coverage не закрывает
-> этот пробел.
+> за отдельный browser/integration suite и CI check; реализованные flows и
+> фактические gate результаты — в [PWDRZ-117 evidence](../agent-task-backlog/pwdrz-117-execution.md).
+> Unit coverage не доказывает работу браузера и межсервисной интеграции.
 
 Если в задаче, которую считали реализованной, обнаружилась дополнительная
 работа, оформите её отдельной Jira-задачей для соответствующего исполнителя,

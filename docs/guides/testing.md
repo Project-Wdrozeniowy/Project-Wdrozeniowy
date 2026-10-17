@@ -222,10 +222,28 @@ npm --prefix gateway run test:coverage
 The root `docker-compose.yml` starts PostgreSQL and Redis for local
 integration tests.
 
-> **Current E2E gap:** The mandatory browser suite and CI gate are tracked in
-> [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117); they do
-> **not** exist yet. Record exactly which manual or integration path was
-> exercised. Do not claim the missing gate passed.
+### Browser and cross-service gate (PWDRZ-117)
+
+The independent [e2e package](../../e2e/README.md) owns Playwright, an isolated
+real stack and startup/teardown. Run `npm --prefix e2e test` after the documented
+installation. Four browser cases cover registration, login/reload-refresh/logout,
+bad credentials and publication/feed persistence. A fifth HTTP integration case
+checks anonymous protected-write rejection; it is not browser E2E evidence.
+API fixtures are setup, not proof that the corresponding UI flow works.
+
+The baseline is Chromium desktop, one worker and zero retries. Tests must be
+independent, observe accessible UI/API outcomes and use real services/migrations.
+Do not read HttpOnly cookie values in browser code, inject tokens into browser
+storage, mock a missing feature, or duplicate whole unit-test matrices here.
+Post details/comments and provisional registration fields are explicitly limited
+by their own tasks. Coverage gates remain separate.
+
+The separate workflow declares the `E2E (Chromium)` check on all PRs and pushes
+to main/develop; selective CI remains PWDRZ-137. Negative probe
+`npm --prefix e2e run test:probe` must exit 1 for a real failed browser assertion.
+Logs/report/traces and teardown must survive failures. Actual local/CI evidence
+and required-check enforcement are in [PWDRZ-117 execution](../agent-task-backlog/pwdrz-117-execution.md).
+An unrun, skipped or unpublished check is never counted as passing.
 
 **The configured service-specific gates must pass.** Frontend executable UI
 code is measured, but aggregate coverage does not prove every behavior is
@@ -434,10 +452,28 @@ npm --prefix gateway run test:coverage
 Корневой `docker-compose.yml` поднимает PostgreSQL и Redis для локальных
 integration tests.
 
-> **Текущий пробел E2E:** Обязательный browser suite и CI gate — задача
-> [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117); сейчас
-> их **нет**. Фиксируйте, какой ручной или интеграционный путь проверен. Не
-> заявляйте о прохождении отсутствующего gate.
+### Browser и cross-service gate (PWDRZ-117)
+
+Отдельный [e2e package](../../e2e/README.md) содержит Playwright и launcher
+изолированного реального стенда. После описанной установки запускайте
+`npm --prefix e2e test`: четыре browser-сценария проверяют регистрацию,
+login/reload-refresh/logout, неверные credentials и публикацию/feed persistence.
+Пятая HTTP integration-проверка проверяет anonymous protected write; её нельзя
+называть browser E2E. Подготовка через API не доказывает работу соответствующего UI.
+
+Начальный набор — Chromium desktop, один worker, без retries. Нужны независимые
+тесты с реальными сервисами/Flyway, доступными UI selectors и наблюдаемыми
+результатами. Не читайте HttpOnly cookie из browser code, не внедряйте токены
+в browser storage и не подменяйте отсутствующие возможности mocks. Не переносите
+сюда целиком unit-test matrices. Post details/comments и provisional-поля
+регистрации остаются ограниченными своими задачами; coverage gates независимы.
+
+Отдельный workflow объявляет `E2E (Chromium)` на всех PR и push в main/develop;
+выборочный CI остаётся PWDRZ-137. `npm --prefix e2e run test:probe` должен
+завершиться с кодом 1 из-за реального failed browser assertion. Артефакты и
+teardown нужны также при ошибке. Фактические local/CI результаты и обязательность
+check в GitHub — в [PWDRZ-117 execution](../agent-task-backlog/pwdrz-117-execution.md).
+Пропущенный, неопубликованный или незапущенный check не считается пройденным.
 
 **Настроенные посервисные gates обязательны.** Исполняемый UI-код frontend
 измеряется, но общий процент не доказывает проверку каждого поведения.

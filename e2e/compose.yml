@@ -1,0 +1,54 @@
+name: ${E2E_PROJECT:?Run npm test from e2e}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orbita_e2e
+      POSTGRES_USER: orbita_e2e
+      POSTGRES_PASSWORD: ${E2E_DB_PASSWORD:?Managed test credentials required}
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U orbita_e2e -d orbita_e2e']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+
+  backend:
+    build:
+      context: ${E2E_RUNTIME:?Managed source snapshot required}/backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orbita_e2e
+      POSTGRES_DB: orbita_e2e
+      POSTGRES_USER: orbita_e2e
+      POSTGRES_PASSWORD: ${E2E_DB_PASSWORD}
+      JWT_SECRET: ${E2E_JWT_SECRET:?Managed test secret required}
+      COOKIE_SECURE: 'false'
+      SWAGGER_ENABLED: 'false'
+    ports:
+      - '127.0.0.1:${E2E_BACKEND_PORT:?Managed port required}:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  gateway:
+    build:
+      context: ${E2E_RUNTIME}/gateway
+    environment:
+      PORT: 3000
+      BACKEND_URL: http://backend:8080
+      JWT_SECRET: ${E2E_JWT_SECRET}
+      CORS_ORIGINS: http://127.0.0.1:${E2E_FRONTEND_PORT:?Managed port required}
+      # Fixtures/readiness must not exhaust a shared per-run IP quota.
+      # Rate-limit semantics remain covered by gateway's service tests.
+      RATE_LIMIT_MAX: 1000
+    ports:
+      - '127.0.0.1:${E2E_GATEWAY_PORT:?Managed port required}:3000'
+    depends_on:
+      - backend
