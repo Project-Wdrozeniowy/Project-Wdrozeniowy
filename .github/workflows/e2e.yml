@@ -14,14 +14,15 @@ on:
 permissions:
   contents: read
 
+env:
+  NX_DAEMON: 'false'
+  NX_TUI: 'false'
+
 jobs:
   e2e:
     name: E2E (Chromium)
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    defaults:
-      run:
-        working-directory: e2e
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,30 +34,28 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: |
-            e2e/package-lock.json
-            frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install E2E dependencies
-        run: npm ci
+        run: npm ci --workspace orbita-e2e --include-workspace-root
 
       - name: Check E2E tooling
         run: |
-          npm run typecheck
-          npm run format:check
-          npm run test:infra
+          npx nx run e2e:typecheck
+          npx nx run e2e:format-check
+          npx nx run e2e:infra-test
 
       - name: Install Chromium and system dependencies
-        run: npx playwright install --with-deps chromium
+        run: npm exec --workspace orbita-e2e -- playwright install --with-deps chromium
 
       - name: Run isolated browser and integration gate
         env:
           FAILURE_PROBE: ${{ github.event_name == 'workflow_dispatch' && inputs.failure_probe }}
         run: |
           if [ "$FAILURE_PROBE" = "true" ]; then
-            npm run test:probe
+            npx nx run e2e:probe
           else
-            npm test
+            npx nx run e2e:test
           fi
 
       - name: Upload E2E evidence

@@ -1,0 +1,15 @@
+.git
+.nx
+.workspace-artifacts
+**/node_modules
+**/.env
+**/.env.*
+**/.next
+**/target
+**/coverage
+**/dist
+**/*.log
+**/*.tsbuildinfo
+e2e/.runtime
+e2e/artifacts
+output

@@ -7,9 +7,23 @@ on:
       - develop
     paths:
       - 'backend/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'nx.json'
+      - 'tools/**'
+      - '.github/workflows/backend-build.yml'
   pull_request:
     paths:
       - 'backend/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'nx.json'
+      - 'tools/**'
+      - '.github/workflows/backend-build.yml'
+
+env:
+  NX_DAEMON: 'false'
+  NX_TUI: 'false'
 
 jobs:
   build:
@@ -27,6 +41,15 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install root tooling
+        run: npm ci --workspaces=false
+
       - name: Build (skip tests)
-        working-directory: backend
-        run: ./mvnw --batch-mode package -DskipTests
+        run: npx nx run backend:build

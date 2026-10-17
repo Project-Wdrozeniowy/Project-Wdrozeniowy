@@ -7,6 +7,10 @@ on:
       - develop
   pull_request:
 
+env:
+  NX_DAEMON: 'false'
+  NX_TUI: 'false'
+
 jobs:
   frontend-test:
     name: Frontend Tests (coverage gates)
@@ -21,15 +25,13 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
+        run: npm ci --workspace frontend --include-workspace-root
 
       - name: Run tests with coverage
-        working-directory: frontend
-        run: npm run test:coverage
+        run: npx nx run frontend:coverage
 
   gateway-test:
     name: Gateway Tests (coverage gates)
@@ -44,15 +46,13 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: gateway/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: gateway
-        run: npm ci
+        run: npm ci --workspace gateway --include-workspace-root
 
       - name: Run tests with coverage
-        working-directory: gateway
-        run: npm run test:coverage
+        run: npx nx run gateway:coverage
 
   backend-test:
     name: Backend Tests (coverage gates)
@@ -87,8 +87,17 @@ jobs:
       - name: Verify Postgres is reachable
         run: pg_isready -h localhost -p 5432 -U devpulse -d devpulse
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install root tooling
+        run: npm ci --workspaces=false
+
       - name: Run tests with coverage check
-        working-directory: backend
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/devpulse
           SPRING_DATASOURCE_USERNAME: devpulse
@@ -97,4 +106,19 @@ jobs:
           POSTGRES_USER: devpulse
           POSTGRES_PASSWORD: devpulse
           JWT_SECRET: ci-test-secret-key-that-is-long-enough-for-hmac-sha256
-        run: ./mvnw --batch-mode verify
+        run: npx nx run backend:coverage:ci
+
+  workspace-tooling:
+    name: Workspace Tooling
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --workspaces=false
+      - run: npx nx run tooling:format-check
+      - run: npx nx run tooling:infra-test
+      - run: npx nx show projects

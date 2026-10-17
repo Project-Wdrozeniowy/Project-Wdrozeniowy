@@ -1,0 +1,31 @@
+{
+  "name": "orbita",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
+  },
+  "packageManager": "npm@11.12.1",
+  "workspaces": [
+    "frontend",
+    "gateway",
+    "e2e"
+  ],
+  "scripts": {
+    "bootstrap": "node tools/workspace/bootstrap.mjs",
+    "dev": "nx run tooling:dev",
+    "build": "nx run-many -t build --projects=frontend,gateway,backend --parallel=3",
+    "check": "nx run-many -t lint,typecheck,format-check --projects=frontend,gateway,e2e,tooling --parallel=3",
+    "test": "nx run-many -t coverage --projects=frontend,gateway,backend --parallel=3",
+    "test:e2e": "nx run e2e:test",
+    "test:tooling": "nx run-many -t infra-test --projects=e2e,tooling",
+    "validate": "nx run tooling:validate",
+    "graph": "nx graph",
+    "format:check": "nx run tooling:format-check"
+  },
+  "devDependencies": {
+    "nx": "23.3.0",
+    "prettier": "3.8.1"
+  }
+}

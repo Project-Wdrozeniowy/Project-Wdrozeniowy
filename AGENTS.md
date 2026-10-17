@@ -9,7 +9,9 @@
 
 **Orbita** is a full-stack community forum platform. Users can register, post articles, comment, vote, and receive real-time notifications.
 
-The repository is a **manual monorepo** containing three independent services and a shared Docker Compose stack:
+The repository is an **Nx monorepo** containing three services, an E2E project,
+and a shared Docker Compose stack. npm workspaces uses the root lockfile;
+Java remains Maven-owned. See the [monorepo runbook](docs/guides/monorepo.md).
 
 ```
 Frontend (Next.js 16)  →  Gateway (Express 5)  →  Backend (Spring Boot 4)  →  PostgreSQL 16
@@ -30,7 +32,7 @@ ER diagrams live in `docs/db-schema*.mmd`.
 
 ### Prerequisites
 
-- Node.js ≥ 24 (matches CI)
+- Node.js 24 / npm 11 (matches CI)
 - Java 17 (Temurin recommended)
 - Maven wrapper included (`./mvnw`)
 - Docker + Docker Compose
@@ -65,21 +67,30 @@ docker compose logs --tail=100 # inspect startup
 
 PostgreSQL is available at `localhost:5432`. Flyway migrations run automatically on backend startup.
 
-### 3. Install frontend dependencies
+### 3. Install workspace dependencies
 
 ```bash
-cd frontend && npm install
+npm ci
 ```
 
-### 4. Install gateway dependencies
-
-```bash
-cd gateway && npm install
-```
+The root lockfile owns frontend/gateway/E2E installation. Do not create local
+lockfiles. Nx and Prettier are root development tools; application dependencies
+remain declared by each consuming workspace.
 
 ---
 
 ## Development Workflow
+
+`npm run dev` performs configuration/port preflight, starts PostgreSQL/Redis/backend
+through Compose, waits for backend HTTP readiness and launches frontend/gateway
+through Nx. Ctrl+C stops those source processes; Compose data/services remain.
+`npm run check`, `npm run build`, `npm test`, `npm run test:e2e` and
+`npm run validate` are root workflows. Production builds require explicit
+`NEXT_PUBLIC_API_URL`. Root backend coverage uses a temporary owned PostgreSQL
+with local Java 17; `backend:coverage:ci` explicitly uses the disposable CI DB.
+Coverage/E2E/lifecycle tasks are never cached. The runbook owns details and
+direct-command escape paths. Do not change existing service gates or enable
+affected-only CI as an incidental optimization; PWDRZ-137 owns that rollout.
 
 The frontend and gateway run from source in separate terminals when the
 Compose command above starts the backend. See the root README for the
@@ -191,8 +202,8 @@ and `src/middleware/__tests__/`.
 
 ### Browser and cross-service tests (PWDRZ-117)
 
-Use the independent [e2e package](e2e/README.md): after `npm ci` and browser
-installation in `e2e/`, run `npm test` there. Its launcher owns an isolated real
+Use the [e2e workspace](e2e/README.md): after root `npm ci` and browser
+installation, run root `npm run test:e2e` or `npm test` in `e2e/`. Its launcher owns an isolated real
 stack; do not substitute developer servers, production data or mocked API
 responses. Four browser flows and one HTTP integration case use Chromium,
 one worker and no retries. Keep service coverage gates independent.

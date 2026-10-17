@@ -1,5 +1,8 @@
 # Node
 node_modules/
+.nx/
+.workspace-artifacts/
+*.tsbuildinfo
 .env
 
 # Coverage reports

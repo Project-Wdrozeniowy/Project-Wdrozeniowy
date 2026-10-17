@@ -9,7 +9,14 @@ current behaviour; a documented target may have Jira-tracked cleanup debt.
 
 ## Stack & Versions
 
-Manual monorepo — three fully independent services. Use exact versions listed; do not upgrade or use features beyond them.
+Nx monorepo — three services and the E2E workspace. npm workspaces installs from
+the single root lockfile; Java remains Maven-owned. See the
+[monorepo runbook](../docs/guides/monorepo.md) for root commands, lifecycle,
+cache policy and direct-service escape paths. Do not recreate service lockfiles
+or change service coverage gates while editing orchestration.
+
+Use the versions declared by the owning project; incompatible TypeScript/ESLint
+majors must not be unified incidentally. Shared Nx/Prettier live at root.
 
 | Service  | Runtime       | Key Versions                                                       |
 | -------- | ------------- | ------------------------------------------------------------------ |

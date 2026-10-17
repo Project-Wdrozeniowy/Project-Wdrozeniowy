@@ -4,8 +4,10 @@ import net from 'node:net';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { spawn, execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { setTimeout as delay } from 'node:timers/promises';
 import { assertOwnedRuntime, includeInSnapshot, testPorts } from './environment.mjs';
+import { copyWorkspaceManifests } from '../../tools/workspace/snapshot.mjs';
 
 const e2e = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = path.resolve(e2e, '..');
@@ -20,6 +22,7 @@ if (process.argv.slice(2).some((arg) => arg !== '--probe-failure')) {
   throw new Error('Only --probe-failure is supported; use E2E_*_PORT to change test ports.');
 }
 const npmCli = process.env.npm_execpath;
+const require = createRequire(import.meta.url);
 if (!npmCli || !fs.existsSync(npmCli)) throw new Error('Start this launcher with npm test.');
 const env = {
   ...process.env,
@@ -170,11 +173,21 @@ try {
     });
   }
   const frontendDir = path.join(runtime, 'frontend');
+  copyWorkspaceManifests(repository, runtime);
   await command(
     process.execPath,
-    [npmCli, 'ci', '--include=dev', '--no-audit', '--no-fund'],
+    [
+      npmCli,
+      'ci',
+      '--workspace',
+      'frontend',
+      '--include-workspace-root=false',
+      '--include=dev',
+      '--no-audit',
+      '--no-fund',
+    ],
     'frontend-install',
-    frontendDir
+    runtime
   );
   composeAttempted = true;
   await command('docker', [...composeArgs, 'up', '--build', '--detach'], 'stack-start');
@@ -188,7 +201,7 @@ try {
   frontend = spawn(
     process.execPath,
     [
-      'node_modules/next/dist/bin/next',
+      createRequire(path.join(frontendDir, 'package.json')).resolve('next/dist/bin/next'),
       'start',
       '--hostname',
       '127.0.0.1',
@@ -213,7 +226,7 @@ try {
   await waitFor(`${env.E2E_BASE_URL}/login`);
   await command(
     process.execPath,
-    ['node_modules/@playwright/test/cli.js', 'test'],
+    [require.resolve('@playwright/test/cli'), 'test'],
     'browser-tests'
   );
 } catch (error) {

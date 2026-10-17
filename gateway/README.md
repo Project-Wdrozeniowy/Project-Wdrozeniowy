@@ -29,10 +29,15 @@ From `gateway/`, after copying the root `.env.example` to `.env` at the reposito
 root (for PostgreSQL and the backend):
 
 ```bash
-npm install
+# First run npm ci at the repository root (shared workspace lockfile).
 cp .env.example .env   # set JWT_SECRET to the same value as in the root .env
 npm run dev
 ```
+
+Root Nx workflows and direct-service commands are explained in the
+[monorepo guide](../docs/guides/monorepo.md).
+Build the Docker image from the repository root:
+`docker build -f gateway/Dockerfile .`.
 
 ---
 

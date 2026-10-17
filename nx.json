@@ -1,0 +1,58 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "cacheDirectory": ".nx/cache",
+  "parallel": 3,
+  "namedInputs": {
+    "workspace": [
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/package-lock.json",
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/.prettierrc.json",
+      "{workspaceRoot}/tools/workspace/**/*",
+      {
+        "runtime": "node --version"
+      },
+      {
+        "runtime": "node -p \"process.platform + '-' + process.arch\""
+      }
+    ],
+    "default": [
+      "{projectRoot}/**/*",
+      "!{projectRoot}/node_modules/**/*",
+      "!{projectRoot}/.next/**/*",
+      "!{projectRoot}/dist/**/*",
+      "!{projectRoot}/coverage/**/*",
+      "!{projectRoot}/target/**/*",
+      "!{projectRoot}/**/*.tsbuildinfo",
+      "workspace"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "cache": true,
+      "inputs": ["default"]
+    },
+    "lint": {
+      "cache": true,
+      "inputs": ["default"]
+    },
+    "typecheck": {
+      "cache": true,
+      "inputs": ["default"]
+    },
+    "format-check": {
+      "cache": true,
+      "inputs": ["default"]
+    },
+    "coverage": {
+      "cache": false
+    },
+    "test": {
+      "cache": false
+    },
+    "infra-test": {
+      "cache": false
+    }
+  },
+  "analytics": false
+}

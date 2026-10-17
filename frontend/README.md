@@ -8,17 +8,21 @@ The source layout is being migrated under PWDRZ-149. See the [frontend target ar
 
 ```bash
 # Run this block from the repository root.
+npm ci
 cp .env.example .env
 
 # If frontend/.env does not already exist, create it from the template.
 cd frontend
 cp .env.example .env
 
-npm install
 npm run dev -- -p 3001
 ```
 
 Open `http://localhost:3001`. Start the gateway and backend as described in the repository [README](../README.md).
+
+Dependency installation belongs to the root workspace and shared lockfile.
+Root Nx commands and direct-service escape paths are in the
+[monorepo guide](../docs/guides/monorepo.md).
 
 ## Quality commands
 
