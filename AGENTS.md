@@ -138,13 +138,13 @@ listed in `gateway/src/config/index.ts`.
 
 ```bash
 # Frontend
-cd frontend && npm run test:coverage   # threshold: 65%
+cd frontend && npm run test:coverage   # Istanbul; service-specific gates
 
 # Gateway
-cd gateway && npm run test:coverage    # threshold: 65%
+cd gateway && npm run test:coverage    # Jest; service-specific gates
 
 # Backend (requires running PostgreSQL — use docker compose up postgres)
-cd backend && ./mvnw test
+cd backend && ./mvnw verify
 ```
 
 ### Frontend tests (Vitest 3 + React Testing Library)
@@ -164,10 +164,12 @@ npx vitest run -t "login"
 Test files live in `__tests__/` subdirectories next to the module under test.  
 Example: `src/shared/api/auth/__tests__/authClient.test.ts` tests `src/shared/api/auth/authClient.ts`.
 
-Current Vitest coverage excludes: `app/`, `components/`, `hooks/`, `lib/`,
-`utils/`, `shared/`, and `constants/`. Several of these contain executable
-logic; their exclusion does not mean they are tested. PWDRZ-118 will review
-the measured scope and threshold.
+Vitest 3.2.4 uses Istanbul and includes `src/**/*.{ts,tsx}`, including executable
+pages, components, hooks, libraries, shared code and utilities, even when no test
+imports them. Only declaration/test/setup files and dependency/generated/tooling
+paths are excluded. All four metrics are mandatory. The canonical
+[coverage policy](docs/guides/testing.md#coverage-policy-pwdrz-118) owns the exact
+thresholds, source patterns, exclusions and rationale.
 
 ### Gateway tests (Jest 29 + ts-jest + supertest)
 
@@ -312,6 +314,15 @@ docs/
 
 6. **OpenAPI contract** — `backend/openapi.json` is the committed copy of the published contract and lists implemented operations only; `501` stubs are `@Hidden`. After an API change, regenerate it from `backend/` with `./mvnw test -Dtest=OpenApiContractTest -Dopenapi.contract.update=true`; `OpenApiContractTest` fails while it is stale. Swagger UI is at `http://localhost:8080/api/swagger-ui/index.html` when `SWAGGER_ENABLED=true` and must be **disabled in production**.
 
+### Gateway authentication boundary (PWDRZ-99 / PWDRZ-118)
+
+The gateway verifies Bearer JWTs on API requests; the backend owns token issuance,
+refresh rotation and resource authorization. Next.js serves pages independently,
+so frontend AuthGuard/RoleGuard and session initialization remain UI concerns.
+The unused gateway page redirect guard based on an `orbita_session` cookie was
+removed. Do not reintroduce it as a replacement for the current frontend guards
+without an explicit BFF/SSR architecture decision.
+
 ## Task Backlog Tracking
 
 - The shared executable backlog lives in [docs/agent-task-backlog/pwdrz-jira-tasks.json](docs/agent-task-backlog/pwdrz-jira-tasks.json).
@@ -321,6 +332,82 @@ docs/
 - When you finish a task, set `localTracking.status = done`, refresh `localTracking.updatedAt`, and add a short note in `localTracking.notes`.
 - Do not change the Jira payload when updating local status; the local tracking block is the execution record.
 - If you need to resume work, read the backlog file first and continue from the first `pending` or `blocked` task that is relevant.
+
+---
+
+## Post-task review of provisional functionality
+
+This section is the **canonical agent workflow** for unfinished, temporary or
+blocked functionality. Apply it after completing and validating each task,
+before marking it done and writing the final response. For review-only work,
+report findings without making implementation changes beyond the requested review.
+
+### Targeted check
+
+1. Identify the current Jira key from the requested task and the current branch.
+   If they differ, inspect relevant references to both; a branch name does not
+   authorize work outside the user's requested scope.
+2. Make a quick exact-key search in project source, tests, configuration and
+   relevant documentation, including hidden instruction files where relevant.
+   Look for the key itself and equivalent dependency wording: `remove after`,
+   `enable when ... is done`, `blocked by`, `waiting for`, or their equivalents
+   in other languages. Skip dependencies, generated output and historical exports
+   as cleanup targets; a ticket mention alone is not an actionable TODO.
+3. Inspect provisional mechanisms in the changed feature and its directly
+   adjacent code: TODOs, feature flags, disabled/unreachable branches,
+   `while (false)` and similar artificial guards, temporary `return undefined`,
+   stubs, and dependency comments. Do not scan all unrelated TODOs or flags.
+   An ordinary undefined return, a deliberate no-op, or a permanent operational
+   flag is not provisional merely because its syntax resembles these examples.
+4. For each relevant finding, establish its purpose, the event that enables or
+   removes it, the owning Jira task/developer if known, and whether that event
+   actually occurred. Check implementation, contracts and relevant verification;
+   do not infer readiness from Jira status or the current task's completion alone.
+
+### Decide within scope and ownership
+
+| Finding | Required action |
+| --- | --- |
+| A marker says to remove/enable something after the **current ticket** | Verify that its prerequisite is now satisfied. Perform the bounded change within the current task when it belongs to its scope and ownership and needs no substantial refactor; update relevant tests and remove/update the resolved marker. Do not defer an obvious in-scope consequence merely because it was not repeated in acceptance criteria. |
+| A marker delegates implementation to **another ticket** | Preserve that ownership. Do not implement the other ticket automatically. Check whether the current task satisfies its dependency and whether any other blockers remain. |
+| A marker has **no ticket**, in the same feature/module | A bounded resolution is allowed when the task works on the same functionality and substantially fulfills the reason for the temporary mechanism. Verify the prerequisite, resolve the marker and related tests, and explicitly identify this additional logically related work in the final response. Mere proximity is insufficient. |
+| A related marker is across a **service/layer or ownership boundary** | Unless the user's existing authorization already includes that change, do not implement it. Briefly describe the problem, its relationship to the current task, the existing ticket or probable need for a separate ticket, and ask whether to address it now if technically feasible. Wait for the answer before the cross-boundary change. |
+| A temporary flag/guard's enabling condition **has occurred** | Complete its intended transition when it is bounded and authorized within scope. Otherwise record an explicit owner/follow-up and why it remains; do not silently leave an expired mechanism indefinitely. Crossing a boundary still requires the preceding rule. |
+| A temporary flag/guard's enabling condition **has not occurred or is unverified** | Preserve the provisional behavior and document the remaining prerequisite or uncertainty. Do not enable it, delete the guard, or describe it as production-ready. |
+
+For clearly out-of-scope work or a substantial refactor, reuse an existing Jira
+task or create a separate scoped follow-up when authorized, after checking for
+duplicates. Record the owner and remaining prerequisite. For a cross-boundary
+finding without a ticket, identify the likely need in the question rather than
+treating it as permission to implement. Continue independent work within the
+current task while waiting; an unanswered question is not approval.
+
+### Tests and completion evidence
+
+- Test the actual temporary mechanism: observe the feature flag's state, preserve
+  the disabled path, or verify the current stub/temporary return and failure mode.
+  Identify TODO-backed scenarios and their owning task in or next to the tests.
+  Mocked planned success fixtures must be labelled provisional and must not be
+  presented as proof of an implemented backend contract. Backend owns the API
+  contract; frontend tests must follow its verified availability and semantics.
+- When an authorized transition becomes possible, update tests and documentation
+  together so neither an obsolete stub nor its old assertions survive by accident.
+  A marker/flag's existence alone is not a defect or permission to remove it.
+- Record the targeted check's scope/outcome in execution notes or the final
+  response: relevant markers resolved, retained prerequisites, and follow-ups.
+  Explicitly name any unticketed marker resolved as logically related work.
+- If the completed task actually unblocks another owner's task, add a **separate
+  bold statement** to the final response, for example:
+  **PWDRZ-YYY теперь разблокирован после выполнения PWDRZ-XXX — нужно уведомить его владельца.**
+  Name the owner when known. Apply this to equivalent dependencies, not only a
+  literal `blocked by` comment. If other blockers remain or readiness cannot be
+  verified, state that limitation instead of claiming the task is unblocked.
+- A request to report that an owner should be notified does not authorize sending
+  messages or changing Jira status. Obtain authorization before such actions.
+
+This is a targeted completion check, not repository-wide cleanup. Unrelated
+TODOs/flags stay outside the task; large or cross-boundary changes do not become
+authorized solely because this check discovers them.
 
 ---
 
@@ -354,13 +441,17 @@ cd frontend && npm run typecheck && npm run lint && npm run format:check && npm 
 cd gateway && npm run typecheck && npm run lint && npm run format:check && npm run test
 
 # Backend
-cd backend && ./mvnw test
+cd backend && ./mvnw verify
 ```
 
-Every applicable Build, Lint, and Tests job must pass. Current test
-configurations enforce 65% for frontend/gateway (all four metrics) and 65%
-backend line coverage; PWDRZ-118 owns the threshold review. The `≥50%`
-labels in the Tests workflow are stale labels, not the active gate. The
+Every applicable Build, Lint, and Tests job must pass. Frontend and gateway
+enforce all four service-specific coverage gates from the canonical
+[coverage policy](docs/guides/testing.md#coverage-policy-pwdrz-118).
+Backend enforces LINE ≥95% and BRANCH ≥85% at `verify`; METHOD and INSTRUCTION
+remain diagnostic. JaCoCo uses `append=false` for the current single test fork
+to prevent accumulation of previous execution sessions.
+Frontend/gateway CI labels say `coverage gates`; exact values live in their
+test configurations and the testing guide; backend uses the same label style. The
 mandatory E2E gate is not yet configured; PWDRZ-117 owns it. Never report an
 absent gate as passed.
 

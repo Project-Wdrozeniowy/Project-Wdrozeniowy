@@ -22,6 +22,7 @@ const mockAuthResponse = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  tokenMemory.set(null);
 });
 
 describe('authService.register >-65 POST /auth/register', () => {
@@ -59,6 +60,29 @@ describe('authService.logout >-65 POST /auth/logout', () => {
 });
 
 describe('authService.loadProfile >-65 GET /users/me', () => {
+  it('clears the pending token and preserves the profile error (PWDRZ-155)', async () => {
+    const error = new Error('profile unavailable');
+    mockApiClient.get.mockRejectedValueOnce(error);
+
+    await expect(authService.loadProfile('pending-token')).rejects.toBe(error);
+
+    expect(tokenMemory.get()).toBeNull();
+  });
+
+  it('does not clear a newer session when an older profile request fails (PWDRZ-155)', async () => {
+    let rejectProfile!: (reason: Error) => void;
+    mockApiClient.get.mockImplementationOnce(
+      () => new Promise((_, reject) => (rejectProfile = reject))
+    );
+    const profileRequest = authService.loadProfile('old-token');
+    tokenMemory.set('new-token');
+    const error = new Error('older request failed');
+    rejectProfile(error);
+
+    await expect(profileRequest).rejects.toBe(error);
+    expect(tokenMemory.get()).toBe('new-token');
+  });
+
   it('sets the access token in memory before requesting the profile', async () => {
     const profile = { id: 1, username: 'john' };
     mockApiClient.get.mockImplementation(async () => {

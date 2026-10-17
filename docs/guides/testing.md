@@ -16,6 +16,91 @@ separately from that target.
 4. **Coverage alone is insufficient.** New behaviour needs a test at a useful
    boundary, even when the aggregate percentage already passes.
 
+## Coverage policy (PWDRZ-118)
+
+Service-specific thresholds were selected from the expanded source baseline
+and the verified risk package. Each listed metric is an independent mandatory
+global gate: a higher result elsewhere cannot compensate for a failure.
+
+| Service | Provider | Lines | Branches | Functions | Statements |
+| --- | --- | --- | --- | --- | --- |
+| Frontend | Istanbul, Vitest/provider 3.2.4 | 85% | 85% | 80% | 85% |
+| Gateway | Jest 29 default Babel/Istanbul coverage | 95% | 85% | 90% | 95% |
+| Backend | JaCoCo 0.8.12 | 95% | 85% | — | — |
+
+The verified frontend baseline is 87.03/86.66/81.69/87.46% and the gateway
+baseline is 96.99/86.95/92.30/97.03%, in the table's metric order. The selected
+floors leave approximately 1.7–2.5 percentage points of headroom for frontend
+and 2.0–2.3 for gateway. These deliberately tight regression floors can block
+new uncovered code; they do not certify security or contract correctness.
+Istanbul was selected for frontend because the pinned V8 configuration produced
+misleading branch/function counters for some unimported files in the comparison.
+All four frontend/gateway metrics remain mandatory; none is diagnostic-only.
+
+Backend's clean baseline is 872/905 lines = 96.35% and 299/347 branches =
+86.17%. Its independent mandatory `BUNDLE` / `COVEREDRATIO` floors of 95%
+LINE and 85% BRANCH leave 1.35 and 1.17 percentage points of headroom. These
+floors replace the old 65% line-only rule without requiring new Java tests.
+METHOD (96.78%) and INSTRUCTION (96.65%) remain diagnostic: method invocation
+does not establish conditional outcomes, while instruction coverage overlaps
+source execution and is less directly readable in behavior reviews. These
+JaCoCo metrics are not literal equivalents of Istanbul functions/statements.
+Backend gaps in PWDRZ-156 remain backend-owned work; aggregate gates do not
+certify those scenarios.
+
+### Measured source and exclusions
+
+- **Frontend:** `src/**/*.{ts,tsx}` in `frontend/vitest.config.ts`, including
+  executable pages, components, hooks, shared code and utilities even when not
+  imported by tests. Exclude `**/*.d.ts`, `src/**/__tests__/**`,
+  `src/**/*.test.{ts,tsx}`, `src/**/*.spec.{ts,tsx}` and `src/test/**` because
+  declarations and test infrastructure are not production behavior. Existing
+  non-production exclusions `node_modules/**`, `.next/**`, `next.config.*`,
+  `postcss.config.*`, `eslint.config.*`, `tailwind.config.*` and `vitest.config.*`
+  are outside the explicit `src` include. No production-directory exclusion
+  hides executable UI or business logic.
+- **Gateway:** `src/**/*.ts` in `gateway/jest.config.js`, excluding declarations
+  (`src/**/*.d.ts`) and exactly `src/index.ts`, the process bootstrap that starts
+  the listener. Jest omits test files and configured setup files from coverage.
+  Middleware, configuration, proxy and error-handling logic stay measured.
+  The bootstrap exclusion does not exclude `app.ts` or a whole directory.
+- **Backend:** compiled production classes under `backend/src/main/java`;
+  identical report/check exclusions in `backend/pom.xml` omit exactly
+  `com/devpulse/BackendApplication.class` (process bootstrap) and
+  `com/devpulse/analytics/dto/**` (five non-executable DTO source types from the
+  audit). Config, security, exceptions, controllers, services, repositories and
+  executable entities remain included. Do not add executable logic to an
+  excluded DTO package without revisiting that exclusion.
+
+### CI and verification
+
+The Tests workflow installs frontend/gateway with `npm ci`, then runs each one's
+`npm run test:coverage` script. Frontend invokes `vitest run --coverage` and
+gateway invokes `jest --coverage`; provider and gate values come from the
+committed service configuration, not duplicated CLI thresholds. Job display
+names are `Frontend Tests (coverage gates)` and `Gateway Tests (coverage gates)`;
+job IDs, triggers and execution steps are unchanged. Frontend `npm test` alone
+does not enable coverage; gateway `npm test` is an alias of its coverage run.
+
+Backend's job is `Backend Tests (coverage gates)` and runs
+`./mvnw --batch-mode verify` with its isolated CI PostgreSQL service. `test`
+generates the report, but the JaCoCo check runs at `verify`; use `verify` for
+gate verification. JaCoCo `prepare-agent` uses `append=false` so prior execution
+sessions cannot inflate a later run. This is appropriate for the current
+single test fork; revisit the execution-file strategy before introducing
+multiple concurrent forks or separate integration-test JVMs. A skipped-test
+report is not a fresh baseline.
+
+Local full-suite passes and deliberate failures were verified for all three
+services: each mandatory metric rejects an isolated 100% override, and a
+reduced-test invocation fails the actual selected floors while retaining the
+production denominator. Backend's final full rerun restores the report and
+confirms one session with the original clean counters.
+See the [decision and verification record](../agent-task-backlog/pwdrz-118-final-decisions.md)
+for commands, counters, limitations and logs. The final published configuration
+also passes GitHub Tests run 39043075704; negative checks were local. Historical
+baseline and comparison reports remain dated evidence, not the current policy.
+
 ## Backend — JUnit 5 + Mockito + Spring Boot Test
 
 | Concern               | Choice                                       |
@@ -25,7 +110,7 @@ separately from that target.
 | Assertions            | AssertJ (`assertThat`, `assertThatThrownBy`) |
 | Controller testing    | Choose `standaloneSetup` for controller-local behaviour; use a Spring context/security setup when wiring, filters, or authorization are the contract |
 | Real schema           | `@MigratedSchemaTest` (`com.devpulse.support`), see below |
-| Coverage              | JaCoCo, ≥ **65%** line coverage, enforced by `./mvnw verify` |
+| Coverage              | JaCoCo, LINE ≥ **95%** and BRANCH ≥ **85%**; METHOD/INSTRUCTION diagnostic; enforced by `./mvnw verify` |
 | Excluded packages     | listed in the `jacoco-maven-plugin` `check` execution in `backend/pom.xml` |
 
 ### Naming
@@ -78,7 +163,7 @@ in English.
 | Runner         | Vitest 3 (`jsdom` environment)        |
 | DOM helpers    | `@testing-library/react`              |
 | Setup file     | `src/test/setup.ts`                   |
-| Coverage       | Currently ≥ **65%** lines/functions/branches/statements on included source (see `frontend/vitest.config.ts`); PWDRZ-118 will reassess the policy |
+| Coverage       | Istanbul; all four [service-specific gates](#coverage-policy-pwdrz-118) are mandatory (`frontend/vitest.config.ts`) |
 | Typecheck      | `npm run typecheck` (`tsc --noEmit`) runs as a separate step in the frontend build workflow |
 | Naming         | `__tests__/<source-name>.test.ts(x)` in the source file's directory; distinct integration suites may use `<source-name>.integration.test.ts(x)` |
 
@@ -108,7 +193,7 @@ in English.
 | -------------- | ----------------------------------- |
 | Runner         | Jest with `ts-jest`                 |
 | Setup file     | `gateway/src/test/setup.ts`         |
-| Coverage       | Currently ≥ **65%** lines/functions/branches/statements (see `gateway/jest.config.js`); PWDRZ-118 will reassess the policy |
+| Coverage       | All four [service-specific gates](#coverage-policy-pwdrz-118) are mandatory (`gateway/jest.config.js`) |
 | Layout         | `__tests__/<source-name>.test.ts` beside the source (e.g. `src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts`) |
 
 Focus areas:
@@ -142,11 +227,13 @@ integration tests.
 > **not** exist yet. Record exactly which manual or integration path was
 > exercised. Do not claim the missing gate passed.
 
-**The current 65% gates must pass**, but do not prove that excluded UI code is
-tested. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118)
-will measure the baseline, review executable-code exclusions, choose
-service-specific metrics and thresholds, and verify that the gates reject an
-insufficient result. *65% is not the approved long-term threshold.*
+**The configured service-specific gates must pass.** Frontend executable UI
+code is measured, but aggregate coverage does not prove every behavior is
+tested. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) has
+selected service-specific gates, confirmed by GitHub Tests run 39043075704 at
+`ad268731d512e2e1838548059d43225df85a88eb`. See the
+[final verification record](../agent-task-backlog/pwdrz-118-final-decisions.md#final-ci-verification-and-acceptance-sign-off)
+for evidence and limitations.
 
 ## When to add tests
 
@@ -184,6 +271,49 @@ insufficient result. *65% is not the approved long-term threshold.*
 4. **Процента покрытия недостаточно.** Для нового поведения нужен тест на
    подходящей границе, даже если общий процент уже достаточен.
 
+### Coverage policy (PWDRZ-118) — краткое описание
+
+Каноническая [таблица coverage policy](#coverage-policy-pwdrz-118) выше задаёт
+независимые обязательные пороги frontend и gateway. Frontend использует
+Istanbul с Vitest/provider 3.2.4; gateway — стандартный Babel/Istanbul provider
+Jest 29. Все четыре метрики обязательны. Пороги выбраны близко к измеренному
+baseline и могут блокировать добавление непокрытого кода; высокий процент не
+доказывает корректность security или API contract.
+
+Frontend измеряет `src/**/*.{ts,tsx}`, включая не импортированные тестами
+pages, components, hooks и shared logic; исключаются declaration/test/setup
+и непроизводственные tooling/generated paths, перечисленные выше. Gateway
+измеряет `src/**/*.ts`, исключая declarations и точный process bootstrap
+`src/index.ts`; Jest также не измеряет test/setup files. Широких исключений
+production-директорий нет во frontend/gateway. Для backend обязательны LINE
+≥95% и BRANCH ≥85%; METHOD и INSTRUCTION диагностические и не являются
+прямыми аналогами Istanbul functions/statements. Чистый baseline — 96,35%
+lines и 86,17% branches; запас небольшой, выбран для защиты достигнутого
+покрытия. Java gaps в PWDRZ-156 остаются ответственностью backend-разработчика.
+Из backend report/check одинаково исключены только точный bootstrap
+`com/devpulse/BackendApplication.class` и пакет пяти неисполняемых analytics
+DTO `com/devpulse/analytics/dto/**`. Остальная исполняемая production-логика
+входит в измерение; появление логики в исключённом DTO-пакете требует ревизии.
+
+CI выполняет `npm ci` и существующий `npm run test:coverage` каждого сервиса;
+значения берутся из конфигурации. Названия jobs — `Frontend Tests (coverage gates)`
+и `Gateway Tests (coverage gates)`. Backend job — `Backend Tests (coverage gates)`,
+запускает `./mvnw --batch-mode verify` с отдельной PostgreSQL в CI. Команда
+`test` создаёт report, но gate выполняется на `verify`. `append=false` исключает
+накопление старых JaCoCo sessions при текущем единственном test fork; перед
+несколькими forks/JVM нужно пересмотреть стратегию execution files. Запуск с
+пропущенными тестами не считается новым baseline.
+Локальные pass/fail-проверки всех трёх сервисов завершены,
+включая отказы окончательных gates при сокращённом наборе тестов с неизменным
+production-знаменателем. Повторный полный backend-прогон восстановил report
+и подтвердил одну session с прежними чистыми counters. Команды и ограничения — в
+[журнале решений](../agent-task-backlog/pwdrz-118-final-decisions.md).
+GitHub Tests run 39043075704 на SHA `ad268731d512e2e1838548059d43225df85a88eb`
+подтвердил все три сервиса; ссылки — в
+[финальной проверке](../agent-task-backlog/pwdrz-118-final-decisions.md#final-ci-verification-and-acceptance-sign-off).
+Отрицательные проверки выполнялись локально, а не в GitHub CI.
+Исторические отчёты не задают текущую политику.
+
 ### Backend — JUnit 5 + Mockito + Spring Boot Test
 
 | Вопрос | Текущий выбор |
@@ -193,7 +323,7 @@ insufficient result. *65% is not the approved long-term threshold.*
 | Assertions | AssertJ (`assertThat`, `assertThatThrownBy`) |
 | Проверка controller | `standaloneSetup` для локального поведения controller; Spring context/security setup — когда контракт зависит от wiring, filters или authorization |
 | Реальная схема | `@MigratedSchemaTest` (`com.devpulse.support`), подробности ниже |
-| Coverage | JaCoCo, ≥ **65%** по строкам, проверяется через `./mvnw verify` |
+| Coverage | JaCoCo, LINE ≥ **95%**, BRANCH ≥ **85%**; METHOD/INSTRUCTION диагностические; gate через `./mvnw verify` |
 | Исключённые пакеты | Указаны в execution `check` плагина `jacoco-maven-plugin` в `backend/pom.xml` |
 
 #### Имена
@@ -247,7 +377,7 @@ replayingARotatedTokenRevokesTheWholeFamily
 | Runner | Vitest 3 (`jsdom`) |
 | DOM helpers | `@testing-library/react` |
 | Setup | `src/test/setup.ts` |
-| Coverage | Сейчас ≥ **65%** строк/functions/branches/statements по включённому коду (`frontend/vitest.config.ts`); PWDRZ-118 пересмотрит правило |
+| Coverage | Istanbul; все четыре [посервисных gate](#coverage-policy-pwdrz-118) обязательны (`frontend/vitest.config.ts`) |
 | Typecheck | `npm run typecheck` (`tsc --noEmit`) отдельным шагом frontend build workflow |
 | Имена | `__tests__/<имя-source>.test.ts(x)` в директории исходного файла; отдельный integration suite может называться `<имя-source>.integration.test.ts(x)` |
 
@@ -277,7 +407,7 @@ replayingARotatedTokenRevokesTheWholeFamily
 | --- | --- |
 | Runner | Jest с `ts-jest` |
 | Setup | `gateway/src/test/setup.ts` |
-| Coverage | Сейчас ≥ **65%** строк/functions/branches/statements (`gateway/jest.config.js`); PWDRZ-118 пересмотрит правило |
+| Coverage | Все четыре [посервисных gate](#coverage-policy-pwdrz-118) обязательны (`gateway/jest.config.js`) |
 | Размещение | `__tests__/<имя-source>.test.ts` рядом с исходным файлом, например `src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts` |
 
 Приоритетные области: композиция middleware (auth, rate limiter, error
@@ -309,11 +439,11 @@ integration tests.
 > их **нет**. Фиксируйте, какой ручной или интеграционный путь проверен. Не
 > заявляйте о прохождении отсутствующего gate.
 
-**Текущий порог 65% обязателен**, но не доказывает проверку исключённого
-UI-кода. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118)
-измерит базовый уровень, проверит исключения исполняемого кода, выберет
-метрики и пороги каждого сервиса и подтвердит, что gate отклоняет
-недостаточный результат. *65% не является утверждённым долгосрочным порогом.*
+**Настроенные посервисные gates обязательны.** Исполняемый UI-код frontend
+измеряется, но общий процент не доказывает проверку каждого поведения.
+В [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) выбраны и
+настроены посервисные gates; GitHub Tests run 39043075704 подтвердил
+окончательную конфигурацию всех трёх сервисов.
 
 ### Когда добавлять тесты
 

@@ -2,6 +2,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { logger } from '../logger';
 import { sendError, errorHandler } from '../errorHandler';
 import type { ErrorResponse } from '../../types';
+import { createServer } from 'http';
+import request from 'supertest';
 
 function mockReq(url = '/api/test'): Partial<Request> {
   return { originalUrl: url } as Partial<Request>;
@@ -15,6 +17,24 @@ function mockRes(): { status: jest.Mock; json: jest.Mock } {
 }
 
 describe('sendError()', () => {
+  it('writes the unified JSON error to a raw upstream HTTP response', async () => {
+    const server = createServer((req, res) => {
+      sendError(res, req, 502, 'Backend unavailable');
+    });
+    const response = await request(server).get('/api/raw');
+
+    expect(response.status).toBe(502);
+    expect(response.headers['content-type']).toContain('application/json');
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        status: 502,
+        error: 'Bad Gateway',
+        message: 'Backend unavailable',
+        path: '/api/raw',
+      })
+    );
+  });
+
   it('calls res.status() with the given status code', () => {
     const req = mockReq();
     const res = mockRes();

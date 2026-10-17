@@ -158,11 +158,11 @@ Fix: Mirror every new `paths` entry from `tsconfig.json` into `vitest.config.ts`
 ## Missing Tests for New Logic Files
 
 ☢️ Issue — New logic file without tests
-Untested service, slice, or middleware code can lower the configured coverage metric and lets regressions go undetected; PWDRZ-118 owns the final threshold policy.
+Untested service, slice, or middleware code can lower the configured coverage metric and lets regressions go undetected; see the canonical [coverage policy](../../docs/guides/testing.md#coverage-policy-pwdrz-118).
 Fix: Add `__tests__/*.test.ts` alongside each new file in `services/`, `store/slices/`, `providers/`, `middleware/`, or `config/`.
-The current Vitest metric excludes `app/`, `components/`, `hooks/`, `lib/`, and
-`utils/`; this is not an exemption from testing new behaviour. PWDRZ-118 owns
-the coverage-scope review.
+Vitest/Istanbul includes executable pages, components, hooks, libraries and
+utilities, even when not imported by tests. Do not hide new behaviour behind
+broad coverage exclusions.
 
 ---
 

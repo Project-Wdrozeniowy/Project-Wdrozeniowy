@@ -60,8 +60,10 @@ not prove a multi-service path.
 
 > **Current quality gap:** Existing coverage gates remain mandatory, but are
 > **not proof of sufficient behavioural coverage**.
-> [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) will
-> measure and select meaningful service-specific thresholds and exclusions.
+> [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) has selected
+> and verified service-specific coverage gates locally and in GitHub CI; see
+> the [coverage policy](testing.md#coverage-policy-pwdrz-118) and
+> [final evidence](../agent-task-backlog/pwdrz-118-final-decisions.md#final-ci-verification-and-acceptance-sign-off).
 > [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117) owns the
 > mandatory E2E/CI gate; it does not exist yet. Do not describe an unrun
 > browser scenario or a non-existent workflow as passed. Unit coverage does
@@ -153,8 +155,10 @@ descriptive and regenerate them only from verified evidence.
 
 > **Текущий пробел качества:** Coverage gates обязательны, но **процент не
 > доказывает достаточного поведенческого покрытия**.
-> [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) исследует
-> и выберет осмысленные пороги и исключения для сервисов.
+> В [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) выбраны и
+> проверены gates всех трёх сервисов локально и в GitHub CI; см.
+> [coverage policy](testing.md#coverage-policy-pwdrz-118) и
+> [финальные результаты](../agent-task-backlog/pwdrz-118-final-decisions.md#final-ci-verification-and-acceptance-sign-off).
 > [PWDRZ-117](https://project-wdrz.atlassian.net/browse/PWDRZ-117) отвечает
 > за обязательный E2E/CI gate; пока его нет, нельзя заявлять, что браузерный
 > сценарий или несуществующий workflow пройден. Unit coverage не закрывает

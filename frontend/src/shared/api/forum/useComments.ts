@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// Provisional comment flow: backend is a 501 stub (PWDRZ-142); integration is PWDRZ-67.
 import { commentService } from '@/shared/api/forum/forumClient';
 import { COMMENTS_PAGE_SIZE } from '@/shared/api/forum/commentQuery.const';
 

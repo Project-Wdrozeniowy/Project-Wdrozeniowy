@@ -156,19 +156,22 @@ If you changed the database name or user in the root `.env`, use those values he
 From the repository root, run each line independently:
 
 ```bash
-# Frontend — Vitest 3, current configured threshold: 65%
+# Frontend — Vitest 3.2.4 + Istanbul, service-specific coverage gates
 npm --prefix frontend run test:coverage
 
-# Gateway — Jest 29, current configured threshold: 65%
+# Gateway — Jest 29, service-specific coverage gates
 npm --prefix gateway run test:coverage
 
 # Backend — JUnit 5 + JaCoCo (requires a running PostgreSQL)
 cd backend && ./mvnw verify
 ```
 
-PWDRZ-118 will measure coverage and decide whether these thresholds should change.
-Passing these percentages does not prove new behaviour is tested: the frontend
-coverage configuration currently excludes executable UI and hook code.
+PWDRZ-118 selected independent lines, branches, functions and statements gates
+for frontend and gateway. Frontend executable UI and hook code is included;
+passing aggregate coverage does not prove every behaviour is tested.
+See the [coverage policy](docs/guides/testing.md#coverage-policy-pwdrz-118)
+for exact thresholds and source scope. Backend enforces independent JaCoCo
+LINE ≥95% and BRANCH ≥85% gates at `verify`; METHOD/INSTRUCTION are diagnostic.
 Browser E2E tests and their CI gate are planned in PWDRZ-117 but are not yet
 available. See the [testing guide](docs/guides/testing.md) for the agreed
 completion criteria and current gap.

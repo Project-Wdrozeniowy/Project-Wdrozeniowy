@@ -1,3 +1,4 @@
+// PROVISIONAL mock dashboard data: backend analytics remains a 501 stub (PWDRZ-145).
 export const MONTHS = [
   'Jan',
   'Feb',

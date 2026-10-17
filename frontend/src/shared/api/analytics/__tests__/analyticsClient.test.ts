@@ -1,3 +1,4 @@
+// PROVISIONAL PWDRZ-145/146: mocked planned adapters, not live backend contract verification.
 import { vi } from 'vitest';
 
 const mockApiClient = {

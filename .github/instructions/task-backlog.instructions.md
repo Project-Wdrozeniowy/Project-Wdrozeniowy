@@ -11,4 +11,5 @@ applyTo: "**"
 - When starting a task, update only `localTracking.status`, `localTracking.updatedAt`, `localTracking.owner`, and `localTracking.notes`.
 - Keep Jira fields authoritative; do not overwrite the original Jira payload when changing local status.
 - Mark a task `done` only after the requested work is complete and validated.
+- Before completion, apply the canonical [post-task review of provisional functionality](../../AGENTS.md#post-task-review-of-provisional-functionality); keep its scope/ownership boundaries and report verified dependency handoffs in bold.
 - Use a short `localTracking.notes` entry to capture the result, blockers, or links to edited files.

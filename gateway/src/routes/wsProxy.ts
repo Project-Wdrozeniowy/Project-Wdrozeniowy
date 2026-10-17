@@ -23,7 +23,7 @@ const wsProxyMiddleware = createProxyMiddleware({
   target: config.backendUrl,
   changeOrigin: true,
   ws: true,
-  pathFilter: ['/ws', '/ws/**'],
+  pathFilter: (pathname) => pathname === '/ws' || pathname.startsWith('/ws/'),
   on: {
     error: handleWsProxyError,
   },

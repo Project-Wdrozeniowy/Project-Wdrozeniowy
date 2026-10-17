@@ -167,6 +167,10 @@
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
+                        <configuration>
+                            <!-- One test fork: do not merge probes from previous runs. -->
+                            <append>false</append>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>report</id>
@@ -174,6 +178,12 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>com/devpulse/BackendApplication.class</exclude>
+                                <exclude>com/devpulse/analytics/dto/**</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>check</id>
@@ -183,13 +193,6 @@
                         <configuration>
                             <excludes>
                                 <exclude>com/devpulse/BackendApplication.class</exclude>
-                                <exclude>com/devpulse/auth/dto/**</exclude>
-                                <exclude>com/devpulse/auth/entity/**</exclude>
-                                <exclude>com/devpulse/exception/**</exclude>
-                                <exclude>com/devpulse/config/**</exclude>
-                                <!-- New stub implementations — no business logic yet -->
-                                <exclude>com/devpulse/ai/**</exclude>
-                                <exclude>com/devpulse/websocket/**</exclude>
                                 <exclude>com/devpulse/analytics/dto/**</exclude>
                             </excludes>
                             <rules>
@@ -199,7 +202,12 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.65</minimum>
+                                            <minimum>0.95</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.85</minimum>
                                         </limit>
                                     </limits>
                                 </rule>

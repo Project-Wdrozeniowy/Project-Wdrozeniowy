@@ -17370,10 +17370,10 @@
       },
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-99",
       "localTracking": {
-        "status": "pending",
-        "updatedAt": null,
-        "owner": null,
-        "notes": ""
+        "status": "done",
+        "updatedAt": "2026-10-16T09:10:13.360Z",
+        "owner": "Codex",
+        "notes": "Removed unused cookie page guard under the user-approved current API-only architecture; references and gateway checks verified. Uncommitted working copy; Jira status unchanged."
       }
     },
     {
@@ -21221,6 +21221,987 @@
         "updatedAt": null,
         "owner": null,
         "notes": ""
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10449",
+      "key": "PWDRZ-118",
+      "fields": {
+        "statuscategorychangedate": "2026-10-07T13:54:31.895+0200",
+        "issuetype": {
+          "id": "10076",
+          "description": "A small, distinct piece of work.",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "2535984a-65c8-4602-a7a7-54815d407a6a",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "10208",
+          "key": "PWDRZ-58",
+          "fields": {
+            "summary": "Testing & Quality Assurance",
+            "status": {
+              "description": "",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+              "name": "To Do",
+              "id": "10076",
+              "statusCategory": {
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "id": "10079",
+              "description": "A collection of related bugs, stories, and tasks.",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "6a7f778c-6d7c-43a6-900a-cf2d83892a04",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "project": {
+          "id": "10066",
+          "key": "PWDRZ",
+          "name": "ProjectWdrz",
+          "projectTypeKey": "software",
+          "simplified": true,
+          "avatarUrls": {
+            "48x48": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419",
+            "24x24": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=small",
+            "16x16": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=xsmall",
+            "32x32": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=medium"
+          }
+        },
+        "fixVersions": [],
+        "statusCategory": {
+          "id": 4,
+          "key": "indeterminate",
+          "colorName": "yellow",
+          "name": "In Progress"
+        },
+        "workratio": 0,
+        "issuerestriction": {
+          "issuerestrictions": {},
+          "shouldDisplay": true
+        },
+        "watches": {
+          "watchCount": 1,
+          "isWatching": true
+        },
+        "lastViewed": "2026-10-16T10:00:09.273+0200",
+        "created": "2026-10-07T13:29:47.587+0200",
+        "priority": {
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "labels": [],
+        "timeestimate": 7200,
+        "aggregatetimeoriginalestimate": 7200,
+        "versions": [],
+        "issuelinks": [],
+        "assignee": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "updated": "2026-10-16T08:48:39.525+0200",
+        "status": {
+          "description": "This work item is being actively worked on at the moment by the assignee.",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+          "name": "In Progress",
+          "id": "10077",
+          "statusCategory": {
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "components": [],
+        "timeoriginalestimate": 7200,
+        "description": "## Type\n\nSpike: measure, decide, implement, and verify a realistic quality threshold. The existing 65% value is a hypothesis, not an accepted requirement.\n\n## Owner\n\nTeam lead / platform and CI owner.\n\n## Contributors\n\nFrontend and backend developers provide service-level coverage evidence for the code they own. They do not need to take over CI policy.\n\n## Scope\n\n* Establish a reproducible coverage baseline for frontend, gateway, and backend and document which metric is used.\n* Identify meaningful exclusions and low-value generated/UI/static areas; do not hide executable business logic merely to raise a percentage.\n* Propose service-specific thresholds that reflect current risk and a credible next improvement step.\n* Record the decision and rationale, configure the selected thresholds in test/CI tooling, and make the gate reproducible.\n\n## Acceptance criteria\n\n* Baseline coverage result and command are recorded for each service; unavailable results have a concrete environment blocker and rerun plan.\n* The selected metric, included source paths, exclusions, and per-service threshold are documented with rationale.\n* The solution does not assume that one universal 65% threshold is correct.\n* The selected threshold is enforced by repository test configuration or CI for every service where measurement is supported.\n* A deliberately insufficient coverage result is rejected by the relevant gate, and a compliant run is demonstrated.\n* Any Java/Spring test additions required by the backend threshold are tracked as backend-owned work, not assigned to the platform owner.\n\n",
+        "timetracking": {
+          "originalEstimate": "2h",
+          "remainingEstimate": "2h",
+          "originalEstimateSeconds": 7200,
+          "remainingEstimateSeconds": 7200
+        },
+        "attachment": [],
+        "aggregatetimeestimate": 7200,
+        "summary": "Investigate and enforce meaningful coverage thresholds",
+        "creator": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "subtasks": [],
+        "reporter": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "aggregateprogress": {
+          "progress": 0,
+          "total": 7200,
+          "percent": 0
+        },
+        "duedate": "2026-10-16",
+        "progress": {
+          "progress": 0,
+          "total": 7200,
+          "percent": 0
+        },
+        "votes": {
+          "votes": 0,
+          "hasVoted": false
+        },
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "worklog": {
+          "startAt": 0,
+          "maxResults": 20,
+          "total": 0,
+          "worklogs": []
+        },
+        "customFields": {
+          "Sprint": {
+            "id": "customfield_10020",
+            "value": [
+              {
+                "id": 170,
+                "name": "PWDRZ Sprint 5",
+                "state": "active",
+                "boardId": 67,
+                "goal": "- Get rid of major bugs\n- Introduce coverage metrics and automated testing\n- Introduce clear Task live cycle\n- Connect parts of application\n- Refactor outdated and redudndant parts of application\nMajor goal: Make application easy to develop and test, make it clean and unified as monorepo",
+                "startDate": "2026-10-07T11:34:52.000Z",
+                "endDate": "2026-10-18T06:00:00.000Z"
+              }
+            ]
+          },
+          "Rank": {
+            "id": "customfield_10019",
+            "value": "0|i000te:zzz1"
+          },
+          "Development": {
+            "id": "customfield_10000",
+            "value": "{}"
+          }
+        }
+      },
+      "descriptionEditable": true,
+      "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-118",
+      "localTracking": {
+        "status": "done",
+        "owner": "Codex",
+        "notes": "Baseline/scope audit, provider comparison and risk package recorded. Canonical provisional post-task workflow added. User selected Istanbul on 2026-10-17; pinned Vitest/provider 3.2.4 declared and lockfile updated. Clean npm 11.12.1 install, 509 tests, typecheck/lint/format verified; metrics match the prior Istanbul experiment. User selected all four frontend metrics as mandatory on 2026-10-17; selected final frontend thresholds B: lines 85, branches 85, functions 80, statements 85 (replacing initial A). Normal 509-test run passes; all four isolated CLI gate failures verified (exit 1). Reduced 502-test run keeps production denominators and fails all four selected final thresholds (exit 1). User selected all four gateway metrics as mandatory; actual Jest configuration loaded and all four numeric entries verified. User selected gateway thresholds A: lines 95, branches 85, functions 90, statements 95. Normal 51-test pass and four independent gate failures verified; reduced 13-test run fails all final gates with unchanged denominators. Initial npm-wrapped negative process crash excluded from evidence; direct Jest reruns confirmed exit 1 with gate messages. Frontend/gateway CI labels and current docs/agent instructions aligned with selected policy; workflow parsed and verified to change only two display names, commands/triggers/backend unchanged. Config/table/links checked, frontend format and diff checks pass. Three active GitHub rulesets have no required_status_checks rules; remote settings unchanged. User selected backend A: LINE and BRANCH mandatory, METHOD/INSTRUCTION diagnostic. User selected backend thresholds A: LINE 95, BRANCH 85. Both configured; append=false prevents prior-session accumulation with current single fork. Full verify twice passes 187 tests (872/905 lines, 299/347 branches, one session); independent 100% gate checks fail as expected, and 13-test reduced run fails actual 95/85 gates at 32/905 and 5/347 with unchanged denominators. Temporary POMs/container removed. Backend CI label and all current docs aligned; XML/YAML/config/counters/whitespace verified. Live Jira AC audit recorded. GitHub Tests 39042464392 plus Build/Lint pass at 42d7bcf, confirming final FE/GW policy; that run still has old backend gate. FINAL verification 2026-10-17: user published ad268731d512e2e1838548059d43225df85a88eb; local HEAD and PR57 head match. Tests run 39043075704 confirms all three final gates, backend 187 tests/59 classes/append=false, FE Istanbul and expected metrics, gateway 51 tests/expected metrics. All 3 Build jobs and both Lint jobs pass at that SHA. Live Jira six-criterion audit PASS; PWDRZ-156 remains backend-owned by Ivan. Ready for closure through normal review/merge; Jira/PR status unchanged. Final evidence and pending-CI guide notes updated locally, left uncommitted; tested code/workflow unchanged. See pwdrz-118-final-decisions.md.",
+        "updatedAt": "2026-10-17T15:08:56.058Z"
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10485",
+      "key": "PWDRZ-154",
+      "fields": {
+        "statuscategorychangedate": "2026-10-16T10:52:20.036+0200",
+        "issuetype": {
+          "id": "10077",
+          "description": "A problem or error.",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium",
+          "name": "Bug",
+          "subtask": false,
+          "avatarId": 10303,
+          "entityId": "203e8419-e97f-49ce-a123-f24825a8afbe",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "10385",
+          "key": "PWDRZ-86",
+          "fields": {
+            "summary": "Authentication contract integration and remaining gaps",
+            "status": {
+              "description": "",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+              "name": "To Do",
+              "id": "10076",
+              "statusCategory": {
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "id": "10079",
+              "description": "A collection of related bugs, stories, and tasks.",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "6a7f778c-6d7c-43a6-900a-cf2d83892a04",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "components": [],
+        "project": {
+          "id": "10066",
+          "key": "PWDRZ",
+          "name": "ProjectWdrz",
+          "projectTypeKey": "software",
+          "simplified": true,
+          "avatarUrls": {
+            "48x48": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419",
+            "24x24": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=small",
+            "16x16": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=xsmall",
+            "32x32": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=medium"
+          }
+        },
+        "description": "## Problem\n\nOn develop cc998e7, the registration page presents Select Your Interests as personalizing the feed. RegisterRequest in backend source and backend/openapi.json has no interests field; the frontend request intentionally sends no interests. No flag, disabled control, targeted TODO or documented interests contract marks this UI as provisional. Users can make selections that are silently discarded.\n\n## Evidence\n\nfrontend/src/app/(auth)/register/page.tsx: interests Controller and personalization copy; frontend/src/features/sign-up/register.schema.ts: optional interests; backend/src/main/java/com/devpulse/auth/dto/RegisterRequest.java: username/email/password/optional displayName only. Found during PWDRZ-118. Duplicate searches covered registration/interests/auth contract issues; PWDRZ-128 owns displayName only, and PWDRZ-131 owns orchestration.\n\n## Owner\n\nFrontend developer; backend/product owner defines any future interests contract.\n\n## Scope\n\n* Make the unsupported interest selection clearly unavailable or explicitly provisional; do not promise persistence/personalization without backend support.\n* Record the backend dependency and keep interests out of the published registration payload until implemented.\n* Adapt focused form tests so provisional selections cannot be presented as persisted server data.\n\n## Out of scope\n\nImplementing interests persistence/recommendations, changing JWT/cookies, or duplicating PWDRZ-128 displayName work.\n\n## Acceptance criteria\n\n* A reviewer can identify the provisional state from the source and user-visible flow; unsupported selections are disabled/hidden or explicitly described as unsaved.\n* Registration continues to follow the implemented backend request contract; no invented interests field is sent.\n* Tests identify the temporary state and its task/dependency; no mocked response is described as proof of interests persistence.\n* Frontend typecheck, lint, format and focused tests pass; the chosen temporary mechanism is documented.\n\n",
+        "fixVersions": [],
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "colorName": "blue-gray",
+          "name": "To Do"
+        },
+        "timetracking": {},
+        "attachment": [],
+        "workratio": -1,
+        "summary": "Mark registration interests as unavailable until a backend contract exists [FE]",
+        "issuerestriction": {
+          "issuerestrictions": {},
+          "shouldDisplay": true
+        },
+        "watches": {
+          "watchCount": 1,
+          "isWatching": true
+        },
+        "creator": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "subtasks": [],
+        "created": "2026-10-16T10:52:19.546+0200",
+        "reporter": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "aggregateprogress": {
+          "progress": 0,
+          "total": 0
+        },
+        "priority": {
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "labels": [
+          "pwdrz-118-follow-up"
+        ],
+        "versions": [],
+        "progress": {
+          "progress": 0,
+          "total": 0
+        },
+        "issuelinks": [],
+        "votes": {
+          "votes": 0,
+          "hasVoted": false
+        },
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "assignee": {
+          "accountId": "712020:80bce58e-4c62-4188-92c0-4e5ce20699c6",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/50446ee0d0862131baac8543eacf3d64?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FDV-2.png",
+            "24x24": "https://secure.gravatar.com/avatar/50446ee0d0862131baac8543eacf3d64?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FDV-2.png",
+            "16x16": "https://secure.gravatar.com/avatar/50446ee0d0862131baac8543eacf3d64?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FDV-2.png",
+            "32x32": "https://secure.gravatar.com/avatar/50446ee0d0862131baac8543eacf3d64?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FDV-2.png"
+          },
+          "displayName": "Dzmitry Varonin",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "worklog": {
+          "startAt": 0,
+          "maxResults": 20,
+          "total": 0,
+          "worklogs": []
+        },
+        "updated": "2026-10-16T10:52:19.694+0200",
+        "status": {
+          "description": "",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+          "name": "To Do",
+          "id": "10076",
+          "statusCategory": {
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "customFields": {
+          "Rank": {
+            "id": "customfield_10019",
+            "value": "0|i0012e:"
+          }
+        }
+      },
+      "descriptionEditable": true,
+      "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-154",
+      "localTracking": {
+        "status": "pending",
+        "owner": "Dzmitry Varonin",
+        "notes": "Created for unsupported registration interests. Source TODO added; final user-visible provisional handling remains owner work.",
+        "updatedAt": "2026-10-16T09:10:13.360Z"
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10486",
+      "key": "PWDRZ-155",
+      "fields": {
+        "statuscategorychangedate": "2026-10-16T10:52:21.825+0200",
+        "issuetype": {
+          "id": "10077",
+          "description": "A problem or error.",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium",
+          "name": "Bug",
+          "subtask": false,
+          "avatarId": 10303,
+          "entityId": "203e8419-e97f-49ce-a123-f24825a8afbe",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "10385",
+          "key": "PWDRZ-86",
+          "fields": {
+            "summary": "Authentication contract integration and remaining gaps",
+            "status": {
+              "description": "",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+              "name": "To Do",
+              "id": "10076",
+              "statusCategory": {
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "id": "10079",
+              "description": "A collection of related bugs, stories, and tasks.",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "6a7f778c-6d7c-43a6-900a-cf2d83892a04",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "components": [],
+        "project": {
+          "id": "10066",
+          "key": "PWDRZ",
+          "name": "ProjectWdrz",
+          "projectTypeKey": "software",
+          "simplified": true,
+          "avatarUrls": {
+            "48x48": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419",
+            "24x24": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=small",
+            "16x16": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=xsmall",
+            "32x32": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=medium"
+          }
+        },
+        "description": "## Problem\n\nOn develop cc998e7, authService.loadProfile sets tokenMemory before GET /users/me. If profile loading rejects, login/register reports an error and AuthProvider can stay guest while that access token remains attached to later API requests. UI session state and API authentication disagree.\n\n## Reproduction\n\nCall loadProfile with a newly issued token; make userService.getMyProfile reject with 500/network failure; observe tokenMemory still contains the token. Existing success-only authClient test does not cover this path. Found during PWDRZ-118; searched loadProfile/profile failure/token and session tasks. PWDRZ-150 is related profile-cache consolidation, but does not specifically address this partial login failure.\n\n## Owner\n\nFrontend developer. Coordinate with PWDRZ-131/PWDRZ-150 without requiring their larger refactors.\n\n## Scope\n\n* Make failed profile loading leave a consistent local unauthenticated state and preserve the original error for the caller.\n* Avoid an older failed profile request clearing a newer session token.\n* Add deterministic regression tests for success, failure cleanup and a superseding token.\n\n## Out of scope\n\nChanging backend tokens/cookies, adding a new session protocol, or replacing profile cache ownership.\n\n## Acceptance criteria\n\n* Profile success retains the issued memory token and returns the backend profile.\n* Profile failure clears the same pending token and rejects with the original error; form/provider does not report success.\n* A newer token installed while the older request is pending survives the older failure.\n* No tokens are persisted in browser storage; existing refresh/retry behavior remains intact.\n* Frontend typecheck, lint, format and tests pass.\n\n",
+        "fixVersions": [],
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "colorName": "blue-gray",
+          "name": "To Do"
+        },
+        "timetracking": {},
+        "attachment": [],
+        "workratio": -1,
+        "summary": "Clear pending access token when authenticated profile loading fails [FE]",
+        "issuerestriction": {
+          "issuerestrictions": {},
+          "shouldDisplay": true
+        },
+        "watches": {
+          "watchCount": 1,
+          "isWatching": true
+        },
+        "creator": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "subtasks": [],
+        "created": "2026-10-16T10:52:21.465+0200",
+        "reporter": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "aggregateprogress": {
+          "progress": 0,
+          "total": 0
+        },
+        "priority": {
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "labels": [
+          "pwdrz-118-follow-up"
+        ],
+        "versions": [],
+        "progress": {
+          "progress": 0,
+          "total": 0
+        },
+        "issuelinks": [],
+        "votes": {
+          "votes": 0,
+          "hasVoted": false
+        },
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "assignee": {
+          "accountId": "712020:80bce58e-4c62-4188-92c0-4e5ce20699c6",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/50446ee0d0862131baac8543eacf3d64?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FDV-2.png",
+            "24x24": "https://secure.gravatar.com/avatar/50446ee0d0862131baac8543eacf3d64?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FDV-2.png",
+            "16x16": "https://secure.gravatar.com/avatar/50446ee0d0862131baac8543eacf3d64?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FDV-2.png",
+            "32x32": "https://secure.gravatar.com/avatar/50446ee0d0862131baac8543eacf3d64?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FDV-2.png"
+          },
+          "displayName": "Dzmitry Varonin",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "worklog": {
+          "startAt": 0,
+          "maxResults": 20,
+          "total": 0,
+          "worklogs": []
+        },
+        "updated": "2026-10-16T10:52:21.552+0200",
+        "status": {
+          "description": "",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+          "name": "To Do",
+          "id": "10076",
+          "statusCategory": {
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "customFields": {
+          "Rank": {
+            "id": "customfield_10019",
+            "value": "0|i0012m:"
+          }
+        }
+      },
+      "descriptionEditable": true,
+      "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-155",
+      "localTracking": {
+        "status": "done",
+        "owner": "Codex",
+        "notes": "Pending token cleanup implemented in working copy with failure and superseding-token regression tests; FE owner review/commit remains. Jira status unchanged.",
+        "updatedAt": "2026-10-16T09:10:13.360Z"
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10487",
+      "key": "PWDRZ-156",
+      "fields": {
+        "statuscategorychangedate": "2026-10-16T10:52:23.876+0200",
+        "issuetype": {
+          "id": "10076",
+          "description": "A small, distinct piece of work.",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "2535984a-65c8-4602-a7a7-54815d407a6a",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "10208",
+          "key": "PWDRZ-58",
+          "fields": {
+            "summary": "Testing & Quality Assurance",
+            "status": {
+              "description": "",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+              "name": "To Do",
+              "id": "10076",
+              "statusCategory": {
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "id": "10079",
+              "description": "A collection of related bugs, stories, and tasks.",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "6a7f778c-6d7c-43a6-900a-cf2d83892a04",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "components": [],
+        "project": {
+          "id": "10066",
+          "key": "PWDRZ",
+          "name": "ProjectWdrz",
+          "projectTypeKey": "software",
+          "simplified": true,
+          "avatarUrls": {
+            "48x48": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419",
+            "24x24": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=small",
+            "16x16": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=xsmall",
+            "32x32": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=medium"
+          }
+        },
+        "description": "## Goal\n\nClose a small backend-owned set of behavioral gaps identified by the clean PWDRZ-118 baseline, with assertions for security and business/error outcomes rather than a percentage target.\n\n## Context\n\nAt cc998e7, expanded JaCoCo scope has 872/905 lines and 299/347 branches. WebSocketAuthInterceptor is 0/14 lines and 0/12 branches. VoteService retry exhaustion and generic MVC 500/filter-chain 403 paths are missing. Existing HTTP auth/refresh, migration and vote concurrency suites already cover successful behavior. STOMP delivery remains provisional under PWDRZ-104; REST post subscriptions already exist under PWDRZ-109.\n\n## Owner\n\nBackend developer (Java/Spring); platform owner maintains coverage policy in PWDRZ-118.\n\n## Scope\n\n* Add deterministic tests for CONNECT JWT/principal assignment, missing/wrong/invalid/expired token and unknown user. Record authenticated-only interim policy; coordinate actual rejection/recipient isolation with PWDRZ-104 rather than treating current permissive behavior as final.\n* Cover VoteService bounded retry exhaustion/retract conflict, checking 409 and unchanged score; retain existing migration-backed concurrency checks instead of duplicating them.\n* Verify unexpected MVC exceptions return safe 500 ProblemDetail and filter-chain forbidden responses return the documented 403 contract.\n\n## Out of scope\n\nImplementing the real-time delivery architecture or empty STOMP subscription methods (PWDRZ-104), changing coverage thresholds, or reimplementing existing refresh/schema/concurrency tests.\n\n## Acceptance criteria\n\n* Each added test documents the behavior and expected negative outcome; provisional STOMP expectations link PWDRZ-104 and do not certify unauthorized subscriptions as acceptable final behavior.\n* Authenticated/anonymous/invalid-token distinctions and current limitations are explicit; unsupported messaging integration is not reported as working.\n* Forced vote conflicts stop at the retry bound, return 409, and do not corrupt scores; deterministic success-after-conflict cases remain correct.\n* Generic 500 and filter-chain 403 responses have expected status/content type and expose no internal error details.\n* A clean ./mvnw verify run on isolated PostgreSQL/Flyway passes; coverage is generated without accumulated execution sessions and relevant counter changes are recorded.\n\n",
+        "fixVersions": [],
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "colorName": "blue-gray",
+          "name": "To Do"
+        },
+        "timetracking": {},
+        "attachment": [],
+        "workratio": -1,
+        "summary": "Cover backend authentication and conflict error gaps found by PWDRZ-118 [BE]",
+        "issuerestriction": {
+          "issuerestrictions": {},
+          "shouldDisplay": true
+        },
+        "watches": {
+          "watchCount": 1,
+          "isWatching": true
+        },
+        "creator": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "subtasks": [],
+        "created": "2026-10-16T10:52:23.501+0200",
+        "reporter": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "aggregateprogress": {
+          "progress": 0,
+          "total": 0
+        },
+        "priority": {
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "labels": [
+          "pwdrz-118-follow-up"
+        ],
+        "versions": [],
+        "progress": {
+          "progress": 0,
+          "total": 0
+        },
+        "issuelinks": [],
+        "votes": {
+          "votes": 0,
+          "hasVoted": false
+        },
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "assignee": {
+          "accountId": "712020:6b9d0796-5a0b-4e3f-b100-6ed57fb4481b",
+          "avatarUrls": {
+            "48x48": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:6b9d0796-5a0b-4e3f-b100-6ed57fb4481b/acb59172-8436-4ba9-83a0-5de36326af91/48",
+            "24x24": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:6b9d0796-5a0b-4e3f-b100-6ed57fb4481b/acb59172-8436-4ba9-83a0-5de36326af91/24",
+            "16x16": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:6b9d0796-5a0b-4e3f-b100-6ed57fb4481b/acb59172-8436-4ba9-83a0-5de36326af91/16",
+            "32x32": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:6b9d0796-5a0b-4e3f-b100-6ed57fb4481b/acb59172-8436-4ba9-83a0-5de36326af91/32"
+          },
+          "displayName": "Ivan 82288",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "worklog": {
+          "startAt": 0,
+          "maxResults": 20,
+          "total": 0,
+          "worklogs": []
+        },
+        "updated": "2026-10-16T10:52:23.595+0200",
+        "status": {
+          "description": "",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+          "name": "To Do",
+          "id": "10076",
+          "statusCategory": {
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "customFields": {
+          "Rank": {
+            "id": "customfield_10019",
+            "value": "0|i00131:"
+          }
+        }
+      },
+      "descriptionEditable": true,
+      "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-156",
+      "localTracking": {
+        "status": "pending",
+        "owner": "Ivan 82288",
+        "notes": "Backend-owned auth/conflict/error test additions tracked; coordinate provisional STOMP behavior with PWDRZ-104.",
+        "updatedAt": "2026-10-16T09:10:13.360Z"
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10488",
+      "key": "PWDRZ-157",
+      "fields": {
+        "statuscategorychangedate": "2026-10-16T10:59:26.523+0200",
+        "issuetype": {
+          "id": "10077",
+          "description": "A problem or error.",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium",
+          "name": "Bug",
+          "subtask": false,
+          "avatarId": 10303,
+          "entityId": "203e8419-e97f-49ce-a123-f24825a8afbe",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "10389",
+          "key": "PWDRZ-90",
+          "fields": {
+            "summary": "Technical debt and contract alignment",
+            "status": {
+              "description": "",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+              "name": "To Do",
+              "id": "10076",
+              "statusCategory": {
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "id": "10079",
+              "description": "A collection of related bugs, stories, and tasks.",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "6a7f778c-6d7c-43a6-900a-cf2d83892a04",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "components": [],
+        "project": {
+          "id": "10066",
+          "key": "PWDRZ",
+          "name": "ProjectWdrz",
+          "projectTypeKey": "software",
+          "simplified": true,
+          "avatarUrls": {
+            "48x48": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419",
+            "24x24": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=small",
+            "16x16": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=xsmall",
+            "32x32": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=medium"
+          }
+        },
+        "description": "## Problem\n\nAt develop cc998e7, wsProxy configures pathFilter: \\['/ws', '/ws/\\*\\*'\\]. Installed http-proxy-middleware 3.0.5 accepts arrays of strings OR arrays of globs, but rejects a mixed array. Its shouldProxy catches the matcher error and returns false, so GET /ws/info receives 404 without attempting the configured upstream. A new real-proxy regression test from PWDRZ-118 reproduced expected 502 versus actual 404 when the backend port is unavailable.\n\n## Owner\n\nGateway/platform owner.\n\n## Scope\n\n* Replace the mixed filter with a valid exact-prefix boundary matcher for /ws and /ws/ descendants.\n* Verify unavailable upstream yields the intended HTTP/SockJS 502 response and unrelated paths are not captured.\n* Keep authentication and final backend context-path/handshake integration explicit under PWDRZ-104.\n\n## Out of scope\n\nImplementing real-time producers, STOMP subscriptions, a new transport, or declaring the end-to-end delivery path complete.\n\n## Acceptance criteria\n\n* The regression test invokes the real proxy and receives 502 JSON from unavailable upstream on /ws/info, not the application's fallthrough 404.\n* /ws and its descendants match; /ws-other is not proxied.\n* Existing API proxy, JWT, CORS and gateway tests still pass; typecheck/lint/format checks pass.\n* Coverage scope stays inclusive; no exclusion or threshold change hides the failure.\n\nRelated work: PWDRZ-104 owns broader real-time transport integration, PWDRZ-118 found this concrete routing defect.",
+        "fixVersions": [],
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "colorName": "blue-gray",
+          "name": "To Do"
+        },
+        "timetracking": {},
+        "attachment": [],
+        "workratio": -1,
+        "summary": "Gateway skips /ws proxy because its path filter mixes string and glob patterns",
+        "issuerestriction": {
+          "issuerestrictions": {},
+          "shouldDisplay": true
+        },
+        "watches": {
+          "watchCount": 1,
+          "isWatching": true
+        },
+        "creator": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "subtasks": [],
+        "created": "2026-10-16T10:59:25.888+0200",
+        "reporter": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "aggregateprogress": {
+          "progress": 0,
+          "total": 0
+        },
+        "priority": {
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "labels": [
+          "pwdrz-118-follow-up"
+        ],
+        "versions": [],
+        "progress": {
+          "progress": 0,
+          "total": 0
+        },
+        "issuelinks": [],
+        "votes": {
+          "votes": 0,
+          "hasVoted": false
+        },
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "assignee": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "worklog": {
+          "startAt": 0,
+          "maxResults": 20,
+          "total": 0,
+          "worklogs": []
+        },
+        "updated": "2026-10-16T10:59:26.035+0200",
+        "status": {
+          "description": "",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+          "name": "To Do",
+          "id": "10076",
+          "statusCategory": {
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "customFields": {
+          "Rank": {
+            "id": "customfield_10019",
+            "value": "0|i00138:"
+          }
+        }
+      },
+      "descriptionEditable": true,
+      "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-157",
+      "localTracking": {
+        "status": "done",
+        "owner": "Codex",
+        "notes": "Fixed mixed WebSocket proxy path filter; real proxy regression for /ws, /ws/info and /ws-other passes. Uncommitted; Jira status unchanged.",
+        "updatedAt": "2026-10-16T09:10:13.360Z"
       }
     }
   ]
