@@ -86,6 +86,12 @@ npm run dev
 | `npm run lint:fix` | Auto-fix ESLint issues |
 | `npm run format` | Format source with Prettier |
 | `npm run format:check` | Check formatting (CI) |
+| `npm test` | Run Jest with coverage and enforce configured gates |
+| `npm run test:coverage` | Same coverage run, used by CI |
+
+All four coverage metrics are mandatory. See the canonical
+[coverage policy](../docs/guides/testing.md#coverage-policy-pwdrz-118) for
+thresholds, measured source and exclusions.
 
 ---
 

@@ -52,8 +52,10 @@ All four frontend/gateway metrics remain mandatory; none is diagnostic-only.
   the listener. Jest omits test files and configured setup files from coverage.
   Middleware, configuration, proxy and error-handling logic stay measured.
   The bootstrap exclusion does not exclude `app.ts` or a whole directory.
-- **Backend:** its current JaCoCo line gate remains **65% interim**; final
-  metrics and thresholds are awaiting a separate user decision. Its existing
+- **Backend:** its current JaCoCo line gate remains **65% interim**. LINE and
+  BRANCH are selected as the final mandatory metrics; METHOD and INSTRUCTION
+  remain diagnostic. Numeric thresholds await a separate user decision, so
+  the BRANCH gate is not configured yet. Its existing
   source scope is unchanged in this frontend/gateway update.
 
 ### CI and verification
@@ -256,8 +258,9 @@ pages, components, hooks и shared logic; исключаются declaration/tes
 и непроизводственные tooling/generated paths, перечисленные выше. Gateway
 измеряет `src/**/*.ts`, исключая declarations и точный process bootstrap
 `src/index.ts`; Jest также не измеряет test/setup files. Широких исключений
-production-директорий нет. Политика backend пока не выбрана: 65% line gate
-остаётся промежуточным.
+production-директорий нет. Для backend выбраны обязательные LINE и BRANCH,
+а METHOD и INSTRUCTION остаются диагностическими. Числовые пороги ещё не
+выбраны: действующий 65% line gate промежуточный, BRANCH gate пока не настроен.
 
 CI выполняет `npm ci` и существующий `npm run test:coverage` каждого сервиса;
 значения берутся из конфигурации. Названия jobs — `Frontend Tests (coverage gates)`

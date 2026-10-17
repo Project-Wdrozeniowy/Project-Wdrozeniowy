@@ -182,9 +182,105 @@ reruns retain the same configuration and produce readable gate failures.
 Normal log: `backend/target/pwdrz118-gw-final-pass.log`; failed environment
 attempt: `backend/target/pwdrz118-gw-final-fail-lines.log`.
 
+### Gateway controlled failures
+
+Direct command base, from `gateway/`:
+
+```text
+node node_modules/jest/bin/jest.js --coverage --runInBand --cacheDirectory=../backend/target/jest-cache-risk
+```
+
+For each metric, pass `--coverageThreshold=<JSON>` containing all four selected
+global thresholds with only that metric raised to 100. All four runs pass
+51 tests / 7 suites, exit 1, and explicitly report only the intended metric's
+coverage violation: lines 96.99%, branches 86.95%, functions 92.30%, statements
+97.03%. CLI overrides do not modify tracked policy.
+
+An additional run adds `--runTestsByPath src/config/__tests__/index.test.ts`
+without a threshold override. All 13 selected tests pass, but the final gates
+reject lines 16/133 = 12.03%, branches 4/46 = 8.69%, functions 6/26 = 23.07%,
+statements 11.85%; exit 1. LCOV confirms unchanged production denominators
+133 lines / 46 branches / 26 functions. This verifies insufficient coverage
+against the actual selected thresholds, without changing tests or coverage scope.
+
+Each negative run uses a separate `--coverageDirectory` under `backend/target/`
+to preserve the normal `gateway/coverage/` report. Exact argument arrays, exits
+and gate messages are saved in ignored
+`backend/target/pwdrz118-gw-verified-results.json`; per-run logs are
+`backend/target/pwdrz118-gw-verified-{lines,branches,functions,statements,reduced}.log`.
+These are local checks; no new GitHub CI result is claimed.
+
+## Frontend/gateway CI and documentation alignment
+
+The user requested this alignment before proceeding to backend. Context map:
+`.github/workflows/test.yml` supplies display names and invokes the existing
+service scripts; `docs/guides/testing.md` is the canonical coverage policy;
+root/service READMEs, developer-guide entry points and agent/review instructions
+refer to that policy. `docs/guides/git-workflow.md` lists the updated check names.
+Dependencies are the accepted frontend/gateway configurations and package scripts.
+Existing pass/fail suites above verify gate behavior; this step changes no test
+assertion, API, database schema or coverage scope.
+
+Frontend and gateway display names are now `Frontend Tests (coverage gates)`
+and `Gateway Tests (coverage gates)`. Their job IDs, triggers, `npm ci` install
+steps and `npm run test:coverage` commands are unchanged; the existing scripts
+already enforce the selected configuration. Percentages are not copied into
+job labels. Backend workflow/configuration remains untouched in this step.
+
+The canonical guide records thresholds, independent mandatory metrics, provider,
+measured paths/exclusions and rationale; English and Russian sections agree.
+Current-facing instructions no longer claim broad frontend UI/hook exclusions
+or universal 65% frontend/gateway gates. Historical measurement reports retain
+their original dated values.
+
+Read-only GitHub inspection found no `required_status_checks` rules in active
+rulesets 14868458 (develop), 14868413 (main) and 14868510 (staging).
+No remote settings were changed. This checks these rulesets only, not every
+possible branch-protection mechanism; enforcement work remains PWDRZ-137.
+Renamed jobs still require a new GitHub run after publication; local verification
+does not establish remote success. No commit, push or workflow dispatch occurred.
+
+Verification completed: parsed the workflow with the installed `js-yaml` and
+compared it structurally with HEAD after normalizing only the two display names.
+Everything else is identical, including backend, triggers, job IDs and steps.
+Checked actual package scripts, frontend provider/version and all eight
+frontend/gateway threshold values against the canonical policy table; checked
+the new local policy links and removed stale current-facing frontend/gateway
+65%/broad-exclusion claims. Frontend format:check and `git diff --check` pass.
+Existing gate pass/fail evidence remains applicable: no runner command or
+behavior changed in this documentation/naming step.
+
+Targeted provisional-marker review covered PWDRZ-118 references in the changed
+workflow, guides and agent instructions. Resolved future-tense frontend/gateway
+policy references now describe the selected implementation. Backend references
+remain explicitly pending; PWDRZ-117 and PWDRZ-139 prerequisites have not been
+satisfied by this work and their markers are retained. No unrelated temporary
+feature was enabled, and no other owner's task is claimed newly unblocked.
+
+## Decision 6 — backend metric policy
+
+The user selected **A: mandatory LINE and BRANCH coverage**. METHOD and
+INSTRUCTION remain diagnostic JaCoCo metrics. The gates will use independent
+BUNDLE COVEREDRATIO limits, consistent with the existing global LINE rule.
+
+Rationale: LINE measures execution across source code; BRANCH adds a separate
+regression signal for conditional outcomes in authorization, business rules
+and error paths. METHOD execution alone does not establish coverage of those
+outcomes, and INSTRUCTION overlaps source execution while being less directly
+readable in behavior reviews. Neither aggregate metric proves assertions are
+correct; the backend-owned gaps remain PWDRZ-156, with provisional STOMP
+delivery/authentication under PWDRZ-104.
+
+The last clean baseline remains 187 passing tests, LINE 872/905 = 96.35%,
+BRANCH 299/347 = 86.17%, METHOD 241/249 = 96.78% and INSTRUCTION
+4156/4300 = 96.65%. Inspection confirms the current POM still has only
+LINE >= 0.65. No BRANCH limit or new numeric threshold is configured yet:
+implementation and controlled verification follow the separate numeric choice.
+This documentation-only decision does not claim a new backend test run.
+
 ## Decisions still pending
 
-Backend metric policy, backend numeric thresholds and rationale,
+Backend numeric thresholds and rationale,
 any remaining disputed scope/gap choices, and final CI-policy choices must be
 confirmed by the user before implementation. Final gate fail/pass verification
 and acceptance audit follow those decisions. PWDRZ-118 is not yet complete.
