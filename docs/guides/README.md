@@ -22,6 +22,7 @@ that all existing code already follows them.*
 | Creating a branch, commit, or PR; resolving review feedback | [Git workflow](git-workflow.md), [PR guide](pr-guidelines.md), and the short [PR template](../../.github/pull_request_template.md) |
 | Adding tests or assessing completion | [Testing guide](testing.md) and the Definition of Done below |
 | Running or debugging one service | The [frontend](../../frontend/README.md) or [gateway](../../gateway/README.md) README, plus the [root setup](../../README.md) |
+| Installing dependencies, Nx tasks, caches or CI | [Monorepo workflows](monorepo.md) |
 
 The [codebase maps](../codebase/) are dated technical snapshots for agents and
 investigation, **not the primary source of developer rules**. The [agent entry
@@ -118,6 +119,7 @@ descriptive and regenerate them only from verified evidence.
 | Ветка, коммит, PR или ответ на review | [Git workflow](git-workflow.md), [PR guide](pr-guidelines.md), краткий [PR template](../../.github/pull_request_template.md) |
 | Тесты или оценка готовности | [Тестирование](testing.md) и Definition of Done ниже |
 | Запуск или отладка сервиса | [Frontend](../../frontend/README.md) либо [gateway](../../gateway/README.md) README и [корневые инструкции](../../README.md) |
+| Установка зависимостей, Nx tasks, кеш или CI | [Monorepo workflows](monorepo.md#ru) |
 
 [Карты кодовой базы](../codebase/) — датированные технические снимки для
 агентов и исследования, **не основной источник правил для разработчиков**.

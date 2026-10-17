@@ -39,7 +39,8 @@ services:
 
   gateway:
     build:
-      context: ${E2E_RUNTIME}/gateway
+      context: ${E2E_RUNTIME}
+      dockerfile: gateway/Dockerfile
     environment:
       PORT: 3000
       BACKEND_URL: http://backend:8080

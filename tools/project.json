@@ -1,0 +1,27 @@
+{
+  "name": "tooling",
+  "projectType": "library",
+  "targets": {
+    "format-check": {
+      "command": "prettier --check tools package.json package-lock.json nx.json .prettierrc.json frontend/project.json gateway/project.json backend/project.json e2e/project.json .github/workflows",
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.github/workflows/**/*",
+        "{workspaceRoot}/*/project.json"
+      ]
+    },
+    "infra-test": { "command": "node --test tools/workspace/__tests__/*.test.mjs", "cache": false },
+    "dev": { "command": "node tools/workspace/dev.mjs", "cache": false },
+    "validate": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": [
+        { "projects": ["frontend", "gateway"], "target": "verified" },
+        { "projects": ["backend"], "target": "coverage" },
+        { "projects": ["e2e"], "target": "test" },
+        "format-check",
+        "infra-test"
+      ]
+    }
+  }
+}

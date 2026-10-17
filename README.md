@@ -6,12 +6,14 @@
 [![Tests](https://img.shields.io/github/actions/workflow/status/Project-Wdrozeniowy/Project-Wdrozeniowy/test.yml?style=flat-square&label=Tests)](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions)
 
 A full-stack community forum platform in development. Authentication, user-profile APIs,
-and forum-post APIs are implemented; the forum feed still uses mock data, and comments,
-votes, and real-time notifications are not yet complete end to end.
+forum feed and post creation use real APIs. Post details, comments and real-time
+notifications retain task-specific limitations.
 
 ## Architecture
 
-The repository contains three independent services wired through a shared Docker Compose stack:
+Nx orchestrates three services and the E2E project. npm workspaces shares Node
+installation; Maven owns Java dependencies. See the [monorepo guide](docs/guides/monorepo.md)
+for task ownership, cache boundaries and direct-service escape paths.
 
 ```
 Frontend (Next.js 16)       port 3001
@@ -34,7 +36,7 @@ PostgreSQL 16               port 5432
 
 ### Prerequisites
 
-- Node.js ≥ 24
+- Node.js 24 and npm 11
 - Java 17 (Temurin recommended)
 - Docker + Docker Compose
 
@@ -66,21 +68,43 @@ JWT_SECRET=your_base64_secret
 > supplies the Compose services; `gateway/.env` is used when running the gateway
 > from source. A mismatch causes 401 on authenticated requests.
 
-### 2. Start the infrastructure, backend, and gateway
+### 2. Install the workspace
 
 ```bash
-docker compose up -d        # starts postgres, redis, backend, gateway
-docker compose logs --tail=100 # inspect startup; Flyway runs migrations automatically
+npm run bootstrap
 ```
 
-### 3. Install dependencies
+If Java/Compose prerequisites are already checked, `npm ci` is the install-only
+alternative. Use one of these commands; bootstrap includes the locked install.
+
+### 3. Start development
 
 From the repository root:
 
 ```bash
-npm --prefix frontend install
-npm --prefix gateway install
+npm run dev
 ```
+
+Root dev starts PostgreSQL/Redis/backend in Compose and frontend/gateway from
+source with hot reload. Configure all three `.env` files first. Ctrl+C stops
+frontend/gateway; Compose data and services remain. Stop those explicitly with
+`docker compose stop` when desired. Do not also run the Compose gateway on 3000.
+
+## Root commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm run check` | Lint, typecheck and formatting |
+| `npm run build` | Build all applications; requires explicit `NEXT_PUBLIC_API_URL` |
+| `npm test` | Service coverage gates; backend uses an owned temporary DB |
+| `npm run test:e2e` | Isolated real-stack browser/integration gate |
+| `npm run validate` | Full build/check/coverage/E2E requirements |
+| `npm run graph` | Nx project graph |
+
+Install browser binaries once with
+`npm exec --workspace orbita-e2e -- playwright install chromium`.
+Commands, PowerShell/POSIX environment examples, CI and rollback paths are in
+the [monorepo guide](docs/guides/monorepo.md).
 
 ## Running Locally
 
@@ -157,13 +181,13 @@ From the repository root, run each line independently:
 
 ```bash
 # Frontend — Vitest 3.2.4 + Istanbul, service-specific coverage gates
-npm --prefix frontend run test:coverage
+npx nx run frontend:coverage
 
 # Gateway — Jest 29, service-specific coverage gates
-npm --prefix gateway run test:coverage
+npx nx run gateway:coverage
 
-# Backend — JUnit 5 + JaCoCo (requires a running PostgreSQL)
-cd backend && ./mvnw verify
+# Backend — JUnit 5 + JaCoCo (owned temporary PostgreSQL; Java 17 + Docker)
+npx nx run backend:coverage
 ```
 
 PWDRZ-118 selected independent lines, branches, functions and statements gates
@@ -311,6 +335,6 @@ Proprietary — All rights reserved.
 This is a private educational project with potential commercial use.
 No permission is granted to use, copy, modify, distribute, or publish its
 source code or related materials without written consent from all copyright
-holders listed in [NOTICE](NOTICE).
+holders listed in [NOTICE.md](NOTICE.md).
 
 See [LICENSE](LICENSE) for terms.

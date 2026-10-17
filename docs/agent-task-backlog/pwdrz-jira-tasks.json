@@ -22278,6 +22278,229 @@
         "notes": "All five Jira acceptance criteria verified. PR #58 head 666ba667; PR CI 39054846497 passes 5/5 on test merge 43cfe750. Controlled browser failure CI 39055451049 exits 1 with artifacts and cleanup; subsequent normal CI 39055714957 passes 5/5 exit 0 on same head. Strict E2E (Chromium), GitHub Actions app 15368, required on develop/main/staging; readback preserves original rules/bypass. gh pr checks --required recognizes passing E2E. Existing admin bypass remains; no negative PR merge rejection claimed. No new FE/BE defect. Final evidence docs uncommitted; no agent commit/push/merge/Jira transition. See pwdrz-117-execution.md.",
         "updatedAt": "2026-10-17T17:56:51.294Z"
       }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "10457",
+      "key": "PWDRZ-126",
+      "fields": {
+        "statuscategorychangedate": "2026-10-14T12:12:06.803+0200",
+        "issuetype": {
+          "id": "10076",
+          "description": "A small, distinct piece of work.",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "2535984a-65c8-4602-a7a7-54815d407a6a",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "10160",
+          "key": "PWDRZ-42",
+          "fields": {
+            "summary": "Project initialization and integration baseline",
+            "status": {
+              "description": "This work item is being actively worked on at the moment by the assignee.",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+              "name": "In Progress",
+              "id": "10077",
+              "statusCategory": {
+                "id": 4,
+                "key": "indeterminate",
+                "colorName": "yellow",
+                "name": "In Progress"
+              }
+            },
+            "priority": {
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "id": "10079",
+              "description": "A collection of related bugs, stories, and tasks.",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "6a7f778c-6d7c-43a6-900a-cf2d83892a04",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "project": {
+          "id": "10066",
+          "key": "PWDRZ",
+          "name": "ProjectWdrz",
+          "projectTypeKey": "software",
+          "simplified": true,
+          "avatarUrls": {
+            "48x48": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419",
+            "24x24": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=small",
+            "16x16": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=xsmall",
+            "32x32": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/3/universal_avatar/view/type/project/avatar/10419?size=medium"
+          }
+        },
+        "fixVersions": [],
+        "statusCategory": {
+          "id": 4,
+          "key": "indeterminate",
+          "colorName": "yellow",
+          "name": "In Progress"
+        },
+        "workratio": 0,
+        "issuerestriction": {
+          "issuerestrictions": {},
+          "shouldDisplay": true
+        },
+        "watches": {
+          "watchCount": 1,
+          "isWatching": true
+        },
+        "lastViewed": "2026-10-17T22:55:18.851+0200",
+        "created": "2026-10-08T22:28:48.950+0200",
+        "priority": {
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/high_new.svg",
+          "name": "High",
+          "id": "2"
+        },
+        "labels": [
+          "monorepo",
+          "platform"
+        ],
+        "timeestimate": 14400,
+        "aggregatetimeoriginalestimate": 14400,
+        "versions": [],
+        "issuelinks": [],
+        "assignee": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "updated": "2026-10-14T12:50:55.898+0200",
+        "status": {
+          "description": "This work item is being actively worked on at the moment by the assignee.",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+          "name": "In Progress",
+          "id": "10077",
+          "statusCategory": {
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "components": [],
+        "timeoriginalestimate": 14400,
+        "description": "## Goal\n\nAdd the smallest practical root-level workspace orchestration that makes the three services easier to install, run, validate, and evolve together.\n\n## Owner\n\nTeam lead / platform and CI owner.\n\n## Scope\n\n* Select and justify a root workspace/task runner compatible with Next.js, Express/TypeScript, and Maven.\n* Provide root commands for install/bootstrap guidance, development, build, lint/type/format checks, tests, and CI-relevant validation.\n* Preserve independent service ownership and direct service commands; do not force Java development into a Node workspace.\n* Configure deterministic task dependencies, cache boundaries where safe, and concise contributor documentation.\n\n## Out of scope\n\n* Rewriting frontend, gateway, or backend application logic.\n* Taking ownership of Java/Spring feature code or backend tests.\n* Migrating unrelated tooling merely for fashion.\n\n## Acceptance criteria\n\n* The selected tool and root manifests/configuration are committed with a short rationale.\n* A new contributor can discover one documented root command for each common workflow and still run any service in isolation.\n* Root validation executes service checks in the correct dependency/order constraints and reports the failing service clearly.\n* CI uses the root orchestration where it provides value without weakening existing service gates.\n* The implementation is reproducible on the CI Node/Java versions and does not commit generated artefacts, credentials, or coverage output.\n* Documentation states ownership boundaries and rollback/escape path to direct service commands.\n\n",
+        "timetracking": {
+          "originalEstimate": "4h",
+          "remainingEstimate": "4h",
+          "originalEstimateSeconds": 14400,
+          "remainingEstimateSeconds": 14400
+        },
+        "attachment": [],
+        "aggregatetimeestimate": 14400,
+        "summary": "Introduce root task orchestration for the monorepo",
+        "creator": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "subtasks": [],
+        "reporter": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "emailAddress": "gdx172979@student.gdansk.merito.pl",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "24x24": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "16x16": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png",
+            "32x32": "https://secure.gravatar.com/avatar/38e1c9f5917a7be1bc3a7de3df969fbf?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Fdefault%2Fdefault-avatar-5.png"
+          },
+          "displayName": "Ruslan 82179",
+          "active": true,
+          "timeZone": "Europe/Warsaw",
+          "accountType": "atlassian"
+        },
+        "aggregateprogress": {
+          "progress": 0,
+          "total": 14400,
+          "percent": 0
+        },
+        "duedate": "2026-10-16",
+        "progress": {
+          "progress": 0,
+          "total": 14400,
+          "percent": 0
+        },
+        "votes": {
+          "votes": 0,
+          "hasVoted": false
+        },
+        "comment": {
+          "comments": [],
+          "maxResults": 0,
+          "total": 0,
+          "startAt": 0
+        },
+        "worklog": {
+          "startAt": 0,
+          "maxResults": 20,
+          "total": 0,
+          "worklogs": []
+        },
+        "customFields": {
+          "Sprint": {
+            "id": "customfield_10020",
+            "value": [
+              {
+                "id": 170,
+                "name": "PWDRZ Sprint 5",
+                "state": "active",
+                "boardId": 67,
+                "goal": "- Get rid of major bugs\n- Introduce coverage metrics and automated testing\n- Introduce clear Task live cycle\n- Connect parts of application\n- Refactor outdated and redudndant parts of application\nMajor goal: Make application easy to develop and test, make it clean and unified as monorepo",
+                "startDate": "2026-10-07T11:34:52.000Z",
+                "endDate": "2026-10-18T06:00:00.000Z"
+              }
+            ]
+          },
+          "Rank": {
+            "id": "customfield_10019",
+            "value": "0|i000te:zzz2"
+          },
+          "Development": {
+            "id": "customfield_10000",
+            "value": "{}"
+          }
+        }
+      },
+      "descriptionEditable": true,
+      "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-126",
+      "localTracking": {
+        "status": "in_progress",
+        "owner": "Codex",
+        "notes": "Approved Nx/npm-workspaces orchestration implemented and locally validated: bootstrap, build/cache, static checks, service coverage, real dev, positive E2E and negative failure/cleanup probes. See pwdrz-126-execution.md. Kept in_progress because committed configuration and published GitHub CI remain pending explicit publication authorization; no Jira payload or external status changes.",
+        "updatedAt": "2026-10-17T22:04:00.000Z"
+      }
     }
   ]
 }

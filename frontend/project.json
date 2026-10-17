@@ -1,0 +1,39 @@
+{
+  "name": "frontend",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "command": "node tools/workspace/buildFrontend.mjs",
+      "dependsOn": ["typecheck"],
+      "inputs": [
+        "default",
+        { "env": "NEXT_PUBLIC_API_URL" },
+        { "env": "NEXT_PUBLIC_DEV_ORIGIN" },
+        { "env": "NODE_ENV" }
+      ],
+      "outputs": [
+        "{projectRoot}/.next/**",
+        "!{projectRoot}/.next/cache/**",
+        "!{projectRoot}/.next/dev/**"
+      ]
+    },
+    "lint": { "command": "node tools/workspace/npm.mjs run lint --workspace frontend" },
+    "typecheck": { "command": "node tools/workspace/npm.mjs run typecheck --workspace frontend" },
+    "format-check": {
+      "command": "node tools/workspace/npm.mjs run format:check --workspace frontend"
+    },
+    "coverage": {
+      "command": "node tools/workspace/npm.mjs run test:coverage --workspace frontend",
+      "cache": false
+    },
+    "dev": {
+      "command": "node tools/workspace/npm.mjs run dev --workspace frontend -- --port 3001",
+      "cache": false
+    },
+    "verified": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": ["build", "lint", "format-check", "coverage"]
+    }
+  }
+}

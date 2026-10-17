@@ -1,0 +1,23 @@
+{
+  "name": "backend",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "command": "node tools/workspace/maven.mjs build",
+      "inputs": [
+        "default",
+        { "runtime": "java --version" },
+        { "env": "MAVEN_OPTS" },
+        { "env": "JAVA_TOOL_OPTIONS" }
+      ],
+      "outputs": ["{projectRoot}/target/*.jar"]
+    },
+    "coverage": {
+      "command": "node tools/workspace/backendTest.mjs",
+      "cache": false,
+      "configurations": {
+        "ci": { "command": "node tools/workspace/backendTest.mjs --external-db" }
+      }
+    }
+  }
+}

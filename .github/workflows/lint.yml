@@ -7,6 +7,10 @@ on:
       - develop
   pull_request:
 
+env:
+  NX_DAEMON: 'false'
+  NX_TUI: 'false'
+
 jobs:
   frontend-lint:
     name: Frontend Lint & Format Check
@@ -21,19 +25,16 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
+        run: npm ci --workspace frontend --include-workspace-root
 
       - name: Lint
-        working-directory: frontend
-        run: npm run lint
+        run: npx nx run frontend:lint
 
       - name: Format check
-        working-directory: frontend
-        run: npm run format:check
+        run: npx nx run frontend:format-check
 
   gateway-lint:
     name: Gateway Lint & Format Check
@@ -48,16 +49,13 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: gateway/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: gateway
-        run: npm ci
+        run: npm ci --workspace gateway --include-workspace-root
 
       - name: Lint
-        working-directory: gateway
-        run: npm run lint
+        run: npx nx run gateway:lint
 
       - name: Format check
-        working-directory: gateway
-        run: npm run format:check
+        run: npx nx run gateway:format-check

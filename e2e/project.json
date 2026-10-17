@@ -1,0 +1,29 @@
+{
+  "name": "e2e",
+  "projectType": "application",
+  "implicitDependencies": ["frontend", "gateway", "backend"],
+  "targets": {
+    "typecheck": { "command": "node tools/workspace/npm.mjs run typecheck --workspace orbita-e2e" },
+    "format-check": {
+      "command": "node tools/workspace/npm.mjs run format:check --workspace orbita-e2e"
+    },
+    "infra-test": {
+      "command": "node tools/workspace/npm.mjs run test:infra --workspace orbita-e2e",
+      "cache": false
+    },
+    "test": {
+      "command": "node tools/workspace/npm.mjs test --workspace orbita-e2e",
+      "cache": false,
+      "dependsOn": ["typecheck", "format-check", "infra-test"]
+    },
+    "probe": {
+      "command": "node tools/workspace/npm.mjs run test:probe --workspace orbita-e2e",
+      "cache": false,
+      "dependsOn": ["typecheck", "format-check", "infra-test"]
+    },
+    "browsers-install": {
+      "command": "node tools/workspace/npm.mjs run browsers:install --workspace orbita-e2e",
+      "cache": false
+    }
+  }
+}

@@ -7,9 +7,23 @@ on:
       - develop
     paths:
       - 'frontend/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'nx.json'
+      - 'tools/**'
+      - '.github/workflows/frontend-build.yml'
   pull_request:
     paths:
       - 'frontend/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'nx.json'
+      - 'tools/**'
+      - '.github/workflows/frontend-build.yml'
+
+env:
+  NX_DAEMON: 'false'
+  NX_TUI: 'false'
 
 jobs:
   build:
@@ -25,18 +39,15 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
+        run: npm ci --workspace frontend --include-workspace-root
 
       - name: Type check
-        working-directory: frontend
-        run: npm run typecheck
+        run: npx nx run frontend:typecheck
 
       - name: Build
-        working-directory: frontend
         env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api' }}
-        run: npm run build
+          NEXT_PUBLIC_API_URL: http://localhost:3000/api
+        run: npx nx run frontend:build

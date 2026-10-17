@@ -7,9 +7,23 @@ on:
       - develop
     paths:
       - 'gateway/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'nx.json'
+      - 'tools/**'
+      - '.github/workflows/gateway-build.yml'
   pull_request:
     paths:
       - 'gateway/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'nx.json'
+      - 'tools/**'
+      - '.github/workflows/gateway-build.yml'
+
+env:
+  NX_DAEMON: 'false'
+  NX_TUI: 'false'
 
 jobs:
   build:
@@ -25,16 +39,13 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: gateway/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: gateway
-        run: npm ci
+        run: npm ci --workspace gateway --include-workspace-root
 
       - name: Build
-        working-directory: gateway
-        run: npm run build
+        run: npx nx run gateway:build
 
       - name: Type check
-        working-directory: gateway
-        run: npm run typecheck
+        run: npx nx run gateway:typecheck

@@ -11,10 +11,11 @@ replaces them nor contributes an E2E line-coverage percentage.
 - Free loopback ports 3101 (frontend), 3100 (gateway) and 8180 (backend).
 - No host Java/Maven installation or developer `.env` files are needed.
 
-From `e2e/`:
+Install dependencies from the repository root with `npm ci` (the single workspace
+lockfile). Root `npm run test:e2e` delegates to this managed launcher through Nx.
+After installation, direct commands from `e2e/` remain available:
 
 ```bash
-npm ci
 npm run browsers:install
 npm run typecheck
 npm run format:check
@@ -24,7 +25,7 @@ npm test
 
 Linux CI installs browser system packages with
 `npx playwright install --with-deps chromium` instead of `browsers:install`.
-The package pins Playwright 1.64.1; its installed Chromium is used, not an
+The workspace pins Playwright 1.64.1; its installed Chromium is used, not an
 arbitrary system Chrome. Windows verification uses Node 24.15.0 / bundled npm
 11.12.1; a globally overriding npm 12 previously caused unrelated install-policy
 errors in this workspace. If needed, invoke the bundled npm CLI with Node rather
@@ -32,9 +33,17 @@ than changing global configuration.
 
 `npm test` owns the complete lifecycle. It creates source snapshots without
 local secrets/dependencies/build output, installs and builds the snapshot
-frontend, builds the existing backend/gateway Dockerfiles, waits for real HTTP
+frontend using the root workspace lockfile and selected workspace, builds the
+existing backend/gateway Dockerfiles, waits for real HTTP
 readiness, starts Next.js in production mode and runs Playwright. It never reuses
 an existing server or overwrites the developer's frontend `.next`.
+
+PWDRZ-126 makes snapshot installation workspace-aware: committed root manifests,
+the shared lockfile and Docker ignore rules are copied alongside service source.
+Gateway uses repository Docker context. CLI paths resolve from their owning
+workspace rather than assuming a local `node_modules`. Local secret files,
+npm credentials and dependency trees remain excluded. See the
+[monorepo runbook](../docs/guides/monorepo.md) for dependency/cache ownership.
 
 The initial suite is Chromium desktop, one worker and **zero retries**.
 Browser contexts and users are independent between tests. Wait for observable

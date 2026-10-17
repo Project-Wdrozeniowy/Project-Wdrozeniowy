@@ -1,0 +1,29 @@
+{
+  "name": "gateway",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "command": "node tools/workspace/npm.mjs run build --workspace gateway",
+      "dependsOn": ["typecheck"],
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "lint": { "command": "node tools/workspace/npm.mjs run lint --workspace gateway" },
+    "typecheck": { "command": "node tools/workspace/npm.mjs run typecheck --workspace gateway" },
+    "format-check": {
+      "command": "node tools/workspace/npm.mjs run format:check --workspace gateway"
+    },
+    "coverage": {
+      "command": "node tools/workspace/npm.mjs run test:coverage --workspace gateway",
+      "cache": false
+    },
+    "dev": {
+      "command": "node tools/workspace/npm.mjs run dev --workspace gateway",
+      "cache": false
+    },
+    "verified": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": ["build", "lint", "format-check", "coverage"]
+    }
+  }
+}
