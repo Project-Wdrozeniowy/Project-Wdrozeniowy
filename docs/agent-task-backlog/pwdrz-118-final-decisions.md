@@ -278,9 +278,143 @@ LINE >= 0.65. No BRANCH limit or new numeric threshold is configured yet:
 implementation and controlled verification follow the separate numeric choice.
 This documentation-only decision does not claim a new backend test run.
 
-## Decisions still pending
+## Decision 7 — backend thresholds and reproducible execution
 
-Backend numeric thresholds and rationale,
-any remaining disputed scope/gap choices, and final CI-policy choices must be
-confirmed by the user before implementation. Final gate fail/pass verification
-and acceptance audit follow those decisions. PWDRZ-118 is not yet complete.
+The user selected **A: LINE >= 95%, BRANCH >= 85%**. Both are independent
+`BUNDLE` / `COVEREDRATIO` limits in `backend/pom.xml`; METHOD and INSTRUCTION
+remain diagnostic. Relative to the clean 96.35% / 86.17% baseline, headroom is
+1.35 / 1.17 percentage points. This deliberately tight regression policy can
+block uncovered new Java code sooner than the alternative 90% / 80%; the user
+accepted that trade-off. No new Java tests are needed to meet the floors.
+
+Context map for this implementation: `backend/pom.xml` owns agent/check/report;
+`.github/workflows/test.yml` invokes `verify`; `docs/guides/testing.md` is the
+canonical policy; root README, AGENTS, Copilot and guide entry/check-name lists
+must agree. Dependencies are the existing 187 tests, single Surefire test fork,
+Flyway and PostgreSQL. No API, source behavior, test assertion or exclusion
+change is needed. `git diff 9167dc7 -- backend/src` was empty at verification.
+
+Implementation also sets `prepare-agent` `append=false`, preventing old probes
+from accumulating across test runs. This is a technical correction to the
+documented reproducibility defect, using the current single fork. Introducing
+multiple forks/JVMs requires a separate execution-file/merge design; do not
+silently reuse this setting for such a topology. Report/check exclusions remain
+identical and unchanged. The workflow now labels backend
+`Backend Tests (coverage gates)`; its existing `./mvnw --batch-mode verify`
+command, environment, PostgreSQL service, triggers and job ID are unchanged.
+
+### Backend environment and commands
+
+Verification date: 2026-10-17. Repository SHA:
+`42d7bcf24470c01eb0b230978f071ef0ec3045b9` plus the documented backend POM,
+workflow-label and documentation working-copy changes. Windows 11, Temurin
+Java 17.0.19, Maven 3.9.9, JaCoCo 0.8.12, Docker Engine 29.4.3,
+PostgreSQL 16.14 (`postgres:16-alpine`).
+
+An ephemeral container `pwdrz118-final-coverage` used no volume and exposed
+only `127.0.0.1:55432`; it did not use the developer database. Exported test
+environment: `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:55432/devpulse`,
+`SPRING_DATASOURCE_USERNAME=devpulse`,
+`SPRING_DATASOURCE_PASSWORD=pwdrz118_test_only`, matching `POSTGRES_DB`,
+`POSTGRES_USER`, `POSTGRES_PASSWORD`, and the existing CI test JWT secret.
+Database readiness was checked before Maven.
+
+Commands from `backend/`, using the installed wrapper distribution directly
+because the previously documented Windows wrapper invocation was unreliable:
+
+```powershell
+$mavenExe = 'C:\Users\Ruslan\.m2\wrapper\dists\apache-maven-3.9.9\3477a4f1\bin\mvn.cmd'
+& $mavenExe --batch-mode '-Dmaven.repo.local=C:\Users\Ruslan\.m2\repository' verify
+& $mavenExe --batch-mode '-Dmaven.repo.local=C:\Users\Ruslan\.m2\repository' -f .pwdrz118-line-fail.pom.xml 'jacoco:check@check'
+& $mavenExe --batch-mode '-Dmaven.repo.local=C:\Users\Ruslan\.m2\repository' -f .pwdrz118-branch-fail.pom.xml 'jacoco:check@check'
+& $mavenExe --batch-mode '-Dmaven.repo.local=C:\Users\Ruslan\.m2\repository' '-Dtest=JwtUtilTest' verify
+& $mavenExe --batch-mode '-Dmaven.repo.local=C:\Users\Ruslan\.m2\repository' verify
+```
+
+Temporary POM copies were created next to the original to preserve basedir;
+each raised only the named minimum to 1.00 and reused the full clean execution.
+They were removed in `finally`. The reduced-test command used the actual
+95% / 85% configuration without a threshold override and overwrote prior
+execution data, as configured. The final full command restores the normal
+report after the deliberate failure.
+
+### Backend verification results
+
+Initial full run: **187 tests pass**, exit 0, both selected coverage gates pass.
+JaCoCo reports one session and 59 analyzed executable classes. Counters match
+the earlier clean baseline exactly: LINE 872/905, BRANCH 299/347, METHOD
+241/249, INSTRUCTION 4156/4300. No tests or exclusions inflated this result.
+
+Independent negative checks each exit 1 with the intended violation only:
+LINE covered ratio 0.96 below 1.00; BRANCH covered ratio 0.86 below 1.00.
+JaCoCo formats these error ratios to the minimum's precision; exact report
+percentages remain 96.35% and 86.17%, not 96.00% and 86.00%.
+
+Reduced run: **13 JwtUtilTest tests pass**, but Maven exits 1 because both
+actual final limits reject coverage: LINE 32/905 = 3.54% and BRANCH 5/347 =
+1.44%. The report has one session; source denominators remain 905/347.
+This proves the selected floors reject insufficient coverage and old full-suite
+probes are not retained. Source files, test files and tracked exclusions were
+not changed for this experiment.
+
+Final restored full run: **187 tests pass**, exit 0, both gates pass again.
+Its XML has exactly one session and the original 872/905 lines, 299/347
+branches; the reduced report has one session with the same denominators.
+This verifies replacement of prior data both from full to reduced and back.
+The temporary POM files are absent; `docker ps -a` confirms the ephemeral
+container was removed after its `finally` cleanup.
+
+Ignored evidence: `backend/target/pwdrz118-be-final-pass.log`,
+`pwdrz118-be-final-fail-line.log`, `pwdrz118-be-final-fail-branch.log`,
+`pwdrz118-be-final-reduced.log`, `pwdrz118-be-final-restored-pass.log`, with full
+and reduced `.exec` / XML snapshots under the same target directory. Earlier
+default execution/report were backed up as `pwdrz118-pre-final.exec` and
+`pwdrz118-pre-final-report.xml`; no historical evidence was cleaned away.
+
+## Current GitHub evidence and remaining completion step
+
+The user published earlier changes independently. Read-only verification now
+confirms [Tests run 39042464392](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/39042464392)
+is successful at SHA `42d7bcf24470c01eb0b230978f071ef0ec3045b9`:
+frontend uses Istanbul and reports 87.03/86.66/81.69/87.46%; gateway passes 51
+tests at 96.99/86.95/92.30/97.03%. Their new job names are present.
+Build Frontend, Build Gateway, Build Backend and Lint runs at that SHA also
+pass. That run's backend still has the old 65% line gate and old label; it
+does **not** validate the new backend 95/85 configuration.
+
+Existing PR: [#57](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/pull/57),
+target `develop`. Final backend changes must be published and CI verified on
+their actual commit before the user-requested final completion claim.
+No commit/push/dispatch or Jira status change was authorized or performed here.
+
+## Acceptance audit against live PWDRZ-118
+
+The Jira issue was reopened after implementation/verification on 2026-10-17;
+its description/acceptance criteria are unchanged and status is In Progress.
+
+| Acceptance criterion | Actual evidence and status |
+| --- | --- |
+| Baseline and command for each service, or concrete blocker/rerun | Satisfied: stages 1–2 and 3–4 records plus provider/risk/final records contain commands, SHA, environment and measured counters. All three services were measured; initial environment blockers were resolved, not replaced with assumed numbers. |
+| Selected metrics, included paths, exclusions, service thresholds and rationale | Satisfied locally: canonical testing guide and this record match FE 85/85/80/85, GW 95/85/90/95 (lines/branches/functions/statements), BE LINE 95 / BRANCH 85. Report/check scope is identical for BE, executable production logic remains included and METHOD/INSTRUCTION are diagnostic. |
+| No assumed universal 65% | Satisfied: all decisions were user-selected from clean service-specific baselines and documented trade-offs; no interim 65% gate remains in final configurations. |
+| Threshold enforced by repository config or CI for each supported service | Implemented and verified locally for all three. GitHub run 39042464392 confirms FE/GW at their selected values; publication and a new run are still required to establish remote evidence for final BE gates. |
+| Deliberately insufficient coverage rejected and compliant run demonstrated | Satisfied locally for all three: normal pass, isolated per-metric violation, reduced-test failure with unchanged production denominators. Backend full pass was repeated after the reduced run; all commands/exits are recorded above. No remote negative run is claimed. |
+| Required Java/Spring additions tracked as backend-owned | Satisfied: no Java additions are needed to meet the selected floors. Behavioral follow-up PWDRZ-156 was reread: To Do, Ivan 82288. It remains backend-owned; real-time implementation is PWDRZ-104, not silently absorbed into 118. |
+
+Additional consistency checks pass: workflow parses and differs from the current
+HEAD only by the backend display name; job IDs, triggers, environment and
+execution commands are unchanged. POM XML has exactly the selected LINE/BRANCH
+limits and `append=false`; report/check exclusions agree. The canonical policy
+table and current instructions agree; no temporary test POM remains, and
+`git diff --check` passes. No production/test source file changed in this step.
+
+Targeted post-task provisional review covered current ticket/branch references
+in backend source/POM, workflow, touched guides and agent instructions. Stale
+backend policy/label references were resolved as part of this task. No marker
+was found that authorizes enabling unrelated provisional feature code; no other
+owner's task was verified newly unblocked. Existing PWDRZ-104/128/154/156 feature
+work and PWDRZ-117 E2E / PWDRZ-137 branch enforcement remain outside this gate
+implementation. Do not announce final readiness to close until the user-requested
+new backend CI evidence exists. The next required action is explicit user
+authorization to commit/push these reviewable changes to existing PR #57, or
+publication by the user, followed by read-only CI verification on the new SHA.

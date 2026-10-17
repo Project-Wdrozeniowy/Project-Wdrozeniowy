@@ -55,7 +55,7 @@ jobs:
         run: npm run test:coverage
 
   backend-test:
-    name: Backend Tests (≥50% coverage)
+    name: Backend Tests (coverage gates)
     runs-on: ubuntu-latest
 
     services:

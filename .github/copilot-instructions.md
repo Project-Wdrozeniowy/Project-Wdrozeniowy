@@ -154,7 +154,7 @@ npm run lint     # eslint src (--fix for gateway)
 | Gateway  | Jest 29 + ts-jest + supertest       | source-local `__tests__/` (including `src/config/` and `src/routes/`); root `src/__tests__/` for `app.ts` |
 | Backend  | JUnit 5 + Mockito + Spring Boot Test | mirrors `src/main/java/`                              |
 
-- Frontend uses Vitest 3.2.4 + Istanbul; frontend and gateway enforce four independent service-specific gates. See the canonical [coverage policy](../docs/guides/testing.md#coverage-policy-pwdrz-118) for values, scope and rationale. Backend's 65% JaCoCo line gate remains interim pending its separate decision.
+- Frontend uses Vitest 3.2.4 + Istanbul; frontend and gateway enforce four independent service-specific gates. Backend enforces JaCoCo LINE ≥95% and BRANCH ≥85% at `verify`; METHOD/INSTRUCTION are diagnostic. See the canonical [coverage policy](../docs/guides/testing.md#coverage-policy-pwdrz-118) for scope, rationale and execution-data handling.
 - Frontend includes all `src/**/*.{ts,tsx}` production code, including UI, hooks and shared code; do not restore broad directory exclusions. See `frontend/vitest.config.ts` for declaration/test/setup and non-production exclusions.
 - Backend Spring tests use PostgreSQL. The default test profile disables Flyway and uses Hibernate `create-drop`; tests annotated with `@MigratedSchemaTest` apply real Flyway migrations to `migration_test` and validate mappings.
 - Coverage is not a substitute for behaviour-specific evidence. The mandatory

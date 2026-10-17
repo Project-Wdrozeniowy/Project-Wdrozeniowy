@@ -170,8 +170,8 @@ PWDRZ-118 selected independent lines, branches, functions and statements gates
 for frontend and gateway. Frontend executable UI and hook code is included;
 passing aggregate coverage does not prove every behaviour is tested.
 See the [coverage policy](docs/guides/testing.md#coverage-policy-pwdrz-118)
-for exact thresholds and source scope. Backend policy selection remains pending;
-its current 65% line gate is interim.
+for exact thresholds and source scope. Backend enforces independent JaCoCo
+LINE ≥95% and BRANCH ≥85% gates at `verify`; METHOD/INSTRUCTION are diagnostic.
 Browser E2E tests and their CI gate are planned in PWDRZ-117 but are not yet
 available. See the [testing guide](docs/guides/testing.md) for the agreed
 completion criteria and current gap.

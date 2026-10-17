@@ -144,7 +144,7 @@ cd frontend && npm run test:coverage   # Istanbul; service-specific gates
 cd gateway && npm run test:coverage    # Jest; service-specific gates
 
 # Backend (requires running PostgreSQL — use docker compose up postgres)
-cd backend && ./mvnw test
+cd backend && ./mvnw verify
 ```
 
 ### Frontend tests (Vitest 3 + React Testing Library)
@@ -441,16 +441,17 @@ cd frontend && npm run typecheck && npm run lint && npm run format:check && npm 
 cd gateway && npm run typecheck && npm run lint && npm run format:check && npm run test
 
 # Backend
-cd backend && ./mvnw test
+cd backend && ./mvnw verify
 ```
 
 Every applicable Build, Lint, and Tests job must pass. Frontend and gateway
 enforce all four service-specific coverage gates from the canonical
 [coverage policy](docs/guides/testing.md#coverage-policy-pwdrz-118).
-Backend still enforces its interim 65% line gate pending its separate decision.
+Backend enforces LINE ≥95% and BRANCH ≥85% at `verify`; METHOD and INSTRUCTION
+remain diagnostic. JaCoCo uses `append=false` for the current single test fork
+to prevent accumulation of previous execution sessions.
 Frontend/gateway CI labels say `coverage gates`; exact values live in their
-test configurations and the testing guide. The backend label is still pending
-alignment when its policy is selected. The
+test configurations and the testing guide; backend uses the same label style. The
 mandatory E2E gate is not yet configured; PWDRZ-117 owns it. Never report an
 absent gate as passed.
 

@@ -18,7 +18,7 @@ separately from that target.
 
 ## Coverage policy (PWDRZ-118)
 
-Frontend and gateway thresholds were selected from the expanded source baseline
+Service-specific thresholds were selected from the expanded source baseline
 and the verified risk package. Each listed metric is an independent mandatory
 global gate: a higher result elsewhere cannot compensate for a failure.
 
@@ -26,6 +26,7 @@ global gate: a higher result elsewhere cannot compensate for a failure.
 | --- | --- | --- | --- | --- | --- |
 | Frontend | Istanbul, Vitest/provider 3.2.4 | 85% | 85% | 80% | 85% |
 | Gateway | Jest 29 default Babel/Istanbul coverage | 95% | 85% | 90% | 95% |
+| Backend | JaCoCo 0.8.12 | 95% | 85% | — | — |
 
 The verified frontend baseline is 87.03/86.66/81.69/87.46% and the gateway
 baseline is 96.99/86.95/92.30/97.03%, in the table's metric order. The selected
@@ -35,6 +36,17 @@ new uncovered code; they do not certify security or contract correctness.
 Istanbul was selected for frontend because the pinned V8 configuration produced
 misleading branch/function counters for some unimported files in the comparison.
 All four frontend/gateway metrics remain mandatory; none is diagnostic-only.
+
+Backend's clean baseline is 872/905 lines = 96.35% and 299/347 branches =
+86.17%. Its independent mandatory `BUNDLE` / `COVEREDRATIO` floors of 95%
+LINE and 85% BRANCH leave 1.35 and 1.17 percentage points of headroom. These
+floors replace the old 65% line-only rule without requiring new Java tests.
+METHOD (96.78%) and INSTRUCTION (96.65%) remain diagnostic: method invocation
+does not establish conditional outcomes, while instruction coverage overlaps
+source execution and is less directly readable in behavior reviews. These
+JaCoCo metrics are not literal equivalents of Istanbul functions/statements.
+Backend gaps in PWDRZ-156 remain backend-owned work; aggregate gates do not
+certify those scenarios.
 
 ### Measured source and exclusions
 
@@ -52,15 +64,17 @@ All four frontend/gateway metrics remain mandatory; none is diagnostic-only.
   the listener. Jest omits test files and configured setup files from coverage.
   Middleware, configuration, proxy and error-handling logic stay measured.
   The bootstrap exclusion does not exclude `app.ts` or a whole directory.
-- **Backend:** its current JaCoCo line gate remains **65% interim**. LINE and
-  BRANCH are selected as the final mandatory metrics; METHOD and INSTRUCTION
-  remain diagnostic. Numeric thresholds await a separate user decision, so
-  the BRANCH gate is not configured yet. Its existing
-  source scope is unchanged in this frontend/gateway update.
+- **Backend:** compiled production classes under `backend/src/main/java`;
+  identical report/check exclusions in `backend/pom.xml` omit exactly
+  `com/devpulse/BackendApplication.class` (process bootstrap) and
+  `com/devpulse/analytics/dto/**` (five non-executable DTO source types from the
+  audit). Config, security, exceptions, controllers, services, repositories and
+  executable entities remain included. Do not add executable logic to an
+  excluded DTO package without revisiting that exclusion.
 
 ### CI and verification
 
-The Tests workflow installs each service with `npm ci`, then runs its existing
+The Tests workflow installs frontend/gateway with `npm ci`, then runs each one's
 `npm run test:coverage` script. Frontend invokes `vitest run --coverage` and
 gateway invokes `jest --coverage`; provider and gate values come from the
 committed service configuration, not duplicated CLI thresholds. Job display
@@ -68,9 +82,20 @@ names are `Frontend Tests (coverage gates)` and `Gateway Tests (coverage gates)`
 job IDs, triggers and execution steps are unchanged. Frontend `npm test` alone
 does not enable coverage; gateway `npm test` is an alias of its coverage run.
 
-Local full-suite passes and deliberate failures were verified for both services:
-each metric rejects an isolated 100% override, and a reduced-test invocation
-fails the actual selected floors while retaining the production denominator.
+Backend's job is `Backend Tests (coverage gates)` and runs
+`./mvnw --batch-mode verify` with its isolated CI PostgreSQL service. `test`
+generates the report, but the JaCoCo check runs at `verify`; use `verify` for
+gate verification. JaCoCo `prepare-agent` uses `append=false` so prior execution
+sessions cannot inflate a later run. This is appropriate for the current
+single test fork; revisit the execution-file strategy before introducing
+multiple concurrent forks or separate integration-test JVMs. A skipped-test
+report is not a fresh baseline.
+
+Local full-suite passes and deliberate failures were verified for all three
+services: each mandatory metric rejects an isolated 100% override, and a
+reduced-test invocation fails the actual selected floors while retaining the
+production denominator. Backend's final full rerun restores the report and
+confirms one session with the original clean counters.
 See the [decision and verification record](../agent-task-backlog/pwdrz-118-final-decisions.md)
 for commands, counters, limitations and logs. A local pass is not a GitHub CI
 pass; new CI evidence is still required after publication. Historical baseline
@@ -85,7 +110,7 @@ and comparison reports remain dated evidence, not the current policy.
 | Assertions            | AssertJ (`assertThat`, `assertThatThrownBy`) |
 | Controller testing    | Choose `standaloneSetup` for controller-local behaviour; use a Spring context/security setup when wiring, filters, or authorization are the contract |
 | Real schema           | `@MigratedSchemaTest` (`com.devpulse.support`), see below |
-| Coverage              | JaCoCo, ≥ **65%** line coverage, enforced by `./mvnw verify` |
+| Coverage              | JaCoCo, LINE ≥ **95%** and BRANCH ≥ **85%**; METHOD/INSTRUCTION diagnostic; enforced by `./mvnw verify` |
 | Excluded packages     | listed in the `jacoco-maven-plugin` `check` execution in `backend/pom.xml` |
 
 ### Naming
@@ -205,8 +230,8 @@ integration tests.
 **The configured service-specific gates must pass.** Frontend executable UI
 code is measured, but aggregate coverage does not prove every behavior is
 tested. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) has
-selected and locally verified frontend/gateway gates; backend policy and the
-final GitHub CI acceptance check remain pending. Backend's 65% is still interim.
+selected service-specific gates; the final GitHub CI acceptance check remains
+pending until the final configuration is published and run.
 
 ## When to add tests
 
@@ -258,15 +283,28 @@ pages, components, hooks и shared logic; исключаются declaration/tes
 и непроизводственные tooling/generated paths, перечисленные выше. Gateway
 измеряет `src/**/*.ts`, исключая declarations и точный process bootstrap
 `src/index.ts`; Jest также не измеряет test/setup files. Широких исключений
-production-директорий нет. Для backend выбраны обязательные LINE и BRANCH,
-а METHOD и INSTRUCTION остаются диагностическими. Числовые пороги ещё не
-выбраны: действующий 65% line gate промежуточный, BRANCH gate пока не настроен.
+production-директорий нет во frontend/gateway. Для backend обязательны LINE
+≥95% и BRANCH ≥85%; METHOD и INSTRUCTION диагностические и не являются
+прямыми аналогами Istanbul functions/statements. Чистый baseline — 96,35%
+lines и 86,17% branches; запас небольшой, выбран для защиты достигнутого
+покрытия. Java gaps в PWDRZ-156 остаются ответственностью backend-разработчика.
+Из backend report/check одинаково исключены только точный bootstrap
+`com/devpulse/BackendApplication.class` и пакет пяти неисполняемых analytics
+DTO `com/devpulse/analytics/dto/**`. Остальная исполняемая production-логика
+входит в измерение; появление логики в исключённом DTO-пакете требует ревизии.
 
 CI выполняет `npm ci` и существующий `npm run test:coverage` каждого сервиса;
 значения берутся из конфигурации. Названия jobs — `Frontend Tests (coverage gates)`
-и `Gateway Tests (coverage gates)`. Локальные pass/fail-проверки завершены,
+и `Gateway Tests (coverage gates)`. Backend job — `Backend Tests (coverage gates)`,
+запускает `./mvnw --batch-mode verify` с отдельной PostgreSQL в CI. Команда
+`test` создаёт report, но gate выполняется на `verify`. `append=false` исключает
+накопление старых JaCoCo sessions при текущем единственном test fork; перед
+несколькими forks/JVM нужно пересмотреть стратегию execution files. Запуск с
+пропущенными тестами не считается новым baseline.
+Локальные pass/fail-проверки всех трёх сервисов завершены,
 включая отказы окончательных gates при сокращённом наборе тестов с неизменным
-production-знаменателем. Команды и ограничения — в
+production-знаменателем. Повторный полный backend-прогон восстановил report
+и подтвердил одну session с прежними чистыми counters. Команды и ограничения — в
 [журнале решений](../agent-task-backlog/pwdrz-118-final-decisions.md).
 Новый GitHub CI-прогон после публикации ещё требуется; локальный результат
 не считается подтверждением удалённого CI. Исторические отчёты не задают
@@ -281,7 +319,7 @@ production-знаменателем. Команды и ограничения �
 | Assertions | AssertJ (`assertThat`, `assertThatThrownBy`) |
 | Проверка controller | `standaloneSetup` для локального поведения controller; Spring context/security setup — когда контракт зависит от wiring, filters или authorization |
 | Реальная схема | `@MigratedSchemaTest` (`com.devpulse.support`), подробности ниже |
-| Coverage | JaCoCo, ≥ **65%** по строкам, проверяется через `./mvnw verify` |
+| Coverage | JaCoCo, LINE ≥ **95%**, BRANCH ≥ **85%**; METHOD/INSTRUCTION диагностические; gate через `./mvnw verify` |
 | Исключённые пакеты | Указаны в execution `check` плагина `jacoco-maven-plugin` в `backend/pom.xml` |
 
 #### Имена
@@ -400,8 +438,8 @@ integration tests.
 **Настроенные посервисные gates обязательны.** Исполняемый UI-код frontend
 измеряется, но общий процент не доказывает проверку каждого поведения.
 В [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) выбраны и
-локально проверены frontend/gateway gates; политика backend и финальная
-проверка GitHub CI ещё не завершены. Backend 65% остаётся промежуточным.
+настроены посервисные gates; финальная проверка GitHub CI ещё требуется
+после публикации и запуска окончательной конфигурации.
 
 ### Когда добавлять тесты
 
