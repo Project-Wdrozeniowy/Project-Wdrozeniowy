@@ -97,9 +97,9 @@ reduced-test invocation fails the actual selected floors while retaining the
 production denominator. Backend's final full rerun restores the report and
 confirms one session with the original clean counters.
 See the [decision and verification record](../agent-task-backlog/pwdrz-118-final-decisions.md)
-for commands, counters, limitations and logs. A local pass is not a GitHub CI
-pass; new CI evidence is still required after publication. Historical baseline
-and comparison reports remain dated evidence, not the current policy.
+for commands, counters, limitations and logs. The final published configuration
+also passes GitHub Tests run 39043075704; negative checks were local. Historical
+baseline and comparison reports remain dated evidence, not the current policy.
 
 ## Backend — JUnit 5 + Mockito + Spring Boot Test
 
@@ -230,8 +230,10 @@ integration tests.
 **The configured service-specific gates must pass.** Frontend executable UI
 code is measured, but aggregate coverage does not prove every behavior is
 tested. [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) has
-selected service-specific gates; the final GitHub CI acceptance check remains
-pending until the final configuration is published and run.
+selected service-specific gates, confirmed by GitHub Tests run 39043075704 at
+`ad268731d512e2e1838548059d43225df85a88eb`. See the
+[final verification record](../agent-task-backlog/pwdrz-118-final-decisions.md#final-ci-verification-and-acceptance-sign-off)
+for evidence and limitations.
 
 ## When to add tests
 
@@ -306,9 +308,11 @@ CI выполняет `npm ci` и существующий `npm run test:coverag
 production-знаменателем. Повторный полный backend-прогон восстановил report
 и подтвердил одну session с прежними чистыми counters. Команды и ограничения — в
 [журнале решений](../agent-task-backlog/pwdrz-118-final-decisions.md).
-Новый GitHub CI-прогон после публикации ещё требуется; локальный результат
-не считается подтверждением удалённого CI. Исторические отчёты не задают
-текущую политику.
+GitHub Tests run 39043075704 на SHA `ad268731d512e2e1838548059d43225df85a88eb`
+подтвердил все три сервиса; ссылки — в
+[финальной проверке](../agent-task-backlog/pwdrz-118-final-decisions.md#final-ci-verification-and-acceptance-sign-off).
+Отрицательные проверки выполнялись локально, а не в GitHub CI.
+Исторические отчёты не задают текущую политику.
 
 ### Backend — JUnit 5 + Mockito + Spring Boot Test
 
@@ -438,8 +442,8 @@ integration tests.
 **Настроенные посервисные gates обязательны.** Исполняемый UI-код frontend
 измеряется, но общий процент не доказывает проверку каждого поведения.
 В [PWDRZ-118](https://project-wdrz.atlassian.net/browse/PWDRZ-118) выбраны и
-настроены посервисные gates; финальная проверка GitHub CI ещё требуется
-после публикации и запуска окончательной конфигурации.
+настроены посервисные gates; GitHub Tests run 39043075704 подтвердил
+окончательную конфигурацию всех трёх сервисов.
 
 ### Когда добавлять тесты
 

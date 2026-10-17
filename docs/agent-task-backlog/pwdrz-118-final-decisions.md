@@ -4,6 +4,11 @@ This is the current decision record. The earlier baseline, scope audit, provider
 comparison and risk-package reports retain their historical measurements.
 Starting repository SHA: `9167dc7d849f90ff57ea89d6e07fdbc998fa5326`.
 
+**Final status:** all six acceptance criteria verified on 2026-10-17 against
+published SHA `ad268731d512e2e1838548059d43225df85a88eb` and successful GitHub
+CI. See [final sign-off](#final-ci-verification-and-acceptance-sign-off).
+Earlier pending-publication statements below describe their historical stage.
+
 ## Context map (reviewed before implementation)
 
 | Files | Purpose |
@@ -371,7 +376,7 @@ and reduced `.exec` / XML snapshots under the same target directory. Earlier
 default execution/report were backed up as `pwdrz118-pre-final.exec` and
 `pwdrz118-pre-final-report.xml`; no historical evidence was cleaned away.
 
-## Current GitHub evidence and remaining completion step
+## GitHub evidence before final backend publication (historical)
 
 The user published earlier changes independently. Read-only verification now
 confirms [Tests run 39042464392](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/39042464392)
@@ -387,7 +392,7 @@ target `develop`. Final backend changes must be published and CI verified on
 their actual commit before the user-requested final completion claim.
 No commit/push/dispatch or Jira status change was authorized or performed here.
 
-## Acceptance audit against live PWDRZ-118
+## Acceptance audit before final publication (historical)
 
 The Jira issue was reopened after implementation/verification on 2026-10-17;
 its description/acceptance criteria are unchanged and status is In Progress.
@@ -418,3 +423,54 @@ implementation. Do not announce final readiness to close until the user-requeste
 new backend CI evidence exists. The next required action is explicit user
 authorization to commit/push these reviewable changes to existing PR #57, or
 publication by the user, followed by read-only CI verification on the new SHA.
+
+## Final CI verification and acceptance sign-off
+
+On 2026-10-17 the user published the changes and requested verification.
+Local HEAD and PR #57 head both resolve to
+`ad268731d512e2e1838548059d43225df85a88eb`; the working tree was clean at the
+start of this verification. No commit/push or Jira transition was performed
+by the agent. PR #57 targets develop.
+
+All applicable checks at that exact SHA are successful:
+
+- [Tests 39043075704](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/39043075704): frontend, gateway and backend jobs all use the new `(coverage gates)` names and pass.
+- [Frontend Build](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/39043075725), [Gateway Build](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/39043075710), [Backend Build](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/39043075727), and [Lint](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/39043075693) all pass; PR status rollup confirms all eight jobs successful.
+
+CI logs confirm frontend Istanbul and 87.03% lines / 86.66% branches / 81.69%
+functions / 87.46% statements; gateway passes 51 tests at 96.99 / 86.95 /
+92.30 / 97.03%. Backend passes 187 tests, starts JaCoCo with `append=false`,
+analyzes 59 classes and reports `All coverage checks have been met`.
+The published POM enforces LINE 0.95 and BRANCH 0.85. Exact backend percentages
+96.35 / 86.17 are from the recorded clean local XML; the CI console does not
+publish exact backend percentages, so none is invented for that run.
+
+The live Jira issue and PWDRZ-156 were reread in this final verification.
+PWDRZ-118 remains In Progress; its six acceptance criteria are unchanged.
+
+| Acceptance criterion | Final result |
+| --- | --- |
+| Reproducible service baselines and commands | PASS — stages 1–4, provider comparison and risk/final records contain actual measurements, SHAs, environment, commands and resolved blockers for all services. |
+| Metrics, paths, exclusions, per-service thresholds and rationale documented | PASS — canonical testing guide and committed configurations agree: FE 85/85/80/85; GW 95/85/90/95; BE LINE 95 / BRANCH 85. Scope audit is retained; no executable logic was excluded to meet a floor. |
+| No assumed universal 65% | PASS — provider, metric and service-specific numeric choices were explicitly selected by the user from measured alternatives; old 65% values are historical. |
+| Gates enforced for supported services | PASS — final configurations are published at ad268731 and all three actual CI test jobs pass with their selected gates. |
+| Insufficient result rejected and compliant run demonstrated | PASS — independent metric failures and reduced-test failures against the actual floors were verified locally for all services, with unchanged production denominators; normal CI runs now pass at the final SHA. No negative GitHub run is claimed. |
+| Java additions owned by backend | PASS — no extra Java tests were needed for selected floors; remaining behavior gaps are explicitly tracked in PWDRZ-156, To Do, Ivan 82288. |
+
+All PWDRZ-118 requirements are met and the implementation is ready for closure
+through the normal review/merge workflow. Jira status and PR merge are left to
+the user. LocalTracking is marked done; the original Jira payload is unchanged.
+This final evidence/documentation update is left uncommitted for the user;
+it does not alter the CI-tested code, coverage policy or workflow.
+
+Out-of-scope follow-ups remain PWDRZ-156 (backend security/conflict/error tests),
+PWDRZ-104 (real-time/STOMP design and authentication), PWDRZ-128 (registration
+alignment), PWDRZ-154 (provisional interests UI), PWDRZ-117 (browser E2E gate)
+and PWDRZ-137 (branch-protection enforcement). Earlier PWDRZ-155/157 fixes are
+already included in the published risk package; their Jira lifecycle is separate.
+No new dependency was proven unblocked, and no owner was messaged.
+
+Targeted post-task review revisited PWDRZ-118 policy references in the current
+guides: completed CI prerequisites are now recorded as satisfied in English and
+Russian. Historical investigation records retain dated pending statements;
+unrelated feature flags/stubs and other owners' work were not changed.
