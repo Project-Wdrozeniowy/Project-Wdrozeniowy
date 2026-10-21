@@ -20,6 +20,9 @@ vi.mock('@/shared/lib/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+// The search box has its own tests and needs a QueryClient that this sign-out test does not.
+vi.mock('../ui/SearchBar', () => ({ default: () => null }));
+
 const logout = vi.fn();
 
 vi.mock('@/store', () => ({
