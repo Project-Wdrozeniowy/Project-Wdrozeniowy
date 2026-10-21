@@ -499,3 +499,108 @@ describe('ForumFeed – states', () => {
     expect(screen.getByRole('navigation', { name: 'Pagination' })).toBeInTheDocument();
   });
 });
+
+describe('ForumFeed – tag filter', () => {
+  it('asks the API for the tag of the URL and says the feed is limited to it', async () => {
+    search = 'tag=react';
+    list.mockResolvedValue(pageOf([4, 3]));
+    renderFeed();
+
+    expect(await screen.findByText('Post 4')).toBeInTheDocument();
+    expect(list).toHaveBeenCalledWith(expect.objectContaining({ tag: 'react', page: 0 }), {
+      skipErrorToast: true,
+    });
+    expect(screen.getByText('#react')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Show all posts' })).toHaveAttribute('href', '/forum');
+  });
+
+  it('keeps the topic when the tag is cleared, and drops the page', async () => {
+    search = 'topic=Gaming&tag=react&page=2';
+    list.mockResolvedValue(pageOf([4, 3], { page: 1, totalPages: 2, totalElements: 12 }));
+    renderFeed();
+
+    await screen.findByText('Post 4');
+    expect(screen.getByRole('link', { name: 'Show all posts' })).toHaveAttribute(
+      'href',
+      '/forum?topic=Gaming'
+    );
+    expect(list).toHaveBeenCalledWith(
+      expect.objectContaining({ tag: 'react', categorySlug: 'gaming', page: 1 }),
+      expect.anything()
+    );
+  });
+
+  it('does not show the tag line without a tag', async () => {
+    list.mockResolvedValue(pageOf([4]));
+    renderFeed();
+    await screen.findByText('Post 4');
+    expect(screen.queryByText(/Posts tagged/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the tag in the URL when the page changes', async () => {
+    search = 'tag=react';
+    list.mockResolvedValue(pageOf([8, 7, 6], { page: 0, totalPages: 3, totalElements: 8 }));
+    renderFeed();
+    await screen.findByText('Post 8');
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(mockPush).toHaveBeenCalledWith('/forum?tag=react&page=2');
+  });
+
+  it('keeps the tag in the URL when the topic changes', async () => {
+    search = 'tag=react&page=2';
+    list.mockResolvedValue(pageOf([4], { page: 1, totalPages: 2, totalElements: 12 }));
+    renderFeed();
+    await screen.findByText('Post 4');
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Gaming' }));
+
+    expect(mockReplace).toHaveBeenCalledWith('/forum?tag=react&topic=Gaming', { scroll: false });
+  });
+
+  it('says so for an unknown or empty tag instead of showing other posts', async () => {
+    search = 'tag=no-such-tag';
+    list.mockResolvedValue(pageOf([], { page: 0, totalPages: 0, totalElements: 0 }));
+    renderFeed();
+
+    expect(await screen.findByText('No posts with the tag #no-such-tag yet.')).toBeInTheDocument();
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Show all posts' })).toBeInTheDocument();
+  });
+
+  it('mentions the topic when the tag is combined with one', async () => {
+    search = 'topic=Gaming&tag=react';
+    list.mockResolvedValue(pageOf([], { page: 0, totalPages: 0, totalElements: 0 }));
+    renderFeed();
+
+    expect(
+      await screen.findByText('No posts with the tag #react in this topic yet.')
+    ).toBeInTheDocument();
+  });
+
+  it('shows the fixed error message and keeps the way back to all posts', async () => {
+    search = 'tag=react';
+    list.mockRejectedValue(new Error('SQL exploded at 10.0.0.5'));
+    renderFeed();
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('We could not load the posts. Please try again.');
+    expect(alert).not.toHaveTextContent('SQL');
+    expect(screen.getByRole('link', { name: 'Show all posts' })).toBeInTheDocument();
+  });
+
+  it('never shows the posts of one tag under another', async () => {
+    search = 'tag=react';
+    list.mockResolvedValueOnce(pageOf([8, 7]));
+    const { rerenderFeed } = renderFeed();
+    await screen.findByText('Post 8');
+
+    search = 'tag=rust';
+    list.mockReturnValueOnce(new Promise(() => {}));
+    rerenderFeed();
+
+    expect(await screen.findByRole('status', { name: 'Loading posts…' })).toBeInTheDocument();
+    expect(screen.queryByText('Post 8')).not.toBeInTheDocument();
+  });
+});

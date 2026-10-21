@@ -3,6 +3,7 @@ import { getCategoryColor } from '@/app/(main)/_lib/categoryColor';
 import type { PostCardData } from '@/app/(main)/_lib/postCard';
 import { cn } from '@/shared/lib/cn';
 import { CommentIcon, ShareIcon, SaveIcon } from '@/shared/ui/icons';
+import PostTagLinks from '@/app/(main)/_ui/PostTagLinks';
 import ActionButton from '@/features/post-interactions/ActionButton';
 import { PostVoteColumn } from '@/features/post-interactions/PostVoteColumn';
 
@@ -51,6 +52,8 @@ export default function PostCard({ post }: PostCardProps) {
             <p className="text-slate-400 text-base leading-relaxed line-clamp-2">{post.excerpt}</p>
           )}
         </div>
+
+        <PostTagLinks tags={post.tags} />
 
         <div className="flex items-center gap-2 flex-wrap">
           <ActionButton

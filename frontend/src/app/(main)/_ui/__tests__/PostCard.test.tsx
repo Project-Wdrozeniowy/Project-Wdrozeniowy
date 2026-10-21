@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
@@ -19,6 +19,7 @@ const post: PostCardData = {
   excerpt: null,
   votes: 12,
   comments: 3,
+  tags: [],
   voting: { postId: 5, myVote: null },
 };
 
@@ -122,5 +123,29 @@ describe('PostCard', () => {
       expect(button).toBeDisabled();
       expect(button).toHaveAttribute('title', ACTION_UNAVAILABLE_HINT);
     }
+  });
+
+  it('renders no tag list when the post has no tags', () => {
+    renderCard(post);
+    expect(screen.queryByRole('list', { name: 'Tags' })).not.toBeInTheDocument();
+  });
+
+  it('renders each tag as a link to the feed of that tag', () => {
+    renderCard({
+      ...post,
+      tags: [
+        { name: 'react', slug: 'react' },
+        { name: 'C++', slug: 'c-plus-plus' },
+      ],
+    });
+    const list = screen.getByRole('list', { name: 'Tags' });
+    expect(within(list).getByRole('link', { name: '#react' })).toHaveAttribute(
+      'href',
+      '/forum?tag=react'
+    );
+    expect(within(list).getByRole('link', { name: '#C++' })).toHaveAttribute(
+      'href',
+      '/forum?tag=c-plus-plus'
+    );
   });
 });
