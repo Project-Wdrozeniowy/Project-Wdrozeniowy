@@ -1,12 +1,10 @@
-export default function LineChart({
-  data,
-  labels,
-  color = '#2563eb',
-}: {
+interface LineChartProps {
   data: number[];
   labels?: string[];
   color?: string;
-}) {
+}
+
+export default function LineChart({ data, labels, color = '#2563eb' }: LineChartProps) {
   const w = 420;
   const h = 200;
   const pad = { top: 16, right: 16, bottom: 32, left: 36 };

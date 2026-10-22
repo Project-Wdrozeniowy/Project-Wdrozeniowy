@@ -1,8 +1,12 @@
 import UserAvatar from '@/shared/ui/UserAvatar';
 import type { UserSummary } from '@/shared/api/user/user.dto';
 
+interface UserResultProps {
+  user: UserSummary;
+}
+
 /** There is no public profile page yet, so a user is shown but not linked. */
-export default function UserResult({ user }: { user: UserSummary }) {
+export default function UserResult({ user }: UserResultProps) {
   return (
     <li className="flex items-center gap-3 px-4 py-3">
       <UserAvatar {...user} />

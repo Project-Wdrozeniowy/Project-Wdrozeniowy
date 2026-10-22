@@ -1,16 +1,13 @@
 import { toPercent } from '@/utils/format';
 
-export default function TopPostRow({
-  rank,
-  title,
-  views,
-  engagement,
-}: {
+interface TopPostRowProps {
   rank: number;
   title: string;
   views: number;
   engagement: number;
-}) {
+}
+
+export default function TopPostRow({ rank, title, views, engagement }: TopPostRowProps) {
   return (
     <div className="bg-slate-700 rounded-lg px-4 py-3 flex items-center gap-4">
       <span className="text-slate-400 font-bold text-base w-5 shrink-0">#{rank}</span>

@@ -2,8 +2,12 @@ import Link from 'next/link';
 import { tagHref } from '@/shared/lib/tagUrl';
 import type { Tag } from '@/shared/api/forum/tag.dto';
 
+interface TagResultProps {
+  tag: Tag;
+}
+
 /** A tag result: a link to the feed of that tag. */
-export default function TagResult({ tag }: { tag: Tag }) {
+export default function TagResult({ tag }: TagResultProps) {
   return (
     <li>
       <Link

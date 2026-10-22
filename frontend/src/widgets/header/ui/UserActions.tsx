@@ -2,13 +2,13 @@ import Link from 'next/link';
 import { BellIcon, TrendingIcon } from '@/shared/ui/icons';
 import type { UserProfile } from '@/shared/api/user/user.dto';
 
-interface Props {
+interface UserActionsProps {
   isAuthenticated: boolean;
   user: UserProfile | null;
   logout: () => void;
 }
 
-export default function UserActions({ isAuthenticated, user, logout }: Props) {
+export default function UserActions({ isAuthenticated, user, logout }: UserActionsProps) {
   return (
     <div className="flex items-center gap-2">
       <button

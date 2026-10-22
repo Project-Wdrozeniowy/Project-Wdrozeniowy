@@ -6,8 +6,12 @@ import type { RegisterFormData } from '@/features/sign-up/register.schema';
 import { CATEGORIES } from '@/shared/constants/categories.const';
 import { cn } from '@/shared/lib/cn';
 
+interface InterestsPickerProps {
+  control: Control<RegisterFormData>;
+}
+
 /** The topics a new user can pick. */
-export default function InterestsPicker({ control }: { control: Control<RegisterFormData> }) {
+export default function InterestsPicker({ control }: InterestsPickerProps) {
   const selectedInterests = useWatch({ control, name: 'interests' }) ?? [];
 
   return (

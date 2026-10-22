@@ -1,14 +1,12 @@
 import { ChartBarIcon } from '@/shared/ui/icons';
 
-export default function StatCard({
-  label,
-  value,
-  change,
-}: {
+interface StatCardProps {
   label: string;
   value: number;
   change: number;
-}) {
+}
+
+export default function StatCard({ label, value, change }: StatCardProps) {
   const isPositive = change >= 0;
   return (
     <div className="bg-slate-800 rounded-xl p-5 flex items-start justify-between gap-3">
