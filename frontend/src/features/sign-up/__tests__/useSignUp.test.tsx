@@ -26,7 +26,6 @@ const form = {
   password: 'Password123',
   confirmPassword: 'Password123',
   displayName: 'Alice',
-  interests: ['ai'],
   terms: true as const,
 };
 const profile = { id: 1, username: 'alice', displayName: 'Alice' };

@@ -10,9 +10,10 @@ import type { RegisterField } from '@/features/sign-up/register.const';
 import type { RegisterFormData } from '@/features/sign-up/register.schema';
 
 /**
- * The body of `POST /auth/register`: only what the API takes. The repeated password, the terms
- * checkbox and the interests are form-only. The display name is sent only when there is one:
- * the API rejects an empty or blank value and shows the username when it is left out.
+ * The body of `POST /auth/register`: only what the API takes. The repeated password and the
+ * terms checkbox are form-only, and the interests are not collected at all (PWDRZ-154). The
+ * display name is sent only when there is one: the API rejects an empty or blank value and shows
+ * the username when it is left out.
  */
 export function toRegisterRequest(values: RegisterFormData): RegisterRequest {
   const request: RegisterRequest = {

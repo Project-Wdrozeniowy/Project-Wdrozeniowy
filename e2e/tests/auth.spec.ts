@@ -6,7 +6,7 @@ test('registers through the browser and displays the authenticated session', asy
 }) => {
   await page.goto('/register');
   await page.getByLabel('Username', { exact: true }).fill(identity.username);
-  // PWDRZ-154 owns the interests, which are not part of the request.
+  // Interests are unavailable until the backend has a contract (PWDRZ-154): never sent.
   await page.getByLabel('Display Name', { exact: true }).fill('E2E User');
   await page.getByLabel('Email', { exact: true }).fill(identity.email);
   await page.getByLabel('Password', { exact: true }).fill(identity.password);
