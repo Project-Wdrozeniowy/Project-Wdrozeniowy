@@ -21818,9 +21818,9 @@
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-155",
       "localTracking": {
         "status": "done",
-        "owner": "Codex",
-        "notes": "Pending token cleanup implemented in working copy with failure and superseding-token regression tests; FE owner review/commit remains. Jira status unchanged.",
-        "updatedAt": "2026-10-16T09:10:13.360Z"
+        "updatedAt": "2026-10-23T14:00:00.000Z",
+        "owner": "Dzmitry Varonin",
+        "notes": "The fix itself (authService.loadProfile clears its own pending token on failure, never a newer one, and rethrows the original error) already came with PWDRZ-118. This task verified it against every acceptance criterion and closed the evidence gaps: success keeps the token, failure cleanup for a server error and a network failure, a newer token surviving an older failure and an older success, no browser storage writes, and the real loadProfile behind session restore, sign-in and sign-up. Mutation-checked: removing the cleanup or making it unconditional fails the tests. No production code change."
       }
     },
     {
