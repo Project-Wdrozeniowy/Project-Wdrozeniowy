@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { getRegisterError, toRegisterRequest } from '@/features/sign-up/register';
+import { REGISTER_FIELDS } from '@/features/sign-up/register.const';
 import { registerSchema } from '@/features/sign-up/register.schema';
 import type { RegisterFormData } from '@/features/sign-up/register.schema';
 import { authService } from '@/shared/api/auth/authClient';
@@ -14,7 +16,6 @@ import { useStore } from '@/store';
 import { CATEGORIES } from '@/shared/constants/categories.const';
 import OrbitaLogo from '@/shared/ui/OrbitaLogo';
 import FormField from '@/shared/ui/FormField';
-import { apiErrorMessage } from '@/shared/api/client/apiError';
 import { cn } from '@/shared/lib/cn';
 import { toast } from '@/shared/lib/toast';
 
@@ -27,6 +28,8 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     control,
+    setError,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -38,18 +41,18 @@ export default function RegisterPage() {
   async function onSubmit(data: RegisterFormData) {
     setServerError(null);
     try {
-      const { accessToken } = await authService.register({
-        // TODO(PWDRZ-128): pass displayName from the implemented backend contract.
-        username: data.username,
-        email: data.email,
-        password: data.password,
-      });
+      const { accessToken } = await authService.register(toRegisterRequest(data));
       const user = await authService.loadProfile(accessToken);
       setAuth(user, accessToken);
       toast.success('Your account has been created.');
       router.push('/');
     } catch (err: unknown) {
-      setServerError(apiErrorMessage(err, 'Registration failed. Please try again.'));
+      // The form keeps everything the user typed; only the rejected fields are marked.
+      const { fields, form } = getRegisterError(err);
+      const rejected = REGISTER_FIELDS.filter((field) => fields[field]);
+      for (const field of rejected) setError(field, { type: 'server', message: fields[field] });
+      if (rejected.length > 0) setFocus(rejected[0]);
+      setServerError(form ?? null);
     }
   }
 
@@ -68,7 +71,10 @@ export default function RegisterPage() {
         className="bg-white rounded-xl p-8 flex flex-col gap-5"
       >
         {serverError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded">
+          <div
+            role="alert"
+            className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded"
+          >
             {serverError}
           </div>
         )}
@@ -76,7 +82,7 @@ export default function RegisterPage() {
         <FormField
           label="Username"
           error={errors.username?.message}
-          hint="This will be your public display name"
+          hint="Your unique handle, 3 to 50 characters"
           id="username"
         >
           <input
@@ -89,7 +95,12 @@ export default function RegisterPage() {
           />
         </FormField>
 
-        <FormField label="Display Name" error={errors.displayName?.message} id="displayName">
+        <FormField
+          label="Display Name"
+          hint="Shown instead of your username. Leave it empty to use your username."
+          error={errors.displayName?.message}
+          id="displayName"
+        >
           <input
             {...register('displayName')}
             id="displayName"

@@ -106,8 +106,8 @@ never use real account credentials. CI artifact retention is seven days.
 5. **HTTP integration**, not browser E2E: anonymous protected write → 401 and no
    persisted post in a subsequent real read.
 
-PWDRZ-128 owns displayName mapping and PWDRZ-154 provisional interests; registration
-does not certify those fields as implemented. Post details remain a placeholder,
+Registration checks that `displayName` goes out in the request and is stored; PWDRZ-154
+owns the provisional interests, which are not part of the request. Post details remain a placeholder,
 so the forum scenario does not fake a completed detail screen. Comments
 (PWDRZ-142/67), notifications/STOMP (PWDRZ-104), full JWT expiry/replay matrices,
 cross-browser expansion and performance are not part of this initial gate.

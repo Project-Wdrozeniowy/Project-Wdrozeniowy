@@ -6,8 +6,7 @@ test('registers through the browser and displays the authenticated session', asy
 }) => {
   await page.goto('/register');
   await page.getByLabel('Username', { exact: true }).fill(identity.username);
-  // Provisional: PWDRZ-128 owns displayName mapping; PWDRZ-154 owns interests.
-  // This scenario verifies implemented auth, not persistence of those fields.
+  // PWDRZ-154 owns the interests, which are not part of the request.
   await page.getByLabel('Display Name', { exact: true }).fill('E2E User');
   await page.getByLabel('Email', { exact: true }).fill(identity.email);
   await page.getByLabel('Password', { exact: true }).fill(identity.password);
@@ -16,10 +15,20 @@ test('registers through the browser and displays the authenticated session', asy
   const registration = apiResponse(page, '/auth/register', 'POST');
   const profile = apiResponse(page, '/users/me', 'GET');
   await page.getByRole('button', { name: 'Create Account', exact: true }).click();
-  expect((await registration).status()).toBe(201);
+  const registered = await registration;
+  expect(registered.status()).toBe(201);
+  // The display name goes out as `displayName`, and nothing else beyond the API's fields.
+  expect(JSON.parse(registered.request().postData() ?? '{}')).toEqual({
+    username: identity.username,
+    email: identity.email,
+    password: identity.password,
+    displayName: 'E2E User',
+  });
   const loaded = await profile;
   expect(loaded.status()).toBe(200);
-  expect((await loaded.json()).username).toBe(identity.username);
+  const me = await loaded.json();
+  expect(me.username).toBe(identity.username);
+  expect(me.displayName).toBe('E2E User');
   await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
 });
 

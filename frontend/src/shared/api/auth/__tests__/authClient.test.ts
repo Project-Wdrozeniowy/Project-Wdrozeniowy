@@ -37,6 +37,44 @@ describe('authService.register >-65 POST /auth/register', () => {
   });
 });
 
+describe('authService.register with a display name', () => {
+  it('sends displayName with that exact field name', async () => {
+    const data = {
+      username: 'john',
+      email: 'john@example.com',
+      password: 'secret123',
+      displayName: 'John Doe',
+    };
+    mockApiClient.post.mockResolvedValue(mockAuthResponse);
+
+    await authService.register(data);
+
+    expect(mockApiClient.post).toHaveBeenCalledWith('/auth/register', data);
+  });
+
+  it('sends no displayName key when there is none', async () => {
+    mockApiClient.post.mockResolvedValue(mockAuthResponse);
+    await authService.register({
+      username: 'john',
+      email: 'john@example.com',
+      password: 'secret123',
+    });
+    expect(mockApiClient.post.mock.calls[0][1]).not.toHaveProperty('displayName');
+  });
+});
+
+describe('other auth endpoints', () => {
+  it('never carry a display name', async () => {
+    mockApiClient.post.mockResolvedValue(mockAuthResponse);
+    await authService.login({ username: 'john', password: 'secret123' });
+    await authService.logout();
+    for (const [url, body] of mockApiClient.post.mock.calls) {
+      expect(url).not.toBe('/auth/register');
+      expect(JSON.stringify(body ?? {})).not.toContain('displayName');
+    }
+  });
+});
+
 describe('authService.login >-65 POST /auth/login', () => {
   it('calls apiClient.post with /auth/login and credentials', async () => {
     const data = { username: 'john', password: 'secret123' };

@@ -18,8 +18,8 @@ vi.mock('@/store', () => ({ useStore: () => ({ setAuth: mocks.setAuth }) }));
 vi.mock('@/shared/lib/toast', () => ({ toast: { success: mocks.success } }));
 
 // PWDRZ-131 owns the later extraction. These check current orchestration, not
-// live API integration. PWDRZ-128 owns displayName mapping; PWDRZ-154 owns the
-// unsupported interests UI. Neither omission is asserted as the final contract.
+// live API integration. PWDRZ-154 owns the unsupported interests UI; its omission from the
+// request is not asserted as the final contract.
 const profile = { id: 1, username: 'alice', displayName: 'Alice' };
 
 beforeEach(() => {
@@ -105,13 +105,13 @@ it('submits the supported registration fields and establishes auth after profile
   const user = await fillRegistration();
   await user.click(screen.getByRole('button', { name: 'Create Account' }));
   await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/'));
-  expect(mocks.register).toHaveBeenCalledWith(
-    expect.objectContaining({
-      username: 'alice',
-      email: 'alice@example.com',
-      password: 'Password123',
-    })
-  );
+  // Exactly the API's fields: no repeated password, terms or interests.
+  expect(mocks.register).toHaveBeenCalledWith({
+    username: 'alice',
+    email: 'alice@example.com',
+    password: 'Password123',
+    displayName: 'Alice',
+  });
   expect(mocks.setAuth).toHaveBeenCalledWith(profile, 'access');
 });
 
@@ -124,4 +124,84 @@ it('shows registration failure and retains safe form fields without announcing s
   expect(screen.getByLabelText('Email')).toHaveValue('alice@example.com');
   expect(mocks.setAuth).not.toHaveBeenCalled();
   expect(mocks.push).not.toHaveBeenCalled();
+});
+
+describe('registration display name', () => {
+  async function submitWithDisplayName(displayName: string) {
+    render(<RegisterPage />);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('Username'), 'alice');
+    if (displayName) await user.type(screen.getByLabelText('Display Name'), displayName);
+    await user.type(screen.getByLabelText('Email'), 'alice@example.com');
+    await user.type(screen.getByLabelText('Password'), 'Password123');
+    await user.type(screen.getByLabelText('Confirm Password'), 'Password123');
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('button', { name: 'Create Account' }));
+    return user;
+  }
+
+  it('trims the display name before sending it', async () => {
+    await submitWithDisplayName('  Alice A.  ');
+    await waitFor(() => expect(mocks.register).toHaveBeenCalled());
+    expect(mocks.register.mock.calls[0][0].displayName).toBe('Alice A.');
+  });
+
+  it('leaves the display name out when it is empty: it is optional', async () => {
+    await submitWithDisplayName('');
+    await waitFor(() => expect(mocks.register).toHaveBeenCalled());
+    expect(mocks.register.mock.calls[0][0]).not.toHaveProperty('displayName');
+  });
+
+  it('leaves the display name out when it is only spaces, which the API would reject', async () => {
+    await submitWithDisplayName('   ');
+    await waitFor(() => expect(mocks.register).toHaveBeenCalled());
+    expect(mocks.register.mock.calls[0][0]).not.toHaveProperty('displayName');
+  });
+
+  it('does not send a display name over 100 characters', async () => {
+    await submitWithDisplayName('a'.repeat(101));
+    expect(
+      await screen.findByText('Display name must be at most 100 characters')
+    ).toBeInTheDocument();
+    expect(mocks.register).not.toHaveBeenCalled();
+  });
+
+  it('marks the fields the server rejects and keeps what was typed', async () => {
+    mocks.register.mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: {
+          status: 400,
+          errors: {
+            displayName: 'must not be blank',
+            email: 'must be a well-formed email address',
+          },
+        },
+      },
+    });
+    await submitWithDisplayName('Alice');
+
+    expect(
+      await screen.findByText('Display name must be at most 100 characters and not blank')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Please enter a valid email address')).toBeInTheDocument();
+    expect(screen.queryByText(/well-formed/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Username')).toHaveValue('alice');
+    expect(screen.getByLabelText('Display Name')).toHaveValue('Alice');
+    expect(screen.getByLabelText('Email')).toHaveValue('alice@example.com');
+    expect(mocks.setAuth).not.toHaveBeenCalled();
+  });
+
+  it('says the username is taken under the username field, not with server text', async () => {
+    mocks.register.mockRejectedValue({
+      isAxiosError: true,
+      response: { status: 409, data: { status: 409, detail: 'Username already taken' } },
+    });
+    await submitWithDisplayName('Alice');
+
+    expect(await screen.findByText('This username is already taken')).toBeInTheDocument();
+    expect(screen.queryByText('Username already taken')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Display Name')).toHaveValue('Alice');
+  });
 });
