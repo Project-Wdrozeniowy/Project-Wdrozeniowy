@@ -9,8 +9,11 @@ test('searches through the one documented endpoint and shows the persisted user'
 }, testInfo) => {
   const searchRequests: string[] = [];
   page.on('request', (request) => {
-    const { pathname } = new URL(request.url());
-    if (pathname.includes('search')) searchRequests.push(`${request.method()} ${request.url()}`);
+    // Only the gateway's API: the page's own /search route is the frontend, not an endpoint.
+    if (!request.url().startsWith(`${gatewayURL}/api/`)) return;
+    if (new URL(request.url()).pathname.includes('search')) {
+      searchRequests.push(`${request.method()} ${request.url()}`);
+    }
   });
 
   await page.goto('/');
@@ -60,7 +63,8 @@ test('searches through the one documented endpoint and shows the persisted user'
   });
   await expect(page.getByText(`@${account.username}`)).toBeVisible();
 
-  // Only the documented endpoint was called, and always with GET.
+  // Search reached the API only through the documented endpoint, and always with GET.
+  expect(searchRequests.length).toBeGreaterThan(0);
   for (const entry of searchRequests) {
     expect(entry).toMatch(new RegExp(`^GET ${gatewayURL}/api/search\\?`));
   }
