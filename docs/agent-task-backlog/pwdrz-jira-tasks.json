@@ -18943,10 +18943,10 @@
       },
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-106",
       "localTracking": {
-        "status": "pending",
-        "updatedAt": null,
-        "owner": null,
-        "notes": ""
+        "status": "done",
+        "updatedAt": "2026-10-21T22:00:00.000Z",
+        "owner": "Dzmitry Varonin",
+        "notes": "Header search combobox (debounce, Arrow/Enter/Escape, loading/empty/error+retry, recent terms in localStorage) and /search page (q/type/page in URL, All/Posts/Users/Tags tabs, Load more) call only GET /api/search (PWDRZ-151). Omitted without a real source: Follow button, Popular topics. Users/tags are shown but not linked: no profile/tag routes exist. Gateway-backed check: e2e/tests/search.spec.ts (attaches request URL + payload); not run locally, Docker was unavailable."
       }
     },
     {
