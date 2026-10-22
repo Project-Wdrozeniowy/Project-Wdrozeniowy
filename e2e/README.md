@@ -107,7 +107,8 @@ never use real account credentials. CI artifact retention is seven days.
    persisted post in a subsequent real read.
 
 Registration checks that `displayName` goes out in the request and is stored; PWDRZ-154
-owns the provisional interests, which are not part of the request. Post details remain a placeholder,
+marks the interests as unavailable until the backend has a contract: they are shown as such
+and never sent. Post details remain a placeholder,
 so the forum scenario does not fake a completed detail screen. Comments
 (PWDRZ-142/67), notifications/STOMP (PWDRZ-104), full JWT expiry/replay matrices,
 cross-browser expansion and performance are not part of this initial gate.

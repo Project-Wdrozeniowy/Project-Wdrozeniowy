@@ -25,7 +25,6 @@ export const registerSchema = z
     confirmPassword: z.string().min(1, 'Please confirm your password'),
     // Optional, as in the API: empty means "show my username". Trimmed, so a blank value is empty.
     displayName: z.string().trim().max(100, 'Display name must be at most 100 characters'),
-    interests: z.array(z.string()).optional(),
     terms: z.literal(true, 'You must agree to the Terms of Service'),
   })
   .refine((data) => data.password === data.confirmPassword, {

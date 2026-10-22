@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import LoginPage from '@/app/(auth)/login/page';
 import RegisterPage from '@/app/(auth)/register/page';
+import { CATEGORIES } from '@/shared/constants/categories.const';
 
 const mocks = vi.hoisted(() => ({
   login: vi.fn(),
@@ -21,8 +22,7 @@ vi.mock('@/store', () => ({
 vi.mock('@/shared/lib/toast', () => ({ toast: { success: mocks.success } }));
 
 // These render the route pages with the real forms and hooks and fake the service, router,
-// store and toast: they check the submit flow, not live API integration. PWDRZ-154 owns the
-// unsupported interests UI; its omission from the request is not asserted as the final contract.
+// store and toast: they check the submit flow, not live API integration.
 const profile = { id: 1, username: 'alice', displayName: 'Alice' };
 
 beforeEach(() => {
@@ -108,7 +108,7 @@ it('submits the supported registration fields and establishes auth after profile
   const user = await fillRegistration();
   await user.click(screen.getByRole('button', { name: 'Create Account' }));
   await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/'));
-  // Exactly the API's fields: no repeated password, terms or interests.
+  // Exactly the API's fields: no repeated password or terms, and no interests (PWDRZ-154).
   expect(mocks.register).toHaveBeenCalledWith({
     username: 'alice',
     email: 'alice@example.com',
@@ -206,5 +206,33 @@ describe('registration display name', () => {
     expect(await screen.findByText('This username is already taken')).toBeInTheDocument();
     expect(screen.queryByText('Username already taken')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Display Name')).toHaveValue('Alice');
+  });
+});
+
+describe('registration interests (provisional, PWDRZ-154)', () => {
+  it('shows the interests as unavailable instead of a working choice', () => {
+    render(<RegisterPage />);
+
+    expect(screen.getByText('Coming soon')).toBeInTheDocument();
+    expect(screen.getByText(/Choosing topics is not available yet/)).toBeInTheDocument();
+    // No topic can be pressed: none of the categories is a button.
+    for (const { label } of CATEGORIES) {
+      expect(screen.queryByRole('button', { name: label })).toBeNull();
+    }
+  });
+
+  it('registers without interests: the request has only the fields the API defines', async () => {
+    render(<RegisterPage />);
+    const user = await fillRegistration();
+    await user.click(screen.getByRole('button', { name: 'Create Account' }));
+    await waitFor(() => expect(mocks.register).toHaveBeenCalled());
+
+    expect(mocks.register.mock.calls[0][0]).not.toHaveProperty('interests');
+    expect(Object.keys(mocks.register.mock.calls[0][0]).sort()).toEqual([
+      'displayName',
+      'email',
+      'password',
+      'username',
+    ]);
   });
 });

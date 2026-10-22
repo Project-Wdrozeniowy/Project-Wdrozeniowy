@@ -21627,10 +21627,10 @@
       "descriptionEditable": true,
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-154",
       "localTracking": {
-        "status": "pending",
+        "status": "done",
+        "updatedAt": "2026-10-23T12:00:00.000Z",
         "owner": "Dzmitry Varonin",
-        "notes": "Created for unsupported registration interests. Source TODO added; final user-visible provisional handling remains owner work.",
-        "updatedAt": "2026-10-16T09:10:13.360Z"
+        "notes": "Registration interests are provisional and unavailable: the section stays visible as a read-only preview with a 'Coming soon' badge and text saying nothing would be saved, with no selectable controls and no form state or schema field. The request keeps the implemented contract (no interests). Dependency recorded in features/sign-up/interests.const.ts: the backend RegisterRequest/OpenAPI needs an interests field and persistence (backend/product owned, no ticket yet). Tests pin the temporary state."
       }
     },
     {

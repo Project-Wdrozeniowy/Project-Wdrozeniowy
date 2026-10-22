@@ -17,13 +17,11 @@ export default function RegisterForm() {
   const {
     register,
     handleSubmit,
-    control,
     setError,
     setFocus,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { interests: [] },
   });
 
   // The form keeps everything the user typed; only the rejected fields are marked.
@@ -120,7 +118,7 @@ export default function RegisterForm() {
         />
       </FormField>
 
-      <InterestsPicker control={control} />
+      <InterestsPicker />
 
       <div className="flex flex-col gap-1.5">
         <label

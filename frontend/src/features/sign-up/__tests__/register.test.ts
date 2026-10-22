@@ -8,7 +8,6 @@ const values = {
   password: 'Password123',
   confirmPassword: 'Password123',
   displayName: 'Alice',
-  interests: ['ai'],
   terms: true as const,
 };
 
@@ -28,7 +27,7 @@ describe('toRegisterRequest', () => {
     });
   });
 
-  it('never sends the repeated password, the terms or the interests', () => {
+  it('never sends the repeated password, the terms or interests: the API has no such field', () => {
     const request = toRegisterRequest(values);
     expect(request).not.toHaveProperty('confirmPassword');
     expect(request).not.toHaveProperty('terms');
