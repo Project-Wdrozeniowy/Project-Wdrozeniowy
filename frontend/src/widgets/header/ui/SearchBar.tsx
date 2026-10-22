@@ -151,7 +151,7 @@ export default function SearchBar() {
             activeIndex={activeOption}
             optionId={optionId}
             onSelectPost={openPost}
-            onViewAll={() => {
+            onNavigate={() => {
               recent.add(trimmed);
               close();
             }}

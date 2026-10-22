@@ -101,6 +101,15 @@ describe('SearchResults', () => {
     );
   });
 
+  it('links a tag result to the feed of that tag', async () => {
+    query = 'q=react';
+    search.mockResolvedValue(all());
+    renderResults();
+
+    const link = await screen.findByRole('link', { name: /react.*1 post/ });
+    expect(link).toHaveAttribute('href', '/forum?tag=react');
+  });
+
   it('asks for one kind with a larger page when a tab is selected in the URL', async () => {
     query = 'q=react&type=USER';
     search.mockResolvedValue(all({ posts: null, tags: null }));

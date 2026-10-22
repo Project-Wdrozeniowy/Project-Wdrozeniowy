@@ -4,8 +4,13 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import PostCard from '@/app/(main)/_ui/PostCard';
 import { ALL_TOPICS, isTopic } from '@/shared/constants/categories.const';
 import { useForumPosts } from '@/shared/api/forum/useForumPosts';
-import { parsePageParam, topicToCategorySlug } from '@/app/(main)/forum/_lib/forumFeed';
+import {
+  parsePageParam,
+  parseTagParam,
+  topicToCategorySlug,
+} from '@/app/(main)/forum/_lib/forumFeed';
 import { toPostCardData } from '@/app/(main)/_lib/postCard';
+import ActiveTagFilter from './ActiveTagFilter';
 import CategoryFilter from './CategoryFilter';
 import EmptyFeed from './EmptyFeed';
 import PostFeedError from '@/app/(main)/_ui/PostFeedError';
@@ -14,7 +19,8 @@ import PostPagination from './PostPagination';
 
 /**
  * Forum post list backed by `GET /forum/posts`.
- * The topic (`?topic=`) and the page (`?page=`, 1-based) live in the URL, so they are linkable,
+ * The topic (`?topic=`), the tag (`?tag=`, a tag slug) and the page (`?page=`, 1-based) live in the
+ * URL, so they are linkable,
  * survive a reload and work with the Back button.
  */
 export default function ForumFeed() {
@@ -24,6 +30,7 @@ export default function ForumFeed() {
 
   const topicParam = searchParams.get('topic');
   const activeTopic = isTopic(topicParam) ? topicParam : ALL_TOPICS;
+  const tag = parseTagParam(searchParams.get('tag'));
   const page = parsePageParam(searchParams.get('page'));
   const categorySlug = activeTopic === ALL_TOPICS ? undefined : topicToCategorySlug(activeTopic);
 
@@ -35,7 +42,7 @@ export default function ForumFeed() {
     isFetching,
     isPlaceholderData,
     refetch,
-  } = useForumPosts({ page, categorySlug });
+  } = useForumPosts({ page, categorySlug, tag });
 
   function navigate(update: (params: URLSearchParams) => void, mode: 'push' | 'replace') {
     const params = new URLSearchParams(searchParams.toString());
@@ -61,6 +68,14 @@ export default function ForumFeed() {
     }, 'replace');
   }
 
+  function hrefWithoutTag() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('tag');
+    params.delete('page');
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }
+
   function handlePageChange(nextPage: number) {
     navigate((params) => {
       if (nextPage <= 0) {
@@ -82,6 +97,7 @@ export default function ForumFeed() {
   return (
     <>
       <CategoryFilter active={activeTopic} onSelect={handleSelectTopic} />
+      {tag && <ActiveTagFilter tag={tag} clearHref={hrefWithoutTag()} />}
       {isLoadingError ? (
         <PostFeedError onRetry={() => refetch()} retrying={isFetching} />
       ) : isPending ? (
@@ -94,6 +110,7 @@ export default function ForumFeed() {
       ) : data.content.length === 0 ? (
         <EmptyFeed
           topic={activeTopic}
+          tag={tag}
           pageOutOfRange={page > 0 && data.totalPages > 0}
           onFirstPage={() => handlePageChange(0)}
         />

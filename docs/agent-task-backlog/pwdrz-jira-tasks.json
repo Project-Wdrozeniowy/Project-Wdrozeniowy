@@ -19160,10 +19160,10 @@
       },
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-107",
       "localTracking": {
-        "status": "pending",
-        "updatedAt": null,
-        "owner": null,
-        "notes": ""
+        "status": "done",
+        "updatedAt": "2026-10-22T10:00:00.000Z",
+        "owner": "Dzmitry Varonin",
+        "notes": "Tag-filtered forum view /forum?tag=<slug> via GET /api/forum/posts?tag= (page and topic kept in the URL, empty/unknown/error states). Tag links on post cards render when a post carries tags; the listing API (PostSummaryDto) returns none yet, so listed cards show none until the backend adds them. Tag results in search link to the tag view. No tag index/sidebar: waits for PWDRZ-143. The 501 /forum/tags/{slug}/posts endpoint is not called. Branch is based on PWDRZ-106 (search tag rows)."
       }
     },
     {

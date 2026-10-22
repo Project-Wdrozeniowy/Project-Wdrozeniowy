@@ -19,3 +19,13 @@ export function parsePageParam(value: string | null): number {
 export function topicToCategorySlug(topic: string): string | undefined {
   return CATEGORIES.find((category) => category.label === topic)?.key;
 }
+
+/**
+ * The tag of the URL (`?tag=spring-boot`). Blank means no tag filter. Whatever else is there is
+ * passed on as it is: an unknown tag is answered by the API with an empty page, which the feed shows
+ * as "no posts with this tag". It is never cut or ignored, as that would change which tag is shown.
+ */
+export function parseTagParam(value: string | null): string | undefined {
+  const tag = value?.trim();
+  return tag ? tag : undefined;
+}

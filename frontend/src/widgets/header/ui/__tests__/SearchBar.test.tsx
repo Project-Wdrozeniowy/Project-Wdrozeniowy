@@ -111,6 +111,17 @@ describe('SearchBar', () => {
     );
   });
 
+  it('links a tag result to the feed of that tag and closes the panel', async () => {
+    search.mockResolvedValue(results());
+    renderBar();
+    await typeTerm('react');
+
+    const link = await screen.findByRole('link', { name: /^react\s*4$/ });
+    expect(link).toHaveAttribute('href', '/forum?tag=react');
+    await userEvent.click(link);
+    expect(screen.queryByRole('option')).not.toBeInTheDocument();
+  });
+
   it('does not search for a term the API would reject', async () => {
     renderBar();
     await typeTerm('r');
