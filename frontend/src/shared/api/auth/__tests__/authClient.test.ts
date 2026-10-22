@@ -133,4 +133,54 @@ describe('authService.loadProfile >-65 GET /users/me', () => {
     expect(mockApiClient.get).toHaveBeenCalledWith('/users/me', undefined);
     expect(result).toEqual(profile);
   });
+
+  it('keeps the issued token in memory once the profile has loaded (PWDRZ-155)', async () => {
+    const profile = { id: 1, username: 'john' };
+    mockApiClient.get.mockResolvedValue(profile);
+
+    await expect(authService.loadProfile('issued-token')).resolves.toEqual(profile);
+
+    expect(tokenMemory.get()).toBe('issued-token');
+  });
+
+  it.each([
+    ['a server error', Object.assign(new Error('Request failed'), { response: { status: 500 } })],
+    ['a network failure', new Error('Network Error')],
+  ])(
+    'clears the pending token and rejects with the original error after %s (PWDRZ-155)',
+    async (_name, error) => {
+      mockApiClient.get.mockRejectedValueOnce(error);
+
+      await expect(authService.loadProfile('pending-token')).rejects.toBe(error);
+
+      expect(tokenMemory.get()).toBeNull();
+    }
+  );
+
+  it('keeps a newer token when an older profile request succeeds later (PWDRZ-155)', async () => {
+    let resolveProfile!: (profile: unknown) => void;
+    mockApiClient.get.mockImplementationOnce(
+      () => new Promise((resolve) => (resolveProfile = resolve))
+    );
+    const profileRequest = authService.loadProfile('old-token');
+    tokenMemory.set('new-token');
+    resolveProfile({ id: 1, username: 'john' });
+
+    await profileRequest;
+    expect(tokenMemory.get()).toBe('new-token');
+  });
+
+  it('never writes the token to browser storage, whether the profile loads or not (PWDRZ-155)', async () => {
+    // Start from empty storage so only what loadProfile does is measured.
+    localStorage.clear();
+    sessionStorage.clear();
+    mockApiClient.get.mockResolvedValueOnce({ id: 1, username: 'john' });
+    await authService.loadProfile('stored-nowhere-1');
+    mockApiClient.get.mockRejectedValueOnce(new Error('profile unavailable'));
+    await expect(authService.loadProfile('stored-nowhere-2')).rejects.toThrow();
+
+    for (const storage of [localStorage, sessionStorage]) {
+      expect(storage.length).toBe(0);
+    }
+  });
 });
