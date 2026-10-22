@@ -42,6 +42,7 @@ describe('toPostCardData', () => {
       excerpt: null,
       votes: 7,
       comments: 3,
+      tags: [],
       voting: { postId: 42, myVote: null },
     });
   });
@@ -75,6 +76,32 @@ describe('toPostCardData', () => {
     const data = toPostCardData({ ...summary, category: null }, NOW);
     expect(data.category).toBeNull();
     expect(data.categorySlug).toBeNull();
+  });
+
+  it('has no tags for a listed post: the listing API does not return them', () => {
+    expect(toPostCardData(summary, NOW).tags).toEqual([]);
+  });
+
+  it('keeps the tags of a full post as links data', () => {
+    const post = {
+      ...summary,
+      content: 'text',
+      subscribed: false,
+      updatedAt: '2026-10-10T10:00:00Z',
+      tags: [
+        { id: 1, name: 'react', slug: 'react', postCount: 4 },
+        { id: 2, name: 'Spring Boot', slug: 'spring-boot', postCount: 9 },
+      ],
+    };
+    expect(toPostCardData(post, NOW).tags).toEqual([
+      { name: 'react', slug: 'react' },
+      { name: 'Spring Boot', slug: 'spring-boot' },
+    ]);
+  });
+
+  it('does not break on a null tags field', () => {
+    const data = toPostCardData({ ...summary, tags: null } as unknown as PostSummary, NOW);
+    expect(data.tags).toEqual([]);
   });
 
   it('marks pinned posts', () => {
@@ -122,6 +149,7 @@ describe('toPostCardData with a real API response', () => {
       excerpt: null,
       votes: 0,
       comments: 0,
+      tags: [],
       voting: { postId: 8, myVote: null },
     });
   });

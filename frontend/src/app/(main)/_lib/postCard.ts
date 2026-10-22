@@ -1,7 +1,12 @@
 import { PINNED_BADGE_LABEL } from '@/app/(main)/_lib/postCard.const';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
+import type { Post, PostSummary } from '@/shared/api/forum/post.dto';
 import type { MyVote } from '@/shared/api/forum/vote.dto';
 import { formatTimeAgo } from '@/utils/format';
+
+export interface PostCardTag {
+  name: string;
+  slug: string;
+}
 
 /** What `PostCard` renders. Both the real API and the mock feed are mapped to it. */
 export interface PostCardData {
@@ -19,11 +24,14 @@ export interface PostCardData {
   excerpt: string | null;
   votes: number;
   comments: number;
+  /** Tags of the post. The listing API does not return them yet, so a listed post has none. */
+  tags: PostCardTag[];
   /** What voting needs: the post to vote on and the user's current vote. */
   voting: { postId: number; myVote: MyVote | null };
 }
 
-export function toPostCardData(post: PostSummary, now?: number): PostCardData {
+/** A listed `PostSummary` carries no tags; a full `Post` does, and its tags become links. */
+export function toPostCardData(post: PostSummary | Post, now?: number): PostCardData {
   const username = post.author.displayName?.trim() || post.author.username;
   return {
     // No link to the post: the post page is a placeholder until the view page is implemented.
@@ -39,6 +47,10 @@ export function toPostCardData(post: PostSummary, now?: number): PostCardData {
     excerpt: null,
     votes: post.voteScore,
     comments: post.commentCount,
+    tags:
+      'tags' in post && Array.isArray(post.tags)
+        ? post.tags.map(({ name, slug }) => ({ name, slug }))
+        : [],
     voting: { postId: post.id, myVote: post.myVote },
   };
 }

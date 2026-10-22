@@ -1,4 +1,4 @@
-import { parsePageParam, topicToCategorySlug } from '../forumFeed';
+import { parsePageParam, parseTagParam, topicToCategorySlug } from '../forumFeed';
 
 describe('parsePageParam', () => {
   it('converts the 1-based URL page to the 0-based API page', () => {
@@ -33,5 +33,25 @@ describe('topicToCategorySlug', () => {
   it('returns undefined for unknown labels', () => {
     expect(topicToCategorySlug('Nonsense')).toBeUndefined();
     expect(topicToCategorySlug('')).toBeUndefined();
+  });
+});
+
+describe('parseTagParam', () => {
+  it('reads the tag and trims it', () => {
+    expect(parseTagParam('spring-boot')).toBe('spring-boot');
+    expect(parseTagParam('  react ')).toBe('react');
+  });
+
+  it('means no filter for a missing or blank tag', () => {
+    expect(parseTagParam(null)).toBeUndefined();
+    expect(parseTagParam('   ')).toBeUndefined();
+  });
+
+  it('keeps an unknown tag, so the feed shows it empty instead of unfiltered', () => {
+    expect(parseTagParam('no-such-tag')).toBe('no-such-tag');
+  });
+
+  it('never cuts a long tag into a different one', () => {
+    expect(parseTagParam('a'.repeat(300))).toHaveLength(300);
   });
 });

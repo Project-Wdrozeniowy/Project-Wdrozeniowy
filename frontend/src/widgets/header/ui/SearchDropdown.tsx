@@ -37,7 +37,7 @@ interface SearchDropdownProps {
   activeIndex: number;
   optionId: (index: number) => string;
   onSelectPost: (post: PostSummary) => void;
-  onViewAll: () => void;
+  onNavigate: () => void;
   onPickRecent: (term: string) => void;
   onRemoveRecent: (term: string) => void;
   onRetry: () => void;
@@ -50,7 +50,7 @@ export default function SearchDropdown({
   activeIndex,
   optionId,
   onSelectPost,
-  onViewAll,
+  onNavigate,
   onPickRecent,
   onRemoveRecent,
   onRetry,
@@ -96,7 +96,7 @@ export default function SearchDropdown({
           activeIndex={activeIndex}
           optionId={optionId}
           onSelectPost={onSelectPost}
-          onViewAll={onViewAll}
+          onNavigate={onNavigate}
         />
       )}
     </div>
@@ -109,10 +109,10 @@ interface ResultsProps {
   activeIndex: number;
   optionId: (index: number) => string;
   onSelectPost: (post: PostSummary) => void;
-  onViewAll: () => void;
+  onNavigate: () => void;
 }
 
-function Results({ results, term, activeIndex, optionId, onSelectPost, onViewAll }: ResultsProps) {
+function Results({ results, term, activeIndex, optionId, onSelectPost, onNavigate }: ResultsProps) {
   const posts = results.posts?.content ?? [];
   const users = results.users?.content ?? [];
   const tags = results.tags?.content ?? [];
@@ -148,13 +148,13 @@ function Results({ results, term, activeIndex, optionId, onSelectPost, onViewAll
       {tags.length > 0 && (
         <SearchSection title={SEARCH_SECTION_TAGS}>
           {tags.map((tag) => (
-            <SearchTagRow key={tag.id} tag={tag} />
+            <SearchTagRow key={tag.id} tag={tag} onNavigate={onNavigate} />
           ))}
         </SearchSection>
       )}
       <Link
         href={searchPageHref({ q: term })}
-        onClick={onViewAll}
+        onClick={onNavigate}
         className="block border-t border-slate-700 px-3 py-2 text-center text-xs font-semibold text-blue-400 hover:bg-slate-700/60 focus-visible:outline-2 focus-visible:outline-blue-500"
       >
         {SEARCH_VIEW_ALL_LABEL}
