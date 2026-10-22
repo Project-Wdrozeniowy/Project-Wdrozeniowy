@@ -77,10 +77,10 @@ before migration**, not new placement rules:
   it by actual `widgets`, `features`, `shared`, or route-local responsibility.
 
 > **Existing gap:** These are architectural responsibilities, not a claim
-> that all files comply. Login and registration routes still contain
-> submission orchestration;
-> [PWDRZ-131](https://project-wdrz.atlassian.net/browse/PWDRZ-131)
-> owns that frontend cleanup.
+> that all files comply. The login and registration routes are thin
+> compositions; their submission orchestration lives in `features/sign-in` and
+> `features/sign-up`
+> ([PWDRZ-131](https://project-wdrz.atlassian.net/browse/PWDRZ-131)).
 
 The [frontend README](../../frontend/README.md) describes running the service.
 
@@ -218,9 +218,10 @@ PostgreSQL enum mapping **обязателен round-trip тест с мигра
   или локального route UI.
 
 > **Существующее расхождение:** Это правила ответственности, а не заявление,
-> что старый код уже им следует. Login/register routes пока содержат
-> submission orchestration; frontend cleanup —
-> [PWDRZ-131](https://project-wdrz.atlassian.net/browse/PWDRZ-131).
+> что старый код уже им следует. Login/register routes теперь только
+> компонуют страницу; submission orchestration находится в `features/sign-in` и
+> `features/sign-up`
+> ([PWDRZ-131](https://project-wdrz.atlassian.net/browse/PWDRZ-131)).
 
 Запуск сервиса описан в [frontend README](../../frontend/README.md).
 

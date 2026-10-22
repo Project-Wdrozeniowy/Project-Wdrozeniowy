@@ -14,12 +14,15 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock('@/shared/api/auth/authClient', () => ({ authService: mocks }));
-vi.mock('@/store', () => ({ useStore: () => ({ setAuth: mocks.setAuth }) }));
+vi.mock('@/store', () => ({
+  useStore: (select: (state: { setAuth: typeof mocks.setAuth }) => unknown) =>
+    select({ setAuth: mocks.setAuth }),
+}));
 vi.mock('@/shared/lib/toast', () => ({ toast: { success: mocks.success } }));
 
-// PWDRZ-131 owns the later extraction. These check current orchestration, not
-// live API integration. PWDRZ-154 owns the unsupported interests UI; its omission from the
-// request is not asserted as the final contract.
+// These render the route pages with the real forms and hooks and fake the service, router,
+// store and toast: they check the submit flow, not live API integration. PWDRZ-154 owns the
+// unsupported interests UI; its omission from the request is not asserted as the final contract.
 const profile = { id: 1, username: 'alice', displayName: 'Alice' };
 
 beforeEach(() => {
