@@ -85,6 +85,15 @@ describe('userService.changePassword >-65 POST /users/me/password', () => {
     const data = { currentPassword: 'old-password', newPassword: 'new-password' };
     mockApiClient.post.mockResolvedValue(undefined);
     await userService.changePassword(data);
-    expect(mockApiClient.post).toHaveBeenCalledWith('/users/me/password', data);
+    expect(mockApiClient.post).toHaveBeenCalledWith('/users/me/password', data, undefined);
+  });
+
+  it('passes the request config on, e.g. to skip the global error toast', async () => {
+    const data = { currentPassword: 'old-password', newPassword: 'new-password' };
+    mockApiClient.post.mockResolvedValue(undefined);
+    await userService.changePassword(data, { skipErrorToast: true });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/users/me/password', data, {
+      skipErrorToast: true,
+    });
   });
 });

@@ -19377,10 +19377,10 @@
       },
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-108",
       "localTracking": {
-        "status": "pending",
-        "updatedAt": null,
-        "owner": null,
-        "notes": ""
+        "status": "done",
+        "updatedAt": "2026-10-22T12:00:00.000Z",
+        "owner": "Dzmitry Varonin",
+        "notes": "Protected /settings route: the profile page's own ProfileForm (PATCH /api/users/me; same useMyProfile cache and store update, no second state) plus a separate ChangePasswordForm (POST /api/users/me/password). The password change asks for confirmation because it signs the user out everywhere, then ends the local session and sends the user to /login. Avatar stays a validated http(s) link. Nothing for upload, email preferences or account deletion. Settings link in the header. Gateway-backed check: e2e/tests/settings.spec.ts (not run locally, Docker unavailable)."
       }
     },
     {

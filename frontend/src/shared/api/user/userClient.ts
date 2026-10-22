@@ -17,6 +17,6 @@ export const userService = {
   updateMyProfile: (data: UpdateProfileRequest, config?: AxiosRequestConfig): Promise<MyProfile> =>
     apiClient.patch<MyProfile>('/users/me', data, config),
 
-  changePassword: (data: ChangePasswordRequest): Promise<void> =>
-    apiClient.post<void>('/users/me/password', data),
+  changePassword: (data: ChangePasswordRequest, config?: AxiosRequestConfig): Promise<void> =>
+    apiClient.post<void>('/users/me/password', data, config),
 };
