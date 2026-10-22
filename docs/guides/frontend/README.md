@@ -43,8 +43,8 @@ frontend/src/
 │   ├── site-header/ui/
 │   └── site-sidebar/ui/
 ├── features/
-│   ├── sign-in/ui/                   # after coordinated PWDRZ-131 extraction
-│   ├── sign-up/ui/                   # after coordinated PWDRZ-131 extraction
+│   ├── sign-in/                      # LoginForm, useSignIn
+│   ├── sign-up/                      # RegisterForm, useSignUp
 │   ├── post-interactions/ui/         # ActionButton, VoteButton
 │   ├── post-comments/ui/             # comment form, item, section
 │   └── edit-profile/ui/              # ProfileForm

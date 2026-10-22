@@ -2,7 +2,7 @@ import { registerSchema } from '../register.schema';
 
 // Local form safeguards. The email, password and display name limits mirror the API;
 // the username character rule and the password letter/number rule are UI-only.
-// PWDRZ-131 owns form extraction, and PWDRZ-154 marks interests as provisional and unsaved.
+// PWDRZ-154 marks interests as provisional and unsaved.
 const valid = {
   username: 'alice',
   email: 'alice@example.com',

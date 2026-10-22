@@ -2,7 +2,6 @@ import { z } from 'zod';
 // The email, password and display name limits mirror backend RegisterRequest. The username
 // character rule and the password letter/number rule are UI-only and stricter than the API.
 
-//TODO [PWDRZ-131]: Extract authentication form orchestration from route pages, so that the schema can be imported from a single place and used in both the route page and the form component.
 export const registerSchema = z
   .object({
     username: z
