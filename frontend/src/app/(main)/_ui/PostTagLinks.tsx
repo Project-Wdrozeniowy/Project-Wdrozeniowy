@@ -2,8 +2,12 @@ import Link from 'next/link';
 import type { PostCardTag } from '@/app/(main)/_lib/postCard';
 import { tagHref } from '@/shared/lib/tagUrl';
 
+interface PostTagLinksProps {
+  tags: PostCardTag[];
+}
+
 /** The tags of a post, each a link to the feed of that tag. Renders nothing without tags. */
-export default function PostTagLinks({ tags }: { tags: PostCardTag[] }) {
+export default function PostTagLinks({ tags }: PostTagLinksProps) {
   if (tags.length === 0) return null;
   return (
     <ul aria-label="Tags" className="flex flex-wrap gap-1.5">

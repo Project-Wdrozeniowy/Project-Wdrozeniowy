@@ -3,13 +3,13 @@ import type { UserProfile } from '@/shared/api/user/user.dto';
 import { NAV_LINKS, USER_STATS } from '@/widgets/sidebar/ui/sidebar.const';
 import { cn } from '@/shared/lib/cn';
 
-interface Props {
+interface UserCardProps {
   user: UserProfile;
   initials: string;
   pathname: string;
 }
 
-export default function UserCard({ user, initials, pathname }: Props) {
+export default function UserCard({ user, initials, pathname }: UserCardProps) {
   return (
     <div className="bg-slate-800 rounded-xl p-4 flex flex-col gap-4">
       <Link href="/profile" className="flex items-center gap-3">

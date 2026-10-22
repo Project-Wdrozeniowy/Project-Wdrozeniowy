@@ -2,7 +2,11 @@ import Link from 'next/link';
 import { postHref } from '@/shared/lib/searchUrl';
 import type { PostSummary } from '@/shared/api/forum/post.dto';
 
-export default function PostResult({ post }: { post: PostSummary }) {
+interface PostResultProps {
+  post: PostSummary;
+}
+
+export default function PostResult({ post }: PostResultProps) {
   return (
     <li>
       <Link

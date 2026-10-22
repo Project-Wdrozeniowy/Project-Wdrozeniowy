@@ -5,11 +5,15 @@ import { apiClient } from '@/shared/api/client/api';
 import { authService } from '@/shared/api/auth/authClient';
 import { useStore } from '@/store';
 
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
 /**
  * Restores the session on page load. The access token only lives in memory, so after a
  * reload it is re-issued from the httpOnly refresh cookie. No cookie means a guest.
  */
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
+export default function AuthProvider({ children }: AuthProviderProps) {
   const setAuth = useStore((s) => s.setAuth);
   const setInitialized = useStore((s) => s.setInitialized);
 

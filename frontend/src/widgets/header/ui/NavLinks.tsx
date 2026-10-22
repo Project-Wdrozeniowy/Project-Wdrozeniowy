@@ -11,13 +11,12 @@ export function isActiveLink(pathname: string, href: string): boolean {
   return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export default function NavLinks({
-  links,
-  pathname,
-}: {
+interface NavLinksProps {
   links: readonly NavLink[];
   pathname: string;
-}) {
+}
+
+export default function NavLinks({ links, pathname }: NavLinksProps) {
   return (
     <nav className="hidden md:flex items-center gap-1">
       {links.map(({ href, label }) => {

@@ -39,7 +39,12 @@ function inputClass(invalid: boolean) {
   return cn('input', invalid && 'ring-2 ring-red-500');
 }
 
-function FieldError({ id, message }: { id: string; message?: string }) {
+interface FieldErrorProps {
+  id: string;
+  message?: string;
+}
+
+function FieldError({ id, message }: FieldErrorProps) {
   if (!message) return null;
   return (
     <p id={id} role="alert" className="text-xs text-red-500">

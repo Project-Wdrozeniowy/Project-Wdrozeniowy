@@ -1,12 +1,10 @@
-export default function BarChart({
-  data,
-  labels,
-  color = '#2563eb',
-}: {
+interface BarChartProps {
   data: number[];
   labels?: string[];
   color?: string;
-}) {
+}
+
+export default function BarChart({ data, labels, color = '#2563eb' }: BarChartProps) {
   const w = 420;
   const h = 200;
   const pad = { top: 16, right: 16, bottom: labels ? 32 : 16, left: 36 };

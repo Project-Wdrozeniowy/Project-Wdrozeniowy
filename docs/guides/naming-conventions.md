@@ -153,9 +153,12 @@ useful existing public-entry filenames.
   `type` does **not** make fields immutable; use `readonly` where needed.
 - **No `I` prefix.** `User`, not `IUser`.
 - Component props are named `<ComponentName>Props`, including local props
-  shapes: `interface PostCardProps { … }`. Existing inline `Props` forms need
-  [PWDRZ-132](https://project-wdrz.atlassian.net/browse/PWDRZ-132), not a
-  documentation-only rename.
+  shapes: `interface PostCardProps { … }`. No inline props types and no generic
+  `Props` ([PWDRZ-132](https://project-wdrz.atlassian.net/browse/PWDRZ-132)); a
+  test (`src/test/componentPropsNaming.test.ts`) enforces it. **Framework
+  exception:** Next.js special files (`page`, `layout`, `template`, `loading`,
+  `error`, `global-error`, `not-found`, `default`) keep the props shape the
+  framework defines, such as `{ children }` or `{ params }`.
 - Generic wrappers reused across resources: `PagedResponse<T>`, matching the
   backend's `PagedResponse`. API responses are not wrapped in an envelope.
 
@@ -371,9 +374,12 @@ public entry points.
   `readonly`.
 - **Без префикса `I`.** `User`, не `IUser`.
 - Props компонента называются `<ComponentName>Props`, включая локальные:
-  `interface PostCardProps { … }`. Старые обобщённые `Props` исправляются в
-  [PWDRZ-132](https://project-wdrz.atlassian.net/browse/PWDRZ-132), не только
-  в документации.
+  `interface PostCardProps { … }`. Inline-типы props и обобщённый `Props` не
+  используются ([PWDRZ-132](https://project-wdrz.atlassian.net/browse/PWDRZ-132));
+  правило проверяет тест `src/test/componentPropsNaming.test.ts`. **Исключение
+  фреймворка:** специальные файлы Next.js (`page`, `layout`, `template`,
+  `loading`, `error`, `global-error`, `not-found`, `default`) сохраняют форму
+  props, заданную фреймворком, например `{ children }` или `{ params }`.
 - Общая обёртка для ресурсов — `PagedResponse<T>`, согласованная с backend.
   Дополнительной envelope-обёртки для API responses нет.
 

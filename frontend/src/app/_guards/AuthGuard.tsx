@@ -5,8 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useStore } from '@/store';
 import SessionLoader from './SessionLoader';
 
+interface AuthGuardProps {
+  children: React.ReactNode;
+}
+
 /** Renders its children for signed-in users and sends everyone else to /login. */
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+export default function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const isInitialized = useStore((s) => s.isInitialized);
   const isAuthenticated = useStore((s) => s.isAuthenticated);
