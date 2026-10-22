@@ -32,6 +32,12 @@ export default function UserActions({ isAuthenticated, user, logout }: Props) {
           <span className="text-sm text-slate-400 hidden sm:block">
             {user?.displayName ?? user?.username}
           </span>
+          <Link
+            href="/settings"
+            className="text-sm text-slate-400 hover:text-gray-50 transition-colors"
+          >
+            Settings
+          </Link>
           <button
             onClick={logout}
             className="text-sm text-slate-400 hover:text-gray-50 transition-colors"
