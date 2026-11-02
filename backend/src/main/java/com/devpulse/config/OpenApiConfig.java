@@ -56,7 +56,6 @@ public class OpenApiConfig {
                 .tags(new ArrayList<>(tags()))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName, new SecurityScheme()
-                                .name(securitySchemeName)
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")));
