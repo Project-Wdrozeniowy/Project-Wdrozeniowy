@@ -166,14 +166,14 @@ npm run test              # single run
 npm run test:coverage     # with HTML + lcov coverage report
 
 # Run a specific test file
-npx vitest run src/shared/api/auth/__tests__/authClient.test.ts
+npx vitest run src/shared/api/client/__tests__/generatedTransport.integration.test.ts
 
 # Run tests matching a name pattern
 npx vitest run -t "login"
 ```
 
 Test files live in `__tests__/` subdirectories next to the module under test.  
-Example: `src/shared/api/auth/__tests__/authClient.test.ts` tests `src/shared/api/auth/authClient.ts`.
+Example: `src/shared/api/client/__tests__/generatedTransport.integration.test.ts` tests generated operations through the existing transport. API generation and drift checks are documented in `docs/guides/api-bindings.md`.
 
 Vitest 3.2.4 uses Istanbul and includes `src/**/*.{ts,tsx}`, including executable
 pages, components, hooks, libraries, shared code and utilities, even when no test
@@ -205,7 +205,7 @@ and `src/middleware/__tests__/`.
 Use the [e2e workspace](e2e/README.md): after root `npm ci` and browser
 installation, run root `npm run test:e2e` or `npm test` in `e2e/`. Its launcher owns an isolated real
 stack; do not substitute developer servers, production data or mocked API
-responses. Four browser flows and one HTTP integration case use Chromium,
+responses. Seven browser flows and one HTTP integration case use Chromium,
 one worker and no retries. Keep service coverage gates independent.
 `npm run test:probe` must fail a real browser assertion and still clean up.
 Current local/CI/required-check evidence belongs in
@@ -276,7 +276,7 @@ npm run typecheck     # tsc --noEmit
 
 ### Path alias (frontend only)
 
-`@/*` maps to `frontend/src/*`. Example: `import type { User } from '@/shared/types'`.  
+`@/*` maps to `frontend/src/*`. Example: `import type { AuthResponse } from '@/shared/api/generated/models/authResponse.dto'`.
 Defined in `frontend/tsconfig.json`. Always use `@/` for cross-module imports; relative imports only within the same folder.
 
 ---
@@ -289,13 +289,14 @@ frontend/src/
     (auth)/        ← login, register pages (no header/sidebar)
     (main)/        ← home feed, forum, dashboard, profile (with Header + Sidebar)
     layout.tsx     ← root layout, wraps everything in QueryProvider
-  services/        ← API call functions (thin wrappers over ApiClient)
+  features/        ← user actions, form schemas and request mapping
+  widgets/         ← reusable header/sidebar regions
+  shared/api/      ← single transport, generated bindings and Query compositions
+  shared/auth/     ← session bootstrap and in-memory token infrastructure
+  shared/ui/       ← reusable UI
+  shared/lib/      ← shared utilities
+  shared/constants/ ← static data
   store/slices/    ← Zustand slices: authSlice, uiSlice
-  shared/types/    ← domain TypeScript types (User, Post, Comment, etc.)
-  lib/validations/ ← Zod schemas for form validation
-  components/      ← layout/ and ui/ reusable components
-  providers/       ← React context providers (QueryProvider)
-  constants/       ← static data (category list, nav items, mock content)
 
 gateway/src/
   middleware/      ← auth, cors, rateLimiter, logger
@@ -335,6 +336,8 @@ docs/
 5. **Socket.IO is installed in the gateway** but not yet connected to a server/client flow. It is reserved for a future real-time integration, which must reconcile the current Spring STOMP/WebSocket path. Do not remove the dependency as a documentation cleanup.
 
 6. **OpenAPI contract** — `backend/openapi.json` is the committed copy of the published contract and lists implemented operations only; `501` stubs are `@Hidden`. After an API change, regenerate it from `backend/` with `./mvnw test -Dtest=OpenApiContractTest -Dopenapi.contract.update=true`; `OpenApiContractTest` fails while it is stale. Swagger UI is at `http://localhost:8080/api/swagger-ui/index.html` when `SWAGGER_ENABLED=true` and must be **disabled in production**.
+
+7. **Frontend bindings (PWDRZ-130)** — pinned Orval generates committed models/operations/Query bindings in `frontend/src/shared/api/generated/`. Root `api:generate` and `api:check` update and validate the full output through the existing transport. Follow `docs/guides/api-bindings.md`; hidden 501 contracts and PWDRZ-150 state consolidation remain separate work.
 
 ### Gateway authentication boundary (PWDRZ-99 / PWDRZ-118)
 

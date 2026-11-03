@@ -207,7 +207,7 @@ Run a specific test from the relevant service directory (each block starts at th
 
 ```bash
 cd frontend
-npx vitest run src/shared/api/auth/__tests__/authClient.test.ts
+npx vitest run src/shared/api/client/__tests__/generatedTransport.integration.test.ts
 npx vitest run -t "login"
 ```
 
@@ -223,6 +223,12 @@ cd backend
 ```
 
 ## Code Style
+
+Implemented frontend HTTP models, operations and TanStack Query bindings are generated
+from the committed backend OpenAPI by pinned Orval. Run root `npm run api:generate`
+after a contract change and `npm run api:check` to detect drift; do not edit output.
+See the [API bindings workflow](docs/guides/api-bindings.md) for backend export,
+transport, cache ownership, CI and remaining provisional APIs.
 
 Both the frontend and gateway use **Prettier 3** and **ESLint**. Run the relevant checks from the repository root:
 
@@ -246,10 +252,12 @@ The CI **Lint** workflow enforces `format:check` and `lint` on every push to `ma
 frontend/src/
   app/(auth)/          ← login, register (no header/sidebar)
   app/(main)/          ← home feed, forum, dashboard, profile
-  services/            ← API call functions
+  features/            ← user actions, form schemas and request mapping
+  widgets/             ← header and sidebar
+  shared/api/          ← transport, generated bindings and server-cache composition
+  shared/auth/         ← session/token infrastructure
+  shared/ui/           ← reusable UI
   store/slices/        ← Zustand: authSlice, uiSlice
-  shared/types/        ← domain TypeScript types
-  lib/validations/     ← Zod schemas
 
 gateway/src/
   middleware/          ← auth, cors, rateLimiter, logger
