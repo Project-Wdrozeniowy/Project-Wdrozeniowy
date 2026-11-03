@@ -14,7 +14,15 @@
     "test": {
       "command": "node tools/workspace/npm.mjs test --workspace orbita-e2e",
       "cache": false,
-      "dependsOn": ["typecheck", "format-check", "infra-test"]
+      "dependsOn": [
+        "typecheck",
+        "format-check",
+        "infra-test",
+        {
+          "projects": ["frontend"],
+          "target": "api-check"
+        }
+      ]
     },
     "probe": {
       "command": "node tools/workspace/npm.mjs run test:probe --workspace orbita-e2e",

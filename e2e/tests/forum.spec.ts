@@ -1,6 +1,6 @@
-import { test, expect, signIn, gatewayURL } from '../support/fixtures.js';
+import { test, expect, signIn, gatewayURL, apiResponse } from '../support/fixtures.js';
 
-test('publishes through the protected gateway route and reads the persisted post in the feed', async ({
+test('publishes a persisted post and casts, switches and retracts its vote through generated bindings', async ({
   page,
   account,
   request,
@@ -34,6 +34,36 @@ test('publishes through the protected gateway route and reads the persisted post
   const stored = await request.get(`${gatewayURL}/api/forum/posts/${post.slug}`);
   expect(stored.status()).toBe(200);
   expect((await stored.json()).content).toBe(content);
+  expect(post.subscribed).toBe(false);
+
+  const card = page
+    .getByRole('article')
+    .filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+  const cast = apiResponse(page, '/forum/votes', 'POST');
+  await card.getByRole('button', { name: 'Upvote', exact: true }).click();
+  const castResponse = await cast;
+  expect(castResponse.status()).toBe(201);
+  const vote = await castResponse.json();
+  expect(vote.newScore).toBe(1);
+  expect(vote.voteType).toBe('UP');
+  await expect(card.getByRole('button', { name: 'Upvote' })).toHaveClass(/text-blue-400/);
+
+  // Reload proves the personal vote comes back through the generated feed query and bearer.
+  await page.reload();
+  await expect(card.getByRole('button', { name: 'Upvote' })).toHaveClass(/text-blue-400/);
+  const switched = apiResponse(page, '/forum/votes', 'POST');
+  await card.getByRole('button', { name: 'Downvote', exact: true }).click();
+  const switchedResponse = await switched;
+  expect(switchedResponse.status()).toBe(200);
+  expect((await switchedResponse.json()).newScore).toBe(-1);
+  await expect(card.getByRole('button', { name: 'Downvote' })).toHaveClass(/text-red-400/);
+
+  const retracted = apiResponse(page, `/forum/votes/${vote.id}`, 'DELETE');
+  await card.getByRole('button', { name: 'Downvote', exact: true }).click();
+  expect((await retracted).status()).toBe(204);
+  await expect(card.getByRole('button', { name: 'Downvote' })).not.toHaveClass(/text-red-400/);
+  const afterRetract = await request.get(`${gatewayURL}/api/forum/posts/${post.slug}`);
+  expect((await afterRetract.json()).voteScore).toBe(0);
   // The detail page is still a placeholder. Do not present it as implemented
   // or mock comments (PWDRZ-142/67) to make a detail-page scenario pass.
 });
