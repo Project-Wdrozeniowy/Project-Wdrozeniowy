@@ -18,7 +18,6 @@ export default {
           version: 5,
           signal: true,
           useInvalidate: true,
-          mutationInvalidates: [{ onMutations: ['createPost'], invalidates: ['listPosts'] }],
         },
       },
     },

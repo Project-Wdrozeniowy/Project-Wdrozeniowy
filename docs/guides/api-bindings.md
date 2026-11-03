@@ -69,8 +69,11 @@ currently unused subscriptions/admin bindings require no new UI in this task.
 
 Generated hooks/options own ordinary requests and mutations. Handwritten compositions
 remain only for application behavior: feed placeholders, search pages/gating, votes,
-profile synchronization and session transitions. Create-post feed invalidation is an
-Orval rule; publication success does not wait for feed refetch.
+profile synchronization and session transitions. `shared/api/forum/usePublishPost.ts`
+composes generated mutation options with feed invalidation. Publication success does
+not wait for feed refetch, but a caller's async `onSuccess` is awaited and its failure
+is handled by the normal mutation lifecycle. Orval 8.46.0's `mutationInvalidates`
+wrapper discards that callback's Promise, so this policy stays outside generated code.
 
 Generated runtime bindings are consumed by the existing browser/client tree. Server
 Components may use model-only type imports. This task does not introduce SSR token

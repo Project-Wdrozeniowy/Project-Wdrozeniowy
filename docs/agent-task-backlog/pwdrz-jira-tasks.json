@@ -22604,9 +22604,10 @@
       "localTracking": {
         "status": "done",
         "owner": "Codex / Ruslan 82179",
-        "updatedAt": "2026-11-02T13:23:32.663Z",
+        "updatedAt": "2026-11-03T11:20:43.978Z",
         "notes": [
-          "Local implementation and final review complete on PWDRZ-130-generated-api-bindings. Orval bindings, transport/cache migration and strict drift checks verified. Frontend 693 tests, gateway 51, backend verify 188, real E2E 8/8 and cleanup passed; clean install reproduces all 44 output files. Docker incident/recovery and verified VHD backups documented in pwdrz-130-execution.md. Prepared for PR; user authorized a logical commit series without co-author trailers. No push/PR/merge/Jira mutation or new published CI run."
+          "Local implementation and final review complete on PWDRZ-130-generated-api-bindings. Orval bindings, transport/cache migration and strict drift checks verified. Frontend 693 tests, gateway 51, backend verify 188, real E2E 8/8 and cleanup passed; clean install reproduces all 44 output files. Docker incident/recovery and verified VHD backups documented in pwdrz-130-execution.md. Prepared for PR; user authorized a logical commit series without co-author trailers. No push/PR/merge/Jira mutation or new published CI run.",
+          "Independent review follow-up: fixed selective E2E CI install (clean npm 11 fixture + actual Nx api-check passed) and publish async onSuccess lifecycle using generated mutation options with a tested cache composition. Frontend 696 tests and all coverage gates, static/codegen checks, production build and real E2E 8/8 passed. An earlier native Windows worker crash and its successful fresh-stack rerun are recorded in pwdrz-130-execution.md. User requested one local fix commit without co-author trailers; no additional push or Jira mutation."
         ]
       }
     }

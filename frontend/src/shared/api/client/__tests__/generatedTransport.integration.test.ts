@@ -125,7 +125,8 @@ it('invalidates every generated feed key without delaying publish success for re
   client.setQueryData(operations.getListPostsQueryKey({ page: 1, categorySlug: 'tech' }), {
     content: [],
   });
-  const options = operations.getCreatePostMutationOptions(client, {});
+  const { getPublishPostMutationOptions } = await import('@/shared/api/forum/usePublishPost');
+  const options = getPublishPostMutationOptions(client);
   mock.onPost('/forum/posts').reply(201, { slug: 'created', subscribed: false });
   const mutation = client.getMutationCache().build(client, options);
   await mutation.execute({ data: { title: 'Title', content: 'Body', categoryId: 1 } });

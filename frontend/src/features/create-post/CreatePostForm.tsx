@@ -22,11 +22,8 @@ import { createPostSchema } from '@/features/create-post/createPost.schema';
 import type { CreatePostFormData } from '@/features/create-post/createPost.schema';
 import { FieldLabel } from '@/features/create-post/FieldLabel';
 import { TagInput } from '@/features/create-post/TagInput';
-import {
-  getListCategoriesQueryKey,
-  useListCategories,
-  useCreatePost,
-} from '@/shared/api/generated/orbita.api';
+import { getListCategoriesQueryKey, useListCategories } from '@/shared/api/generated/orbita.api';
+import { usePublishPost } from '@/shared/api/forum/usePublishPost';
 import type { CategoryDto as Category } from '@/shared/api/generated/models/categoryDto.dto';
 
 import { cn } from '@/shared/lib/cn';
@@ -72,7 +69,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
   const queryClient = useQueryClient();
   // Which field should get the focus once the form is editable again (see the effect below).
   const [focusRequest, setFocusRequest] = useState<CreatePostField | null>(null);
-  const { mutateAsync, isPending } = useCreatePost({ request: { skipErrorToast: true } });
+  const { mutateAsync, isPending } = usePublishPost({ request: { skipErrorToast: true } });
   const [formError, setFormError] = useState<string | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
   const alertRef = useRef<HTMLDivElement>(null);

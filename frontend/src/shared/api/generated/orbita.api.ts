@@ -5,14 +5,13 @@
  * REST API of the Orbita forum platform. Lists only implemented operations; planned ones are tracked in Jira.
  * OpenAPI spec version: 1.0.0
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
   InvalidateOptions,
   MutationFunction,
-  MutationFunctionContext,
   QueryClient,
   QueryFunction,
   QueryKey,
@@ -875,19 +874,18 @@ export const createPost = (
 
 export const getCreatePostMutationKey = () => ['createPost'] as const;
 
-export const getCreatePostMutationOptions = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
-  queryClient: QueryClient,
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof createPost>>,
-      TError,
-      CreatePostMutationVariables,
-      TContext
-    >;
-    skipInvalidation?: boolean;
-    request?: SecondParameter<typeof orvalTransport>;
-  }
-): UseMutationOptions<
+export const getCreatePostMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPost>>,
+    TError,
+    CreatePostMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
   Awaited<ReturnType<typeof createPost>>,
   TError,
   CreatePostMutationVariables,
@@ -909,19 +907,7 @@ export const getCreatePostMutationOptions = <TError = ErrorType<ProblemDetail>, 
     return createPost(data, requestOptions);
   };
 
-  const onSuccess = (
-    data: Awaited<ReturnType<typeof createPost>>,
-    variables: CreatePostMutationVariables,
-    onMutateResult: TContext,
-    context: MutationFunctionContext
-  ) => {
-    if (!options?.skipInvalidation) {
-      queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
-    }
-    mutationOptions?.onSuccess?.(data, variables, onMutateResult, context);
-  };
-
-  return { ...mutationOptions, mutationFn, onSuccess };
+  return { mutationFn, ...mutationOptions };
 };
 
 export type CreatePostMutationResult = NonNullable<Awaited<ReturnType<typeof createPost>>>;
@@ -940,7 +926,6 @@ export const useCreatePost = <TError = ErrorType<ProblemDetail>, TContext = unkn
       CreatePostMutationVariables,
       TContext
     >;
-    skipInvalidation?: boolean;
     request?: SecondParameter<typeof orvalTransport>;
   },
   queryClient?: QueryClient
@@ -950,11 +935,7 @@ export const useCreatePost = <TError = ErrorType<ProblemDetail>, TContext = unkn
   CreatePostMutationVariables,
   TContext
 > => {
-  const backupQueryClient = useQueryClient();
-  return useMutation(
-    getCreatePostMutationOptions(queryClient ?? backupQueryClient, options),
-    queryClient
-  );
+  return useMutation(getCreatePostMutationOptions(options), queryClient);
 };
 
 /**

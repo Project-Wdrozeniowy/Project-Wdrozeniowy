@@ -1,9 +1,10 @@
 # PWDRZ-130 execution record
 
 Date: 2026-11-02. Base: `develop` / `5b6020014fc474aafba12229efb7e14220763edc`.
-Branch: `PWDRZ-130-generated-api-bindings`. The user subsequently authorized a
-logical commit series without co-author trailers. Push, PR creation, merge and
-Jira mutations remain outside the requested scope.
+Branch: `PWDRZ-130-generated-api-bindings`. The user authorized a logical commit
+series without co-author trailers and subsequently authorized restoring `develop`
+and publishing the task branch. PR #68 is open. The review follow-up authorizes
+one local fix commit; further push, merge and Jira mutations are not requested.
 
 ## Decisions and scope
 
@@ -24,7 +25,7 @@ Jira mutations remain outside the requested scope.
 | Generation    | Local versioned input, 44 generated files for 23 operations, deterministic formatting, full-set drift comparison                          |
 | Transport     | One typed request entry and custom mutator; cancellation, unknown errors, empty 204 normalization                                         |
 | Auth          | Generated login/register/logout/profile operations; pending-token orchestration moved to shared/auth with PWDRZ-155 regressions retained  |
-| Forum/search  | Generated operations/options; built-in publish invalidation; meaningful feed/search/vote composition retained                             |
+| Forum/search  | Generated operations/options; publish composition preserves callback lifecycle; meaningful feed/search/vote composition retained          |
 | Profile       | Generated requests and user-scoped cache key; old Query/Zustand synchronization deliberately retained for PWDRZ-150                       |
 | Cleanup       | Removed implemented service wrappers, duplicate DTOs and simple categories/create/password hooks; no compatibility barrels                |
 | Nx/CI         | Noncached check before frontend typecheck/coverage/E2E; codegen regression before coverage; contract build input and workflow path filter |
@@ -111,8 +112,11 @@ Suggested title: `[PWDRZ-130]: Generate frontend API bindings from verified Open
 Target: `develop`. Review backend metadata/contract first, then generator/transport,
 cache/auth migration, remaining compositions and tests. Generated model/import
 changes are mechanical; the generated source must match `npm run api:check`.
-New GitHub checks have not been published: the user requested local PR preparation
-only. The bounded backend metadata change should receive backend review in the PR.
+Initial verification was local. Independent review of PR #68 at `d8524ea` confirmed
+green GitHub build/lint/service-test jobs, but E2E failed before browser execution
+because its install omitted frontend codegen dependencies. The follow-up below
+records the fix and its verification. The bounded backend metadata change should
+receive backend review in the PR.
 
 ## Acceptance criteria and final diff review
 
@@ -131,3 +135,41 @@ behavior, generated determinism, package ownership, Nx/CI paths and exceptions.
 No blocking implementation finding remains. Existing act/jsdom navigation warnings
 remain nonfailing test diagnostics. Source/schema lifecycle and GitHub required
 check governance were not broadened into unrelated work.
+
+## Independent review follow-up — 2026-11-03
+
+Both findings from the review of `d8524ea` are addressed:
+
+- E2E CI now installs `orbita-e2e`, `frontend` and root tooling together. A clean
+  exported source fixture with npm 11.12.1 installed 682 packages using the corrected
+  selective command and passed the real Nx `frontend:api-check` prerequisite.
+- Removed Orval's `mutationInvalidates` wrapper for `createPost` and regenerated all
+  output through the normal command. `shared/api/forum/usePublishPost.ts` composes
+  generated mutation options and keys with application feed invalidation. It returns
+  the caller's `onSuccess` result while leaving background refetch unawaited. Request
+  DTOs, operations, mutation keys and transport remain generated/shared.
+- New regressions prove pending state until an async success callback completes,
+  propagation of its context, rejection through the mutation error lifecycle and
+  publication completion while an active feed refetch is still pending. Existing
+  transport integration and dialog/form tests exercise the same composition.
+
+Follow-up validation:
+
+- Root static checks passed (10 tasks; 5 unchanged tasks reused their cache).
+- Frontend: 68 files / 696 tests passed; coverage gates passed with statements
+  90.52%, branches 89.68%, functions 85.17% and lines 90.34%.
+- Codegen regression and full 44-file drift checks passed. Production frontend
+  build passed with an explicit gateway API URL.
+- Real E2E run `1793704675591-07915b19`: 8/8 passed, Chromium, one worker, zero
+  configured retries, including publication and cast/switch/retract after reload.
+  Owned containers, image tags, networks and runtime snapshots are absent after
+  both follow-up runs; Docker Engine remained ready after cleanup.
+- Earlier run `1793704514449-c0d47670`: 7/8 passed; the Windows Playwright worker
+  exited with native code 3221226505 before the forum scenario (reported duration
+  0 ms), without an assertion failure. Docker remained ready and teardown completed.
+  The complete fresh-stack rerun above passed without changing code, test assertions,
+  retries, Docker settings or browser configuration. The native crash cause is unconfirmed.
+
+Backend/gateway code was not changed by this follow-up; their earlier local checks
+and successful published PR jobs are separate evidence. New remote CI requires
+publishing the follow-up commit; no additional push or Jira mutation is requested.

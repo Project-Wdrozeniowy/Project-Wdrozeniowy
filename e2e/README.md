@@ -13,6 +13,10 @@ replaces them nor contributes an E2E line-coverage percentage.
 
 Install dependencies from the repository root with `npm ci` (the single workspace
 lockfile). Root `npm run test:e2e` delegates to this managed launcher through Nx.
+For a selective CI install, include both `orbita-e2e` and `frontend` with
+`--include-workspace-root`: Nx checks frontend binding drift before launching the
+stack, so the outer checkout also needs Orval. The later frontend snapshot install
+does not provide dependencies to that prerequisite.
 After installation, direct commands from `e2e/` remain available:
 
 ```bash
