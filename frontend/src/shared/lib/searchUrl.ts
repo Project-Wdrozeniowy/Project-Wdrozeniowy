@@ -1,4 +1,4 @@
-import type { SearchType } from '@/shared/api/search/search.dto';
+import type { SearchType } from '@/shared/api/generated/models/searchType.dto';
 
 /** Page of a post. Posts are the only search result with a page to open. */
 export function postHref(slug: string): string {

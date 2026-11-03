@@ -19,7 +19,7 @@ import {
 import { toast } from '@/shared/lib/toast';
 import { profileSchema } from '@/features/edit-profile/profile.schema';
 import type { ProfileFormData } from '@/features/edit-profile/profile.schema';
-import type { MyProfile } from '@/shared/api/user/user.dto';
+import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 const SUBMIT_CLASS =
   'bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
@@ -75,7 +75,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
     setFormError(null);
     try {
-      const updated = await mutateAsync(request);
+      const updated = await mutateAsync({ data: request });
       reset(profileToFormValues(updated), { keepDirtyValues: false });
       toast.success(PROFILE_SAVED_MESSAGE);
     } catch (error: unknown) {

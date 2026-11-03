@@ -1,6 +1,6 @@
 import { apiErrorStatus } from '@/shared/api/client/apiError';
-import type { ProblemDetail } from '@/shared/api/client/problem.dto';
-import type { RegisterRequest } from '@/shared/api/auth/auth.dto';
+import type { ProblemDetail } from '@/shared/api/generated/models/problemDetail.dto';
+import type { RegisterRequest } from '@/shared/api/generated/models/registerRequest.dto';
 import {
   REGISTER_ERROR_MESSAGE,
   REGISTER_FIELD_ERRORS,

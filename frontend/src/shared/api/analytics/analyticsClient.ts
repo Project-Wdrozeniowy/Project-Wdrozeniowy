@@ -1,5 +1,5 @@
 // PROVISIONAL (PWDRZ-145/146): analytics/recommendation backends are 501 stubs; shapes await implementation.
-import { apiClient } from '../client/api';
+import { apiClient } from '@/shared/api/client/api';
 import type {
   UserActivitySummary,
   PostAnalytics,
@@ -9,8 +9,8 @@ import type {
   TrendPeriod,
 } from './analytics.dto';
 import type { RecommendedPost } from '@/shared/api/recommendation/recommendation.dto';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
-import type { Tag } from '@/shared/api/forum/tag.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
+import type { TagDto as Tag } from '@/shared/api/generated/models/tagDto.dto';
 
 export const analyticsService = {
   getMyActivity: (): Promise<UserActivitySummary> =>

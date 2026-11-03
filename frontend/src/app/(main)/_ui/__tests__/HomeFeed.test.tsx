@@ -1,3 +1,5 @@
+import type { ApiRequestOptions } from '@/shared/api/client/orvalTransport';
+import type { AxiosRequestConfig } from 'axios';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -5,17 +7,24 @@ import { vi } from 'vitest';
 import HomeFeed from '../HomeFeed';
 import { ACTION_UNAVAILABLE_HINT } from '@/app/(main)/_ui/postCard.const';
 import { FEED_ERROR_MESSAGE } from '@/app/(main)/_ui/forumFeed.const';
-import { postService, voteService } from '@/shared/api/forum/forumClient';
 import { FEED_PAGE_SIZE, FEED_QUERY_KEY, FEED_SORT } from '@/shared/api/forum/feedQuery.const';
 import { useStore } from '@/store';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock('@/shared/api/forum/forumClient', () => ({
+const fixtureOperations = vi.hoisted(() => ({
   postService: { list: vi.fn() },
   voteService: { cast: vi.fn(), retract: vi.fn() },
 }));
+const { postService, voteService } = fixtureOperations;
+vi.mock('@/shared/api/client/orvalTransport', async () => {
+  const { mockApiOperations } = await import('@/test/mockApiOperations');
+  return {
+    orvalTransport: (config: AxiosRequestConfig, options: ApiRequestOptions) =>
+      mockApiOperations(config, options, fixtureOperations),
+  };
+});
 
 const list = vi.mocked(postService.list);
 
@@ -72,8 +81,8 @@ describe('HomeFeed', () => {
     expect(screen.getByText('Post 1')).toBeInTheDocument();
     expect(list).toHaveBeenCalledTimes(1);
     expect(list).toHaveBeenCalledWith(
-      { page: 0, size: FEED_PAGE_SIZE, sort: FEED_SORT, categorySlug: undefined },
-      { skipErrorToast: true }
+      { page: 0, size: FEED_PAGE_SIZE, sort: FEED_SORT, categorySlug: undefined, tag: undefined },
+      expect.objectContaining({ skipErrorToast: true, signal: expect.any(AbortSignal) })
     );
   });
 

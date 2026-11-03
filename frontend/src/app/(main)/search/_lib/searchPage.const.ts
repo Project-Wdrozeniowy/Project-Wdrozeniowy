@@ -1,4 +1,4 @@
-import type { SearchType } from '@/shared/api/search/search.dto';
+import type { SearchType } from '@/shared/api/generated/models/searchType.dto';
 
 export interface SearchTab {
   label: string;

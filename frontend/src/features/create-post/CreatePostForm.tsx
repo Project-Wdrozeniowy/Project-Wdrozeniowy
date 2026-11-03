@@ -22,9 +22,13 @@ import { createPostSchema } from '@/features/create-post/createPost.schema';
 import type { CreatePostFormData } from '@/features/create-post/createPost.schema';
 import { FieldLabel } from '@/features/create-post/FieldLabel';
 import { TagInput } from '@/features/create-post/TagInput';
-import { categoriesQueryKey, useCategories } from '@/shared/api/forum/useCategories';
-import type { Category } from '@/shared/api/forum/category.dto';
-import { useCreatePost } from '@/shared/api/forum/useCreatePost';
+import {
+  getListCategoriesQueryKey,
+  useListCategories,
+  useCreatePost,
+} from '@/shared/api/generated/orbita.api';
+import type { CategoryDto as Category } from '@/shared/api/generated/models/categoryDto.dto';
+
 import { cn } from '@/shared/lib/cn';
 
 interface CreatePostFormProps {
@@ -61,11 +65,14 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
     categoryError: `${baseId}-category-error`,
     content: `${baseId}-content`,
   };
-  const categories = useCategories();
+  const categories = useListCategories({
+    query: { staleTime: 5 * 60 * 1000 },
+    request: { skipErrorToast: true },
+  });
   const queryClient = useQueryClient();
   // Which field should get the focus once the form is editable again (see the effect below).
   const [focusRequest, setFocusRequest] = useState<CreatePostField | null>(null);
-  const { mutateAsync, isPending } = useCreatePost();
+  const { mutateAsync, isPending } = useCreatePost({ request: { skipErrorToast: true } });
   const [formError, setFormError] = useState<string | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
   const alertRef = useRef<HTMLDivElement>(null);
@@ -106,7 +113,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
     setPublishedSlug(null);
     setFocusRequest(null);
     try {
-      const post = await mutateAsync(buildCreatePostRequest(values));
+      const post = await mutateAsync({ data: buildCreatePostRequest(values) });
       reset(emptyFormValues());
       setPublishedSlug(post.slug);
       onPublished?.();
@@ -121,7 +128,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
       if (rejected.length > 0 && rejected[0] !== 'tags') setFocusRequest(rejected[0]);
       if (fields.categoryId) {
         // The chosen category is gone: stop offering it right away, then reload the real list.
-        queryClient.setQueryData<Category[]>(categoriesQueryKey, (list) =>
+        queryClient.setQueryData<Category[]>(getListCategoriesQueryKey(), (list) =>
           list?.filter((category) => String(category.id) !== values.categoryId)
         );
         void categories.refetch();

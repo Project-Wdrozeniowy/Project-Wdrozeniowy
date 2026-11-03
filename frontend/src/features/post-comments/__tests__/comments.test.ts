@@ -1,7 +1,7 @@
 // PROVISIONAL PWDRZ-142/67: local UI/model scenarios use planned comment fixtures; backend remains a 501 stub.
 import { canDeleteComment, canReplyToComment, isCommentDeleted } from '../comments';
 import type { Comment } from '@/shared/api/forum/comment.dto';
-import type { UserProfile } from '@/shared/api/user/user.dto';
+import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 
 function makeUser(overrides: Partial<UserProfile> = {}): UserProfile {
   return {

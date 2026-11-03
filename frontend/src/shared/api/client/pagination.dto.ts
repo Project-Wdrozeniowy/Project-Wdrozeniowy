@@ -1,11 +1,4 @@
-/** Shared page shape returned by paginated backend endpoints. */
-// TODO(PWDRZ-130): Generate API DTOs from the backend OpenAPI contract to keep them synchronized.
-export interface PagedResponse<T> {
-  content: T[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  first: boolean;
-  last: boolean;
-}
+import type { PagedResponsePostSummaryDto } from '@/shared/api/generated/models/pagedResponsePostSummaryDto.dto';
+
+/** Provisional pages (comments/notifications) reuse the verified envelope until their contracts exist. */
+export type PagedResponse<T> = Omit<PagedResponsePostSummaryDto, 'content'> & { content: T[] };

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { tagHref } from '@/shared/lib/tagUrl';
-import type { Tag } from '@/shared/api/forum/tag.dto';
+import type { TagDto as Tag } from '@/shared/api/generated/models/tagDto.dto';
 
 interface TagResultProps {
   tag: Tag;

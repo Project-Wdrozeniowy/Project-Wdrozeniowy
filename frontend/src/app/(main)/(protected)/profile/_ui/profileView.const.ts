@@ -1,4 +1,4 @@
-import type { UserRole } from '@/shared/api/user/user.dto';
+import type { UserProfileDtoRole as UserRole } from '@/shared/api/generated/models/userProfileDtoRole.dto';
 
 export const PROFILE_LOAD_ERROR_MESSAGE = 'We could not load your profile. Please try again.';
 

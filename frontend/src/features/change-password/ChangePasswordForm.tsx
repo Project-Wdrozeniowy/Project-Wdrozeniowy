@@ -16,7 +16,7 @@ import {
 } from '@/features/change-password/changePassword';
 import { changePasswordSchema } from '@/features/change-password/changePassword.schema';
 import type { ChangePasswordFormData } from '@/features/change-password/changePassword.schema';
-import { useChangePassword } from '@/shared/api/profile/useChangePassword';
+import { useChangePassword } from '@/shared/api/generated/orbita.api';
 import { cn } from '@/shared/lib/cn';
 import { toast } from '@/shared/lib/toast';
 import FormField from '@/shared/ui/FormField';
@@ -38,7 +38,7 @@ const EMPTY_VALUES: ChangePasswordFormData = {
 export default function ChangePasswordForm() {
   const router = useRouter();
   const logout = useStore((state) => state.logout);
-  const { mutateAsync, isPending } = useChangePassword();
+  const { mutateAsync, isPending } = useChangePassword({ request: { skipErrorToast: true } });
   // The values that passed validation, kept while the user confirms: that is what is sent.
   const [validated, setValidated] = useState<ChangePasswordFormData | null>(null);
   const confirming = validated !== null;
@@ -65,7 +65,7 @@ export default function ChangePasswordForm() {
     if (isPending || !validated) return;
     setFormError(null);
     try {
-      await mutateAsync(toChangePasswordRequest(validated));
+      await mutateAsync({ data: toChangePasswordRequest(validated) });
     } catch (error: unknown) {
       const { fields, form } = getPasswordChangeError(error);
       setValidated(null);

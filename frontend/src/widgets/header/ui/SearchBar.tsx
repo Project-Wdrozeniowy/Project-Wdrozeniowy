@@ -9,7 +9,7 @@ import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
 import { useRecentSearches } from '@/shared/lib/useRecentSearches';
 import { isSearchableTerm, useSearchPreview } from '@/shared/api/search/useSearch';
 import { SEARCH_DEBOUNCE_MS, SEARCH_MAX_LENGTH } from '@/shared/api/search/searchQuery.const';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 import { SearchIcon } from '@/shared/ui/icons';
 import SearchDropdown from './SearchDropdown';
 import type { SearchDropdownView } from './SearchDropdown';

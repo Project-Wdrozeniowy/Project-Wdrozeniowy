@@ -9,7 +9,7 @@ import { toast } from '@/shared/lib/toast';
 import { apiClient } from '@/shared/api/client/api';
 import { tokenMemory } from '@/shared/auth/tokenMemory';
 import { useStore } from '@/store';
-import type { MyProfile } from '@/shared/api/user/user.dto';
+import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 /**
  * SettingsView -> both forms -> hooks -> userService -> the real ApiClient (axios + interceptors).

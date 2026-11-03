@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { CommentItem } from '../CommentItem';
 import type { Comment } from '@/shared/api/forum/comment.dto';
-import type { UserProfile } from '@/shared/api/user/user.dto';
+import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 
 const alice: UserProfile = {
   id: 1,

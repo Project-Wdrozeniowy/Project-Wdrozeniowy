@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { postHref } from '@/shared/lib/searchUrl';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 
 interface PostResultProps {
   post: PostSummary;

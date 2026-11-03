@@ -7,8 +7,9 @@ import {
 import type { ProfileField } from '@/features/edit-profile/profile.const';
 import { apiErrorStatus } from '@/shared/api/client/apiError';
 import type { ProfileFormData } from '@/features/edit-profile/profile.schema';
-import type { ProblemDetail } from '@/shared/api/client/problem.dto';
-import type { MyProfile, UpdateProfileRequest } from '@/shared/api/user/user.dto';
+import type { ProblemDetail } from '@/shared/api/generated/models/problemDetail.dto';
+import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
+import type { UpdateProfileRequest } from '@/shared/api/generated/models/updateProfileRequest.dto';
 
 /** Form values for a profile. The API's `null` (not set) is an empty input. */
 export function profileToFormValues(profile: MyProfile): ProfileFormData {

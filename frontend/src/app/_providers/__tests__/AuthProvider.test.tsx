@@ -4,18 +4,28 @@ import AuthProvider from '../AuthProvider';
 import { useStore } from '@/store';
 import { tokenMemory } from '@/shared/auth/tokenMemory';
 import { apiClient } from '@/shared/api/client/api';
-import { authService } from '@/shared/api/auth/authClient';
-import type { UserProfile } from '@/shared/api/user/user.dto';
+import { loadProfile } from '@/shared/auth/loadProfile';
+import type { MyProfileDto } from '@/shared/api/generated/models/myProfileDto.dto';
 
 vi.mock('@/shared/api/client/api', () => ({
   apiClient: { refreshAccessToken: vi.fn() },
 }));
 
-vi.mock('@/shared/api/auth/authClient', () => ({
-  authService: { loadProfile: vi.fn() },
-}));
+vi.mock('@/shared/auth/loadProfile', () => ({ loadProfile: vi.fn() }));
 
-const mockUser = { id: 1, username: 'alice', role: 'USER' } as UserProfile;
+const mockUser: MyProfileDto = {
+  id: 1,
+  username: 'alice',
+  email: 'alice@example.test',
+  displayName: null,
+  avatarUrl: null,
+  bio: null,
+  role: 'USER',
+  status: 'ACTIVE',
+  postCount: 0,
+  commentCount: 0,
+  createdAt: '2026-01-01T00:00:00Z',
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -40,12 +50,12 @@ describe('AuthProvider', () => {
 
   it('restores the session from the refresh cookie', async () => {
     vi.mocked(apiClient.refreshAccessToken).mockResolvedValue('fresh-token');
-    vi.mocked(authService.loadProfile).mockResolvedValue(mockUser);
+    vi.mocked(loadProfile).mockResolvedValue(mockUser);
 
     renderProvider();
 
     await waitFor(() => expect(useStore.getState().isAuthenticated).toBe(true));
-    expect(authService.loadProfile).toHaveBeenCalledWith('fresh-token');
+    expect(loadProfile).toHaveBeenCalledWith('fresh-token');
     expect(useStore.getState().user).toEqual(mockUser);
     expect(useStore.getState().isInitialized).toBe(true);
     expect(tokenMemory.get()).toBe('fresh-token');
@@ -58,12 +68,12 @@ describe('AuthProvider', () => {
 
     await waitFor(() => expect(useStore.getState().isInitialized).toBe(true));
     expect(useStore.getState().isAuthenticated).toBe(false);
-    expect(authService.loadProfile).not.toHaveBeenCalled();
+    expect(loadProfile).not.toHaveBeenCalled();
   });
 
   it('stays a guest when the profile cannot be loaded', async () => {
     vi.mocked(apiClient.refreshAccessToken).mockResolvedValue('fresh-token');
-    vi.mocked(authService.loadProfile).mockRejectedValue(new Error('500'));
+    vi.mocked(loadProfile).mockRejectedValue(new Error('500'));
 
     renderProvider();
 

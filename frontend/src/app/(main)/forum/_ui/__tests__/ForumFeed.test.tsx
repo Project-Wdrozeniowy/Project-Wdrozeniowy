@@ -1,13 +1,14 @@
+import type { ApiRequestOptions } from '@/shared/api/client/orvalTransport';
+import type { AxiosRequestConfig } from 'axios';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import ForumFeed from '../ForumFeed';
 import { ACTION_UNAVAILABLE_HINT } from '@/app/(main)/_ui/postCard.const';
-import { postService, voteService } from '@/shared/api/forum/forumClient';
 import { useStore } from '@/store';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
@@ -19,10 +20,18 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(search),
 }));
 
-vi.mock('@/shared/api/forum/forumClient', () => ({
+const fixtureOperations = vi.hoisted(() => ({
   postService: { list: vi.fn() },
   voteService: { cast: vi.fn(), retract: vi.fn() },
 }));
+const { postService, voteService } = fixtureOperations;
+vi.mock('@/shared/api/client/orvalTransport', async () => {
+  const { mockApiOperations } = await import('@/test/mockApiOperations');
+  return {
+    orvalTransport: (config: AxiosRequestConfig, options: ApiRequestOptions) =>
+      mockApiOperations(config, options, fixtureOperations),
+  };
+});
 
 const list = vi.mocked(postService.list);
 
@@ -99,9 +108,9 @@ describe('ForumFeed – data flow', () => {
     expect(await screen.findByText('Post 3')).toBeInTheDocument();
     expect(list).toHaveBeenCalledTimes(1);
     expect(list).toHaveBeenCalledWith(
-      { page: 0, size: 10, sort: 'lastActivityAt', categorySlug: undefined },
+      { page: 0, size: 10, sort: 'lastActivityAt', categorySlug: undefined, tag: undefined },
       // The feed shows its own fixed message, so the global toast (which prints server text) is off.
-      { skipErrorToast: true }
+      expect.objectContaining({ skipErrorToast: true, signal: expect.any(AbortSignal) })
     );
   });
 
@@ -490,7 +499,7 @@ describe('ForumFeed – states', () => {
 
     list.mockRejectedValue(new Error('Network Error'));
     await act(async () => {
-      await client.refetchQueries({ queryKey: ['forum-posts'] });
+      await client.refetchQueries({ queryKey: ['/forum/posts'] });
     });
 
     expect(await screen.findByRole('alert')).toHaveTextContent('We could not load the posts');
@@ -507,9 +516,10 @@ describe('ForumFeed – tag filter', () => {
     renderFeed();
 
     expect(await screen.findByText('Post 4')).toBeInTheDocument();
-    expect(list).toHaveBeenCalledWith(expect.objectContaining({ tag: 'react', page: 0 }), {
-      skipErrorToast: true,
-    });
+    expect(list).toHaveBeenCalledWith(
+      expect.objectContaining({ tag: 'react', page: 0 }),
+      expect.objectContaining({ skipErrorToast: true, signal: expect.any(AbortSignal) })
+    );
     expect(screen.getByText('#react')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Show all posts' })).toHaveAttribute('href', '/forum');
   });

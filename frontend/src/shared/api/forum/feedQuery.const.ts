@@ -1,5 +1,7 @@
-/** Root of every cached feed page: `['forum-posts', { page, categorySlug, tag }]`. */
-export const FEED_QUERY_KEY = ['forum-posts'] as const;
+import { getListPostsQueryKey } from '@/shared/api/generated/orbita.api';
+
+/** Prefix shared by every generated feed query, across filters and pages. */
+export const FEED_QUERY_KEY = getListPostsQueryKey();
 
 /** Posts per page in the forum feed. The API accepts 1–100. */
 export const FEED_PAGE_SIZE = 10;

@@ -8,7 +8,7 @@ import ProfileView from '../ProfileView';
 import { toast } from '@/shared/lib/toast';
 import { apiClient } from '@/shared/api/client/api';
 import { useStore } from '@/store';
-import type { MyProfile } from '@/shared/api/user/user.dto';
+import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 /**
  * ProfileView -> hooks -> userService -> the real ApiClient (axios + interceptors).
@@ -468,7 +468,7 @@ describe('data staying in step with the server', () => {
     await loaded();
 
     act(() => {
-      client.setQueryData(['my-profile', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
+      client.setQueryData(['/users/me', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
     });
 
     await waitFor(() => expect(input('Display name').value).toBe('Changed elsewhere'));
@@ -483,7 +483,7 @@ describe('data staying in step with the server', () => {
     const typed = input('Bio').value;
 
     act(() => {
-      client.setQueryData(['my-profile', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
+      client.setQueryData(['/users/me', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
     });
 
     // The untouched field follows the server, the field being edited keeps the user's text.
@@ -502,7 +502,7 @@ describe('data staying in step with the server', () => {
     await user.clear(input('Bio'));
     await user.type(input('Bio'), 'Mine');
     act(() => {
-      client.setQueryData(['my-profile', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
+      client.setQueryData(['/users/me', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
     });
     await waitFor(() => expect(input('Display name').value).toBe('Changed elsewhere'));
 
@@ -547,7 +547,7 @@ describe('data staying in step with the server', () => {
     await user.type(input('Display name'), ' typed');
 
     act(() => {
-      client.setQueryData(['my-profile', 1], { ...PROFILE, postCount: 99 });
+      client.setQueryData(['/users/me', 1], { ...PROFILE, postCount: 99 });
     });
 
     expect(input('Display name').value).toBe('Alice typed');
@@ -573,7 +573,7 @@ describe('data staying in step with the server', () => {
     // A background refresh starts and is still running when the user saves.
     slowMode = true;
     act(() => {
-      void client.refetchQueries({ queryKey: ['my-profile'] });
+      void client.refetchQueries({ queryKey: ['/users/me'] });
     });
     await waitFor(() => expect(staleRequested).toBe(true));
 

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { searchPageHref } from '@/shared/lib/searchUrl';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
-import type { SearchResults } from '@/shared/api/search/search.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
+import type { SearchResultsDto as SearchResults } from '@/shared/api/generated/models/searchResultsDto.dto';
 import RecentSearches from './RecentSearches';
 import SearchMessage from './SearchMessage';
 import SearchPostOption from './SearchPostOption';
