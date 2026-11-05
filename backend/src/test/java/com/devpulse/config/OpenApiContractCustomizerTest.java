@@ -50,7 +50,7 @@ class OpenApiContractCustomizerTest {
 
         customizer.customise(openApi);
 
-        assertThat(schema(openApi, "Thing").getRequired()).containsExactlyInAnyOrder("name", "category");
+        assertThat(schema(openApi, "Thing").getRequired()).containsExactlyInAnyOrder("name", "category", "kind");
         assertThat(schema(openApi, "Category").getRequired()).containsExactly("slug");
         assertThat(schema(openApi, "ThingRequest").getRequired()).isNull();
         assertThat(schema(openApi, "Shared").getRequired()).isNull();
@@ -72,6 +72,10 @@ class OpenApiContractCustomizerTest {
         assertThat(category.getAnyOf()).hasSize(2);
         assertThat(category.getAnyOf().get(0).get$ref()).isEqualTo("#/components/schemas/Category");
         assertThat(category.getAnyOf().get(1).getTypes()).containsExactly("null");
+
+        Schema<?> kind = property(openApi, "Thing", "kind");
+        assertThat(kind.getTypes()).containsExactly("string", "null");
+        assertThat(new ArrayList<Object>(kind.getEnum())).containsExactly("A", "B", null);
     }
 
     @Test
@@ -104,6 +108,7 @@ class OpenApiContractCustomizerTest {
         thing.addProperty("name", typed("string").nullable(true));
         thing.addProperty("category", new Schema<>().$ref("#/components/schemas/Category")
                 .description("Category, if any").nullable(true));
+        thing.addProperty("kind", new Schema<String>().types(Set.of("string"))._enum(List.of("A", "B")).nullable(true));
 
         Schema<?> category = typed("object");
         category.addProperty("slug", typed("string"));
