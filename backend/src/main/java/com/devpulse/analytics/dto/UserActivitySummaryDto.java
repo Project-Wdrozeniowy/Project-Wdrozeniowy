@@ -36,6 +36,6 @@ public class UserActivitySummaryDto {
     @Schema(description = "Total downvotes received on posts and comments")
     private int totalDownvotesReceived;
 
-    @Schema(description = "Timestamp of the last recorded activity")
+    @Schema(description = "When the user last posted, commented or voted; null if never", nullable = true)
     private OffsetDateTime lastActivityAt;
 }

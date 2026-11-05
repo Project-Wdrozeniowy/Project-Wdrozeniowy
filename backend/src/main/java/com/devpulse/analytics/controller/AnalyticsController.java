@@ -4,51 +4,48 @@ import com.devpulse.analytics.dto.ActivityTrendDto;
 import com.devpulse.analytics.dto.PostAnalyticsDto;
 import com.devpulse.analytics.dto.PlatformSummaryDto;
 import com.devpulse.analytics.dto.UserActivitySummaryDto;
+import com.devpulse.analytics.service.AnalyticsService;
 import com.devpulse.forum.dto.PostSummaryDto;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 /**
- * Planned analytics endpoints, implemented under PWDRZ-145.
- *
- * <p>Every operation still answers {@code 501 Not Implemented}, so the
- * controller is hidden from the published OpenAPI contract and its
- * annotations serve as the design reference. When an operation is
- * implemented, move {@code @Hidden} from the class to the operations that
- * are still stubs; {@code OpenApiContractTest} fails while an implemented
- * operation is hidden or a stub is published.
+ * REST controller for activity and engagement analytics; how each figure is
+ * counted is documented on {@link AnalyticsService}. Trending posts are
+ * public, everything else needs authentication.
  */
-@Hidden
 @Tag(name = "Analytics", description = "Activity and engagement analytics")
 @RestController
 @RequestMapping("/analytics")
 @SecurityRequirement(name = "bearerAuth")
+@RequiredArgsConstructor
 public class AnalyticsController {
+
+    private final AnalyticsService analyticsService;
 
     @Operation(summary = "Get own activity summary")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Summary returned"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized")
+        @ApiResponse(responseCode = "401", description = "Not authenticated")
     })
     @GetMapping("/me")
     public UserActivitySummaryDto getMyActivitySummary() {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        return analyticsService.myActivity();
     }
 
     @Operation(summary = "Get analytics for a specific post")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Post analytics returned"),
+        @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "403", description = "Admin or Moderator role required"),
         @ApiResponse(responseCode = "404", description = "Post not found")
     })
@@ -56,25 +53,28 @@ public class AnalyticsController {
     @PreAuthorize("hasAnyRole('ADMIN','MODERATOR')")
     public PostAnalyticsDto getPostAnalytics(
             @Parameter(description = "Post ID", example = "101") @PathVariable Long id) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        return analyticsService.postAnalytics(id);
     }
 
     @Operation(summary = "Get platform-wide summary")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Summary returned"),
+        @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "403", description = "Admin role required")
     })
     @GetMapping("/summary")
     @PreAuthorize("hasRole('ADMIN')")
     public PlatformSummaryDto getPlatformSummary() {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        return analyticsService.platformSummary();
     }
 
     @Operation(summary = "Get activity trend for a metric over a period",
-            description = "Returns daily counts for the chosen metric. Useful for time-series charts on the admin dashboard.")
+            description = "Daily counts (UTC) of the rows created for the chosen metric within the period; "
+                    + "days without rows count 0.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Trend data returned"),
         @ApiResponse(responseCode = "400", description = "Invalid metric or period"),
+        @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "403", description = "Admin role required")
     })
     @GetMapping("/trends")
@@ -86,14 +86,16 @@ public class AnalyticsController {
             @Parameter(description = "Time period", example = "7d",
                     schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"24h", "7d", "30d", "90d"}))
             @RequestParam(defaultValue = "7d") String period) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        return analyticsService.trend(metric, period);
     }
 
     @Operation(summary = "Get trending posts for a time window",
-            description = "Returns the top posts ranked by a combination of views, votes, and comment activity within the window.")
+            description = "Public. The most active published or locked posts within the window, ranked by "
+                    + "views + 2 x votes + 3 x comments in the window; posts without activity are left out.",
+            security = {})
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Trending posts returned"),
-        @ApiResponse(responseCode = "400", description = "Invalid period")
+        @ApiResponse(responseCode = "400", description = "Invalid period or limit")
     })
     @GetMapping("/trending-posts")
     public List<PostSummaryDto> getTrendingPosts(
@@ -102,6 +104,6 @@ public class AnalyticsController {
             @RequestParam(defaultValue = "24h") String period,
             @Parameter(description = "Maximum number of results (1–50)", example = "10")
             @RequestParam(defaultValue = "10") int limit) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        return analyticsService.trendingPosts(period, limit);
     }
 }

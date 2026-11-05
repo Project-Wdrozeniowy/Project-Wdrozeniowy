@@ -2,6 +2,7 @@ package com.devpulse.forum.service;
 
 import com.devpulse.auth.entity.User;
 import com.devpulse.auth.repository.UserRepository;
+import com.devpulse.analytics.repository.AnalyticsRepository;
 import com.devpulse.auth.util.AuthenticatedUserResolver;
 import com.devpulse.exception.AppException;
 import com.devpulse.forum.dto.CreatePostRequest;
@@ -91,6 +92,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final VoteRepository voteRepository;
     private final PostSubscriptionRepository subscriptionRepository;
+    private final AnalyticsRepository analyticsRepository;
     private final AuthenticatedUserResolver currentUser;
     private final TransactionTemplate transactionTemplate;
 
@@ -141,14 +143,18 @@ public class PostService {
     }
 
     /**
-     * Returns the post with the given slug.
+     * Returns the post with the given slug and records the read as a
+     * {@code POST_VIEWED} event for analytics (anonymous reads without a user).
      *
      * @throws AppException HTTP 404 if it does not exist, is deleted, or is a
      *                      draft the caller may not see
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public PostDto getBySlug(String slug) {
-        return full(loadReadable(slug));
+        Post post = loadReadable(slug);
+        Authentication auth = auth();
+        analyticsRepository.recordPostView(post.getId(), isAuthenticated(auth) ? auth.getName() : null);
+        return full(post);
     }
 
     /**

@@ -77,6 +77,7 @@ public class OpenApiConfig {
                 new Tag().name("Forum \u2013 Subscriptions").description("Subscribe to new comments on posts"),
                 new Tag().name("Search").description("Search posts, users and tags"),
                 new Tag().name("Notifications").description("Manage user notifications"),
+                new Tag().name("Analytics").description("Activity and engagement analytics"),
                 new Tag().name("Admin").description("Administration endpoints, ADMIN role only")
         );
     }
