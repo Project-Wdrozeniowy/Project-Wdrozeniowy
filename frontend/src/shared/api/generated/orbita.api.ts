@@ -32,11 +32,17 @@ import type { CategoryDto } from './models/categoryDto.dto';
 
 import type { ChangePasswordRequest } from './models/changePasswordRequest.dto';
 
+import type { CommentDto } from './models/commentDto.dto';
+
+import type { CreateCommentRequest } from './models/createCommentRequest.dto';
+
 import type { CreatePostRequest } from './models/createPostRequest.dto';
 
 import type { GetActivityTrendParams } from './models/getActivityTrendParams.dto';
 
 import type { GetTrendingPostsParams } from './models/getTrendingPostsParams.dto';
+
+import type { ListCommentsParams } from './models/listCommentsParams.dto';
 
 import type { ListNotificationsParams } from './models/listNotificationsParams.dto';
 
@@ -47,6 +53,8 @@ import type { MyProfileDto } from './models/myProfileDto.dto';
 import type { MySubscriptionsParams } from './models/mySubscriptionsParams.dto';
 
 import type { NotificationDto } from './models/notificationDto.dto';
+
+import type { PagedResponseCommentDto } from './models/pagedResponseCommentDto.dto';
 
 import type { PagedResponseNotificationDto } from './models/pagedResponseNotificationDto.dto';
 
@@ -69,6 +77,8 @@ import type { RegisterRequest } from './models/registerRequest.dto';
 import type { SearchParams } from './models/searchParams.dto';
 
 import type { SearchResultsDto } from './models/searchResultsDto.dto';
+
+import type { UpdateCommentRequest } from './models/updateCommentRequest.dto';
 
 import type { UpdatePostRequest } from './models/updatePostRequest.dto';
 
@@ -1397,6 +1407,175 @@ export const invalidateGetCategory = async (
 };
 
 /**
+ * The author or staff. The comment stays in its thread as a placeholder.
+ * @summary Delete a comment
+ */
+export const deleteComment = (
+  id: number,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    { url: `/forum/comments/${encodeURIComponent(String(id))}`, method: 'DELETE', signal },
+    options
+  );
+};
+
+export const getDeleteCommentMutationKey = () => ['deleteComment'] as const;
+
+export const getDeleteCommentMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteComment>>,
+    TError,
+    DeleteCommentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteComment>>,
+  TError,
+  DeleteCommentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteCommentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteComment>>,
+    DeleteCommentMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteComment(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteCommentMutationResult = NonNullable<Awaited<ReturnType<typeof deleteComment>>>;
+
+export type DeleteCommentMutationError = ErrorType<ProblemDetail>;
+export type DeleteCommentMutationVariables = { id: number };
+
+/**
+ * @summary Delete a comment
+ */
+export const useDeleteComment = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteComment>>,
+      TError,
+      DeleteCommentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteComment>>,
+  TError,
+  DeleteCommentMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeleteCommentMutationOptions(options), queryClient);
+};
+
+/**
+ * The author or staff.
+ * @summary Update a comment
+ */
+export const updateComment = (
+  id: number,
+  updateCommentRequest: BodyType<UpdateCommentRequest>,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<CommentDto>(
+    {
+      url: `/forum/comments/${encodeURIComponent(String(id))}`,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      data: updateCommentRequest,
+      signal,
+    },
+    options
+  );
+};
+
+export const getUpdateCommentMutationKey = () => ['updateComment'] as const;
+
+export const getUpdateCommentMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateComment>>,
+    TError,
+    UpdateCommentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateComment>>,
+  TError,
+  UpdateCommentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateCommentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateComment>>,
+    UpdateCommentMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateComment(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCommentMutationResult = NonNullable<Awaited<ReturnType<typeof updateComment>>>;
+export type UpdateCommentMutationBody = BodyType<UpdateCommentRequest>;
+export type UpdateCommentMutationError = ErrorType<ProblemDetail>;
+export type UpdateCommentMutationVariables = { id: number; data: BodyType<UpdateCommentRequest> };
+
+/**
+ * @summary Update a comment
+ */
+export const useUpdateComment = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateComment>>,
+      TError,
+      UpdateCommentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateComment>>,
+  TError,
+  UpdateCommentMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateCommentMutationOptions(options), queryClient);
+};
+
+/**
  * Public. Without a status filter only published and locked posts are listed. A bearer token is optional and only widens what the status filter may return.
  * @summary List posts with optional filtering and pagination
  */
@@ -1914,6 +2093,241 @@ export const useUpdatePost = <TError = ErrorType<ProblemDetail>, TContext = unkn
   TContext
 > => {
   return useMutation(getUpdatePostMutationOptions(options), queryClient);
+};
+
+/**
+ * Pages root comments, oldest first; each comes with its replies down to depth 5. Deleted comments are placeholders without content and author.
+ * @summary List comments for a post
+ */
+export const listComments = (
+  slug: string,
+  params?: ListCommentsParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PagedResponseCommentDto>(
+    {
+      url: `/forum/posts/${encodeURIComponent(String(slug))}/comments`,
+      method: 'GET',
+      params,
+      signal,
+    },
+    options
+  );
+};
+
+export const getListCommentsQueryKey = (slug: string, params?: ListCommentsParams) => {
+  return [`/forum/posts/${slug}/comments`, ...(params ? [params] : [])] as const;
+};
+
+export const getListCommentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listComments>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  slug: string,
+  params?: ListCommentsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listComments>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCommentsQueryKey(slug, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listComments>>> = ({ signal }) =>
+    listComments(slug, params, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: slug !== null && slug !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof listComments>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type ListCommentsQueryResult = NonNullable<Awaited<ReturnType<typeof listComments>>>;
+export type ListCommentsQueryError = ErrorType<ProblemDetail>;
+
+export function useListComments<
+  TData = Awaited<ReturnType<typeof listComments>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  slug: string,
+  params: undefined | ListCommentsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listComments>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listComments>>,
+          TError,
+          Awaited<ReturnType<typeof listComments>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListComments<
+  TData = Awaited<ReturnType<typeof listComments>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  slug: string,
+  params?: ListCommentsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listComments>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listComments>>,
+          TError,
+          Awaited<ReturnType<typeof listComments>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListComments<
+  TData = Awaited<ReturnType<typeof listComments>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  slug: string,
+  params?: ListCommentsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listComments>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List comments for a post
+ */
+
+export function useListComments<
+  TData = Awaited<ReturnType<typeof listComments>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  slug: string,
+  params?: ListCommentsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listComments>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListCommentsQueryOptions(slug, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useListComments} query
+ */
+export const invalidateListComments = async (
+  queryClient: QueryClient,
+  slug: string,
+  params?: ListCommentsParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getListCommentsQueryKey(slug, params) }, options);
+
+  return queryClient;
+};
+
+/**
+ * With parentId the comment replies to that comment of the same post.
+ * @summary Add a comment to a post
+ */
+export const createComment = (
+  slug: string,
+  createCommentRequest: BodyType<CreateCommentRequest>,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<CommentDto>(
+    {
+      url: `/forum/posts/${encodeURIComponent(String(slug))}/comments`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: createCommentRequest,
+      signal,
+    },
+    options
+  );
+};
+
+export const getCreateCommentMutationKey = () => ['createComment'] as const;
+
+export const getCreateCommentMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createComment>>,
+    TError,
+    CreateCommentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createComment>>,
+  TError,
+  CreateCommentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateCommentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createComment>>,
+    CreateCommentMutationVariables
+  > = (props) => {
+    const { slug, data } = props ?? {};
+
+    return createComment(slug, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCommentMutationResult = NonNullable<Awaited<ReturnType<typeof createComment>>>;
+export type CreateCommentMutationBody = BodyType<CreateCommentRequest>;
+export type CreateCommentMutationError = ErrorType<ProblemDetail>;
+export type CreateCommentMutationVariables = { slug: string; data: BodyType<CreateCommentRequest> };
+
+/**
+ * @summary Add a comment to a post
+ */
+export const useCreateComment = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createComment>>,
+      TError,
+      CreateCommentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof createComment>>,
+  TError,
+  CreateCommentMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateCommentMutationOptions(options), queryClient);
 };
 
 /**

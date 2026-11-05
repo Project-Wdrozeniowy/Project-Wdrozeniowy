@@ -60,6 +60,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     int adjustPostCount(@Param("userId") Long userId, @Param("delta") int delta);
 
     /**
+     * Atomically adds {@code delta} to the user's comment counter, like
+     * {@link #adjustPostCount}.
+     *
+     * @param userId the author
+     * @param delta  {@code +1} or {@code -1}
+     * @return the number of updated rows
+     */
+    @Modifying
+    @Query("UPDATE User u SET u.commentCount = u.commentCount + :delta WHERE u.id = :userId")
+    int adjustCommentCount(@Param("userId") Long userId, @Param("delta") int delta);
+
+    /**
      * Users with {@code status} whose username or display name matches
      * {@code pattern}, a lower-case {@code LIKE} pattern from
      * {@link com.devpulse.common.util.LikePatterns#containing}.

@@ -341,6 +341,19 @@ public class PostService {
         return post;
     }
 
+    /**
+     * Loads a post the caller may read, by id.
+     *
+     * @throws AppException HTTP 404 if it does not exist, is deleted, or is a
+     *                      draft the caller may not see
+     */
+    public Post loadReadable(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(PostService::notFound);
+        requireReadable(post);
+        return post;
+    }
+
     /** Deleted posts and other users' drafts (except for admins) read as 404. */
     private static void requireReadable(Post post) {
         if (post.getStatus() == PostStatus.DELETED) {
