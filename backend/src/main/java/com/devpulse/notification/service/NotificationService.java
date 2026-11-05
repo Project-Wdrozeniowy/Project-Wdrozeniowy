@@ -1,10 +1,12 @@
 package com.devpulse.notification.service;
 
+import com.devpulse.auth.entity.User;
 import com.devpulse.auth.util.AuthenticatedUserResolver;
 import com.devpulse.common.dto.PagedResponse;
 import com.devpulse.exception.AppException;
 import com.devpulse.notification.dto.NotificationDto;
 import com.devpulse.notification.entity.Notification;
+import com.devpulse.notification.entity.NotificationType;
 import com.devpulse.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -14,13 +16,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+
 /**
  * The caller's notifications: list, mark read and delete.
  *
  * <p>Every operation works on the caller's own notifications only; another
- * user's notification answers 403. Creating notifications belongs to the
- * features that cause them (comments under PWDRZ-142, votes, moderation), and
- * real-time delivery to PWDRZ-104.
+ * user's notification answers 403. The features that cause notifications
+ * decide whom to notify and store them with {@link #send} (comments under
+ * PWDRZ-142); real-time delivery is PWDRZ-104.
  */
 @Service
 @RequiredArgsConstructor
@@ -30,6 +34,31 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final AuthenticatedUserResolver currentUser;
+
+    /**
+     * Stores one unread notification per recipient. Joins the caller's
+     * transaction, so the notifications are kept only if the change that
+     * caused them is.
+     *
+     * @param recipientIds users to notify; nothing is stored when empty
+     * @param sender       the user whose action caused the notifications
+     * @param entityType   {@code POST} or {@code COMMENT}
+     * @param entityId     id of the post or comment the notifications relate to
+     */
+    @Transactional
+    public void send(Collection<Long> recipientIds, User sender, NotificationType type,
+                     String entityType, Long entityId, String message) {
+        notificationRepository.saveAll(recipientIds.stream()
+                .map(recipientId -> Notification.builder()
+                        .recipientId(recipientId)
+                        .sender(sender)
+                        .type(type)
+                        .entityType(entityType)
+                        .entityId(entityId)
+                        .message(message)
+                        .build())
+                .toList());
+    }
 
     /**
      * The caller's notifications, newest first; only unread ones when {@code unreadOnly}.

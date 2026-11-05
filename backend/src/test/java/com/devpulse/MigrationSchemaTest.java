@@ -7,12 +7,15 @@ import com.devpulse.auth.entity.UserStatus;
 import com.devpulse.auth.repository.RefreshTokenRepository;
 import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.forum.entity.Category;
+import com.devpulse.forum.entity.Comment;
+import com.devpulse.forum.entity.CommentStatus;
 import com.devpulse.forum.entity.Post;
 import com.devpulse.forum.entity.PostStatus;
 import com.devpulse.forum.entity.Tag;
 import com.devpulse.forum.entity.Vote;
 import com.devpulse.forum.enums.VoteType;
 import com.devpulse.forum.repository.CategoryRepository;
+import com.devpulse.forum.repository.CommentRepository;
 import com.devpulse.forum.repository.PostRepository;
 import com.devpulse.forum.repository.PostSubscriptionRepository;
 import com.devpulse.forum.repository.TagRepository;
@@ -74,6 +77,9 @@ class MigrationSchemaTest {
 
     @Autowired
     private NotificationRepository notificationRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Autowired
     private EntityManager entityManager;
@@ -168,6 +174,51 @@ class MigrationSchemaTest {
                 .get()
                 .extracting(Post::getStatus)
                 .isEqualTo(status);
+    }
+
+    /**
+     * {@code comments.status} is the native {@code comment_status} enum, every
+     * Java constant exists in it, and a reply keeps its post, parent, author
+     * and depth; the vote score and timestamps come from the database.
+     */
+    @ParameterizedTest
+    @EnumSource(CommentStatus.class)
+    void commentRoundTripsThroughNativeEnum(CommentStatus status) {
+        String name = "comment-" + status.name().toLowerCase();
+        User author = userRepository.saveAndFlush(user(name, Role.USER));
+        Post post = postRepository.saveAndFlush(Post.builder()
+                .author(author)
+                .title(name)
+                .slug("schema-" + name)
+                .content("content")
+                .build());
+        Long rootId = commentRepository.saveAndFlush(Comment.builder()
+                .postId(post.getId())
+                .author(author)
+                .content("root")
+                .build()).getId();
+        Long id = commentRepository.saveAndFlush(Comment.builder()
+                .postId(post.getId())
+                .author(author)
+                .parentId(rootId)
+                .content("reply")
+                .status(status)
+                .depth((short) 1)
+                .build()).getId();
+        entityManager.clear();
+
+        assertThat(commentRepository.findWithAuthorById(id)).get()
+                .satisfies(comment -> {
+                    assertThat(comment.getStatus()).isEqualTo(status);
+                    assertThat(comment.getPostId()).isEqualTo(post.getId());
+                    assertThat(comment.getParentId()).isEqualTo(rootId);
+                    assertThat(comment.getAuthor().getUsername()).isEqualTo(name);
+                    assertThat(comment.getContent()).isEqualTo("reply");
+                    assertThat(comment.getDepth()).isEqualTo((short) 1);
+                    assertThat(comment.getVoteScore()).isZero();
+                    assertThat(comment.getCreatedAt()).isNotNull();
+                    assertThat(comment.getUpdatedAt()).isNotNull();
+                });
     }
 
     /** Every table has non-null {@code created_at} and {@code updated_at} with defaults and the V7 trigger. */

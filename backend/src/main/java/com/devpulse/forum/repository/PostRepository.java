@@ -7,9 +7,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -48,4 +50,17 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     @Override
     @EntityGraph(attributePaths = {"author", "category"})
     Page<Post> findAll(Specification<Post> spec, Pageable pageable);
+
+    /**
+     * Counts a new comment on the post and makes {@code at} its last activity.
+     * A bulk update, so concurrent comments don't overwrite each other's count.
+     */
+    @Modifying
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount + 1, p.lastActivityAt = :at WHERE p.id = :postId")
+    int commentAdded(@Param("postId") Long postId, @Param("at") OffsetDateTime at);
+
+    /** Stops counting a deleted comment on the post. */
+    @Modifying
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount - 1 WHERE p.id = :postId")
+    int commentRemoved(@Param("postId") Long postId);
 }

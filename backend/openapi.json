@@ -21,6 +21,12 @@
     "description" : "Browse and manage forum posts",
     "name" : "Forum – Posts"
   }, {
+    "description" : "Read and manage comments on forum posts",
+    "name" : "Forum – Comments"
+  }, {
+    "description" : "Cast and retract votes on posts and comments",
+    "name" : "Forum – Votes"
+  }, {
     "description" : "Subscribe to new comments on posts",
     "name" : "Forum – Subscriptions"
   }, {
@@ -35,9 +41,6 @@
   }, {
     "description" : "Administration endpoints, ADMIN role only",
     "name" : "Admin"
-  }, {
-    "description" : "Cast and retract votes on posts and comments",
-    "name" : "Forum – Votes"
   } ],
   "paths" : {
     "/admin/ping" : {
@@ -618,6 +621,145 @@
         "tags" : [ "Forum – Categories" ]
       }
     },
+    "/forum/comments/{id}" : {
+      "delete" : {
+        "description" : "The author or staff. The comment stays in its thread as a placeholder.",
+        "operationId" : "deleteComment",
+        "parameters" : [ {
+          "description" : "Comment ID",
+          "example" : 55,
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Comment deleted"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not the author or staff, or the post is locked"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Comment not found or already deleted"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Delete a comment",
+        "tags" : [ "Forum – Comments" ]
+      },
+      "patch" : {
+        "description" : "The author or staff.",
+        "operationId" : "updateComment",
+        "parameters" : [ {
+          "description" : "Comment ID",
+          "example" : 55,
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateCommentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CommentDto"
+                }
+              }
+            },
+            "description" : "Comment updated"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Validation error"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not the author or staff, or the post is locked"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Comment not found or deleted"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Update a comment",
+        "tags" : [ "Forum – Comments" ]
+      }
+    },
     "/forum/posts" : {
       "get" : {
         "description" : "Public. Without a status filter only published and locked posts are listed. A bearer token is optional and only widens what the status filter may return.",
@@ -952,6 +1094,179 @@
         } ],
         "summary" : "Update a post by slug",
         "tags" : [ "Forum – Posts" ]
+      }
+    },
+    "/forum/posts/{slug}/comments" : {
+      "get" : {
+        "description" : "Pages root comments, oldest first; each comes with its replies down to depth 5. Deleted comments are placeholders without content and author.",
+        "operationId" : "listComments",
+        "parameters" : [ {
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Page number (0-based)",
+          "example" : 0,
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "description" : "Page size, 1 to 50",
+          "example" : 20,
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponseCommentDto"
+                }
+              }
+            },
+            "description" : "Comments returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid pagination"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Post not found, deleted, or a draft the caller may not see"
+          }
+        },
+        "summary" : "List comments for a post",
+        "tags" : [ "Forum – Comments" ]
+      },
+      "post" : {
+        "description" : "With parentId the comment replies to that comment of the same post.",
+        "operationId" : "createComment",
+        "parameters" : [ {
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CommentDto"
+                }
+              }
+            },
+            "description" : "Comment created"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Validation error"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Post is locked"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Post or parent comment not found"
+          },
+          "409" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Post is a draft, or the parent comment was deleted"
+          },
+          "422" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Maximum comment nesting depth (5) exceeded"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Add a comment to a post",
+        "tags" : [ "Forum – Comments" ]
       }
     },
     "/forum/posts/{slug}/pin" : {
@@ -1919,6 +2234,94 @@
         },
         "required" : [ "currentPassword", "newPassword" ]
       },
+      "CommentDto" : {
+        "type" : "object",
+        "description" : "Comment on a forum post, optionally with nested replies",
+        "properties" : {
+          "author" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/UserSummaryDto"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Comment author; null for a deleted comment"
+          },
+          "content" : {
+            "type" : [ "string", "null" ],
+            "description" : "Comment content (Markdown); null for a deleted comment"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Creation timestamp"
+          },
+          "depth" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Nesting depth (0 = root comment, maximum allowed depth is 5)"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Comment ID",
+            "example" : 55
+          },
+          "parentId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64",
+            "description" : "ID of the parent comment; null for root comments",
+            "example" : 54
+          },
+          "postId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "ID of the post this comment belongs to",
+            "example" : 101
+          },
+          "replies" : {
+            "type" : "array",
+            "description" : "Direct replies, oldest first, each with its own replies down to depth 5. Empty in the responses to creating and updating a comment.",
+            "items" : {
+              "$ref" : "#/components/schemas/CommentDto"
+            }
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "Comment status; only VISIBLE and DELETED comments are listed",
+            "enum" : [ "VISIBLE", "HIDDEN", "DELETED" ],
+            "example" : "VISIBLE"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Last update timestamp"
+          },
+          "voteScore" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Cumulative vote score"
+          }
+        },
+        "required" : [ "author", "content", "createdAt", "depth", "id", "parentId", "postId", "replies", "status", "updatedAt", "voteScore" ]
+      },
+      "CreateCommentRequest" : {
+        "type" : "object",
+        "description" : "Request body for creating a comment",
+        "properties" : {
+          "content" : {
+            "type" : "string",
+            "description" : "Comment content (Markdown)",
+            "maxLength" : 10000,
+            "minLength" : 0
+          },
+          "parentId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "ID of the parent comment for threaded replies (omit for root comment)"
+          }
+        },
+        "required" : [ "content" ]
+      },
       "CreatePostRequest" : {
         "type" : "object",
         "description" : "Request body for creating a new post",
@@ -2090,6 +2493,52 @@
           }
         },
         "required" : [ "createdAt", "entityId", "entityType", "id", "message", "read", "senderUsername", "type" ]
+      },
+      "PagedResponseCommentDto" : {
+        "type" : "object",
+        "description" : "Generic paginated response wrapper",
+        "properties" : {
+          "content" : {
+            "type" : "array",
+            "description" : "Page content",
+            "items" : {
+              "$ref" : "#/components/schemas/CommentDto"
+            }
+          },
+          "first" : {
+            "type" : "boolean",
+            "description" : "Whether this is the first page"
+          },
+          "last" : {
+            "type" : "boolean",
+            "description" : "Whether this is the last page"
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Current page number (0-based)",
+            "example" : 0
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Page size",
+            "example" : 20
+          },
+          "totalElements" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Total number of elements",
+            "example" : 100
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Total number of pages",
+            "example" : 5
+          }
+        },
+        "required" : [ "content", "first", "last", "page", "size", "totalElements", "totalPages" ]
       },
       "PagedResponseNotificationDto" : {
         "type" : "object",
@@ -2699,6 +3148,19 @@
           }
         },
         "required" : [ "count", "date" ]
+      },
+      "UpdateCommentRequest" : {
+        "type" : "object",
+        "description" : "Request body for updating a comment",
+        "properties" : {
+          "content" : {
+            "type" : "string",
+            "description" : "New comment content (Markdown)",
+            "maxLength" : 10000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "content" ]
       },
       "UpdatePostRequest" : {
         "type" : "object",
