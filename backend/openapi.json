@@ -9,42 +9,42 @@
     "url" : "/api"
   } ],
   "tags" : [ {
-    "name" : "Auth",
-    "description" : "Registration, login, token management"
+    "description" : "Registration, login, token management",
+    "name" : "Auth"
   }, {
-    "name" : "Users",
-    "description" : "User profile endpoints"
+    "description" : "User profile endpoints",
+    "name" : "Users"
   }, {
-    "name" : "Forum – Categories",
-    "description" : "Browse and manage forum categories"
+    "description" : "Browse and manage forum categories",
+    "name" : "Forum – Categories"
   }, {
-    "name" : "Forum – Posts",
-    "description" : "Browse and manage forum posts"
+    "description" : "Browse and manage forum posts",
+    "name" : "Forum – Posts"
   }, {
-    "name" : "Forum – Subscriptions",
-    "description" : "Subscribe to new comments on posts"
+    "description" : "Subscribe to new comments on posts",
+    "name" : "Forum – Subscriptions"
   }, {
-    "name" : "Search",
-    "description" : "Search posts, users and tags"
+    "description" : "Search posts, users and tags",
+    "name" : "Search"
   }, {
-    "name" : "Notifications",
-    "description" : "Manage user notifications"
+    "description" : "Manage user notifications",
+    "name" : "Notifications"
   }, {
-    "name" : "Admin",
-    "description" : "Administration endpoints, ADMIN role only"
+    "description" : "Activity and engagement analytics",
+    "name" : "Analytics"
   }, {
-    "name" : "Forum – Votes",
-    "description" : "Cast and retract votes on posts and comments"
+    "description" : "Administration endpoints, ADMIN role only",
+    "name" : "Admin"
+  }, {
+    "description" : "Cast and retract votes on posts and comments",
+    "name" : "Forum – Votes"
   } ],
   "paths" : {
     "/admin/ping" : {
       "get" : {
-        "tags" : [ "Admin" ],
-        "summary" : "Check that the caller has admin access",
         "operationId" : "ping",
         "responses" : {
           "200" : {
-            "description" : "Caller is an admin; body is {\"status\": \"ok\", \"scope\": \"admin\"}",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -54,38 +54,308 @@
                   }
                 }
               }
-            }
+            },
+            "description" : "Caller is an admin; body is {\"status\": \"ok\", \"scope\": \"admin\"}"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           },
           "403" : {
-            "description" : "Admin role required",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Admin role required"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Check that the caller has admin access",
+        "tags" : [ "Admin" ]
+      }
+    },
+    "/analytics/me" : {
+      "get" : {
+        "operationId" : "getMyActivitySummary",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserActivitySummaryDto"
+                }
+              }
+            },
+            "description" : "Summary returned"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Get own activity summary",
+        "tags" : [ "Analytics" ]
+      }
+    },
+    "/analytics/posts/{id}" : {
+      "get" : {
+        "operationId" : "getPostAnalytics",
+        "parameters" : [ {
+          "description" : "Post ID",
+          "example" : 101,
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PostAnalyticsDto"
+                }
+              }
+            },
+            "description" : "Post analytics returned"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin or Moderator role required"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Post not found"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Get analytics for a specific post",
+        "tags" : [ "Analytics" ]
+      }
+    },
+    "/analytics/summary" : {
+      "get" : {
+        "operationId" : "getPlatformSummary",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlatformSummaryDto"
+                }
+              }
+            },
+            "description" : "Summary returned"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin role required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Get platform-wide summary",
+        "tags" : [ "Analytics" ]
+      }
+    },
+    "/analytics/trending-posts" : {
+      "get" : {
+        "description" : "Public. The most active published or locked posts within the window, ranked by views + 2 x votes + 3 x comments in the window; posts without activity are left out.",
+        "operationId" : "getTrendingPosts",
+        "parameters" : [ {
+          "description" : "Time window",
+          "example" : "24h",
+          "in" : "query",
+          "name" : "period",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "24h", "7d", "30d" ]
+          }
+        }, {
+          "description" : "Maximum number of results (1–50)",
+          "example" : 10,
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PostSummaryDto"
+                  }
+                }
+              }
+            },
+            "description" : "Trending posts returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid period or limit"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Get trending posts for a time window",
+        "tags" : [ "Analytics" ]
+      }
+    },
+    "/analytics/trends" : {
+      "get" : {
+        "description" : "Daily counts (UTC) of the rows created for the chosen metric within the period; days without rows count 0.",
+        "operationId" : "getActivityTrend",
+        "parameters" : [ {
+          "description" : "Metric to track",
+          "example" : "posts",
+          "in" : "query",
+          "name" : "metric",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "posts", "comments", "votes", "users" ]
+          }
+        }, {
+          "description" : "Time period",
+          "example" : "7d",
+          "in" : "query",
+          "name" : "period",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "24h", "7d", "30d", "90d" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ActivityTrendDto"
+                }
+              }
+            },
+            "description" : "Trend data returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid metric or period"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin role required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Get activity trend for a metric over a period",
+        "tags" : [ "Analytics" ]
       }
     },
     "/auth/login" : {
       "post" : {
-        "tags" : [ "Auth" ],
-        "summary" : "Login and receive an access token",
         "operationId" : "login",
         "requestBody" : {
           "content" : {
@@ -99,6 +369,13 @@
         },
         "responses" : {
           "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuthResponse"
+                }
+              }
+            },
             "description" : "Authenticated successfully",
             "headers" : {
               "Set-Cookie" : {
@@ -108,42 +385,35 @@
                 },
                 "style" : "simple"
               }
-            },
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/AuthResponse"
-                }
-              }
             }
           },
           "400" : {
-            "description" : "Validation error",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error"
           },
           "401" : {
-            "description" : "Bad credentials",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Bad credentials"
           }
-        }
+        },
+        "summary" : "Login and receive an access token",
+        "tags" : [ "Auth" ]
       }
     },
     "/auth/logout" : {
       "post" : {
-        "tags" : [ "Auth" ],
-        "summary" : "Logout — revoke the refresh token and clear the cookie",
         "description" : "The refresh cookie itself acts as the credential, so no access token is required. Idempotent: a missing, unknown or already-revoked token also returns 204.",
         "operationId" : "logout",
         "parameters" : [ {
@@ -168,13 +438,13 @@
               }
             }
           }
-        }
+        },
+        "summary" : "Logout — revoke the refresh token and clear the cookie",
+        "tags" : [ "Auth" ]
       }
     },
     "/auth/refresh" : {
       "post" : {
-        "tags" : [ "Auth" ],
-        "summary" : "Refresh the access token using the refresh cookie",
         "operationId" : "refresh",
         "parameters" : [ {
           "description" : "Refresh token cookie set by register, login and refresh; the browser sends it automatically",
@@ -187,6 +457,13 @@
         } ],
         "responses" : {
           "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuthResponse"
+                }
+              }
+            },
             "description" : "Token refreshed",
             "headers" : {
               "Set-Cookie" : {
@@ -196,16 +473,16 @@
                 },
                 "style" : "simple"
               }
-            },
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/AuthResponse"
-                }
-              }
             }
           },
           "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
             "description" : "Refresh cookie missing, invalid or expired",
             "headers" : {
               "Set-Cookie" : {
@@ -215,22 +492,15 @@
                 },
                 "style" : "simple"
               }
-            },
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
             }
           }
-        }
+        },
+        "summary" : "Refresh the access token using the refresh cookie",
+        "tags" : [ "Auth" ]
       }
     },
     "/auth/register" : {
       "post" : {
-        "tags" : [ "Auth" ],
-        "summary" : "Register a new account",
         "operationId" : "register",
         "requestBody" : {
           "content" : {
@@ -244,6 +514,13 @@
         },
         "responses" : {
           "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuthResponse"
+                }
+              }
+            },
             "description" : "Registered successfully",
             "headers" : {
               "Set-Cookie" : {
@@ -253,46 +530,38 @@
                 },
                 "style" : "simple"
               }
-            },
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/AuthResponse"
-                }
-              }
             }
           },
           "400" : {
-            "description" : "Validation error",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error"
           },
           "409" : {
-            "description" : "Username or email already taken",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Username or email already taken"
           }
-        }
+        },
+        "summary" : "Register a new account",
+        "tags" : [ "Auth" ]
       }
     },
     "/forum/categories" : {
       "get" : {
-        "tags" : [ "Forum – Categories" ],
-        "summary" : "List the visible categories in display order",
         "operationId" : "listCategories",
         "responses" : {
           "200" : {
-            "description" : "Category list returned",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -302,15 +571,16 @@
                   }
                 }
               }
-            }
+            },
+            "description" : "Category list returned"
           }
-        }
+        },
+        "summary" : "List the visible categories in display order",
+        "tags" : [ "Forum – Categories" ]
       }
     },
     "/forum/categories/{slug}" : {
       "get" : {
-        "tags" : [ "Forum – Categories" ],
-        "summary" : "Get a category by slug",
         "operationId" : "getCategory",
         "parameters" : [ {
           "description" : "Category slug",
@@ -324,32 +594,32 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Category found",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CategoryDto"
                 }
               }
-            }
+            },
+            "description" : "Category found"
           },
           "404" : {
-            "description" : "Not found or hidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not found or hidden"
           }
-        }
+        },
+        "summary" : "Get a category by slug",
+        "tags" : [ "Forum – Categories" ]
       }
     },
     "/forum/posts" : {
       "get" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "List posts with optional filtering and pagination",
         "description" : "Public. Without a status filter only published and locked posts are listed. A bearer token is optional and only widens what the status filter may return.",
         "operationId" : "listPosts",
         "parameters" : [ {
@@ -437,30 +707,30 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Posts returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PagedResponsePostSummaryDto"
                 }
               }
-            }
+            },
+            "description" : "Posts returned"
           },
           "400" : {
-            "description" : "Invalid pagination or unsupported sort field",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Invalid pagination or unsupported sort field"
           }
-        }
+        },
+        "summary" : "List posts with optional filtering and pagination",
+        "tags" : [ "Forum – Posts" ]
       },
       "post" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "Create a new post",
         "operationId" : "createPost",
         "requestBody" : {
           "content" : {
@@ -474,83 +744,45 @@
         },
         "responses" : {
           "201" : {
-            "description" : "Post created",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PostDto"
                 }
               }
-            }
+            },
+            "description" : "Post created"
           },
           "400" : {
-            "description" : "Validation error or unknown category",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error or unknown category"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Create a new post",
+        "tags" : [ "Forum – Posts" ]
       }
     },
     "/forum/posts/{slug}" : {
-      "get" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "Get a post by slug",
-        "description" : "Public. A draft is visible only to its author and to admins, who need to send their bearer token.",
-        "operationId" : "getPost",
-        "parameters" : [ {
-          "description" : "Post slug",
-          "example" : "how-to-use-spring-boot-with-postgresql",
-          "in" : "path",
-          "name" : "slug",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Post found",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PostDto"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Not found, deleted, or a draft the caller may not see",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      },
       "delete" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "Delete a post by slug",
         "operationId" : "deletePost",
         "parameters" : [ {
           "description" : "Post slug",
@@ -567,43 +799,81 @@
             "description" : "Post deleted"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           },
           "403" : {
-            "description" : "Not the author, or the post is locked",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not the author, or the post is locked"
           },
           "404" : {
-            "description" : "Not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not found"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Delete a post by slug",
+        "tags" : [ "Forum – Posts" ]
+      },
+      "get" : {
+        "description" : "Public. A draft is visible only to its author and to admins, who need to send their bearer token.",
+        "operationId" : "getPost",
+        "parameters" : [ {
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PostDto"
+                }
+              }
+            },
+            "description" : "Post found"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found, deleted, or a draft the caller may not see"
+          }
+        },
+        "summary" : "Get a post by slug",
+        "tags" : [ "Forum – Posts" ]
       },
       "patch" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "Update a post by slug",
         "operationId" : "updatePost",
         "parameters" : [ {
           "description" : "Post slug",
@@ -627,65 +897,65 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Post updated",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PostDto"
                 }
               }
-            }
+            },
+            "description" : "Post updated"
           },
           "400" : {
-            "description" : "Validation error or unknown category",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error or unknown category"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           },
           "403" : {
-            "description" : "Not the author, the post is locked, or locking requires a moderator",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not the author, the post is locked, or locking requires a moderator"
           },
           "404" : {
-            "description" : "Not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not found"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Update a post by slug",
+        "tags" : [ "Forum – Posts" ]
       }
     },
     "/forum/posts/{slug}/pin" : {
       "patch" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "Toggle pin status of a post",
         "operationId" : "togglePin",
         "parameters" : [ {
           "description" : "Post slug",
@@ -699,99 +969,55 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Pin status toggled",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PostDto"
                 }
               }
-            }
+            },
+            "description" : "Pin status toggled"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           },
           "403" : {
-            "description" : "Admin or Moderator role required",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Admin or Moderator role required"
           },
           "404" : {
-            "description" : "Not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not found"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Toggle pin status of a post",
+        "tags" : [ "Forum – Posts" ]
       }
     },
     "/forum/posts/{slug}/subscription" : {
-      "put" : {
-        "tags" : [ "Forum – Subscriptions" ],
-        "summary" : "Subscribe to a post",
-        "description" : "Idempotent: subscribing again changes nothing.",
-        "operationId" : "subscribe",
-        "parameters" : [ {
-          "description" : "Post slug",
-          "example" : "how-to-use-spring-boot-with-postgresql",
-          "in" : "path",
-          "name" : "slug",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "Subscribed"
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Not found, deleted, or a draft the caller may not see",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ]
-      },
       "delete" : {
-        "tags" : [ "Forum – Subscriptions" ],
-        "summary" : "Unsubscribe from a post",
         "description" : "Idempotent: unsubscribing without a subscription changes nothing.",
         "operationId" : "unsubscribe",
         "parameters" : [ {
@@ -809,35 +1035,79 @@
             "description" : "Not subscribed any more"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "404" : {
-            "description" : "Not found, deleted, or a draft the caller may not see",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not found, deleted, or a draft the caller may not see"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Unsubscribe from a post",
+        "tags" : [ "Forum – Subscriptions" ]
+      },
+      "put" : {
+        "description" : "Idempotent: subscribing again changes nothing.",
+        "operationId" : "subscribe",
+        "parameters" : [ {
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Subscribed"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found, deleted, or a draft the caller may not see"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Subscribe to a post",
+        "tags" : [ "Forum – Subscriptions" ]
       }
     },
     "/forum/votes" : {
       "post" : {
-        "tags" : [ "Forum – Votes" ],
-        "summary" : "Cast a vote on a post or comment",
         "description" : "The first vote on a target answers 201. Voting again in the same direction changes nothing and switching direction moves the score by two; both answer 200 with the caller's vote. Votes are accepted on published posts and visible comments of published posts.",
         "operationId" : "castVote",
         "requestBody" : {
@@ -852,85 +1122,85 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Existing vote kept or switched",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/VoteDto"
                 }
               }
-            }
+            },
+            "description" : "Existing vote kept or switched"
           },
           "201" : {
-            "description" : "Vote recorded",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/VoteDto"
                 }
               }
-            }
+            },
+            "description" : "Vote recorded"
           },
           "400" : {
-            "description" : "Validation error",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "The post is locked",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "The post is locked"
           },
           "404" : {
-            "description" : "Post or comment not found, or not readable by the caller",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Post or comment not found, or not readable by the caller"
           },
           "409" : {
-            "description" : "The post is a draft, or the vote is being changed concurrently",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "The post is a draft, or the vote is being changed concurrently"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Cast a vote on a post or comment",
+        "tags" : [ "Forum – Votes" ]
       }
     },
     "/forum/votes/{id}" : {
       "delete" : {
-        "tags" : [ "Forum – Votes" ],
-        "summary" : "Retract a vote",
         "operationId" : "retractVote",
         "parameters" : [ {
           "description" : "Vote ID",
@@ -948,55 +1218,55 @@
             "description" : "Vote retracted"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "The vote belongs to another user",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "The vote belongs to another user"
           },
           "404" : {
-            "description" : "Vote not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Vote not found"
           },
           "409" : {
-            "description" : "The vote is being changed concurrently",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "The vote is being changed concurrently"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Retract a vote",
+        "tags" : [ "Forum – Votes" ]
       }
     },
     "/notifications" : {
       "get" : {
-        "tags" : [ "Notifications" ],
-        "summary" : "List notifications for the authenticated user",
         "description" : "Newest first. With unreadOnly=true only unread notifications are listed; totalElements is then the unread count.",
         "operationId" : "listNotifications",
         "parameters" : [ {
@@ -1033,70 +1303,70 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Notifications returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PagedResponseNotificationDto"
                 }
               }
-            }
+            },
+            "description" : "Notifications returned"
           },
           "400" : {
-            "description" : "Invalid pagination",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Invalid pagination"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "List notifications for the authenticated user",
+        "tags" : [ "Notifications" ]
       }
     },
     "/notifications/read-all" : {
       "patch" : {
-        "tags" : [ "Notifications" ],
-        "summary" : "Mark all notifications as read",
         "operationId" : "markAllRead",
         "responses" : {
           "204" : {
             "description" : "All notifications marked as read"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Mark all notifications as read",
+        "tags" : [ "Notifications" ]
       }
     },
     "/notifications/{id}" : {
       "delete" : {
-        "tags" : [ "Notifications" ],
-        "summary" : "Delete a notification",
         "operationId" : "deleteNotification",
         "parameters" : [ {
           "description" : "Notification ID",
@@ -1114,45 +1384,45 @@
             "description" : "Notification deleted"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "Not the recipient",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not the recipient"
           },
           "404" : {
-            "description" : "Not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not found"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Delete a notification",
+        "tags" : [ "Notifications" ]
       }
     },
     "/notifications/{id}/read" : {
       "patch" : {
-        "tags" : [ "Notifications" ],
-        "summary" : "Mark a notification as read",
         "description" : "Idempotent.",
         "operationId" : "markRead",
         "parameters" : [ {
@@ -1168,55 +1438,55 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Notification marked as read",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/NotificationDto"
                 }
               }
-            }
+            },
+            "description" : "Notification marked as read"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "Not the recipient",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not the recipient"
           },
           "404" : {
-            "description" : "Not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not found"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Mark a notification as read",
+        "tags" : [ "Notifications" ]
       }
     },
     "/search" : {
       "get" : {
-        "tags" : [ "Search" ],
-        "summary" : "Search posts, users and tags",
         "description" : "Public. Case-insensitive substring match of the trimmed query. Without a type every kind is searched and paged on its own; with a type only that kind is returned and the others are null. A term that matches nothing returns empty pages.",
         "operationId" : "search",
         "parameters" : [ {
@@ -1264,62 +1534,62 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Results returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/SearchResultsDto"
                 }
               }
-            }
+            },
+            "description" : "Results returned"
           },
           "400" : {
-            "description" : "Query shorter than 2 or longer than 100 characters, unknown type, or invalid pagination",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Query shorter than 2 or longer than 100 characters, unknown type, or invalid pagination"
           }
-        }
+        },
+        "summary" : "Search posts, users and tags",
+        "tags" : [ "Search" ]
       }
     },
     "/users/me" : {
       "get" : {
-        "tags" : [ "Users" ],
-        "summary" : "Get own profile",
         "operationId" : "currentProfile",
         "responses" : {
           "200" : {
-            "description" : "Profile returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/MyProfileDto"
                 }
               }
-            }
+            },
+            "description" : "Profile returned"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Get own profile",
+        "tags" : [ "Users" ]
       },
       "patch" : {
-        "tags" : [ "Users" ],
-        "summary" : "Update own profile",
         "operationId" : "updateProfile",
         "requestBody" : {
           "content" : {
@@ -1333,55 +1603,55 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Profile updated",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/MyProfileDto"
                 }
               }
-            }
+            },
+            "description" : "Profile updated"
           },
           "400" : {
-            "description" : "Validation error",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           },
           "409" : {
-            "description" : "Email already registered",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Email already registered"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Update own profile",
+        "tags" : [ "Users" ]
       }
     },
     "/users/me/password" : {
       "post" : {
-        "tags" : [ "Users" ],
-        "summary" : "Change own password",
         "operationId" : "changePassword",
         "requestBody" : {
           "content" : {
@@ -1398,35 +1668,35 @@
             "description" : "Password changed"
           },
           "400" : {
-            "description" : "Validation error or wrong current password",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error or wrong current password"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Change own password",
+        "tags" : [ "Users" ]
       }
     },
     "/users/me/subscriptions" : {
       "get" : {
-        "tags" : [ "Forum – Subscriptions" ],
-        "summary" : "List my post subscriptions",
         "description" : "Posts the caller is subscribed to and can still read, most recent subscription first.",
         "operationId" : "mySubscriptions",
         "parameters" : [ {
@@ -1454,45 +1724,45 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Subscriptions returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PagedResponsePostSummaryDto"
                 }
               }
-            }
+            },
+            "description" : "Subscriptions returned"
           },
           "400" : {
-            "description" : "Invalid pagination",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Invalid pagination"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "List my post subscriptions",
+        "tags" : [ "Forum – Subscriptions" ]
       }
     },
     "/users/{username}" : {
       "get" : {
-        "tags" : [ "Users" ],
-        "summary" : "Get public profile by username",
         "operationId" : "publicProfile",
         "parameters" : [ {
           "description" : "Username",
@@ -1506,31 +1776,65 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Profile found",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/UserProfileDto"
                 }
               }
-            }
+            },
+            "description" : "Profile found"
           },
           "404" : {
-            "description" : "User not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "User not found"
           }
-        }
+        },
+        "summary" : "Get public profile by username",
+        "tags" : [ "Users" ]
       }
     }
   },
   "components" : {
     "schemas" : {
+      "ActivityTrendDto" : {
+        "type" : "object",
+        "description" : "Time-series trend for a single activity metric",
+        "properties" : {
+          "data" : {
+            "type" : "array",
+            "description" : "Ordered list of daily counts for the requested period",
+            "items" : {
+              "$ref" : "#/components/schemas/TrendDataPointDto"
+            }
+          },
+          "metric" : {
+            "type" : "string",
+            "description" : "Metric being tracked",
+            "enum" : [ "posts", "comments", "votes", "users" ],
+            "example" : "posts"
+          },
+          "period" : {
+            "type" : "string",
+            "description" : "Time period of the trend",
+            "enum" : [ "24h", "7d", "30d", "90d" ],
+            "example" : "7d"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Total count across the entire period",
+            "example" : 314
+          }
+        },
+        "required" : [ "data", "metric", "period", "total" ]
+      },
       "AuthRequest" : {
         "type" : "object",
         "properties" : {
@@ -1971,6 +2275,100 @@
         },
         "required" : [ "content", "first", "last", "page", "size", "totalElements", "totalPages" ]
       },
+      "PlatformSummaryDto" : {
+        "type" : "object",
+        "description" : "Platform-wide analytics summary (admin only)",
+        "properties" : {
+          "activeUsers" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Number of active users (ACTIVE status)"
+          },
+          "totalCategories" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Total categories"
+          },
+          "totalComments" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Total comments"
+          },
+          "totalPosts" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Total posts"
+          },
+          "totalTags" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Total tags"
+          },
+          "totalUsers" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Total registered users"
+          },
+          "totalVotes" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Total votes cast"
+          }
+        },
+        "required" : [ "activeUsers", "totalCategories", "totalComments", "totalPosts", "totalTags", "totalUsers", "totalVotes" ]
+      },
+      "PostAnalyticsDto" : {
+        "type" : "object",
+        "description" : "Analytics data for a single forum post",
+        "properties" : {
+          "commentCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Total comment count"
+          },
+          "downvoteCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Number of downvotes"
+          },
+          "postId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Post ID",
+            "example" : 101
+          },
+          "postTitle" : {
+            "type" : "string",
+            "description" : "Post title"
+          },
+          "subscriptionCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Number of active subscriptions to this post"
+          },
+          "uniqueViewCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Unique viewer count"
+          },
+          "upvoteCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Number of upvotes"
+          },
+          "viewCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Total view count"
+          },
+          "voteScore" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Vote score (upvotes minus downvotes)"
+          }
+        },
+        "required" : [ "commentCount", "downvoteCount", "postId", "postTitle", "subscriptionCount", "uniqueViewCount", "upvoteCount", "viewCount", "voteScore" ]
+      },
       "PostDto" : {
         "type" : "object",
         "description" : "Full post details — extends PostSummaryDto with content, tags and updatedAt",
@@ -2283,6 +2681,25 @@
         },
         "required" : [ "id", "name", "postCount", "slug" ]
       },
+      "TrendDataPointDto" : {
+        "type" : "object",
+        "description" : "A single data point in a time-series trend",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Count of events on this date",
+            "example" : 42
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "Date of the data point",
+            "example" : "2026-05-07"
+          }
+        },
+        "required" : [ "count", "date" ]
+      },
       "UpdatePostRequest" : {
         "type" : "object",
         "description" : "Request body for updating a post (all fields optional)",
@@ -2356,6 +2773,54 @@
             "minLength" : 0
           }
         }
+      },
+      "UserActivitySummaryDto" : {
+        "type" : "object",
+        "description" : "Summary of a user's activity on the platform",
+        "properties" : {
+          "lastActivityAt" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time",
+            "description" : "When the user last posted, commented or voted; null if never"
+          },
+          "totalComments" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Total comments written"
+          },
+          "totalDownvotesReceived" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Total downvotes received on posts and comments"
+          },
+          "totalPosts" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Total posts created"
+          },
+          "totalUpvotesReceived" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Total upvotes received on posts and comments"
+          },
+          "totalVotesCast" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Total votes cast"
+          },
+          "userId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "User ID",
+            "example" : 42
+          },
+          "username" : {
+            "type" : "string",
+            "description" : "Username",
+            "example" : "johndoe"
+          }
+        },
+        "required" : [ "lastActivityAt", "totalComments", "totalDownvotesReceived", "totalPosts", "totalUpvotesReceived", "totalVotesCast", "userId", "username" ]
       },
       "UserProfileDto" : {
         "type" : "object",
