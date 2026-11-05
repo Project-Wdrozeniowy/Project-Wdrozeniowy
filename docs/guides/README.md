@@ -23,6 +23,7 @@ that all existing code already follows them.*
 | Adding tests or assessing completion | [Testing guide](testing.md) and the Definition of Done below |
 | Running or debugging one service | The [frontend](../../frontend/README.md) or [gateway](../../gateway/README.md) README, plus the [root setup](../../README.md) |
 | Installing dependencies, Nx tasks, caches or CI | [Monorepo workflows](monorepo.md) |
+| Updating backend contracts or frontend generated API code | [API bindings workflow](api-bindings.md) |
 
 The [codebase maps](../codebase/) are dated technical snapshots for agents and
 investigation, **not the primary source of developer rules**. The [agent entry

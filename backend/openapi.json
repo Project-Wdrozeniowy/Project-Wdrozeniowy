@@ -3441,7 +3441,6 @@
     "securitySchemes" : {
       "bearerAuth" : {
         "bearerFormat" : "JWT",
-        "name" : "bearerAuth",
         "scheme" : "bearer",
         "type" : "http"
       }

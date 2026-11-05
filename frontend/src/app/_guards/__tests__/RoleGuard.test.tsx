@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import RoleGuard from '../RoleGuard';
 import { useStore } from '@/store';
-import type { UserRole } from '@/shared/api/user/user.dto';
+import type { UserProfileDtoRole as UserRole } from '@/shared/api/generated/models/userProfileDtoRole.dto';
 
 const mockReplace = vi.fn();
 

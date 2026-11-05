@@ -9,7 +9,8 @@
         "default",
         { "env": "NEXT_PUBLIC_API_URL" },
         { "env": "NEXT_PUBLIC_DEV_ORIGIN" },
-        { "env": "NODE_ENV" }
+        { "env": "NODE_ENV" },
+        "{workspaceRoot}/backend/openapi.json"
       ],
       "outputs": [
         "{projectRoot}/.next/**",
@@ -18,13 +19,18 @@
       ]
     },
     "lint": { "command": "node tools/workspace/npm.mjs run lint --workspace frontend" },
-    "typecheck": { "command": "node tools/workspace/npm.mjs run typecheck --workspace frontend" },
+    "typecheck": {
+      "command": "node tools/workspace/npm.mjs run typecheck --workspace frontend",
+      "dependsOn": ["api-check"],
+      "inputs": ["default", "{workspaceRoot}/backend/openapi.json"]
+    },
     "format-check": {
       "command": "node tools/workspace/npm.mjs run format:check --workspace frontend"
     },
     "coverage": {
       "command": "node tools/workspace/npm.mjs run test:coverage --workspace frontend",
-      "cache": false
+      "cache": false,
+      "dependsOn": ["api-check", "codegen-test"]
     },
     "dev": {
       "command": "node tools/workspace/npm.mjs run dev --workspace frontend -- --port 3001",
@@ -34,6 +40,18 @@
       "executor": "nx:noop",
       "cache": false,
       "dependsOn": ["build", "lint", "format-check", "coverage"]
+    },
+    "api-check": {
+      "command": "node tools/workspace/npm.mjs run api:check --workspace frontend",
+      "cache": false
+    },
+    "api-generate": {
+      "command": "node tools/workspace/npm.mjs run api:generate --workspace frontend",
+      "cache": false
+    },
+    "codegen-test": {
+      "command": "node tools/workspace/npm.mjs run test:codegen --workspace frontend",
+      "cache": false
     }
   }
 }

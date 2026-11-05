@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { FEED_PAGE_SIZE, FEED_QUERY_KEY, FEED_SORT } from '@/shared/api/forum/feedQuery.const';
-import { postService } from '@/shared/api/forum/forumClient';
+import { FEED_PAGE_SIZE, FEED_SORT } from '@/shared/api/forum/feedQuery.const';
+import { getListPostsQueryOptions } from '@/shared/api/generated/orbita.api';
 
 interface FeedQuery {
   /** 0-based, as the API expects. */
@@ -19,13 +19,10 @@ interface FeedQuery {
  */
 export function useForumPosts({ page, categorySlug, tag }: FeedQuery) {
   return useQuery({
-    queryKey: [...FEED_QUERY_KEY, { page, categorySlug, tag }],
-    queryFn: () =>
-      postService.list(
-        { page, size: FEED_PAGE_SIZE, sort: FEED_SORT, categorySlug, tag },
-        // The feed shows its own fixed error message; the global toast would print server text.
-        { skipErrorToast: true }
-      ),
+    ...getListPostsQueryOptions(
+      { page, size: FEED_PAGE_SIZE, sort: FEED_SORT, categorySlug, tag },
+      { request: { skipErrorToast: true } }
+    ),
     // Never carry another topic's or tag's result over: it has a different number of pages.
     placeholderData: (previous, previousQuery) => {
       const previousFilter = previousQuery?.queryKey[1] as FeedQuery | undefined;

@@ -51,6 +51,13 @@ Java, use the direct commands in the [root README](../../README.md).
 
 ## Validate and build
 
+Frontend HTTP bindings are committed Orval output. Root `npm run api:generate`
+updates them from `backend/openapi.json`; `npm run api:check` validates and compares
+the entire output without writing it. Frontend Nx typecheck/coverage and root E2E
+run the noncached check; frontend build hashes the contract as an explicit input.
+Direct service builds in isolated E2E snapshots use the already checked committed
+files and do not require the backend source. See [API bindings](api-bindings.md).
+
 | Root command           | Contract                                                                      |
 | ---------------------- | ----------------------------------------------------------------------------- |
 | `npm run check`        | Applicable lint, typecheck and format checks, including root tooling          |

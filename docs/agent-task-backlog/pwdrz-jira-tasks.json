@@ -22501,6 +22501,117 @@
         "notes": "Approved Nx/npm-workspaces orchestration implemented and locally validated: bootstrap, build/cache, static checks, service coverage, real dev, positive E2E and negative failure/cleanup probes. See pwdrz-126-execution.md. Kept in_progress because committed configuration and published GitHub CI remain pending explicit publication authorization; no Jira payload or external status changes.",
         "updatedAt": "2026-10-17T22:04:00.000Z"
       }
+    },
+    {
+      "id": "10461",
+      "key": "PWDRZ-130",
+      "fields": {
+        "summary": "Generate frontend API bindings from verified OpenAPI [FE]",
+        "description": "## Goal\n\nReplace hand-maintained frontend API contract shapes with reproducible bindings derived from the published _implemented_ backend OpenAPI contract by the end of Sprint 5.\n\n## Owner\n\nTeam lead / frontend integration owner. Backend developer delivers the corrected published contract in PWDRZ-127.\n\n## Scope\n\n* After PWDRZ-127, choose a pinned OpenAPI generation tool and a reproducible spec export/input.\n* Generate the DTO/operation types and typed endpoint bindings needed by existing frontend services. Keep network transport through `src/services/api.ts` so bearer injection, HttpOnly refresh cookie, one retry on 401, and error handling are preserved.\n* Identify and migrate hand-maintained duplicate API types where the generated contract is authoritative. Keep UI-only models separate.\n* Add a repeatable generation command and CI drift check; document where generated output lives and that it is not hand-edited.\n* Verify at least authentication and forum-post adapter bindings against the implemented contract.\n\n## Out of scope\n\n* Replacing the working auth transport with an untested generated HTTP stack.\n* Implementing missing backend endpoints or publishing planned 501 stubs as usable operations.\n* Full FSD migration.\n\n## Acceptance criteria\n\n* A clean checkout can regenerate the same FE bindings from a versioned or reproducibly exported OpenAPI input using documented commands.\n* Generated types/operation signatures reflect only the usable contract from PWDRZ-127; no hand-edited generated files are required.\n* Existing auth refresh/cookie/401 behaviour remains covered by tests, and the selected forum adapter compiles against generated types.\n* CI detects an intentionally stale generated artifact or a contract mismatch; normal typecheck, test, lint and build gates pass.\n* The present manual mirroring debt is explicitly closed or narrowed with any remaining exceptions documented.\n\n## Dependency\n\nPWDRZ-127 must make the published OpenAPI trustworthy before treating it as the generator input.",
+        "status": {
+          "name": "In Progress",
+          "statusCategory": {
+            "name": "In Progress"
+          }
+        },
+        "assignee": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "displayName": "Ruslan 82179"
+        },
+        "reporter": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "displayName": "Ruslan 82179"
+        },
+        "priority": {
+          "name": "High"
+        },
+        "issuetype": {
+          "id": "10076",
+          "name": "Task"
+        },
+        "created": "2026-10-11T01:19:25.657+0200",
+        "updated": "2026-11-02T11:22:34.071+0100",
+        "labels": [
+          "api-contract",
+          "frontend",
+          "tech-debt"
+        ],
+        "parent": {
+          "id": "10389",
+          "key": "PWDRZ-90",
+          "fields": {
+            "summary": "Technical debt and contract alignment"
+          }
+        },
+        "subtasks": [],
+        "comment": {
+          "total": 0
+        },
+        "issuelinks": [
+          {
+            "id": "10165",
+            "type": {
+              "name": "Blocks",
+              "inward": "is blocked by",
+              "outward": "blocks"
+            },
+            "inwardIssue": {
+              "key": "PWDRZ-127",
+              "fields": {
+                "summary": "Align OpenAPI contract with implemented endpoint availability [BE]",
+                "status": {
+                  "name": "In testing"
+                }
+              }
+            }
+          }
+        ],
+        "customFields": {
+          "Sprint": {
+            "id": "customfield_10020",
+            "value": [
+              {
+                "id": 170,
+                "name": "PWDRZ Sprint 5",
+                "state": "closed",
+                "boardId": 67,
+                "goal": "- Get rid of major bugs\n- Introduce coverage metrics and automated testing\n- Introduce clear Task live cycle\n- Connect parts of application\n- Refactor outdated and redudndant parts of application\nMajor goal: Make application easy to develop and test, make it clean and unified as monorepo",
+                "startDate": "2026-10-07T11:34:52.000Z",
+                "endDate": "2026-10-18T06:00:00.000Z",
+                "completeDate": "2026-10-19T18:50:44.385Z"
+              },
+              {
+                "id": 171,
+                "name": "PWDRZ Sprint 6",
+                "state": "active",
+                "boardId": 67,
+                "goal": "",
+                "startDate": "2026-11-02T10:19:02.056Z",
+                "endDate": "2026-11-08T23:00:00.000Z"
+              }
+            ]
+          },
+          "Rank": {
+            "id": "customfield_10019",
+            "value": "0|i000vz:"
+          },
+          "Development": {
+            "id": "customfield_10000",
+            "value": "{pullrequest={dataType=pullrequest, state=MERGED, stateCount=1}, build={count=3, dataType=build, failedBuildCount=0, successfulBuildCount=3, unknownBuildCount=0}, json={\"cachedValue\":{\"errors\":[],\"summary\":{\"pullrequest\":{\"overall\":{\"count\":1,\"lastUpdated\":\"2026-10-15T07:16:07.000+0200\",\"stateCount\":1,\"state\":\"MERGED\",\"dataType\":\"pullrequest\",\"open\":false},\"byInstanceType\":{\"oAuth-com.github.integration.production\":{\"count\":1,\"name\":\"GitHub\"}}},\"build\":{\"overall\":{\"count\":3,\"lastUpdated\":\"2026-10-15T02:17:20.000+0200\",\"failedBuildCount\":0,\"successfulBuildCount\":3,\"unknownBuildCount\":0,\"dataType\":\"build\"},\"byInstanceType\":{\"cloud-providers\":{\"count\":3,\"name\":\"Other providers\"}}}}},\"isStale\":true}}"
+          }
+        }
+      },
+      "localTracking": {
+        "status": "done",
+        "owner": "Codex / Ruslan 82179",
+        "updatedAt": "2026-11-05T18:07:48.435Z",
+        "notes": [
+          "Local implementation and final review complete on PWDRZ-130-generated-api-bindings. Orval bindings, transport/cache migration and strict drift checks verified. Frontend 693 tests, gateway 51, backend verify 188, real E2E 8/8 and cleanup passed; clean install reproduces all 44 output files. Docker incident/recovery and verified VHD backups documented in pwdrz-130-execution.md. Prepared for PR; user authorized a logical commit series without co-author trailers. No push/PR/merge/Jira mutation or new published CI run.",
+          "Independent review follow-up: fixed selective E2E CI install (clean npm 11 fixture + actual Nx api-check passed) and publish async onSuccess lifecycle using generated mutation options with a tested cache composition. Frontend 696 tests and all coverage gates, static/codegen checks, production build and real E2E 8/8 passed. An earlier native Windows worker crash and its successful fresh-stack rerun are recorded in pwdrz-130-execution.md. User requested one local fix commit without co-author trailers; no additional push or Jira mutation.",
+          "2026-11-05: reproduced GitHub test-merge contract drift after PWDRZ-144/145 added notifications/analytics on develop. User selected local rebase onto 8af67bd; backup ref retained, range-diff confirms all six original commits unchanged in content. Regenerated 61 files for 32 operations; new transport tests, root static checks, frontend coverage (698 tests), production build and real E2E 8/8 passed. New remote CI requires publication of the rebased branch; no push or Jira mutation.",
+          "Final independent cleanup against develop 8af67bd: removed unused handwritten notifications/analytics contracts and wrappers after verifying all nine generated replacements; preserved provisional recommendations and their four assertions in their own module. All 32 published operations audited; remaining 12 manual calls belong to hidden separately owned stubs. Codegen reproduces 61 files; static gates, frontend 686/gateway 51/backend 223 tests with coverage, all three builds and real E2E 9/9 passed, including actual recommendation 501 responses and cleanup. Rebased patch-equivalent backend commits using prior user authorization with identical tree verification; remote refs unchanged. Cleanup remains unstaged/uncommitted; no push, PR creation, merge or Jira mutation. Dashboard prototype remains outside bindings scope; stale availability comments corrected."
+        ]
+      }
     }
   ]
 }

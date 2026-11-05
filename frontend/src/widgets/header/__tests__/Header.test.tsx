@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import Header from '../Header';
-import { authService } from '@/shared/api/auth/authClient';
+import { logout as revokeSession } from '@/shared/api/generated/orbita.api';
 import { toast } from '@/shared/lib/toast';
 import { useStore } from '@/store';
 
@@ -11,9 +11,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
-vi.mock('@/shared/api/auth/authClient', () => ({
-  authService: { logout: vi.fn() },
-}));
+vi.mock('@/shared/api/generated/orbita.api', () => ({ logout: vi.fn() }));
 
 vi.mock('@/shared/lib/toast', () => ({
   API_ERROR_TOAST_ID: 'api-error',
@@ -42,7 +40,7 @@ beforeEach(() => {
 
 describe('Header sign out', () => {
   it('clears the session after the server revoked the refresh token', async () => {
-    vi.mocked(authService.logout).mockResolvedValue(undefined);
+    vi.mocked(revokeSession).mockResolvedValue(undefined);
     render(<Header />);
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Sign out' }));
@@ -54,7 +52,7 @@ describe('Header sign out', () => {
   it('keeps the session when the logout request fails', async () => {
     // The refresh cookie is still valid, so clearing only the client state would
     // sign the user back in on the next page load.
-    vi.mocked(authService.logout).mockRejectedValue(new Error('offline'));
+    vi.mocked(revokeSession).mockRejectedValue(new Error('offline'));
     render(<Header />);
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Sign out' }));

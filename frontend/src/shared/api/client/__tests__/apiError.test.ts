@@ -26,6 +26,11 @@ describe('apiErrorMessage', () => {
   it('falls back for errors that did not come from axios', () => {
     expect(apiErrorMessage(new Error('boom'), 'Try again')).toBe('Try again');
   });
+
+  it.each([null, 'upstream failed', { detail: 123 }, { error: 'Bad Gateway' }])(
+    'does not trust a non-ProblemDetail response: %j',
+    (body) => expect(apiErrorMessage(httpError(502, body), 'Try again')).toBe('Try again')
+  );
 });
 
 describe('apiErrorStatus', () => {

@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { VoteColumn } from '@/features/post-interactions/VoteColumn';
-import type { MyVote, VoteType } from '@/shared/api/forum/vote.dto';
+import type { MyVoteDto as MyVote } from '@/shared/api/generated/models/myVoteDto.dto';
+import type { VoteRequestVoteType as VoteType } from '@/shared/api/generated/models/voteRequestVoteType.dto';
 import { useVotePost } from '@/shared/api/forum/useVotePost';
 import { useStore } from '@/store';
 

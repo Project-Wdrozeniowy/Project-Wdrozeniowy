@@ -6,7 +6,7 @@ import type { FormEvent } from 'react';
 import { searchPageHref } from '@/shared/lib/searchUrl';
 import { SEARCH_MAX_LENGTH } from '@/shared/api/search/searchQuery.const';
 import { isSearchableTerm } from '@/shared/api/search/useSearch';
-import type { SearchType } from '@/shared/api/search/search.dto';
+import type { SearchType } from '@/shared/api/generated/models/searchType.dto';
 import {
   SEARCH_PAGE_INPUT_ID,
   SEARCH_PAGE_INPUT_LABEL,

@@ -12,8 +12,8 @@ import {
 import type { CreatePostField } from '@/features/create-post/createPost.const';
 import type { CreatePostFormData } from '@/features/create-post/createPost.schema';
 import { apiErrorStatus } from '@/shared/api/client/apiError';
-import type { ProblemDetail } from '@/shared/api/client/problem.dto';
-import type { CreatePostRequest } from '@/shared/api/forum/post.dto';
+import type { ProblemDetail } from '@/shared/api/generated/models/problemDetail.dto';
+import type { CreatePostRequest } from '@/shared/api/generated/models/createPostRequest.dto';
 
 /** The stored form of a tag: no leading `#`, lower case (the server stores tags lower-case). */
 export function normalizeTag(raw: string): string {

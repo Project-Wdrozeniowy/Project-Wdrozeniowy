@@ -13,6 +13,10 @@ replaces them nor contributes an E2E line-coverage percentage.
 
 Install dependencies from the repository root with `npm ci` (the single workspace
 lockfile). Root `npm run test:e2e` delegates to this managed launcher through Nx.
+For a selective CI install, include both `orbita-e2e` and `frontend` with
+`--include-workspace-root`: Nx checks frontend binding drift before launching the
+stack, so the outer checkout also needs Orval. The later frontend snapshot install
+does not provide dependencies to that prerequisite.
 After installation, direct commands from `e2e/` remain available:
 
 ```bash
@@ -103,8 +107,16 @@ never use real account credentials. CI artifact retention is seven days.
 3. Invalid credentials → actual 401 and visible error, no authenticated UI.
 4. Browser post creation → protected gateway POST 201 → persisted post visible
    in the feed after reload; an additional real API read confirms stored content.
+   PWDRZ-130 also checks cast 201, switch 200, personal vote after reload and
+   retract 204, then confirms the persisted score through a real read.
 5. **HTTP integration**, not browser E2E: anonymous protected write → 401 and no
    persisted post in a subsequent real read.
+6. Profile PATCH saves account fields and preserves them after reload.
+7. Password change succeeds and requires a new sign-in.
+8. Header search and the results page use the real documented search endpoint.
+9. **HTTP integration**: both provisional recommendation reads return real 501
+   responses through the gateway. PWDRZ-146 owns replacing these hidden stubs;
+   reconcile this regression with its published contract when that task lands.
 
 Registration checks that `displayName` goes out in the request and is stored; PWDRZ-154
 marks the interests as unavailable until the backend has a contract: they are shown as such

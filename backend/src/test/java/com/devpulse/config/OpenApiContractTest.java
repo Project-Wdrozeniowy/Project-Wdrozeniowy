@@ -105,6 +105,15 @@ class OpenApiContractTest {
     }
 
     @Test
+    void bearerSchemeUsesOnlyHttpSecurityFields() throws Exception {
+        Map<String, Object> bearer = JsonPath.read(generatedDocument(), "$.components.securitySchemes.bearerAuth");
+        assertThat(bearer).containsEntry("type", "http")
+                .containsEntry("scheme", "bearer")
+                .containsEntry("bearerFormat", "JWT")
+                .doesNotContainKeys("name", "in");
+    }
+
+    @Test
     void committedContractMatchesTheGeneratedDocument() throws Exception {
         String generated = generatedDocument();
         if (Boolean.getBoolean(UPDATE_PROPERTY)) {

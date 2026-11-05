@@ -1,10 +1,10 @@
 // PROVISIONAL sections: category writes PWDRZ-141, comments PWDRZ-142/67, tags PWDRZ-143/107. Their mocked fixtures are planned adapter behavior, not implemented backend contracts.
 import { vi } from 'vitest';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
-import type { Category } from '@/shared/api/forum/category.dto';
+import type { CategoryDto as Category } from '@/shared/api/generated/models/categoryDto.dto';
 import type { Comment } from '@/shared/api/forum/comment.dto';
-import type { Post, PostSummary } from '@/shared/api/forum/post.dto';
-import type { Tag } from '@/shared/api/forum/tag.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
+import type { TagDto as Tag } from '@/shared/api/generated/models/tagDto.dto';
 
 const mockApiClient = {
   get: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock('@/shared/api/client/api', () => ({
   apiClient: mockApiClient,
 }));
 
-const { categoryService, postService, commentService, tagService, voteService } =
+const { categoryService, commentService, tagService } =
   await import('@/shared/api/forum/forumClient');
 
 const mockAuthor = {
@@ -54,13 +54,6 @@ const mockPostSummary: PostSummary = {
   createdAt: '2024-01-01T00:00:00.000Z',
 };
 
-const mockPost: Post = {
-  ...mockPostSummary,
-  content: 'Post content',
-  tags: [],
-  updatedAt: '2024-01-01T00:00:00.000Z',
-};
-
 const mockComment: Comment = {
   id: 1,
   postId: 1,
@@ -95,32 +88,6 @@ beforeEach(() => {
 
 // ─── categoryService ──────────────────────────────────────────────────────────
 
-describe('categoryService.list >-65 GET /forum/categories', () => {
-  it('calls apiClient.get with /forum/categories', async () => {
-    mockApiClient.get.mockResolvedValue([mockCategory]);
-    const result = await categoryService.list();
-    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/categories', undefined);
-    expect(result).toEqual([mockCategory]);
-  });
-
-  it('passes the request config through', async () => {
-    mockApiClient.get.mockResolvedValue([mockCategory]);
-    await categoryService.list({ skipErrorToast: true });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/categories', {
-      skipErrorToast: true,
-    });
-  });
-});
-
-describe('categoryService.get >-65 GET /forum/categories/:slug', () => {
-  it('calls apiClient.get with /forum/categories/general', async () => {
-    mockApiClient.get.mockResolvedValue(mockCategory);
-    const result = await categoryService.get('general');
-    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/categories/general');
-    expect(result).toEqual(mockCategory);
-  });
-});
-
 describe('categoryService.create >-65 POST /forum/categories', () => {
   it('calls apiClient.post with /forum/categories and data', async () => {
     const data = { name: 'General', slug: 'general', description: 'General discussion' };
@@ -150,90 +117,6 @@ describe('categoryService.delete >-65 DELETE /forum/categories/:slug', () => {
 });
 
 // ─── postService ──────────────────────────────────────────────────────────────
-
-describe('postService.list >-65 GET /forum/posts', () => {
-  it('calls apiClient.get with /forum/posts and default params', async () => {
-    const paged = pagedOf(mockPostSummary);
-    mockApiClient.get.mockResolvedValue(paged);
-    const result = await postService.list();
-    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/posts', { params: {} });
-    expect(result).toEqual(paged);
-  });
-
-  it('forwards extra request options next to the params', async () => {
-    mockApiClient.get.mockResolvedValue(pagedOf(mockPostSummary));
-    await postService.list({ page: 2 }, { skipErrorToast: true });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/posts', {
-      params: { page: 2 },
-      skipErrorToast: true,
-    });
-  });
-
-  it('passes filter params', async () => {
-    mockApiClient.get.mockResolvedValue(pagedOf(mockPostSummary));
-    await postService.list({ categorySlug: 'general', tag: 'typescript', q: 'hello', page: 1 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/posts', {
-      params: { categorySlug: 'general', tag: 'typescript', q: 'hello', page: 1 },
-    });
-  });
-});
-
-describe('postService.get >-65 GET /forum/posts/:slug', () => {
-  it('calls apiClient.get with /forum/posts/hello-world', async () => {
-    mockApiClient.get.mockResolvedValue(mockPost);
-    const result = await postService.get('hello-world');
-    expect(mockApiClient.get).toHaveBeenCalledWith('/forum/posts/hello-world');
-    expect(result).toEqual(mockPost);
-  });
-});
-
-describe('postService.create >-65 POST /forum/posts', () => {
-  it('calls apiClient.post with /forum/posts and data', async () => {
-    const data = { title: 'Hello World', content: 'Content', categoryId: 1 };
-    mockApiClient.post.mockResolvedValue(mockPost);
-    const result = await postService.create(data);
-    expect(mockApiClient.post).toHaveBeenCalledWith('/forum/posts', data, undefined);
-    expect(result).toEqual(mockPost);
-  });
-
-  it('passes the request config through', async () => {
-    const data = { title: 'Hello World', content: 'Content', categoryId: 1 };
-    mockApiClient.post.mockResolvedValue(mockPost);
-    await postService.create(data, { skipErrorToast: true });
-    expect(mockApiClient.post).toHaveBeenCalledWith('/forum/posts', data, {
-      skipErrorToast: true,
-    });
-  });
-});
-
-describe('postService.update >-65 PATCH /forum/posts/:slug', () => {
-  it('calls apiClient.patch with /forum/posts/hello-world and data', async () => {
-    const data = { title: 'Updated Title' };
-    mockApiClient.patch.mockResolvedValue({ ...mockPost, title: 'Updated Title' });
-    const result = await postService.update('hello-world', data);
-    expect(mockApiClient.patch).toHaveBeenCalledWith('/forum/posts/hello-world', data);
-    expect(result.title).toBe('Updated Title');
-  });
-});
-
-describe('postService.delete >-65 DELETE /forum/posts/:slug', () => {
-  it('calls apiClient.delete with /forum/posts/hello-world', async () => {
-    mockApiClient.delete.mockResolvedValue(undefined);
-    await postService.delete('hello-world');
-    expect(mockApiClient.delete).toHaveBeenCalledWith('/forum/posts/hello-world');
-  });
-});
-
-describe('postService.togglePin >-65 PATCH /forum/posts/:slug/pin', () => {
-  it('calls apiClient.patch with /forum/posts/hello-world/pin', async () => {
-    mockApiClient.patch.mockResolvedValue({ ...mockPost, pinned: true });
-    const result = await postService.togglePin('hello-world');
-    expect(mockApiClient.patch).toHaveBeenCalledWith('/forum/posts/hello-world/pin', null);
-    expect(result.pinned).toBe(true);
-  });
-});
-
-// ─── commentService ───────────────────────────────────────────────────────────
 
 describe('commentService.list >-65 GET /forum/posts/:slug/comments', () => {
   it('calls apiClient.get with default pagination', async () => {
@@ -307,37 +190,3 @@ describe('tagService.listPosts >-65 GET /forum/tags/:slug/posts', () => {
 });
 
 // ─── voteService ──────────────────────────────────────────────────────────────
-
-describe('voteService.cast >-65 POST /forum/votes', () => {
-  it('calls apiClient.post with /forum/votes and vote data', async () => {
-    const data = { entityType: 'POST' as const, entityId: 1, voteType: 'UP' as const };
-    const response = { id: 10, entityType: 'POST', entityId: 1, voteType: 'UP', newScore: 1 };
-    mockApiClient.post.mockResolvedValue(response);
-    const result = await voteService.cast(data);
-    expect(mockApiClient.post).toHaveBeenCalledWith('/forum/votes', data, undefined);
-    expect(result).toEqual(response);
-  });
-
-  it('passes the request config through', async () => {
-    const data = { entityType: 'POST' as const, entityId: 1, voteType: 'DOWN' as const };
-    mockApiClient.post.mockResolvedValue({});
-    await voteService.cast(data, { skipErrorToast: true });
-    expect(mockApiClient.post).toHaveBeenCalledWith('/forum/votes', data, { skipErrorToast: true });
-  });
-});
-
-describe('voteService.retract >-65 DELETE /forum/votes/:id', () => {
-  it('calls apiClient.delete with /forum/votes/:id', async () => {
-    mockApiClient.delete.mockResolvedValue(undefined);
-    await voteService.retract(10);
-    expect(mockApiClient.delete).toHaveBeenCalledWith('/forum/votes/10', undefined);
-  });
-
-  it('passes the request config through', async () => {
-    mockApiClient.delete.mockResolvedValue(undefined);
-    await voteService.retract(10, { skipErrorToast: true });
-    expect(mockApiClient.delete).toHaveBeenCalledWith('/forum/votes/10', {
-      skipErrorToast: true,
-    });
-  });
-});

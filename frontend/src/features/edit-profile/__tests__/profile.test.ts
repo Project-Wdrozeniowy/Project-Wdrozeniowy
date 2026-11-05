@@ -2,7 +2,7 @@ import { AxiosError } from 'axios';
 import { buildUpdateRequest, getProfileSaveError, profileToFormValues } from '../profile';
 import { profileSchema } from '../profile.schema';
 import type { ProfileFormData } from '../profile.schema';
-import type { MyProfile } from '@/shared/api/user/user.dto';
+import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 const profile: MyProfile = {
   id: 1,

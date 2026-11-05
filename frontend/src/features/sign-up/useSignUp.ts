@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { getRegisterError, toRegisterRequest } from '@/features/sign-up/register';
 import type { RegisterError } from '@/features/sign-up/register';
 import type { RegisterFormData } from '@/features/sign-up/register.schema';
-import { authService } from '@/shared/api/auth/authClient';
+import { register } from '@/shared/api/generated/orbita.api';
+import { loadProfile } from '@/shared/auth/loadProfile';
 import { toast } from '@/shared/lib/toast';
 import { useStore } from '@/store';
 
@@ -20,8 +21,8 @@ export function useSignUp(onRejectedFields: (fields: RegisterError['fields']) =>
   async function signUp(data: RegisterFormData) {
     setServerError(null);
     try {
-      const { accessToken } = await authService.register(toRegisterRequest(data));
-      const user = await authService.loadProfile(accessToken);
+      const { accessToken } = await register(toRegisterRequest(data));
+      const user = await loadProfile(accessToken);
       setAuth(user, accessToken);
       toast.success('Your account has been created.');
       router.push('/');

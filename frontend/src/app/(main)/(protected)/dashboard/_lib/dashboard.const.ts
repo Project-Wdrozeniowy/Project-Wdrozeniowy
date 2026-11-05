@@ -1,4 +1,5 @@
-// PROVISIONAL mock dashboard data: backend analytics remains a 501 stub (PWDRZ-145).
+// PROVISIONAL mock dashboard data: PWDRZ-145 now publishes analytics; PWDRZ-130 generates bindings.
+// Live dashboard integration still needs UI metric/role mapping, outside binding generation.
 export const MONTHS = [
   'Jan',
   'Feb',

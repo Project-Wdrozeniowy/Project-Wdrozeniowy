@@ -1,5 +1,5 @@
 import { cn } from '@/shared/lib/cn';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 
 interface SearchPostOptionProps {
   id: string;

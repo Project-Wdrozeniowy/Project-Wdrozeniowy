@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/store';
-import type { UserRole } from '@/shared/api/user/user.dto';
+import type { UserProfileDtoRole as UserRole } from '@/shared/api/generated/models/userProfileDtoRole.dto';
 import SessionLoader from './SessionLoader';
 
 interface RoleGuardProps {

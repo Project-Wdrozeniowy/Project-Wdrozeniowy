@@ -1,6 +1,6 @@
 import { createStore } from 'zustand';
 import { createAuthSlice, type AuthSlice } from '../authSlice';
-import type { UserProfile } from '@/shared/api/user/user.dto';
+import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 import { tokenMemory } from '@/shared/auth/tokenMemory';
 
 const mockUser: UserProfile = {

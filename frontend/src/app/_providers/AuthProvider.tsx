@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { apiClient } from '@/shared/api/client/api';
-import { authService } from '@/shared/api/auth/authClient';
+import { loadProfile } from '@/shared/auth/loadProfile';
 import { useStore } from '@/store';
 
 interface AuthProviderProps {
@@ -23,7 +23,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     async function restoreSession() {
       try {
         const accessToken = await apiClient.refreshAccessToken();
-        const user = await authService.loadProfile(accessToken);
+        const user = await loadProfile(accessToken);
         if (!cancelled) setAuth(user, accessToken);
       } catch {
         // No valid session: stay a guest.

@@ -1,5 +1,5 @@
 import VoteButton from '@/features/post-interactions/VoteButton';
-import type { VoteType } from '@/shared/api/forum/vote.dto';
+import type { VoteRequestVoteType as VoteType } from '@/shared/api/generated/models/voteRequestVoteType.dto';
 import { cn } from '@/shared/lib/cn';
 import { ChevronDownVoteIcon, ChevronUpVoteIcon } from '@/shared/ui/icons';
 

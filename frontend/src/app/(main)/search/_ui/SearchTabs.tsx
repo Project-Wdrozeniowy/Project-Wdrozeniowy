@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { cn } from '@/shared/lib/cn';
 import { searchPageHref } from '@/shared/lib/searchUrl';
-import type { SearchType } from '@/shared/api/search/search.dto';
+import type { SearchType } from '@/shared/api/generated/models/searchType.dto';
 import { SEARCH_TABS } from '../_lib/searchPage.const';
 
 interface SearchTabsProps {

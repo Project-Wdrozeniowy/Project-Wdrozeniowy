@@ -11,9 +11,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }));
-vi.mock('@/shared/api/auth/authClient', () => ({
-  authService: { login: mocks.login, loadProfile: mocks.loadProfile },
-}));
+vi.mock('@/shared/api/generated/orbita.api', () => ({ login: mocks.login }));
+vi.mock('@/shared/auth/loadProfile', () => ({ loadProfile: mocks.loadProfile }));
 vi.mock('@/store', () => ({
   useStore: (select: (state: { setAuth: typeof mocks.setAuth }) => unknown) =>
     select({ setAuth: mocks.setAuth }),

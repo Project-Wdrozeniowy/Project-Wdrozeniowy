@@ -1,8 +1,9 @@
 import { SEARCH_MAX_LENGTH } from '@/shared/api/search/searchQuery.const';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
-import type { Tag } from '@/shared/api/forum/tag.dto';
-import type { UserSummary } from '@/shared/api/user/user.dto';
-import type { SearchResults, SearchType } from '@/shared/api/search/search.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
+import type { TagDto as Tag } from '@/shared/api/generated/models/tagDto.dto';
+import type { UserSummaryDto as UserSummary } from '@/shared/api/generated/models/userSummaryDto.dto';
+import type { SearchResultsDto as SearchResults } from '@/shared/api/generated/models/searchResultsDto.dto';
+import type { SearchType } from '@/shared/api/generated/models/searchType.dto';
 import { SEARCH_MAX_PAGES } from './searchPage.const';
 
 /** The `q` of the URL as the API takes it: trimmed and not longer than the API allows. */

@@ -5,8 +5,8 @@ import {
 import type { PasswordField } from '@/features/change-password/changePassword.const';
 import type { ChangePasswordFormData } from '@/features/change-password/changePassword.schema';
 import { apiErrorStatus } from '@/shared/api/client/apiError';
-import type { ProblemDetail } from '@/shared/api/client/problem.dto';
-import type { ChangePasswordRequest } from '@/shared/api/user/user.dto';
+import type { ProblemDetail } from '@/shared/api/generated/models/problemDetail.dto';
+import type { ChangePasswordRequest } from '@/shared/api/generated/models/changePasswordRequest.dto';
 
 /** The request body: only what the API takes. The repeated password is a form-only check. */
 export function toChangePasswordRequest(values: ChangePasswordFormData): ChangePasswordRequest {

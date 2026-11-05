@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { cn } from '@/shared/lib/cn';
 import { CreatePostForm } from '@/features/create-post/CreatePostForm';
-import { createPostMutationKey } from '@/shared/api/forum/useCreatePost';
+import { getCreatePostMutationKey } from '@/shared/api/generated/orbita.api';
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -19,7 +19,7 @@ export function CreatePostDialog({ open, onClose }: CreatePostDialogProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<Element | null>(null);
-  const publishing = useIsMutating({ mutationKey: createPostMutationKey }) > 0;
+  const publishing = useIsMutating({ mutationKey: getCreatePostMutationKey() }) > 0;
   // A published post starts the next draft from a clean form; an unpublished draft survives a close.
   const [formKey, setFormKey] = useState(0);
   const publishedRef = useRef(false);
