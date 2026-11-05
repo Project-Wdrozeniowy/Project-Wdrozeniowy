@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
@@ -12,6 +12,7 @@ export default defineConfig({
       },
     },
     globals: true,
+    exclude: [...configDefaults.exclude, 'scripts/**'],
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
       provider: 'istanbul',
@@ -30,6 +31,7 @@ export default defineConfig({
         'src/**/*.test.{ts,tsx}',
         'src/**/*.spec.{ts,tsx}',
         'src/test/**',
+        'src/shared/api/generated/**',
       ],
       thresholds: {
         lines: 85,

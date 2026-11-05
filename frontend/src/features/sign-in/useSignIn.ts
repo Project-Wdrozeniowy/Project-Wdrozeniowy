@@ -5,7 +5,8 @@ import {
   SIGN_IN_FAILED_MESSAGE,
 } from '@/features/sign-in/login.const';
 import type { LoginFormData } from '@/features/sign-in/login.schema';
-import { authService } from '@/shared/api/auth/authClient';
+import { login } from '@/shared/api/generated/orbita.api';
+import { loadProfile } from '@/shared/auth/loadProfile';
 import { apiErrorMessage, apiErrorStatus } from '@/shared/api/client/apiError';
 import { toast } from '@/shared/lib/toast';
 import { useStore } from '@/store';
@@ -22,8 +23,8 @@ export function useSignIn() {
   async function signIn(data: LoginFormData) {
     setServerError(null);
     try {
-      const { accessToken } = await authService.login(data);
-      const user = await authService.loadProfile(accessToken);
+      const { accessToken } = await login(data);
+      const user = await loadProfile(accessToken);
       setAuth(user, accessToken);
       toast.success(`Welcome back, ${user.displayName ?? user.username}!`);
       router.push('/');

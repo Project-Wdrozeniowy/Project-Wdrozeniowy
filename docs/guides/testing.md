@@ -58,7 +58,12 @@ certify those scenarios.
   non-production exclusions `node_modules/**`, `.next/**`, `next.config.*`,
   `postcss.config.*`, `eslint.config.*`, `tailwind.config.*` and `vitest.config.*`
   are outside the explicit `src` include. No production-directory exclusion
-  hides executable UI or business logic.
+  hides executable UI or business logic. PWDRZ-130 additionally excludes exactly
+  `src/shared/api/generated/**`: reproducible Orval output is validated by strict
+  generation, full-file drift checks, compile-time contract cases and integration/E2E
+  tests. Handwritten mutator, transport and compositions remain measured with unchanged
+  thresholds. Node-only codegen tests run separately from jsdom Vitest via
+  `npm run test:codegen --workspace frontend` and the Nx coverage prerequisite.
 - **Gateway:** `src/**/*.ts` in `gateway/jest.config.js`, excluding declarations
   (`src/**/*.d.ts`) and exactly `src/index.ts`, the process bootstrap that starts
   the listener. Jest omits test files and configured setup files from coverage.

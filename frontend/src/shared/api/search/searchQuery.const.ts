@@ -1,6 +1,3 @@
-/** Root of every cached search result: `['search', ...]`. */
-export const SEARCH_QUERY_KEY = ['search'] as const;
-
 /** The API rejects a trimmed query shorter than this or longer than the maximum. */
 export const SEARCH_MIN_LENGTH = 2;
 export const SEARCH_MAX_LENGTH = 100;

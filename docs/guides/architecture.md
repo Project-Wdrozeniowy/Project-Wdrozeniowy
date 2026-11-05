@@ -122,11 +122,13 @@ the PR:
 Cross-service evidence is part of the
 [Definition of Done](README.md#definition-of-done).
 
-**Technical debt:** Frontend contract types are maintained by hand.
-[PWDRZ-130](https://project-wdrz.atlassian.net/browse/PWDRZ-130) targets
-derived types and endpoint bindings from `backend/openapi.json` by the end of
-Sprint 5, without bypassing `ApiClient`'s token/cookie/401 handling. *The
-generator is not implemented yet.*
+**Frontend bindings (PWDRZ-130):** pinned Orval generates committed DTOs,
+operations and TanStack Query v5 bindings from `backend/openapi.json` into
+`frontend/src/shared/api/generated/`. A custom mutator delegates to the existing
+`ApiClient`, preserving token/cookie/401 handling. Root `api:generate` updates output;
+`api:check` detects drift without repairing files. Handwritten compositions keep
+application behavior; hidden `501` API contracts remain provisional. See the
+[API bindings workflow](api-bindings.md) for cache policy and remaining exceptions.
 
 ## Where to look next
 
@@ -263,11 +265,13 @@ backend отдаёт тот же документ по `/api/v3/api-docs`.
 Подтверждение межсервисной работы входит в
 [Definition of Done](README.md#definition-of-done).
 
-**Technical debt:** Сейчас frontend contract types поддерживаются вручную.
-[PWDRZ-130](https://project-wdrz.atlassian.net/browse/PWDRZ-130) нацелена к
-концу Sprint 5 на генерацию типов и endpoint bindings из
-`backend/openapi.json` без обхода обработки token/cookie/401 в `ApiClient`.
-*Генератор ещё не реализован.*
+**Frontend bindings (PWDRZ-130):** закреплённый Orval генерирует DTO, операции и
+TanStack Query v5 bindings из `backend/openapi.json` в committed-каталог
+`frontend/src/shared/api/generated/`. Custom mutator использует существующий
+`ApiClient` с обработкой token/cookie/401. Корневые `api:generate` и `api:check`
+обновляют output и проверяют drift. Прикладная композиция остаётся ручной;
+контракты скрытых `501` API остаются provisional. Подробности — в
+[API bindings workflow](api-bindings.md).
 
 ### Что читать дальше
 

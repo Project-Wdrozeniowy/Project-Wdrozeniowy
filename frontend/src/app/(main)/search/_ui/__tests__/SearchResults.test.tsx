@@ -1,10 +1,11 @@
+import type { ApiRequestOptions } from '@/shared/api/client/orvalTransport';
+import type { AxiosRequestConfig } from 'axios';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import SearchResults from '../SearchResults';
-import { searchService } from '@/shared/api/search/searchClient';
-import type { SearchResults as SearchResultsDto } from '@/shared/api/search/search.dto';
+import type { SearchResultsDto } from '@/shared/api/generated/models/searchResultsDto.dto';
 
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
@@ -15,9 +16,17 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(query),
 }));
 
-vi.mock('@/shared/api/search/searchClient', () => ({
+const fixtureOperations = vi.hoisted(() => ({
   searchService: { search: vi.fn() },
 }));
+const { searchService } = fixtureOperations;
+vi.mock('@/shared/api/client/orvalTransport', async () => {
+  const { mockApiOperations } = await import('@/test/mockApiOperations');
+  return {
+    orvalTransport: (config: AxiosRequestConfig, options: ApiRequestOptions) =>
+      mockApiOperations(config, options, fixtureOperations),
+  };
+});
 
 const search = vi.mocked(searchService.search);
 

@@ -1,6 +1,6 @@
 import { PINNED_BADGE_LABEL } from '@/app/(main)/_lib/postCard.const';
 import { toPostCardData } from '../postCard';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 
 const NOW = Date.parse('2026-10-10T12:00:00Z');
 

@@ -1,13 +1,4 @@
-export interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  description: string | null;
-  displayOrder: number;
-  visible: boolean;
-  createdAt: string;
-}
-
+// PROVISIONAL PWDRZ-141: category writes remain hidden 501 operations.
 export interface CreateCategoryRequest {
   name: string;
   slug: string;

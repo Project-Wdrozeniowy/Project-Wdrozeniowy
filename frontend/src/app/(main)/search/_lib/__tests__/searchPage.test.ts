@@ -6,7 +6,7 @@ import {
   parseSearchType,
   totalMatches,
 } from '../searchPage';
-import type { SearchResults } from '@/shared/api/search/search.dto';
+import type { SearchResultsDto as SearchResults } from '@/shared/api/generated/models/searchResultsDto.dto';
 
 function page(ids: number[], last: boolean, total = 20): SearchResults {
   return {

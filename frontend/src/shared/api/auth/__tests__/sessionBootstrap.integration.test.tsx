@@ -1,3 +1,4 @@
+import type { AxiosRequestConfig } from 'axios';
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import AuthProvider from '@/app/_providers/AuthProvider';
@@ -24,6 +25,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/shared/api/client/api', () => ({
   apiClient: {
+    request: (config: AxiosRequestConfig) =>
+      config.method === 'GET' ? mocks.get() : mocks.post(config.data),
     get: mocks.get,
     post: mocks.post,
     refreshAccessToken: mocks.refreshAccessToken,

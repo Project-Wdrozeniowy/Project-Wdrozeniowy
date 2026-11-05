@@ -1,6 +1,7 @@
 import { PINNED_BADGE_LABEL } from '@/app/(main)/_lib/postCard.const';
-import type { Post, PostSummary } from '@/shared/api/forum/post.dto';
-import type { MyVote } from '@/shared/api/forum/vote.dto';
+import type { PostDto as Post } from '@/shared/api/generated/models/postDto.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
+import type { MyVoteDto as MyVote } from '@/shared/api/generated/models/myVoteDto.dto';
 import { formatTimeAgo } from '@/utils/format';
 
 export interface PostCardTag {

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import { apiErrorStatus } from '@/shared/api/client/apiError';
 import { FEED_QUERY_KEY } from '@/shared/api/forum/feedQuery.const';
 import { useStore } from '@/store';
 
@@ -25,7 +26,7 @@ export default function QueryProvider({ children }: QueryProviderProps) {
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000,
-            retry: 1,
+            retry: (failureCount, error) => apiErrorStatus(error) !== 401 && failureCount < 1,
           },
         },
       })

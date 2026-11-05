@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { BellIcon, TrendingIcon } from '@/shared/ui/icons';
-import type { UserProfile } from '@/shared/api/user/user.dto';
+import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 
 interface UserActionsProps {
   isAuthenticated: boolean;

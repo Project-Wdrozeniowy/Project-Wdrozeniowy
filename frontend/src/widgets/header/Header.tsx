@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { authService } from '@/shared/api/auth/authClient';
+import { logout as revokeSession } from '@/shared/api/generated/orbita.api';
 import { useStore } from '@/store';
 import OrbitaLogo from '@/shared/ui/OrbitaLogo';
 import NavLinks from './ui/NavLinks';
@@ -21,7 +21,7 @@ export default function Header() {
     try {
       // Revokes the refresh token and clears its cookie. If this fails the cookie stays
       // valid and the next page load would sign the user back in, so keep the session.
-      await authService.logout();
+      await revokeSession();
     } catch {
       toast.error('Could not sign out. Please try again.', API_ERROR_TOAST_ID);
       return;

@@ -8,8 +8,8 @@ import type {
 import axios from 'axios';
 import { tokenMemory } from '@/shared/auth/tokenMemory';
 import { API_ERROR_TOAST_ID, toast } from '@/shared/lib/toast';
-import type { AuthResponse } from '@/shared/api/auth/auth.dto';
-import type { ProblemDetail } from './problem.dto';
+import type { AuthResponse } from '@/shared/api/generated/models/authResponse.dto';
+import { apiErrorMessage } from './apiError';
 
 declare module 'axios' {
   export interface AxiosRequestConfig {
@@ -75,7 +75,8 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
-      async (error: AxiosError<ProblemDetail>) => {
+      async (error: AxiosError<unknown>) => {
+        if (axios.isCancel(error)) return Promise.reject(error);
         if (typeof window === 'undefined') {
           return Promise.reject(error);
         }
@@ -106,7 +107,7 @@ class ApiClient {
 
         if (!config?.skipErrorToast && (status === undefined || status >= 500)) {
           // 4xx errors are handled by the caller (form errors etc.); only unexpected failures toast.
-          toast.error(error.response?.data?.detail ?? FALLBACK_ERROR_MESSAGE, API_ERROR_TOAST_ID);
+          toast.error(apiErrorMessage(error, FALLBACK_ERROR_MESSAGE), API_ERROR_TOAST_ID);
         }
         return Promise.reject(error);
       }
@@ -134,6 +135,13 @@ class ApiClient {
         this.refreshing = null;
       });
     return this.refreshing;
+  }
+
+  /** Entry point for generated operations; all interceptors remain shared. */
+  public async request<T>(config: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.request<T>(config);
+    // Axios may represent a real empty 204 response as an empty string.
+    return response.status === 204 ? (undefined as T) : response.data;
   }
 
   public async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {

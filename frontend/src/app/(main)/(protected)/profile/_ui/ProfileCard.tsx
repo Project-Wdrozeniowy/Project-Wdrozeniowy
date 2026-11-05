@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { ROLE_LABELS } from '@/app/(main)/(protected)/profile/_ui/profileView.const';
 import { isHttpUrl } from '@/shared/lib/url';
-import type { MyProfile } from '@/shared/api/user/user.dto';
+import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 const joinedFormat = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' });
 

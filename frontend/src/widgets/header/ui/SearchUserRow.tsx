@@ -1,5 +1,5 @@
 import UserAvatar from '@/shared/ui/UserAvatar';
-import type { UserSummary } from '@/shared/api/user/user.dto';
+import type { UserSummaryDto as UserSummary } from '@/shared/api/generated/models/userSummaryDto.dto';
 
 interface SearchUserRowProps {
   user: UserSummary;

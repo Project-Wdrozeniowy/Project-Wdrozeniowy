@@ -1,1 +1,4 @@
 * text=auto
+
+# Byte-for-byte codegen drift checks must be independent of core.autocrlf.
+frontend/src/shared/api/generated/** text eol=lf

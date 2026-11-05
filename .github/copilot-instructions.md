@@ -37,14 +37,15 @@ Never import across service boundaries (`frontend/`, `gateway/`, `backend/` are 
 frontend/src/
   app/               ← Next.js route files and composition; move feature orchestration out
     (auth)/          ← unauthenticated pages (login, register)
-    (main)/          ← authenticated pages with layout
-  services/          ← API call functions (thin ApiClient wrappers)
+    (main)/          ← public feed and protected pages with layout
+  features/          ← user actions, form schemas and request mapping
+  widgets/           ← reusable page regions
+  shared/api/        ← existing transport, generated Orval bindings and Query composition
+  shared/auth/       ← session infrastructure and in-memory tokens
+  shared/ui/         ← reusable UI
+  shared/lib/        ← utilities
+  shared/constants/  ← static data
   store/slices/      ← shared application-state slices
-  shared/types/      ← domain TypeScript types
-  lib/validations/   ← Zod schemas
-  components/        ← layout/ and ui/ reusable components
-  providers/         ← React context providers
-  constants/         ← static data only
 
 gateway/src/
   middleware/        ← auth, cors, rateLimiter, logger

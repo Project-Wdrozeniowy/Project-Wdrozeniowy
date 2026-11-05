@@ -11,7 +11,10 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "api:generate": "node scripts/apiCodegen.mjs generate",
+    "api:check": "node scripts/apiCodegen.mjs check",
+    "test:codegen": "node --test scripts/__tests__/*.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -41,6 +44,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "jsdom": "^26.1.0",
+    "orval": "8.46.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "3.2.4"

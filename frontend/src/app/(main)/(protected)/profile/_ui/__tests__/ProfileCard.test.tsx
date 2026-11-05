@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import ProfileCard from '../ProfileCard';
-import type { MyProfile } from '@/shared/api/user/user.dto';
+import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 const PROFILE: MyProfile = {
   id: 1,
