@@ -22,6 +22,8 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
+import type { ActivityTrendDto } from './models/activityTrendDto.dto';
+
 import type { AuthRequest } from './models/authRequest.dto';
 
 import type { AuthResponse } from './models/authResponse.dto';
@@ -32,17 +34,33 @@ import type { ChangePasswordRequest } from './models/changePasswordRequest.dto';
 
 import type { CreatePostRequest } from './models/createPostRequest.dto';
 
+import type { GetActivityTrendParams } from './models/getActivityTrendParams.dto';
+
+import type { GetTrendingPostsParams } from './models/getTrendingPostsParams.dto';
+
+import type { ListNotificationsParams } from './models/listNotificationsParams.dto';
+
 import type { ListPostsParams } from './models/listPostsParams.dto';
 
 import type { MyProfileDto } from './models/myProfileDto.dto';
 
 import type { MySubscriptionsParams } from './models/mySubscriptionsParams.dto';
 
+import type { NotificationDto } from './models/notificationDto.dto';
+
+import type { PagedResponseNotificationDto } from './models/pagedResponseNotificationDto.dto';
+
 import type { PagedResponsePostSummaryDto } from './models/pagedResponsePostSummaryDto.dto';
 
 import type { Ping200 } from './models/ping200.dto';
 
+import type { PlatformSummaryDto } from './models/platformSummaryDto.dto';
+
+import type { PostAnalyticsDto } from './models/postAnalyticsDto.dto';
+
 import type { PostDto } from './models/postDto.dto';
+
+import type { PostSummaryDto } from './models/postSummaryDto.dto';
 
 import type { ProblemDetail } from './models/problemDetail.dto';
 
@@ -55,6 +73,8 @@ import type { SearchResultsDto } from './models/searchResultsDto.dto';
 import type { UpdatePostRequest } from './models/updatePostRequest.dto';
 
 import type { UpdateProfileRequest } from './models/updateProfileRequest.dto';
+
+import type { UserActivitySummaryDto } from './models/userActivitySummaryDto.dto';
 
 import type { UserProfileDto } from './models/userProfileDto.dto';
 
@@ -194,6 +214,662 @@ export const invalidatePing = async (
   options?: InvalidateOptions
 ): Promise<QueryClient> => {
   await queryClient.invalidateQueries({ queryKey: getPingQueryKey() }, options);
+
+  return queryClient;
+};
+
+/**
+ * @summary Get own activity summary
+ */
+export const getMyActivitySummary = (
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<UserActivitySummaryDto>(
+    { url: `/analytics/me`, method: 'GET', signal },
+    options
+  );
+};
+
+export const getGetMyActivitySummaryQueryKey = () => {
+  return [`/analytics/me`] as const;
+};
+
+export const getGetMyActivitySummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyActivitySummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyActivitySummary>>, TError, TData>>;
+  request?: SecondParameter<typeof orvalTransport>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyActivitySummaryQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyActivitySummary>>> = ({ signal }) =>
+    getMyActivitySummary(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyActivitySummary>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMyActivitySummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyActivitySummary>>
+>;
+export type GetMyActivitySummaryQueryError = ErrorType<ProblemDetail>;
+
+export function useGetMyActivitySummary<
+  TData = Awaited<ReturnType<typeof getMyActivitySummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMyActivitySummary>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyActivitySummary>>,
+          TError,
+          Awaited<ReturnType<typeof getMyActivitySummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyActivitySummary<
+  TData = Awaited<ReturnType<typeof getMyActivitySummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMyActivitySummary>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyActivitySummary>>,
+          TError,
+          Awaited<ReturnType<typeof getMyActivitySummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyActivitySummary<
+  TData = Awaited<ReturnType<typeof getMyActivitySummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMyActivitySummary>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get own activity summary
+ */
+
+export function useGetMyActivitySummary<
+  TData = Awaited<ReturnType<typeof getMyActivitySummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMyActivitySummary>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMyActivitySummaryQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetMyActivitySummary} query
+ */
+export const invalidateGetMyActivitySummary = async (
+  queryClient: QueryClient,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getGetMyActivitySummaryQueryKey() }, options);
+
+  return queryClient;
+};
+
+/**
+ * @summary Get analytics for a specific post
+ */
+export const getPostAnalytics = (
+  id: number,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PostAnalyticsDto>(
+    { url: `/analytics/posts/${encodeURIComponent(String(id))}`, method: 'GET', signal },
+    options
+  );
+};
+
+export const getGetPostAnalyticsQueryKey = (id: number) => {
+  return [`/analytics/posts/${id}`] as const;
+};
+
+export const getGetPostAnalyticsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPostAnalytics>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostAnalytics>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPostAnalyticsQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPostAnalytics>>> = ({ signal }) =>
+    getPostAnalytics(id, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getPostAnalytics>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetPostAnalyticsQueryResult = NonNullable<Awaited<ReturnType<typeof getPostAnalytics>>>;
+export type GetPostAnalyticsQueryError = ErrorType<ProblemDetail>;
+
+export function useGetPostAnalytics<
+  TData = Awaited<ReturnType<typeof getPostAnalytics>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostAnalytics>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPostAnalytics>>,
+          TError,
+          Awaited<ReturnType<typeof getPostAnalytics>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPostAnalytics<
+  TData = Awaited<ReturnType<typeof getPostAnalytics>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostAnalytics>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPostAnalytics>>,
+          TError,
+          Awaited<ReturnType<typeof getPostAnalytics>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPostAnalytics<
+  TData = Awaited<ReturnType<typeof getPostAnalytics>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostAnalytics>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get analytics for a specific post
+ */
+
+export function useGetPostAnalytics<
+  TData = Awaited<ReturnType<typeof getPostAnalytics>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPostAnalytics>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPostAnalyticsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetPostAnalytics} query
+ */
+export const invalidateGetPostAnalytics = async (
+  queryClient: QueryClient,
+  id: number,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getGetPostAnalyticsQueryKey(id) }, options);
+
+  return queryClient;
+};
+
+/**
+ * @summary Get platform-wide summary
+ */
+export const getPlatformSummary = (
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PlatformSummaryDto>(
+    { url: `/analytics/summary`, method: 'GET', signal },
+    options
+  );
+};
+
+export const getGetPlatformSummaryQueryKey = () => {
+  return [`/analytics/summary`] as const;
+};
+
+export const getGetPlatformSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPlatformSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformSummary>>, TError, TData>>;
+  request?: SecondParameter<typeof orvalTransport>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPlatformSummaryQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPlatformSummary>>> = ({ signal }) =>
+    getPlatformSummary(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPlatformSummary>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPlatformSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPlatformSummary>>
+>;
+export type GetPlatformSummaryQueryError = ErrorType<ProblemDetail>;
+
+export function useGetPlatformSummary<
+  TData = Awaited<ReturnType<typeof getPlatformSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformSummary>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlatformSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getPlatformSummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPlatformSummary<
+  TData = Awaited<ReturnType<typeof getPlatformSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPlatformSummary>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPlatformSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getPlatformSummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPlatformSummary<
+  TData = Awaited<ReturnType<typeof getPlatformSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get platform-wide summary
+ */
+
+export function useGetPlatformSummary<
+  TData = Awaited<ReturnType<typeof getPlatformSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPlatformSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPlatformSummaryQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetPlatformSummary} query
+ */
+export const invalidateGetPlatformSummary = async (
+  queryClient: QueryClient,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getGetPlatformSummaryQueryKey() }, options);
+
+  return queryClient;
+};
+
+/**
+ * Public. The most active published or locked posts within the window, ranked by views + 2 x votes + 3 x comments in the window; posts without activity are left out.
+ * @summary Get trending posts for a time window
+ */
+export const getTrendingPosts = (
+  params?: GetTrendingPostsParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PostSummaryDto[]>(
+    { url: `/analytics/trending-posts`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getGetTrendingPostsQueryKey = (params?: GetTrendingPostsParams) => {
+  return [`/analytics/trending-posts`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetTrendingPostsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTrendingPosts>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetTrendingPostsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrendingPosts>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetTrendingPostsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTrendingPosts>>> = ({ signal }) =>
+    getTrendingPosts(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTrendingPosts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetTrendingPostsQueryResult = NonNullable<Awaited<ReturnType<typeof getTrendingPosts>>>;
+export type GetTrendingPostsQueryError = ErrorType<ProblemDetail>;
+
+export function useGetTrendingPosts<
+  TData = Awaited<ReturnType<typeof getTrendingPosts>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | GetTrendingPostsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrendingPosts>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTrendingPosts>>,
+          TError,
+          Awaited<ReturnType<typeof getTrendingPosts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetTrendingPosts<
+  TData = Awaited<ReturnType<typeof getTrendingPosts>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetTrendingPostsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrendingPosts>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTrendingPosts>>,
+          TError,
+          Awaited<ReturnType<typeof getTrendingPosts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetTrendingPosts<
+  TData = Awaited<ReturnType<typeof getTrendingPosts>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetTrendingPostsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrendingPosts>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get trending posts for a time window
+ */
+
+export function useGetTrendingPosts<
+  TData = Awaited<ReturnType<typeof getTrendingPosts>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetTrendingPostsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrendingPosts>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetTrendingPostsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetTrendingPosts} query
+ */
+export const invalidateGetTrendingPosts = async (
+  queryClient: QueryClient,
+  params?: GetTrendingPostsParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getGetTrendingPostsQueryKey(params) }, options);
+
+  return queryClient;
+};
+
+/**
+ * Daily counts (UTC) of the rows created for the chosen metric within the period; days without rows count 0.
+ * @summary Get activity trend for a metric over a period
+ */
+export const getActivityTrend = (
+  params?: GetActivityTrendParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<ActivityTrendDto>(
+    { url: `/analytics/trends`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getGetActivityTrendQueryKey = (params?: GetActivityTrendParams) => {
+  return [`/analytics/trends`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetActivityTrendQueryOptions = <
+  TData = Awaited<ReturnType<typeof getActivityTrend>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetActivityTrendParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityTrend>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetActivityTrendQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getActivityTrend>>> = ({ signal }) =>
+    getActivityTrend(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getActivityTrend>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetActivityTrendQueryResult = NonNullable<Awaited<ReturnType<typeof getActivityTrend>>>;
+export type GetActivityTrendQueryError = ErrorType<ProblemDetail>;
+
+export function useGetActivityTrend<
+  TData = Awaited<ReturnType<typeof getActivityTrend>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | GetActivityTrendParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityTrend>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivityTrend>>,
+          TError,
+          Awaited<ReturnType<typeof getActivityTrend>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetActivityTrend<
+  TData = Awaited<ReturnType<typeof getActivityTrend>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetActivityTrendParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityTrend>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getActivityTrend>>,
+          TError,
+          Awaited<ReturnType<typeof getActivityTrend>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetActivityTrend<
+  TData = Awaited<ReturnType<typeof getActivityTrend>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetActivityTrendParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityTrend>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get activity trend for a metric over a period
+ */
+
+export function useGetActivityTrend<
+  TData = Awaited<ReturnType<typeof getActivityTrend>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetActivityTrendParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getActivityTrend>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetActivityTrendQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetActivityTrend} query
+ */
+export const invalidateGetActivityTrend = async (
+  queryClient: QueryClient,
+  params?: GetActivityTrendParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getGetActivityTrendQueryKey(params) }, options);
 
   return queryClient;
 };
@@ -1651,6 +2327,353 @@ export const useRetractVote = <TError = ErrorType<ProblemDetail>, TContext = unk
   TContext
 > => {
   return useMutation(getRetractVoteMutationOptions(options), queryClient);
+};
+
+/**
+ * Newest first. With unreadOnly=true only unread notifications are listed; totalElements is then the unread count.
+ * @summary List notifications for the authenticated user
+ */
+export const listNotifications = (
+  params?: ListNotificationsParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PagedResponseNotificationDto>(
+    { url: `/notifications`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getListNotificationsQueryKey = (params?: ListNotificationsParams) => {
+  return [`/notifications`, ...(params ? [params] : [])] as const;
+};
+
+export const getListNotificationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: ListNotificationsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListNotificationsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listNotifications>>> = ({ signal }) =>
+    listNotifications(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listNotifications>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListNotificationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listNotifications>>
+>;
+export type ListNotificationsQueryError = ErrorType<ProblemDetail>;
+
+export function useListNotifications<
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | ListNotificationsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listNotifications>>,
+          TError,
+          Awaited<ReturnType<typeof listNotifications>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListNotifications<
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: ListNotificationsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listNotifications>>,
+          TError,
+          Awaited<ReturnType<typeof listNotifications>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListNotifications<
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: ListNotificationsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List notifications for the authenticated user
+ */
+
+export function useListNotifications<
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: ListNotificationsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotifications>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListNotificationsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useListNotifications} query
+ */
+export const invalidateListNotifications = async (
+  queryClient: QueryClient,
+  params?: ListNotificationsParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getListNotificationsQueryKey(params) }, options);
+
+  return queryClient;
+};
+
+/**
+ * @summary Mark all notifications as read
+ */
+export const markAllRead = (
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>({ url: `/notifications/read-all`, method: 'PATCH', signal }, options);
+};
+
+export const getMarkAllReadMutationKey = () => ['markAllRead'] as const;
+
+export const getMarkAllReadMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof markAllRead>>, TError, void, TContext>;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<Awaited<ReturnType<typeof markAllRead>>, TError, void, TContext> => {
+  const mutationKey = getMarkAllReadMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof markAllRead>>, void> = () => {
+    return markAllRead(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkAllReadMutationResult = NonNullable<Awaited<ReturnType<typeof markAllRead>>>;
+
+export type MarkAllReadMutationError = ErrorType<ProblemDetail>;
+
+/**
+ * @summary Mark all notifications as read
+ */
+export const useMarkAllRead = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof markAllRead>>, TError, void, TContext>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<Awaited<ReturnType<typeof markAllRead>>, TError, void, TContext> => {
+  return useMutation(getMarkAllReadMutationOptions(options), queryClient);
+};
+
+/**
+ * @summary Delete a notification
+ */
+export const deleteNotification = (
+  id: number,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    { url: `/notifications/${encodeURIComponent(String(id))}`, method: 'DELETE', signal },
+    options
+  );
+};
+
+export const getDeleteNotificationMutationKey = () => ['deleteNotification'] as const;
+
+export const getDeleteNotificationMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteNotification>>,
+    TError,
+    DeleteNotificationMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteNotification>>,
+  TError,
+  DeleteNotificationMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteNotificationMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteNotification>>,
+    DeleteNotificationMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteNotification(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteNotificationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteNotification>>
+>;
+
+export type DeleteNotificationMutationError = ErrorType<ProblemDetail>;
+export type DeleteNotificationMutationVariables = { id: number };
+
+/**
+ * @summary Delete a notification
+ */
+export const useDeleteNotification = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteNotification>>,
+      TError,
+      DeleteNotificationMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteNotification>>,
+  TError,
+  DeleteNotificationMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeleteNotificationMutationOptions(options), queryClient);
+};
+
+/**
+ * Idempotent.
+ * @summary Mark a notification as read
+ */
+export const markRead = (
+  id: number,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<NotificationDto>(
+    { url: `/notifications/${encodeURIComponent(String(id))}/read`, method: 'PATCH', signal },
+    options
+  );
+};
+
+export const getMarkReadMutationKey = () => ['markRead'] as const;
+
+export const getMarkReadMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markRead>>,
+    TError,
+    MarkReadMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof markRead>>,
+  TError,
+  MarkReadMutationVariables,
+  TContext
+> => {
+  const mutationKey = getMarkReadMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof markRead>>,
+    MarkReadMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return markRead(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkReadMutationResult = NonNullable<Awaited<ReturnType<typeof markRead>>>;
+
+export type MarkReadMutationError = ErrorType<ProblemDetail>;
+export type MarkReadMutationVariables = { id: number };
+
+/**
+ * @summary Mark a notification as read
+ */
+export const useMarkRead = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof markRead>>,
+      TError,
+      MarkReadMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof markRead>>,
+  TError,
+  MarkReadMutationVariables,
+  TContext
+> => {
+  return useMutation(getMarkReadMutationOptions(options), queryClient);
 };
 
 /**

@@ -173,3 +173,41 @@ Follow-up validation:
 Backend/gateway code was not changed by this follow-up; their earlier local checks
 and successful published PR jobs are separate evidence. New remote CI requires
 publishing the follow-up commit; no additional push or Jira mutation is requested.
+
+## Develop synchronization — 2026-11-05
+
+The new CI failures on PR #68 were genuine binding drift in GitHub's test-merge,
+not a repeat of the missing-Orval installation problem. Its checked merge commit
+`c35749ef075ab0a6603ab25ad94802d8a83773ea` has parents `8af67bd` (new develop) and
+`d1c2021` (the published task head). PWDRZ-144 and PWDRZ-145 added usable
+notifications and analytics APIs: the published inventory grew from 23 to 32
+operations while the branch still committed the original 44 binding files.
+
+- Reproduced the exact 18-path drift in a detached checkout of that test-merge.
+  Normal generation produced 61 files and its read-only check then passed.
+- User selected rebase. Saved the old task head under
+  `refs/codex-backups/pwdrz130-before-rebase-20261105` and rebased onto `8af67bd`.
+  `git range-diff` confirmed identical content for all six original task commits.
+- Regenerated the complete output on the rebased branch: 17 new model/parameter
+  files and updated operations/Query bindings. No generated output was edited by hand.
+- Added transport regressions for the new notification operations (including nullable
+  system-notification fields and empty 204 responses) and analytics query options/keys.
+- Corrected legacy adapter/fixture comments and the exceptions guide: their backend
+  APIs are now implemented, generated bindings are authoritative, and those unused
+  planned adapters are not proof of live UI integration. Notification UI reconciliation
+  remains PWDRZ-152; recommendation/AI stubs remain separately owned.
+- Root static checks, exact `frontend:coverage` prerequisites and production frontend
+  build passed. Frontend: 68 files / 698 tests, with statements 90.52%, branches
+  89.78%, functions 85.17% and lines 90.34%; all existing gates passed.
+- Exact `e2e:test` gate passed with all prerequisites, including the 61-file drift
+  check. Run `1793899644492-7e408553`: 8/8 real-stack scenarios passed on Chromium,
+  one worker and zero retries; managed teardown completed successfully.
+
+The expected invalid-bearer fixture still prints Orval validation errors in the Node
+regression suite; that test passes only when invalid input is rejected. Real CI
+failures were the separate read-only drift check. CI continues to validate committed
+output without auto-repairing it or switching away from the merge result.
+
+History was rewritten only in the local task branch as requested. Publishing it will
+require a separately authorized push with an explicit lease; `origin/develop` and Jira
+are not modified by this synchronization.

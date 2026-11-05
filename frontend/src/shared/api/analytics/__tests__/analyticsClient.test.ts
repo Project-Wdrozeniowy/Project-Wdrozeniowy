@@ -1,4 +1,4 @@
-// PROVISIONAL PWDRZ-145/146: mocked planned adapters, not live backend contract verification.
+// LEGACY analytics fixtures: PWDRZ-145 backend is implemented; generated bindings own its contract. Recommendations remain provisional (PWDRZ-146).
 import { vi } from 'vitest';
 
 const mockApiClient = {

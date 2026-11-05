@@ -22604,10 +22604,11 @@
       "localTracking": {
         "status": "done",
         "owner": "Codex / Ruslan 82179",
-        "updatedAt": "2026-11-03T11:20:43.978Z",
+        "updatedAt": "2026-11-05T17:30:23.706Z",
         "notes": [
           "Local implementation and final review complete on PWDRZ-130-generated-api-bindings. Orval bindings, transport/cache migration and strict drift checks verified. Frontend 693 tests, gateway 51, backend verify 188, real E2E 8/8 and cleanup passed; clean install reproduces all 44 output files. Docker incident/recovery and verified VHD backups documented in pwdrz-130-execution.md. Prepared for PR; user authorized a logical commit series without co-author trailers. No push/PR/merge/Jira mutation or new published CI run.",
-          "Independent review follow-up: fixed selective E2E CI install (clean npm 11 fixture + actual Nx api-check passed) and publish async onSuccess lifecycle using generated mutation options with a tested cache composition. Frontend 696 tests and all coverage gates, static/codegen checks, production build and real E2E 8/8 passed. An earlier native Windows worker crash and its successful fresh-stack rerun are recorded in pwdrz-130-execution.md. User requested one local fix commit without co-author trailers; no additional push or Jira mutation."
+          "Independent review follow-up: fixed selective E2E CI install (clean npm 11 fixture + actual Nx api-check passed) and publish async onSuccess lifecycle using generated mutation options with a tested cache composition. Frontend 696 tests and all coverage gates, static/codegen checks, production build and real E2E 8/8 passed. An earlier native Windows worker crash and its successful fresh-stack rerun are recorded in pwdrz-130-execution.md. User requested one local fix commit without co-author trailers; no additional push or Jira mutation.",
+          "2026-11-05: reproduced GitHub test-merge contract drift after PWDRZ-144/145 added notifications/analytics on develop. User selected local rebase onto 8af67bd; backup ref retained, range-diff confirms all six original commits unchanged in content. Regenerated 61 files for 32 operations; new transport tests, root static checks, frontend coverage (698 tests), production build and real E2E 8/8 passed. New remote CI requires publication of the rebased branch; no push or Jira mutation."
         ]
       }
     }

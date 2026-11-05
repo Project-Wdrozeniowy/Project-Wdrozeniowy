@@ -1,4 +1,4 @@
-// PROVISIONAL PWDRZ-144/152: planned mocked fixtures; reconcile with backend before live acceptance.
+// LEGACY PWDRZ-152 fixtures: PWDRZ-144 backend is implemented. These mocks are not proof of UI integration; use generated bindings for its live contract.
 import { vi } from 'vitest';
 import type { Notification } from '@/shared/api/notification/notification.dto';
 

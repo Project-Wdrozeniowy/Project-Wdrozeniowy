@@ -1,4 +1,5 @@
-// PROVISIONAL (PWDRZ-145/146): analytics/recommendation backends are 501 stubs; shapes await implementation.
+// LEGACY analytics adapter with no production consumer: PWDRZ-145 is implemented
+// and generated bindings own its contract. Recommendations remain provisional (PWDRZ-146).
 import { apiClient } from '@/shared/api/client/api';
 import type {
   UserActivitySummary,

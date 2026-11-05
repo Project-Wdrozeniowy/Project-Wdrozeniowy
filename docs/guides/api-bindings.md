@@ -41,8 +41,14 @@ generated diff and consumers together. Do not remove invalid schema fields in a
 frontend transformer or disable validation to make generation pass.
 
 The generated set follows the published inventory; hidden `501` operations do not
-become usable bindings. The initial inventory has 23 operations. Published but
-currently unused subscriptions/admin bindings require no new UI in this task.
+become usable bindings. After PWDRZ-144/145 the inventory contains 32 operations
+and generates 61 files, including notifications and analytics. Published but
+currently unused bindings require no new UI in this task.
+
+PR checks use the merge result with the current base branch. If `develop` gains
+implemented endpoints while a frontend PR is open, synchronize the task branch,
+regenerate and commit the complete output before expecting its CI to pass. Do not
+make CI repair artifacts or validate only an outdated PR head to hide this drift.
 
 ## Transport and ownership
 
@@ -94,16 +100,17 @@ server payloads; transport tests and real-stack tests provide separate evidence.
 
 ## Remaining manual contracts
 
-| Exception                           | Reason / owner                                                              |
-| ----------------------------------- | --------------------------------------------------------------------------- |
-| Category write requests             | Hidden `501` endpoints, PWDRZ-141                                           |
-| Comments and provisional pagination | PWDRZ-142/67; page envelope derives from a generated page schema            |
-| Tag-list adapters                   | Hidden `501` endpoints, PWDRZ-143/107; existing published Tag DTO is reused |
-| Notifications                       | PWDRZ-144/152; planned fixtures are not live contract evidence              |
-| Analytics, recommendations, AI      | PWDRZ-145/146/147; do not publish or enable stubs here                      |
-| WebSocket events                    | Separate non-REST protocol, PWDRZ-104                                       |
-| Gateway error envelope              | Not part of the backend OpenAPI; inspect unknown errors safely              |
-| Overlapping profile in Zustand      | Existing synchronization retained; consolidation belongs to PWDRZ-150       |
+| Exception                             | Reason / owner                                                                                                                                    |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Category write requests               | Hidden `501` endpoints, PWDRZ-141                                                                                                                 |
+| Comments and provisional pagination   | PWDRZ-142/67; page envelope derives from a generated page schema                                                                                  |
+| Tag-list adapters                     | Hidden `501` endpoints, PWDRZ-143/107; existing published Tag DTO is reused                                                                       |
+| Legacy notification adapters/fixtures | No production consumer; PWDRZ-144 backend is implemented and generated bindings are authoritative; UI integration remains PWDRZ-152               |
+| Legacy analytics adapters/fixtures    | No production consumer; PWDRZ-145 backend is implemented and generated bindings are authoritative; planned fixtures do not certify UI integration |
+| Recommendations and AI                | Hidden `501` endpoints, PWDRZ-146/147                                                                                                             |
+| WebSocket events                      | Separate non-REST protocol, PWDRZ-104                                                                                                             |
+| Gateway error envelope                | Not part of the backend OpenAPI; inspect unknown errors safely                                                                                    |
+| Overlapping profile in Zustand        | Existing synchronization retained; consolidation belongs to PWDRZ-150                                                                             |
 
 There are no compatibility service wrappers for implemented auth/user/posts/votes/search
 operations. Provisional forum adapters retain their explicit markers and cannot be

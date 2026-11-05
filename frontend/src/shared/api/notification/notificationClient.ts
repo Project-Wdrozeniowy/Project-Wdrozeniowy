@@ -1,4 +1,5 @@
-// PROVISIONAL (PWDRZ-144/152): backend is a 501 stub; no live notification-center contract is certified here.
+// LEGACY planned adapter with no production consumer. PWDRZ-144 is implemented;
+// generated bindings own its contract. UI reconciliation remains PWDRZ-152.
 import { apiClient } from '../client/api';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import type { Notification } from './notification.dto';

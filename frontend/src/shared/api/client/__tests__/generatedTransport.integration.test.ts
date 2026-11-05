@@ -25,6 +25,59 @@ beforeEach(async () => {
 });
 afterEach(() => mock.restore());
 
+it('uses the published notification bindings with bearer, pagination, nullable fields and empty 204', async () => {
+  tokenMemory.set('access');
+  const notification = {
+    id: 9,
+    type: 'SYSTEM',
+    entityType: null,
+    entityId: null,
+    senderUsername: null,
+    message: null,
+    read: false,
+    createdAt: '2026-11-05T10:00:00Z',
+  };
+  mock.onGet('/notifications').reply((config) => {
+    expect(config.headers?.Authorization).toBe('Bearer access');
+    expect(config.withCredentials).toBe(true);
+    expect(config.params).toEqual({ unreadOnly: true, page: 1, size: 5 });
+    return [200, { content: [notification], page: 1 }];
+  });
+  await expect(
+    operations.listNotifications({ unreadOnly: true, page: 1, size: 5 })
+  ).resolves.toMatchObject({ content: [notification], page: 1 });
+  mock.onPatch('/notifications/9/read').reply(200, { ...notification, read: true });
+  await expect(operations.markRead(9)).resolves.toMatchObject({ id: 9, read: true });
+  mock.onPatch('/notifications/read-all').reply(204, '');
+  mock.onDelete('/notifications/9').reply(204, '');
+  await expect(operations.markAllRead()).resolves.toBeUndefined();
+  await expect(operations.deleteNotification(9)).resolves.toBeUndefined();
+});
+
+it('routes generated analytics parameters and keys through the same transport', async () => {
+  tokenMemory.set('access');
+  const params = { metric: 'posts', period: '7d' } as const;
+  const trend = { ...params, total: 0, data: [] };
+  mock.onGet('/analytics/trends').reply((config) => {
+    expect(config.headers?.Authorization).toBe('Bearer access');
+    expect(config.params).toEqual(params);
+    return [200, trend];
+  });
+  const options = operations.getGetActivityTrendQueryOptions(params);
+  const client = new QueryClient();
+  try {
+    await expect(client.fetchQuery(options)).resolves.toEqual(trend);
+    expect(client.getQueryData(operations.getGetActivityTrendQueryKey(params))).toEqual(trend);
+  } finally {
+    client.clear();
+  }
+  mock.onGet('/analytics/trending-posts').reply((config) => {
+    expect(config.params).toEqual({ period: '24h', limit: 5 });
+    return [200, []];
+  });
+  await expect(operations.getTrendingPosts({ period: '24h', limit: 5 })).resolves.toEqual([]);
+});
+
 it('uses the gateway base, bearer on public reads, encoded paths and generated query parameters', async () => {
   tokenMemory.set('access');
   mock.onGet('/forum/posts').reply((config) => {
