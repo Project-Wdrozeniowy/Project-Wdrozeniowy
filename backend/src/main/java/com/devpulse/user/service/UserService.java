@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 
 /**
  * Business logic for user profile management.
@@ -28,6 +29,9 @@ import java.time.OffsetDateTime;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
+    /** The {@code errors.email} message of the 409 for an address another account uses. */
+    static final String EMAIL_TAKEN_MESSAGE = "Email is already used by another account";
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -63,10 +67,11 @@ public class UserService {
      *
      * <p>PATCH semantics: fields that are {@code null} in the request stay as
      * they are. An empty string clears {@code displayName}, {@code avatarUrl}
-     * or {@code bio}. Email changes are checked for uniqueness; the unique
+     * or {@code bio}; a blank email never gets here, request validation
+     * rejects it. Email changes are checked for uniqueness; the unique
      * constraint on {@code users.email} catches the race between that check
      * and the update, so a concurrent request for the same address also ends
-     * in 409 instead of a 500.
+     * in 409 instead of a 500. The 409 names the {@code email} field.
      *
      * @param request fields to update
      * @return the updated profile
@@ -76,7 +81,7 @@ public class UserService {
     public MyProfileDto updateProfile(UpdateProfileRequest request) {
         User user = currentUser.currentUser();
 
-        if (StringUtils.hasText(request.getEmail()) && !request.getEmail().equals(user.getEmail())) {
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.getEmail())) {
                 throw emailTaken();
             }
@@ -126,7 +131,8 @@ public class UserService {
     }
 
     private static AppException emailTaken() {
-        return new AppException("Email already registered", HttpStatus.CONFLICT);
+        return new AppException("Email already registered", HttpStatus.CONFLICT,
+                Map.of("email", EMAIL_TAKEN_MESSAGE));
     }
 
     private static String blankToNull(String value) {

@@ -104,7 +104,9 @@ at `/api/v3/api-docs` when `SWAGGER_ENABLED=true`.
   `@Hidden`, so their annotations remain the design reference. Each such
   controller names the Jira task that implements it.
 - Error responses carry an RFC 9457 `ProblemDetail` body
-  (`application/problem+json`). Every property of a response DTO is present;
+  (`application/problem+json`). Its optional `errors` map names the request
+  fields to blame, on validation errors and on errors such as a taken email
+  (409). Every property of a response DTO is present;
   the ones that can be `null` are marked `@Schema(nullable = true)`.
 - `OpenApiContractTest` fails when a `501` stub is published, when an
   implemented operation is hidden, or when `backend/openapi.json` differs
@@ -247,7 +249,9 @@ backend отдаёт тот же документ по `/api/v3/api-docs`.
   `@Hidden`, поэтому их аннотации остаются design reference. Каждый такой
   controller называет Jira-задачу, которая его реализует.
 - Ответы с ошибкой содержат RFC 9457 `ProblemDetail`
-  (`application/problem+json`). Все свойства response DTO присутствуют в
+  (`application/problem+json`). Необязательная карта `errors` называет поля
+  запроса, вызвавшие ошибку: при ошибках валидации и, например, при занятом
+  email (409). Все свойства response DTO присутствуют в
   ответе; те, что могут быть `null`, отмечены `@Schema(nullable = true)`.
 - `OpenApiContractTest` падает, если опубликована `501`-заглушка, если
   реализованная операция скрыта или если `backend/openapi.json` отличается

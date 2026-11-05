@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Global exception handler for all REST controllers.
@@ -44,8 +46,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    /** Joins the messages of a field that breaks several constraints. */
+    static final String MESSAGE_SEPARATOR = "; ";
+
     /**
-     * Handles domain errors thrown by application services.
+     * Handles domain errors thrown by application services. Field errors of
+     * the exception, if any, go into the {@code errors} map.
      *
      * @param ex the domain exception with an HTTP status and message
      * @return a {@link ProblemDetail} with the appropriate status and message
@@ -54,6 +60,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleAppException(AppException ex) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
         pd.setTitle(ex.getStatus().getReasonPhrase());
+        if (!ex.getFieldErrors().isEmpty()) {
+            pd.setProperty("errors", ex.getFieldErrors());
+        }
         return pd;
     }
 
@@ -62,6 +71,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      *
      * <p>The response contains an {@code errors} map with field names and
      * constraint violation messages (e.g. {@code "username": "size must be between 3 and 50"}).
+     * A field that breaks several constraints gets all their messages, sorted
+     * and joined with {@value #MESSAGE_SEPARATOR}, so the answer does not
+     * depend on the order in which the validator reports them.
      *
      * @param ex the exception containing the list of validation errors
      * @return a {@link ProblemDetail} 400 with a map of field-level errors
@@ -71,10 +83,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                                                   HttpHeaders headers,
                                                                   HttpStatusCode status,
                                                                   WebRequest request) {
-        Map<String, String> errors = new HashMap<>();
-        for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
-            errors.put(fe.getField(), fe.getDefaultMessage());
-        }
+        Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.groupingBy(FieldError::getField, TreeMap::new, Collectors.collectingAndThen(
+                        Collectors.mapping(FieldError::getDefaultMessage, Collectors.toCollection(TreeSet::new)),
+                        messages -> String.join(MESSAGE_SEPARATOR, messages))));
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
         pd.setTitle("Validation Error");
         pd.setProperty("errors", errors);

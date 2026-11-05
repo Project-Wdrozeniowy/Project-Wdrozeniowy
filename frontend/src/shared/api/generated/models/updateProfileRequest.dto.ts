@@ -29,9 +29,10 @@ export interface UpdateProfileRequest {
    */
   displayName?: string;
   /**
-   * New email address — must not be used by another account
+   * New email address — must not be blank or used by another account
    * @minLength 0
    * @maxLength 100
+   * @pattern [\s\S]*\S[\s\S]*
    */
   email?: string;
 }

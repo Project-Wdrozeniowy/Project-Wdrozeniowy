@@ -17,6 +17,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
+import java.util.Map;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -156,14 +158,51 @@ class UserControllerTest {
 
     @Test
     void updateProfileAnswers409ForAnEmailOfAnotherAccount() throws Exception {
-        when(userService.updateProfile(any()))
-                .thenThrow(new AppException("Email already registered", HttpStatus.CONFLICT));
+        when(userService.updateProfile(any())).thenThrow(new AppException("Email already registered",
+                HttpStatus.CONFLICT, Map.of("email", "Email is already used by another account")));
 
         mockMvc.perform(patch("/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"taken@example.com\"}"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.detail").value("Email already registered"));
+                .andExpect(jsonPath("$.detail").value("Email already registered"))
+                .andExpect(jsonPath("$.errors.email").value("Email is already used by another account"));
+    }
+
+    @Test
+    void updateProfileRejectsAnEmptyEmailInsteadOfIgnoringIt() throws Exception {
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email").value("Email must not be blank"));
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void updateProfileGivesEveryBrokenRuleOfAFieldInAFixedOrder() throws Exception {
+        // Whitespace is blank and not an address: both messages, sorted, whatever order the validator uses.
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"   \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email")
+                        .value("Email must be a valid email address; Email must not be blank"));
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    void updateProfileValidationMessagesAreWrittenForTheUser() throws Exception {
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"not-an-email\",\"avatarUrl\":\"not a url\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email").value("Email must be a valid email address"))
+                .andExpect(jsonPath("$.errors.avatarUrl").value("Avatar URL must be a valid http or https URL"));
+
+        verifyNoInteractions(userService);
     }
 
     // ───────────────────────── POST /users/me/password ─────────────────────────
@@ -239,6 +278,7 @@ class UserControllerTest {
 
         mockMvc.perform(get("/users/ghost"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.detail").value("User not found"));
+                .andExpect(jsonPath("$.detail").value("User not found"))
+                .andExpect(jsonPath("$.errors").doesNotExist());
     }
 }

@@ -157,7 +157,8 @@ public class OpenApiContractCustomizer implements OpenApiCustomizer {
         schema.addProperty("instance", typed("string").format("uri-reference")
                 .description("Path of the failed request").example("/api/forum/posts/missing"));
         schema.addProperty("errors", typed("object").additionalProperties(typed("string"))
-                .description("Validation messages by field name; present only when request validation fails"));
+                .description("Messages by request field name; present when request validation fails or when "
+                        + "a field causes the error, such as an email used by another account"));
         schema.setRequired(List.of("title", "status", "detail", "instance"));
         return schema;
     }

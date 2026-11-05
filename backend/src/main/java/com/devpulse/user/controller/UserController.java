@@ -56,9 +56,9 @@ public class UserController {
     @Operation(summary = "Update own profile", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Profile updated"),
-        @ApiResponse(responseCode = "400", description = "Validation error"),
+        @ApiResponse(responseCode = "400", description = "Validation error; `errors` has a message for each rejected field"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
-        @ApiResponse(responseCode = "409", description = "Email already registered")
+        @ApiResponse(responseCode = "409", description = "Email already registered; `errors.email` says so")
     })
     @PatchMapping("/me")
     public MyProfileDto updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
