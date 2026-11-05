@@ -3,6 +3,11 @@ import type { tokenMemory as TokenMemory } from '@/shared/auth/tokenMemory';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { QueryClient } from '@tanstack/react-query';
+import type { NotificationDto } from '@/shared/api/generated/models/notificationDto.dto';
+import type { PagedResponseNotificationDto } from '@/shared/api/generated/models/pagedResponseNotificationDto.dto';
+import type { UserActivitySummaryDto } from '@/shared/api/generated/models/userActivitySummaryDto.dto';
+import type { PostAnalyticsDto } from '@/shared/api/generated/models/postAnalyticsDto.dto';
+import type { PlatformSummaryDto } from '@/shared/api/generated/models/platformSummaryDto.dto';
 
 const toastError = vi.hoisted(() => vi.fn());
 vi.mock('@/shared/lib/toast', () => ({
@@ -36,22 +41,86 @@ it('uses the published notification bindings with bearer, pagination, nullable f
     message: null,
     read: false,
     createdAt: '2026-11-05T10:00:00Z',
-  };
+  } satisfies NotificationDto;
+  const page = {
+    content: [notification],
+    page: 1,
+    size: 5,
+    totalElements: 6,
+    totalPages: 2,
+    first: false,
+    last: true,
+  } satisfies PagedResponseNotificationDto;
   mock.onGet('/notifications').reply((config) => {
     expect(config.headers?.Authorization).toBe('Bearer access');
     expect(config.withCredentials).toBe(true);
     expect(config.params).toEqual({ unreadOnly: true, page: 1, size: 5 });
-    return [200, { content: [notification], page: 1 }];
+    return [200, page];
   });
   await expect(
     operations.listNotifications({ unreadOnly: true, page: 1, size: 5 })
   ).resolves.toMatchObject({ content: [notification], page: 1 });
-  mock.onPatch('/notifications/9/read').reply(200, { ...notification, read: true });
+  mock.onGet('/notifications').reply((config) => {
+    expect(config.params).toBeUndefined();
+    return [
+      200,
+      { ...page, content: [], page: 0, size: 20, totalElements: 0, totalPages: 0, first: true },
+    ];
+  });
+  await expect(operations.listNotifications()).resolves.toMatchObject({ page: 0, size: 20 });
+  mock.onPatch('/notifications/9/read').reply((config) => {
+    expect(config.data).toBeUndefined();
+    return [200, { ...notification, read: true }];
+  });
   await expect(operations.markRead(9)).resolves.toMatchObject({ id: 9, read: true });
   mock.onPatch('/notifications/read-all').reply(204, '');
   mock.onDelete('/notifications/9').reply(204, '');
   await expect(operations.markAllRead()).resolves.toBeUndefined();
   await expect(operations.deleteNotification(9)).resolves.toBeUndefined();
+});
+
+it('reads own activity, per-post analytics and platform summary through generated operations', async () => {
+  tokenMemory.set('access');
+  const activity = {
+    userId: 1,
+    username: 'alice',
+    totalPosts: 0,
+    totalComments: 0,
+    totalVotesCast: 0,
+    totalUpvotesReceived: 0,
+    totalDownvotesReceived: 0,
+    lastActivityAt: null,
+  } satisfies UserActivitySummaryDto;
+  const post = {
+    postId: 42,
+    postTitle: 'Title',
+    viewCount: 0,
+    uniqueViewCount: 0,
+    commentCount: 0,
+    voteScore: 0,
+    upvoteCount: 0,
+    downvoteCount: 0,
+    subscriptionCount: 0,
+  } satisfies PostAnalyticsDto;
+  const platform = {
+    totalUsers: 1,
+    activeUsers: 1,
+    totalPosts: 0,
+    totalComments: 0,
+    totalVotes: 0,
+    totalCategories: 6,
+    totalTags: 0,
+  } satisfies PlatformSummaryDto;
+  mock.onGet('/analytics/me').reply((config) => {
+    expect(config.headers?.Authorization).toBe('Bearer access');
+    expect(config.withCredentials).toBe(true);
+    return [200, activity];
+  });
+  mock.onGet('/analytics/posts/42').reply(200, post);
+  mock.onGet('/analytics/summary').reply(200, platform);
+  await expect(operations.getMyActivitySummary()).resolves.toEqual(activity);
+  await expect(operations.getPostAnalytics(42)).resolves.toEqual(post);
+  await expect(operations.getPlatformSummary()).resolves.toEqual(platform);
 });
 
 it('routes generated analytics parameters and keys through the same transport', async () => {
@@ -76,6 +145,19 @@ it('routes generated analytics parameters and keys through the same transport', 
     return [200, []];
   });
   await expect(operations.getTrendingPosts({ period: '24h', limit: 5 })).resolves.toEqual([]);
+  mock.onGet('/analytics/trends').reply((config) => {
+    expect(config.params).toBeUndefined();
+    return [200, { metric: 'posts', period: '7d', total: 0, data: [] }];
+  });
+  mock.onGet('/analytics/trending-posts').reply((config) => {
+    expect(config.params).toBeUndefined();
+    return [200, []];
+  });
+  await expect(operations.getActivityTrend()).resolves.toMatchObject({
+    metric: 'posts',
+    period: '7d',
+  });
+  await expect(operations.getTrendingPosts()).resolves.toEqual([]);
 });
 
 it('uses the gateway base, bearer on public reads, encoded paths and generated query parameters', async () => {

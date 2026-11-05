@@ -205,7 +205,7 @@ and `src/middleware/__tests__/`.
 Use the [e2e workspace](e2e/README.md): after root `npm ci` and browser
 installation, run root `npm run test:e2e` or `npm test` in `e2e/`. Its launcher owns an isolated real
 stack; do not substitute developer servers, production data or mocked API
-responses. Seven browser flows and one HTTP integration case use Chromium,
+responses. Seven browser flows and two HTTP integration cases use Chromium,
 one worker and no retries. Keep service coverage gates independent.
 `npm run test:probe` must fail a real browser assertion and still clean up.
 Current local/CI/required-check evidence belongs in

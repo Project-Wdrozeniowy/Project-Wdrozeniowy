@@ -100,21 +100,32 @@ server payloads; transport tests and real-stack tests provide separate evidence.
 
 ## Remaining manual contracts
 
-| Exception                             | Reason / owner                                                                                                                                    |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Category write requests               | Hidden `501` endpoints, PWDRZ-141                                                                                                                 |
-| Comments and provisional pagination   | PWDRZ-142/67; page envelope derives from a generated page schema                                                                                  |
-| Tag-list adapters                     | Hidden `501` endpoints, PWDRZ-143/107; existing published Tag DTO is reused                                                                       |
-| Legacy notification adapters/fixtures | No production consumer; PWDRZ-144 backend is implemented and generated bindings are authoritative; UI integration remains PWDRZ-152               |
-| Legacy analytics adapters/fixtures    | No production consumer; PWDRZ-145 backend is implemented and generated bindings are authoritative; planned fixtures do not certify UI integration |
-| Recommendations and AI                | Hidden `501` endpoints, PWDRZ-146/147                                                                                                             |
-| WebSocket events                      | Separate non-REST protocol, PWDRZ-104                                                                                                             |
-| Gateway error envelope                | Not part of the backend OpenAPI; inspect unknown errors safely                                                                                    |
-| Overlapping profile in Zustand        | Existing synchronization retained; consolidation belongs to PWDRZ-150                                                                             |
+| Exception                           | Reason / owner                                                              |
+| ----------------------------------- | --------------------------------------------------------------------------- |
+| Category write requests             | Hidden `501` endpoints, PWDRZ-141                                           |
+| Comments and provisional pagination | PWDRZ-142/67; page envelope derives from a generated page schema            |
+| Tag-list adapters                   | Hidden `501` endpoints, PWDRZ-143/107; existing published Tag DTO is reused |
+| Recommendations and AI              | Hidden `501` endpoints, PWDRZ-146/147                                       |
+| WebSocket events                    | Separate non-REST protocol, PWDRZ-104                                       |
+| Gateway error envelope              | Not part of the backend OpenAPI; inspect unknown errors safely              |
+| Overlapping profile in Zustand      | Existing synchronization retained; consolidation belongs to PWDRZ-150       |
 
-There are no compatibility service wrappers for implemented auth/user/posts/votes/search
-operations. Provisional forum adapters retain their explicit markers and cannot be
-certified by mocked success fixtures.
+Implemented auth, user, posts, votes, search, notifications and analytics operations
+have no handwritten compatibility service wrappers or duplicate wire DTOs. Use the
+generated operations/options directly. Omitted notification and analytics query
+parameters use backend defaults; generated parameter objects replace the removed
+positional analytics signatures. Notification PATCH operations take no request body, and
+empty 204 results resolve to `undefined` through the shared transport.
+
+The notification center remains PWDRZ-152 UI work; generated bindings do not imply
+that its UI is implemented. Provisional recommendations remain in
+`shared/api/recommendation/recommendationClient.ts`, with their own DTO and the
+preserved default/custom-limit tests. Both recommendation endpoints are still hidden
+501 stubs owned by PWDRZ-146. Provisional adapters cannot be certified by mocked
+success fixtures. The managed E2E HTTP case independently verifies both real 501
+responses through the gateway; PWDRZ-146 must reconcile that case when publishing
+implemented operations. No compatibility re-export under the deleted analytics
+module is needed because it had no production consumers.
 
 ## Verification and CI
 

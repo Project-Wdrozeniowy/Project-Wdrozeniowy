@@ -114,6 +114,9 @@ never use real account credentials. CI artifact retention is seven days.
 6. Profile PATCH saves account fields and preserves them after reload.
 7. Password change succeeds and requires a new sign-in.
 8. Header search and the results page use the real documented search endpoint.
+9. **HTTP integration**: both provisional recommendation reads return real 501
+   responses through the gateway. PWDRZ-146 owns replacing these hidden stubs;
+   reconcile this regression with its published contract when that task lands.
 
 Registration checks that `displayName` goes out in the request and is stored; PWDRZ-154
 marks the interests as unavailable until the backend has a contract: they are shown as such
