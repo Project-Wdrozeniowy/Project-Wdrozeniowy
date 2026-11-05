@@ -17,6 +17,9 @@ import com.devpulse.forum.repository.PostRepository;
 import com.devpulse.forum.repository.PostSubscriptionRepository;
 import com.devpulse.forum.repository.TagRepository;
 import com.devpulse.forum.repository.VoteRepository;
+import com.devpulse.notification.entity.Notification;
+import com.devpulse.notification.entity.NotificationType;
+import com.devpulse.notification.repository.NotificationRepository;
 import com.devpulse.support.MigratedSchemaTest;
 import jakarta.persistence.EntityManager;
 import org.flywaydb.core.Flyway;
@@ -70,6 +73,9 @@ class MigrationSchemaTest {
     private PostSubscriptionRepository subscriptionRepository;
 
     @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
     private EntityManager entityManager;
 
     @Autowired
@@ -114,6 +120,33 @@ class MigrationSchemaTest {
                 .get()
                 .extracting(User::getStatus)
                 .isEqualTo(status);
+    }
+
+    /**
+     * {@code notifications.type} is the native {@code notification_type} enum,
+     * and every Java constant exists in it.
+     */
+    @ParameterizedTest
+    @EnumSource(NotificationType.class)
+    void notificationTypeRoundTripsThroughNativeEnum(NotificationType type) {
+        User sender = userRepository.saveAndFlush(user("notify-" + type.name().toLowerCase(), Role.USER));
+        Long id = notificationRepository.saveAndFlush(Notification.builder()
+                .recipientId(sender.getId())
+                .sender(sender)
+                .type(type)
+                .entityType("POST")
+                .entityId(1L)
+                .message("message")
+                .build()).getId();
+        entityManager.clear();
+
+        assertThat(notificationRepository.findById(id)).get()
+                .satisfies(notification -> {
+                    assertThat(notification.getType()).isEqualTo(type);
+                    assertThat(notification.isRead()).isFalse();
+                    assertThat(notification.getCreatedAt()).isNotNull();
+                    assertThat(notification.getUpdatedAt()).isNotNull();
+                });
     }
 
     /** {@code posts.status} is the native {@code post_status} enum, and every Java constant exists in it. */

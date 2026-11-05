@@ -129,7 +129,18 @@ public class OpenApiContractCustomizer implements OpenApiCustomizer {
         types.add("null");
         property.setTypes(types);
         property.setNullable(null);
+        allowNullInEnum(property);
         return property;
+    }
+
+    /** An enum lists every allowed value, so a nullable enum has to list {@code null} as well. */
+    @SuppressWarnings("unchecked")
+    private static void allowNullInEnum(Schema<?> property) {
+        if (property.getEnum() != null && property.getEnum().stream().noneMatch(Objects::isNull)) {
+            List<Object> values = new ArrayList<>(property.getEnum());
+            values.add(null);
+            ((Schema<Object>) property).setEnum(values);
+        }
     }
 
     private static Schema<?> problemDetailSchema() {
