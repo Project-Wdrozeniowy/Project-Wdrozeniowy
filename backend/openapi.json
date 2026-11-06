@@ -21,6 +21,9 @@
     "description" : "Browse and manage forum posts",
     "name" : "Forum – Posts"
   }, {
+    "description" : "Browse the tags of published posts",
+    "name" : "Forum – Tags"
+  }, {
     "description" : "Read and manage comments on forum posts",
     "name" : "Forum – Comments"
   }, {
@@ -1419,6 +1422,29 @@
         } ],
         "summary" : "Subscribe to a post",
         "tags" : [ "Forum – Subscriptions" ]
+      }
+    },
+    "/forum/tags" : {
+      "get" : {
+        "description" : "Tags on at least one published post, ordered by postCount descending, then by name. Tags used only by drafts or deleted posts are left out. List a tag's posts with GET /forum/posts?tag={slug}.",
+        "operationId" : "listTags",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TagDto"
+                  }
+                }
+              }
+            },
+            "description" : "Tag list returned; empty when no published post has a tag"
+          }
+        },
+        "summary" : "List the tags in use, most used first",
+        "tags" : [ "Forum – Tags" ]
       }
     },
     "/forum/votes" : {
