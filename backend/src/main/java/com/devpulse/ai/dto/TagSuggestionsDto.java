@@ -12,14 +12,16 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "AI-generated tag suggestions for a piece of content")
+@Schema(description = "Tag suggestions for a piece of content")
 public class TagSuggestionsDto {
 
-    @Schema(description = "Suggested tag slugs, ordered by confidence (highest first)",
+    @Schema(description = "Suggested tag slugs, best first, at most 5; existing tags or, from keyword extraction, "
+            + "new ones that pass the post tag rules",
             example = "[\"spring-boot\", \"postgresql\", \"flyway\", \"java\"]")
     private List<String> tags;
 
-    @Schema(description = "Whether the response was served from the AI provider or a local fallback",
+    @Schema(description = "true when the AI provider chose the tags (always existing ones); false when they come "
+            + "from keyword extraction because the provider is not configured, failed or chose none",
             example = "true")
     private boolean aiGenerated;
 }

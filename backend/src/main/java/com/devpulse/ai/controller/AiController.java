@@ -2,48 +2,49 @@ package com.devpulse.ai.controller;
 
 import com.devpulse.ai.dto.SuggestTagsRequest;
 import com.devpulse.ai.dto.TagSuggestionsDto;
-import io.swagger.v3.oas.annotations.Hidden;
+import com.devpulse.ai.service.TagSuggestionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Planned AI endpoints, implemented under PWDRZ-147.
- *
- * <p>Every operation still answers {@code 501 Not Implemented}, so the
- * controller is hidden from the published OpenAPI contract and its
- * annotations serve as the design reference. When an operation is
- * implemented, move {@code @Hidden} from the class to the operations that
- * are still stubs; {@code OpenApiContractTest} fails while an implemented
- * operation is hidden or a stub is published.
+ * AI-assisted features for signed-in users; see {@link TagSuggestionService}
+ * for how suggestions are chosen and when the AI provider is used.
  */
-@Hidden
-@Tag(name = "AI", description = "AI-powered features: automatic tag suggestions")
+@Tag(name = "AI", description = "AI-assisted features: tag suggestions")
 @RestController
 @RequestMapping("/ai")
 @SecurityRequirement(name = "bearerAuth")
+@RequiredArgsConstructor
 public class AiController {
 
+    private final TagSuggestionService tagSuggestionService;
+
+    /** Suggests tags for post content; signed-in users only. */
     @Operation(
             summary = "Suggest tags for post content",
-            description = "Sends the provided content to the configured AI provider and returns a ranked list "
-                    + "of tag suggestions. Requires authentication to prevent abuse. "
-                    + "Falls back to keyword extraction if the AI provider is unavailable."
+            description = "Signed-in users only. When an AI provider is configured, the model chooses up to 5 of "
+                    + "the 200 most used tags (aiGenerated: true). Otherwise, or when the provider fails or chooses "
+                    + "none, tags come from the words of the title and content (aiGenerated: false): existing tags "
+                    + "whose words appear first, then frequent words. Title words count three times."
     )
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Tag suggestions returned"),
-        @ApiResponse(responseCode = "400", description = "Validation error — content too short or too long"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized"),
-        @ApiResponse(responseCode = "503", description = "AI provider unavailable and fallback also failed")
+        @ApiResponse(responseCode = "200", description = "Tag suggestions, best first; empty when nothing fits"),
+        @ApiResponse(responseCode = "400", description = "Validation error; errors names the fields"),
+        @ApiResponse(responseCode = "401", description = "Not authenticated"),
+        @ApiResponse(responseCode = "503", description = "Neither the AI provider nor the keyword extraction "
+                + "could answer")
     })
     @PostMapping("/suggest-tags")
     public TagSuggestionsDto suggestTags(@Valid @RequestBody SuggestTagsRequest request) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        return tagSuggestionService.suggest(request);
     }
 }

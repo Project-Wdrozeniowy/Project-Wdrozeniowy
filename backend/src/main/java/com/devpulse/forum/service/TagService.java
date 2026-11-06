@@ -3,6 +3,7 @@ package com.devpulse.forum.service;
 import com.devpulse.forum.dto.TagDto;
 import com.devpulse.forum.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,7 @@ public class TagService {
     /** Returns the tags on at least one public post, most used first, then by name. */
     @Transactional(readOnly = true)
     public List<TagDto> listInUse() {
-        return tagRepository.findAllInUse().stream()
+        return tagRepository.findInUse(Pageable.unpaged()).stream()
                 .map(TagDto::from)
                 .toList();
     }
