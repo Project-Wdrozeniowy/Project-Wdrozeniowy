@@ -7,6 +7,6 @@
  */
 
 /**
- * Validation messages by field name; present only when request validation fails
+ * Messages by request field name; present when request validation fails or when a field causes the error, such as an email used by another account
  */
 export type ProblemDetailErrors = { [key: string]: string };

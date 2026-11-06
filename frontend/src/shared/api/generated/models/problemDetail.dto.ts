@@ -13,7 +13,7 @@ import type { ProblemDetailErrors } from './problemDetailErrors.dto';
 export interface ProblemDetail {
   /** Explanation of this occurrence */
   detail: string;
-  /** Validation messages by field name; present only when request validation fails */
+  /** Messages by request field name; present when request validation fails or when a field causes the error, such as an email used by another account */
   errors?: ProblemDetailErrors;
   /** Path of the failed request */
   instance: string;

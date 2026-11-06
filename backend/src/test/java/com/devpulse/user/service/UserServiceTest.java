@@ -26,6 +26,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -143,7 +144,9 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.updateProfile(req))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
-                        .isEqualTo(HttpStatus.CONFLICT));
+                        .isEqualTo(HttpStatus.CONFLICT))
+                .satisfies(e -> assertThat(((AppException) e).getFieldErrors())
+                        .containsExactly(entry("email", UserService.EMAIL_TAKEN_MESSAGE)));
     }
 
     @Test
@@ -157,7 +160,9 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.updateProfile(req))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
-                        .isEqualTo(HttpStatus.CONFLICT));
+                        .isEqualTo(HttpStatus.CONFLICT))
+                .satisfies(e -> assertThat(((AppException) e).getFieldErrors())
+                        .containsExactly(entry("email", UserService.EMAIL_TAKEN_MESSAGE)));
         verify(userRepository, never()).saveAndFlush(any());
     }
 
