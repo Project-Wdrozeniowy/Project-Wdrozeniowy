@@ -1,17 +1,61 @@
 import { test, expect, gatewayURL } from '../support/fixtures.js';
 
-// PWDRZ-146 owns the transition to implemented recommendations. Reconcile this
-// regression with its published contract when those hidden 501 stubs are replaced.
-test('integration: recommendations remain unavailable while PWDRZ-146 is pending', async ({
+// PWDRZ-146: recommendations are public and ranked by documented rules; a bearer
+// token personalises them. API-level evidence through the real gateway and backend.
+test('integration: recommendations answer for anonymous callers and check the limit', async ({
   request,
 }) => {
   for (const kind of ['posts', 'tags']) {
     const response = await request.get(`${gatewayURL}/api/recommendations/${kind}`, {
       params: { limit: 10 },
     });
-    expect(response.status()).toBe(501);
-    expect((await response.json()).status).toBe(501);
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(Array.isArray(body)).toBe(true);
+    expect(body.length).toBeLessThanOrEqual(10);
+
+    const invalid = await request.get(`${gatewayURL}/api/recommendations/${kind}`, {
+      params: { limit: 0 },
+    });
+    expect(invalid.status()).toBe(400);
+    expect(invalid.headers()['content-type']).toContain('application/problem+json');
+    expect((await invalid.json()).detail).toBe('limit must be between 1 and 100');
   }
-  // Real gateway/backend failure-mode evidence; planned adapter mocks are not
-  // presented as proof of successful recommendations or an implemented UI.
+});
+
+test('integration: signed-in callers are not recommended their own posts', async ({
+  request,
+  account,
+}) => {
+  const login = await request.post(`${gatewayURL}/api/auth/login`, {
+    data: { username: account.username, password: account.password },
+  });
+  expect(login.status()).toBe(200);
+  const headers = { Authorization: `Bearer ${(await login.json()).accessToken}` };
+
+  const categories = await (await request.get(`${gatewayURL}/api/forum/categories`)).json();
+  const created = await request.post(`${gatewayURL}/api/forum/posts`, {
+    headers,
+    data: {
+      title: `Recommendation check ${account.username}`,
+      content: 'A post its own author must not be recommended.',
+      categoryId: categories[0].id,
+      tags: [`e2e-${account.username.slice(-8)}`],
+    },
+  });
+  expect(created.status()).toBe(201);
+  const post = await created.json();
+
+  const anonymous = await (
+    await request.get(`${gatewayURL}/api/recommendations/posts`, { params: { limit: 100 } })
+  ).json();
+  expect(anonymous.map((p: { id: number }) => p.id)).toContain(post.id);
+  expect(anonymous.every((p: { reason: string }) => p.reason === 'trending')).toBe(true);
+
+  const personal = await request.get(`${gatewayURL}/api/recommendations/posts`, {
+    headers,
+    params: { limit: 100 },
+  });
+  expect(personal.status()).toBe(200);
+  expect((await personal.json()).map((p: { id: number }) => p.id)).not.toContain(post.id);
 });

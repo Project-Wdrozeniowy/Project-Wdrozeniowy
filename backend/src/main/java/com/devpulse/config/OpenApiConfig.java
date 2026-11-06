@@ -80,6 +80,7 @@ public class OpenApiConfig {
                 new Tag().name("Search").description("Search posts, users and tags"),
                 new Tag().name("Notifications").description("Manage user notifications"),
                 new Tag().name("Analytics").description("Activity and engagement analytics"),
+                new Tag().name("Recommendations").description("Post and tag recommendations from forum activity"),
                 new Tag().name("Admin").description("Administration endpoints, ADMIN role only")
         );
     }
