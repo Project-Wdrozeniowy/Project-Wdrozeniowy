@@ -42,6 +42,9 @@
     "description" : "Activity and engagement analytics",
     "name" : "Analytics"
   }, {
+    "description" : "Post and tag recommendations from forum activity",
+    "name" : "Recommendations"
+  }, {
     "description" : "Administration endpoints, ADMIN role only",
     "name" : "Admin"
   } ],
@@ -2042,6 +2045,100 @@
         "tags" : [ "Notifications" ]
       }
     },
+    "/recommendations/posts" : {
+      "get" : {
+        "description" : "Public. Signed-in callers never get posts they wrote, voted on or commented on. Posts are ordered by: (1) posts sharing a tag with the caller's interest posts (the public posts they wrote, upvoted or commented on), then posts in a category of those posts, then the rest; (2) shared tags, most first; (3) activity in the last 7 days, views + 2 x votes + 3 x comments; (4) vote score, newest, highest id. Anonymous callers and callers without activity get order (3)–(4) only.",
+        "operationId" : "getRecommendedPosts",
+        "parameters" : [ {
+          "description" : "Number of recommendations to return (1–100)",
+          "example" : 10,
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10,
+            "maximum" : 100,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/RecommendedPostDto"
+                  }
+                }
+              }
+            },
+            "description" : "Recommended posts, best first; empty when no post is public"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Limit outside 1–100"
+          }
+        },
+        "summary" : "Recommend public posts",
+        "tags" : [ "Recommendations" ]
+      }
+    },
+    "/recommendations/tags" : {
+      "get" : {
+        "description" : "Public. Tags of published posts, leaving out the caller's interest tags (the tags of the public posts they wrote, upvoted or commented on). Ordered by: (1) public posts carrying the tag and an interest tag, most first; (2) public posts with the tag created in the last 7 days, most first; (3) postCount, most first, then name.",
+        "operationId" : "getRecommendedTags",
+        "parameters" : [ {
+          "description" : "Number of tags to return (1–100)",
+          "example" : 10,
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10,
+            "maximum" : 100,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TagDto"
+                  }
+                }
+              }
+            },
+            "description" : "Recommended tags, best first; empty when no published post has a tag"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Limit outside 1–100"
+          }
+        },
+        "summary" : "Recommend tags",
+        "tags" : [ "Recommendations" ]
+      }
+    },
     "/search" : {
       "get" : {
         "description" : "Public. Case-insensitive substring match of the trimmed query. Without a type every kind is searched and paged on its own; with a type only that kind is returned and the others are null. A term that matches nothing returns empty pages.",
@@ -3316,6 +3413,71 @@
           }
         },
         "required" : [ "detail", "instance", "status", "title" ]
+      },
+      "RecommendedPostDto" : {
+        "type" : "object",
+        "description" : "A public post recommended to the caller, with the rule that placed it",
+        "properties" : {
+          "author" : {
+            "$ref" : "#/components/schemas/UserSummaryDto",
+            "description" : "Post author"
+          },
+          "category" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/CategoryDto"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Post category; null for a post without one"
+          },
+          "commentCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Comment count"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Post creation timestamp"
+          },
+          "excerpt" : {
+            "type" : "string",
+            "description" : "The first 200 characters of the content with whitespace collapsed, followed by … when the content is longer"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Post ID",
+            "example" : 101
+          },
+          "reason" : {
+            "type" : "string",
+            "description" : "Rule that placed the post: it shares a tag with posts the caller wrote, upvoted or commented on (similar_tags), it is in a category of those posts (same_category), or it is ranked by recent activity only (trending)",
+            "enum" : [ "similar_tags", "same_category", "trending" ],
+            "example" : "trending"
+          },
+          "slug" : {
+            "type" : "string",
+            "description" : "URL slug"
+          },
+          "tags" : {
+            "type" : "array",
+            "description" : "Names of the tags attached to this post, in alphabetical order",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "title" : {
+            "type" : "string",
+            "description" : "Post title"
+          },
+          "voteScore" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Vote score"
+          }
+        },
+        "required" : [ "author", "category", "commentCount", "createdAt", "excerpt", "id", "reason", "slug", "tags", "title", "voteScore" ]
       },
       "RegisterRequest" : {
         "type" : "object",

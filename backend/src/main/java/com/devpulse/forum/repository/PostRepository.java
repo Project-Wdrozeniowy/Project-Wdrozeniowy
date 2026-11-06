@@ -12,6 +12,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -27,6 +29,10 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     /** Loads a single post together with everything {@code PostDto} needs. */
     @EntityGraph(attributePaths = {"author", "category", "tags"})
     Optional<Post> findBySlug(String slug);
+
+    /** Loads the posts with the given ids together with their author, category and tags, in no particular order. */
+    @EntityGraph(attributePaths = {"author", "category", "tags"})
+    List<Post> findWithDetailsByIdIn(Collection<Long> ids);
 
     /**
      * Returns {@code base} and every {@code base-*} slug that is already

@@ -42,6 +42,10 @@ import type { CreatePostRequest } from './models/createPostRequest.dto';
 
 import type { GetActivityTrendParams } from './models/getActivityTrendParams.dto';
 
+import type { GetRecommendedPostsParams } from './models/getRecommendedPostsParams.dto';
+
+import type { GetRecommendedTagsParams } from './models/getRecommendedTagsParams.dto';
+
 import type { GetTrendingPostsParams } from './models/getTrendingPostsParams.dto';
 
 import type { ListCommentsParams } from './models/listCommentsParams.dto';
@@ -73,6 +77,8 @@ import type { PostDto } from './models/postDto.dto';
 import type { PostSummaryDto } from './models/postSummaryDto.dto';
 
 import type { ProblemDetail } from './models/problemDetail.dto';
+
+import type { RecommendedPostDto } from './models/recommendedPostDto.dto';
 
 import type { RegisterRequest } from './models/registerRequest.dto';
 
@@ -3473,6 +3479,289 @@ export const useMarkRead = <TError = ErrorType<ProblemDetail>, TContext = unknow
   TContext
 > => {
   return useMutation(getMarkReadMutationOptions(options), queryClient);
+};
+
+/**
+ * Public. Signed-in callers never get posts they wrote, voted on or commented on. Posts are ordered by: (1) posts sharing a tag with the caller's interest posts (the public posts they wrote, upvoted or commented on), then posts in a category of those posts, then the rest; (2) shared tags, most first; (3) activity in the last 7 days, views + 2 x votes + 3 x comments; (4) vote score, newest, highest id. Anonymous callers and callers without activity get order (3)–(4) only.
+ * @summary Recommend public posts
+ */
+export const getRecommendedPosts = (
+  params?: GetRecommendedPostsParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<RecommendedPostDto[]>(
+    { url: `/recommendations/posts`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getGetRecommendedPostsQueryKey = (params?: GetRecommendedPostsParams) => {
+  return [`/recommendations/posts`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRecommendedPostsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRecommendedPosts>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetRecommendedPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRecommendedPostsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecommendedPosts>>> = ({ signal }) =>
+    getRecommendedPosts(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRecommendedPosts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRecommendedPostsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRecommendedPosts>>
+>;
+export type GetRecommendedPostsQueryError = ErrorType<ProblemDetail>;
+
+export function useGetRecommendedPosts<
+  TData = Awaited<ReturnType<typeof getRecommendedPosts>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | GetRecommendedPostsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedPosts>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecommendedPosts>>,
+          TError,
+          Awaited<ReturnType<typeof getRecommendedPosts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecommendedPosts<
+  TData = Awaited<ReturnType<typeof getRecommendedPosts>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetRecommendedPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedPosts>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecommendedPosts>>,
+          TError,
+          Awaited<ReturnType<typeof getRecommendedPosts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecommendedPosts<
+  TData = Awaited<ReturnType<typeof getRecommendedPosts>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetRecommendedPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Recommend public posts
+ */
+
+export function useGetRecommendedPosts<
+  TData = Awaited<ReturnType<typeof getRecommendedPosts>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetRecommendedPostsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedPosts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRecommendedPostsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetRecommendedPosts} query
+ */
+export const invalidateGetRecommendedPosts = async (
+  queryClient: QueryClient,
+  params?: GetRecommendedPostsParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries(
+    { queryKey: getGetRecommendedPostsQueryKey(params) },
+    options
+  );
+
+  return queryClient;
+};
+
+/**
+ * Public. Tags of published posts, leaving out the caller's interest tags (the tags of the public posts they wrote, upvoted or commented on). Ordered by: (1) public posts carrying the tag and an interest tag, most first; (2) public posts with the tag created in the last 7 days, most first; (3) postCount, most first, then name.
+ * @summary Recommend tags
+ */
+export const getRecommendedTags = (
+  params?: GetRecommendedTagsParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<TagDto[]>(
+    { url: `/recommendations/tags`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getGetRecommendedTagsQueryKey = (params?: GetRecommendedTagsParams) => {
+  return [`/recommendations/tags`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRecommendedTagsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRecommendedTags>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetRecommendedTagsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedTags>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRecommendedTagsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecommendedTags>>> = ({ signal }) =>
+    getRecommendedTags(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRecommendedTags>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRecommendedTagsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRecommendedTags>>
+>;
+export type GetRecommendedTagsQueryError = ErrorType<ProblemDetail>;
+
+export function useGetRecommendedTags<
+  TData = Awaited<ReturnType<typeof getRecommendedTags>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | GetRecommendedTagsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedTags>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecommendedTags>>,
+          TError,
+          Awaited<ReturnType<typeof getRecommendedTags>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecommendedTags<
+  TData = Awaited<ReturnType<typeof getRecommendedTags>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetRecommendedTagsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedTags>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecommendedTags>>,
+          TError,
+          Awaited<ReturnType<typeof getRecommendedTags>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecommendedTags<
+  TData = Awaited<ReturnType<typeof getRecommendedTags>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetRecommendedTagsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedTags>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Recommend tags
+ */
+
+export function useGetRecommendedTags<
+  TData = Awaited<ReturnType<typeof getRecommendedTags>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetRecommendedTagsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedTags>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRecommendedTagsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetRecommendedTags} query
+ */
+export const invalidateGetRecommendedTags = async (
+  queryClient: QueryClient,
+  params?: GetRecommendedTagsParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getGetRecommendedTagsQueryKey(params) }, options);
+
+  return queryClient;
 };
 
 /**
