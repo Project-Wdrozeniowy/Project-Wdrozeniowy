@@ -46,6 +46,10 @@ services:
       JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-604800}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_TIMEOUT: ${AI_TIMEOUT:-10s}
     depends_on:
       postgres:
         condition: service_healthy

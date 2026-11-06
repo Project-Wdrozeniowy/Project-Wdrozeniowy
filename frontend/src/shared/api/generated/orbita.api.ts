@@ -86,7 +86,11 @@ import type { SearchParams } from './models/searchParams.dto';
 
 import type { SearchResultsDto } from './models/searchResultsDto.dto';
 
+import type { SuggestTagsRequest } from './models/suggestTagsRequest.dto';
+
 import type { TagDto } from './models/tagDto.dto';
+
+import type { TagSuggestionsDto } from './models/tagSuggestionsDto.dto';
 
 import type { UpdateCategoryRequest } from './models/updateCategoryRequest.dto';
 
@@ -238,6 +242,93 @@ export const invalidatePing = async (
   await queryClient.invalidateQueries({ queryKey: getPingQueryKey() }, options);
 
   return queryClient;
+};
+
+/**
+ * Signed-in users only. When an AI provider is configured, the model chooses up to 5 of the 200 most used tags (aiGenerated: true). Otherwise, or when the provider fails or chooses none, tags come from the words of the title and content (aiGenerated: false): existing tags whose words appear first, then frequent words. Title words count three times.
+ * @summary Suggest tags for post content
+ */
+export const suggestTags = (
+  suggestTagsRequest: BodyType<SuggestTagsRequest>,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<TagSuggestionsDto>(
+    {
+      url: `/ai/suggest-tags`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: suggestTagsRequest,
+      signal,
+    },
+    options
+  );
+};
+
+export const getSuggestTagsMutationKey = () => ['suggestTags'] as const;
+
+export const getSuggestTagsMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof suggestTags>>,
+    TError,
+    SuggestTagsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof suggestTags>>,
+  TError,
+  SuggestTagsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSuggestTagsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof suggestTags>>,
+    SuggestTagsMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return suggestTags(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SuggestTagsMutationResult = NonNullable<Awaited<ReturnType<typeof suggestTags>>>;
+export type SuggestTagsMutationBody = BodyType<SuggestTagsRequest>;
+export type SuggestTagsMutationError = ErrorType<ProblemDetail>;
+export type SuggestTagsMutationVariables = { data: BodyType<SuggestTagsRequest> };
+
+/**
+ * @summary Suggest tags for post content
+ */
+export const useSuggestTags = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof suggestTags>>,
+      TError,
+      SuggestTagsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof suggestTags>>,
+  TError,
+  SuggestTagsMutationVariables,
+  TContext
+> => {
+  return useMutation(getSuggestTagsMutationOptions(options), queryClient);
 };
 
 /**

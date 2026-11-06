@@ -21,9 +21,10 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
     /**
      * Tags on at least one public post, most used first. Tag names are
      * unique, so ordering ties by name gives every call the same order.
+     * Pass an unsorted {@code pageable}: it only limits the result.
      */
     @Query("SELECT t FROM Tag t WHERE t.postCount > 0 ORDER BY t.postCount DESC, t.name ASC")
-    List<Tag> findAllInUse();
+    List<Tag> findInUse(Pageable pageable);
 
     /**
      * Creates the tag unless one with the same slug exists. Two posts created

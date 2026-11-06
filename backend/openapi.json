@@ -45,6 +45,9 @@
     "description" : "Post and tag recommendations from forum activity",
     "name" : "Recommendations"
   }, {
+    "description" : "AI-assisted features: tag suggestions",
+    "name" : "AI"
+  }, {
     "description" : "Administration endpoints, ADMIN role only",
     "name" : "Admin"
   } ],
@@ -92,6 +95,69 @@
         } ],
         "summary" : "Check that the caller has admin access",
         "tags" : [ "Admin" ]
+      }
+    },
+    "/ai/suggest-tags" : {
+      "post" : {
+        "description" : "Signed-in users only. When an AI provider is configured, the model chooses up to 5 of the 200 most used tags (aiGenerated: true). Otherwise, or when the provider fails or chooses none, tags come from the words of the title and content (aiGenerated: false): existing tags whose words appear first, then frequent words. Title words count three times.",
+        "operationId" : "suggestTags",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SuggestTagsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagSuggestionsDto"
+                }
+              }
+            },
+            "description" : "Tag suggestions, best first; empty when nothing fits"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Validation error; errors names the fields"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "503" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Neither the AI provider nor the keyword extraction could answer"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Suggest tags for post content",
+        "tags" : [ "AI" ]
       }
     },
     "/analytics/me" : {
@@ -3545,6 +3611,27 @@
         },
         "required" : [ "posts", "query", "tags", "users" ]
       },
+      "SuggestTagsRequest" : {
+        "type" : "object",
+        "description" : "Request body for tag suggestions",
+        "properties" : {
+          "content" : {
+            "type" : "string",
+            "description" : "Post content to analyse",
+            "example" : "How to configure Spring Boot with PostgreSQL and Flyway migrations",
+            "maxLength" : 50000,
+            "minLength" : 10
+          },
+          "title" : {
+            "type" : "string",
+            "description" : "Optional post title; its words weigh more than the content's",
+            "example" : "Spring Boot + PostgreSQL setup",
+            "maxLength" : 255,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "content" ]
+      },
       "TagDto" : {
         "type" : "object",
         "description" : "Post tag",
@@ -3573,6 +3660,26 @@
           }
         },
         "required" : [ "id", "name", "postCount", "slug" ]
+      },
+      "TagSuggestionsDto" : {
+        "type" : "object",
+        "description" : "Tag suggestions for a piece of content",
+        "properties" : {
+          "aiGenerated" : {
+            "type" : "boolean",
+            "description" : "true when the AI provider chose the tags (always existing ones); false when they come from keyword extraction because the provider is not configured, failed or chose none",
+            "example" : true
+          },
+          "tags" : {
+            "type" : "array",
+            "description" : "Suggested tag slugs, best first, at most 5; existing tags or, from keyword extraction, new ones that pass the post tag rules",
+            "example" : [ "spring-boot", "postgresql", "flyway", "java" ],
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "aiGenerated", "tags" ]
       },
       "TrendDataPointDto" : {
         "type" : "object",
