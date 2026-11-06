@@ -4,7 +4,6 @@ import com.devpulse.forum.dto.CategoryDto;
 import com.devpulse.forum.dto.CreateCategoryRequest;
 import com.devpulse.forum.dto.UpdateCategoryRequest;
 import com.devpulse.forum.service.CategoryService;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -25,9 +23,8 @@ import java.util.List;
  *
  * <p>Reading is public (configured in {@link com.devpulse.config.SecurityConfig})
  * and leaves hidden categories out. Creating, editing and deleting categories
- * is planned under PWDRZ-141: those operations still answer
- * {@code 501 Not Implemented} and are {@code @Hidden} from the published
- * OpenAPI contract until they are implemented.
+ * is for administrators; it finds a category by slug whether it is visible or
+ * not.
  */
 @Tag(name = "Forum – Categories", description = "Browse and manage forum categories")
 @RestController
@@ -45,19 +42,21 @@ public class CategoryController {
         return categoryService.listVisible();
     }
 
-    @Hidden
-    @Operation(summary = "Create a new category", security = @SecurityRequirement(name = "bearerAuth"))
+    /** Creates a category; administrators only. */
+    @Operation(summary = "Create a category", security = @SecurityRequirement(name = "bearerAuth"),
+            description = "Administrators only. The name is unique ignoring case and the slug is unique.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Category created"),
-        @ApiResponse(responseCode = "400", description = "Validation error"),
+        @ApiResponse(responseCode = "400", description = "Validation error; errors names the fields"),
+        @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "403", description = "Admin role required"),
-        @ApiResponse(responseCode = "409", description = "Slug already exists")
+        @ApiResponse(responseCode = "409", description = "Name or slug taken; errors.name or errors.slug says which")
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
     public CategoryDto createCategory(@Valid @RequestBody CreateCategoryRequest request) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        return categoryService.create(request);
     }
 
     /** Returns the visible category identified by slug. */
@@ -73,34 +72,40 @@ public class CategoryController {
         return categoryService.getVisible(slug);
     }
 
-    @Hidden
-    @Operation(summary = "Update a category by slug", security = @SecurityRequirement(name = "bearerAuth"))
+    /** Updates a visible or hidden category; administrators only. */
+    @Operation(summary = "Update a category by slug", security = @SecurityRequirement(name = "bearerAuth"),
+            description = "Administrators only; works on hidden categories too. Omitted fields stay as they are.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Category updated"),
-        @ApiResponse(responseCode = "400", description = "Validation error"),
+        @ApiResponse(responseCode = "400", description = "Validation error; errors names the fields"),
+        @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "403", description = "Admin role required"),
-        @ApiResponse(responseCode = "404", description = "Not found")
+        @ApiResponse(responseCode = "404", description = "No category has this slug"),
+        @ApiResponse(responseCode = "409", description = "Name or slug taken; errors.name or errors.slug says which")
     })
     @PatchMapping("/{slug}")
     @PreAuthorize("hasRole('ADMIN')")
     public CategoryDto updateCategory(
             @Parameter(description = "Category slug", example = "general-discussion") @PathVariable String slug,
             @Valid @RequestBody UpdateCategoryRequest request) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        return categoryService.update(slug, request);
     }
 
-    @Hidden
-    @Operation(summary = "Delete a category by slug", security = @SecurityRequirement(name = "bearerAuth"))
+    /** Deletes a visible or hidden category and keeps its posts; administrators only. */
+    @Operation(summary = "Delete a category by slug", security = @SecurityRequirement(name = "bearerAuth"),
+            description = "Administrators only; works on hidden categories too. The category's posts stay, "
+                    + "without a category.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Category deleted"),
+        @ApiResponse(responseCode = "401", description = "Not authenticated"),
         @ApiResponse(responseCode = "403", description = "Admin role required"),
-        @ApiResponse(responseCode = "404", description = "Not found")
+        @ApiResponse(responseCode = "404", description = "No category has this slug")
     })
     @DeleteMapping("/{slug}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteCategory(
             @Parameter(description = "Category slug", example = "general-discussion") @PathVariable String slug) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        categoryService.delete(slug);
     }
 }

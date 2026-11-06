@@ -34,6 +34,8 @@ import type { ChangePasswordRequest } from './models/changePasswordRequest.dto';
 
 import type { CommentDto } from './models/commentDto.dto';
 
+import type { CreateCategoryRequest } from './models/createCategoryRequest.dto';
+
 import type { CreateCommentRequest } from './models/createCommentRequest.dto';
 
 import type { CreatePostRequest } from './models/createPostRequest.dto';
@@ -79,6 +81,8 @@ import type { SearchParams } from './models/searchParams.dto';
 import type { SearchResultsDto } from './models/searchResultsDto.dto';
 
 import type { TagDto } from './models/tagDto.dto';
+
+import type { UpdateCategoryRequest } from './models/updateCategoryRequest.dto';
 
 import type { UpdateCommentRequest } from './models/updateCommentRequest.dto';
 
@@ -1275,6 +1279,174 @@ export const invalidateListCategories = async (
 };
 
 /**
+ * Administrators only. The name is unique ignoring case and the slug is unique.
+ * @summary Create a category
+ */
+export const createCategory = (
+  createCategoryRequest: BodyType<CreateCategoryRequest>,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<CategoryDto>(
+    {
+      url: `/forum/categories`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: createCategoryRequest,
+      signal,
+    },
+    options
+  );
+};
+
+export const getCreateCategoryMutationKey = () => ['createCategory'] as const;
+
+export const getCreateCategoryMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCategory>>,
+    TError,
+    CreateCategoryMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCategory>>,
+  TError,
+  CreateCategoryMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateCategoryMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createCategory>>,
+    CreateCategoryMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createCategory(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof createCategory>>>;
+export type CreateCategoryMutationBody = BodyType<CreateCategoryRequest>;
+export type CreateCategoryMutationError = ErrorType<ProblemDetail>;
+export type CreateCategoryMutationVariables = { data: BodyType<CreateCategoryRequest> };
+
+/**
+ * @summary Create a category
+ */
+export const useCreateCategory = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createCategory>>,
+      TError,
+      CreateCategoryMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof createCategory>>,
+  TError,
+  CreateCategoryMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateCategoryMutationOptions(options), queryClient);
+};
+
+/**
+ * Administrators only; works on hidden categories too. The category's posts stay, without a category.
+ * @summary Delete a category by slug
+ */
+export const deleteCategory = (
+  slug: string,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    { url: `/forum/categories/${encodeURIComponent(String(slug))}`, method: 'DELETE', signal },
+    options
+  );
+};
+
+export const getDeleteCategoryMutationKey = () => ['deleteCategory'] as const;
+
+export const getDeleteCategoryMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCategory>>,
+    TError,
+    DeleteCategoryMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteCategory>>,
+  TError,
+  DeleteCategoryMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteCategoryMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteCategory>>,
+    DeleteCategoryMutationVariables
+  > = (props) => {
+    const { slug } = props ?? {};
+
+    return deleteCategory(slug, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCategory>>>;
+
+export type DeleteCategoryMutationError = ErrorType<ProblemDetail>;
+export type DeleteCategoryMutationVariables = { slug: string };
+
+/**
+ * @summary Delete a category by slug
+ */
+export const useDeleteCategory = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteCategory>>,
+      TError,
+      DeleteCategoryMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteCategory>>,
+  TError,
+  DeleteCategoryMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeleteCategoryMutationOptions(options), queryClient);
+};
+
+/**
  * @summary Get a category by slug
  */
 export const getCategory = (
@@ -1406,6 +1578,97 @@ export const invalidateGetCategory = async (
   await queryClient.invalidateQueries({ queryKey: getGetCategoryQueryKey(slug) }, options);
 
   return queryClient;
+};
+
+/**
+ * Administrators only; works on hidden categories too. Omitted fields stay as they are.
+ * @summary Update a category by slug
+ */
+export const updateCategory = (
+  slug: string,
+  updateCategoryRequest: BodyType<UpdateCategoryRequest>,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<CategoryDto>(
+    {
+      url: `/forum/categories/${encodeURIComponent(String(slug))}`,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      data: updateCategoryRequest,
+      signal,
+    },
+    options
+  );
+};
+
+export const getUpdateCategoryMutationKey = () => ['updateCategory'] as const;
+
+export const getUpdateCategoryMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCategory>>,
+    TError,
+    UpdateCategoryMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCategory>>,
+  TError,
+  UpdateCategoryMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateCategoryMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCategory>>,
+    UpdateCategoryMutationVariables
+  > = (props) => {
+    const { slug, data } = props ?? {};
+
+    return updateCategory(slug, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof updateCategory>>>;
+export type UpdateCategoryMutationBody = BodyType<UpdateCategoryRequest>;
+export type UpdateCategoryMutationError = ErrorType<ProblemDetail>;
+export type UpdateCategoryMutationVariables = {
+  slug: string;
+  data: BodyType<UpdateCategoryRequest>;
+};
+
+/**
+ * @summary Update a category by slug
+ */
+export const useUpdateCategory = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateCategory>>,
+      TError,
+      UpdateCategoryMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateCategory>>,
+  TError,
+  UpdateCategoryMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateCategoryMutationOptions(options), queryClient);
 };
 
 /**

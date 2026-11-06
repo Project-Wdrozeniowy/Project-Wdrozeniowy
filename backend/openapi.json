@@ -583,9 +583,134 @@
         },
         "summary" : "List the visible categories in display order",
         "tags" : [ "Forum – Categories" ]
+      },
+      "post" : {
+        "description" : "Administrators only. The name is unique ignoring case and the slug is unique.",
+        "operationId" : "createCategory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateCategoryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryDto"
+                }
+              }
+            },
+            "description" : "Category created"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Validation error; errors names the fields"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin role required"
+          },
+          "409" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Name or slug taken; errors.name or errors.slug says which"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Create a category",
+        "tags" : [ "Forum – Categories" ]
       }
     },
     "/forum/categories/{slug}" : {
+      "delete" : {
+        "description" : "Administrators only; works on hidden categories too. The category's posts stay, without a category.",
+        "operationId" : "deleteCategory",
+        "parameters" : [ {
+          "description" : "Category slug",
+          "example" : "general-discussion",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Category deleted"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin role required"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No category has this slug"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Delete a category by slug",
+        "tags" : [ "Forum – Categories" ]
+      },
       "get" : {
         "operationId" : "getCategory",
         "parameters" : [ {
@@ -621,6 +746,97 @@
           }
         },
         "summary" : "Get a category by slug",
+        "tags" : [ "Forum – Categories" ]
+      },
+      "patch" : {
+        "description" : "Administrators only; works on hidden categories too. Omitted fields stay as they are.",
+        "operationId" : "updateCategory",
+        "parameters" : [ {
+          "description" : "Category slug",
+          "example" : "general-discussion",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateCategoryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryDto"
+                }
+              }
+            },
+            "description" : "Category updated"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Validation error; errors names the fields"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin role required"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No category has this slug"
+          },
+          "409" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Name or slug taken; errors.name or errors.slug says which"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Update a category by slug",
         "tags" : [ "Forum – Categories" ]
       }
     },
@@ -2330,6 +2546,46 @@
         },
         "required" : [ "author", "content", "createdAt", "depth", "id", "parentId", "postId", "replies", "status", "updatedAt", "voteScore" ]
       },
+      "CreateCategoryRequest" : {
+        "type" : "object",
+        "description" : "Request body for creating a forum category",
+        "properties" : {
+          "description" : {
+            "type" : "string",
+            "description" : "Optional description; a blank one is stored as none",
+            "maxLength" : 1000,
+            "minLength" : 0
+          },
+          "displayOrder" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Position in the category list, lowest first; 0 when omitted",
+            "example" : 1,
+            "minimum" : 0
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Category name, unique ignoring case; surrounding whitespace is removed",
+            "example" : "General Discussion",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "slug" : {
+            "type" : "string",
+            "description" : "URL slug, unique",
+            "example" : "general-discussion",
+            "maxLength" : 100,
+            "minLength" : 0,
+            "pattern" : "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "visible" : {
+            "type" : "boolean",
+            "default" : "true",
+            "description" : "Whether the category is visible to users"
+          }
+        },
+        "required" : [ "name", "slug" ]
+      },
       "CreateCommentRequest" : {
         "type" : "object",
         "description" : "Request body for creating a comment",
@@ -3174,6 +3430,42 @@
           }
         },
         "required" : [ "count", "date" ]
+      },
+      "UpdateCategoryRequest" : {
+        "type" : "object",
+        "description" : "Request body for updating a forum category; omitted fields stay as they are",
+        "properties" : {
+          "description" : {
+            "type" : "string",
+            "description" : "New description; an empty string removes it",
+            "maxLength" : 1000,
+            "minLength" : 0
+          },
+          "displayOrder" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "New position in the category list, lowest first",
+            "minimum" : 0
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "New category name, unique ignoring case",
+            "maxLength" : 100,
+            "minLength" : 0,
+            "pattern" : "[\\s\\S]*\\S[\\s\\S]*"
+          },
+          "slug" : {
+            "type" : "string",
+            "description" : "New URL slug, unique; links with the old slug stop working",
+            "maxLength" : 100,
+            "minLength" : 0,
+            "pattern" : "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "visible" : {
+            "type" : "boolean",
+            "description" : "Show or hide the category; hidden categories are left out of the public reads"
+          }
+        }
       },
       "UpdateCommentRequest" : {
         "type" : "object",
