@@ -14,8 +14,8 @@ import java.time.OffsetDateTime;
  * Entity representing a forum section.
  *
  * <p>Maps to the {@code categories} table created by migration V2.
- * Migration V6 adds the default categories; administrator management is
- * planned under PWDRZ-141. Users can only reference existing ones when
+ * Migration V6 adds the default categories; administrators create, edit,
+ * hide and delete them. Users can only reference existing ones when
  * creating a post.
  */
 @Entity

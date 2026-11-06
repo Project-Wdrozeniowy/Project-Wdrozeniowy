@@ -102,7 +102,7 @@ server payloads; transport tests and real-stack tests provide separate evidence.
 
 | Exception                           | Reason / owner                                                              |
 | ----------------------------------- | --------------------------------------------------------------------------- |
-| Category write requests             | Hidden `501` endpoints, PWDRZ-141                                           |
+| Category write adapters             | Operations are generated; the handwritten `categoryService` is still in use |
 | Comments and provisional pagination | PWDRZ-142/67; page envelope derives from a generated page schema            |
 | Tag-page adapter                    | `listTags` is generated; tag posts use the posts `tag` filter, PWDRZ-107    |
 | Recommendations and AI              | Hidden `501` endpoints, PWDRZ-146/147                                       |
