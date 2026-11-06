@@ -78,6 +78,8 @@ import type { SearchParams } from './models/searchParams.dto';
 
 import type { SearchResultsDto } from './models/searchResultsDto.dto';
 
+import type { TagDto } from './models/tagDto.dto';
+
 import type { UpdateCommentRequest } from './models/updateCommentRequest.dto';
 
 import type { UpdatePostRequest } from './models/updatePostRequest.dto';
@@ -2574,6 +2576,126 @@ export const useSubscribe = <TError = ErrorType<ProblemDetail>, TContext = unkno
   TContext
 > => {
   return useMutation(getSubscribeMutationOptions(options), queryClient);
+};
+
+/**
+ * Tags on at least one published post, ordered by postCount descending, then by name. Tags used only by drafts or deleted posts are left out. List a tag's posts with GET /forum/posts?tag={slug}.
+ * @summary List the tags in use, most used first
+ */
+export const listTags = (
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<TagDto[]>({ url: `/forum/tags`, method: 'GET', signal }, options);
+};
+
+export const getListTagsQueryKey = () => {
+  return [`/forum/tags`] as const;
+};
+
+export const getListTagsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTags>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>;
+  request?: SecondParameter<typeof orvalTransport>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListTagsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listTags>>> = ({ signal }) =>
+    listTags(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTags>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListTagsQueryResult = NonNullable<Awaited<ReturnType<typeof listTags>>>;
+export type ListTagsQueryError = ErrorType<unknown>;
+
+export function useListTags<
+  TData = Awaited<ReturnType<typeof listTags>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTags>>,
+          TError,
+          Awaited<ReturnType<typeof listTags>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListTags<
+  TData = Awaited<ReturnType<typeof listTags>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTags>>,
+          TError,
+          Awaited<ReturnType<typeof listTags>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListTags<
+  TData = Awaited<ReturnType<typeof listTags>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary List the tags in use, most used first
+ */
+
+export function useListTags<
+  TData = Awaited<ReturnType<typeof listTags>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListTagsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useListTags} query
+ */
+export const invalidateListTags = async (
+  queryClient: QueryClient,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getListTagsQueryKey() }, options);
+
+  return queryClient;
 };
 
 /**

@@ -73,6 +73,7 @@ public class OpenApiConfig {
                 new Tag().name("Users").description("User profile endpoints"),
                 new Tag().name("Forum \u2013 Categories").description("Browse and manage forum categories"),
                 new Tag().name("Forum \u2013 Posts").description("Browse and manage forum posts"),
+                new Tag().name("Forum \u2013 Tags").description("Browse the tags of published posts"),
                 new Tag().name("Forum \u2013 Comments").description("Read and manage comments on forum posts"),
                 new Tag().name("Forum \u2013 Votes").description("Cast and retract votes on posts and comments"),
                 new Tag().name("Forum \u2013 Subscriptions").description("Subscribe to new comments on posts"),

@@ -19,6 +19,13 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
     List<Tag> findBySlugIn(Collection<String> slugs);
 
     /**
+     * Tags on at least one public post, most used first. Tag names are
+     * unique, so ordering ties by name gives every call the same order.
+     */
+    @Query("SELECT t FROM Tag t WHERE t.postCount > 0 ORDER BY t.postCount DESC, t.name ASC")
+    List<Tag> findAllInUse();
+
+    /**
      * Creates the tag unless one with the same slug exists. Two posts created
      * at the same moment with the same new tag both succeed instead of one of
      * them failing on the unique constraint.

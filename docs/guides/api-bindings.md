@@ -104,7 +104,7 @@ server payloads; transport tests and real-stack tests provide separate evidence.
 | ----------------------------------- | --------------------------------------------------------------------------- |
 | Category write requests             | Hidden `501` endpoints, PWDRZ-141                                           |
 | Comments and provisional pagination | PWDRZ-142/67; page envelope derives from a generated page schema            |
-| Tag-list adapters                   | Hidden `501` endpoints, PWDRZ-143/107; existing published Tag DTO is reused |
+| Tag-page adapter                    | `listTags` is generated; tag posts use the posts `tag` filter, PWDRZ-107    |
 | Recommendations and AI              | Hidden `501` endpoints, PWDRZ-146/147                                       |
 | WebSocket events                    | Separate non-REST protocol, PWDRZ-104                                       |
 | Gateway error envelope              | Not part of the backend OpenAPI; inspect unknown errors safely              |
