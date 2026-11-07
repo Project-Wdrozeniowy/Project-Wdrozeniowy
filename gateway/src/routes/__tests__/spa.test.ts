@@ -37,6 +37,31 @@ it('validates the production build and refuses missing assets at startup', () =>
   }).toThrow('SPA build is missing');
 });
 
+it('refuses a directory named index.html instead of a built entry document', () => {
+  fs.unlinkSync(path.join(directory, 'index.html'));
+  fs.mkdirSync(path.join(directory, 'index.html'));
+  expect(() => {
+    assertSpaBuild(directory);
+  }).toThrow('SPA build is missing');
+});
+
+it.each(['text/html;q=0', 'text/html;q=0, */*;q=1', 'text/html-not-a-document'])(
+  'does not serve navigation HTML when Accept rejects it: %s',
+  async (accept) => {
+    const response = await request(createApp(directory)).get('/forum').set('Accept', accept);
+    expect(response.status).toBe(404);
+    expect(response.type).toBe('application/json');
+    expect(response.headers.vary).toMatch(/\bAccept\b/);
+  }
+);
+
+it('accepts case-insensitive HTML media types for browser navigation', async () => {
+  const response = await request(createApp(directory)).get('/forum').set('Accept', 'TEXT/HTML');
+  expect(response.status).toBe(200);
+  expect(response.type).toBe('text/html');
+  expect(response.headers.vary).toMatch(/\bAccept\b/);
+});
+
 it.each(['/', '/forum/a-post?tag=react', '/settings', '/unknown-client-route'])(
   'serves revalidated HTML for browser navigation to %s',
   async (route) => {
@@ -72,6 +97,8 @@ it.each(['/assets/missing.js', '/missing.css', '/missing.ico', '/api/missing', '
 it('excludes non-navigation requests and non-GET methods from fallback', async () => {
   const app = createApp(directory);
   expect((await request(app).get('/forum').set('Accept', 'application/json')).status).toBe(404);
+  expect((await request(app).get('/forum')).status).toBe(404);
+  expect((await request(app).get('/forum').set('Accept', '*/*')).status).toBe(404);
   expect((await request(app).post('/forum').set('Accept', 'text/html')).status).toBe(404);
   // Near-prefix browser paths must not be mistaken for API or WebSocket requests.
   expect((await request(app).get('/api-other').set('Accept', 'text/html')).status).toBe(200);
