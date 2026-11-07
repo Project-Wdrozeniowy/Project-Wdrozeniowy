@@ -1,9 +1,11 @@
 # Widgets
 
-This FSD layer owns **substantial, reusable page regions** assembled from lower layers. A widget may use `features/` and `shared/`, but must not import another widget or route-private code from `app/`.
+Reusable page regions live here. Widgets may consume features/shared, and do
+not import another widget or a page. A page-private block stays with its page.
 
-- Put a region here when it has a stable responsibility across pages or layouts.
-- Do not move a component here only because it is large; one route's feed or dashboard chart can stay route-local in `app/**/_ui/`.
-- Planned Orbita examples: the site header and site sidebar. Their current components still live under `src/components/layout/` until migration.
+The SPA experiment uses header/sidebar for the common frame and post-feed for
+the card/mapping/loading/error presentation reused by home and forum. The
+post-feed public entry exposes its supported surface; its internals do not
+import that entry. Screen-specific query/navigation composition remains in pages.
 
-Create only slices that have actual implementation. See the [frontend architecture target](../../../docs/guides/frontend/README.md).
+See the [current experimental frontend guide](../../../docs/guides/frontend/README.md).

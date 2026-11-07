@@ -153,12 +153,16 @@ also valid. The managed baseline acceptance remains its own unchanged
 
 ## Route ownership and behavior
 
-`src/main.tsx` creates a React Router **data-mode browser router**.
-`app/routes.tsx` explicitly composes the 10 pages / 5 layouts and lazily imports
-page modules. There are no loaders/actions or server handlers: Query/Orval
-continue to own request/cache behavior. Old directory names are retained to
-preserve FSD ownership and reviewability; `(auth)`, `(protected)` and `[slug]`
-are ordinary folders here, not conventions interpreted by Vite.
+`src/main.tsx` mounts App, which renders one React Router **data-mode browser router**.
+`app/router/routes.tsx` composes the ten page slices through three layouts and
+two pathless guard groups. Each page loads lazily through its public entry.
+Page-private UI/helpers live in `pages/<screen>`, providers stay in app, and
+common feed presentation lives in `widgets/post-feed`. There are no
+loaders/actions or server handlers: Query/Orval continue to own request/cache
+behavior. The former Next route directories and special filenames were removed
+in the user-authorized [structure follow-up](route-structure.md).
+See the [current frontend guide](../../guides/frontend/README.md) for the tree
+and import/public-API rules.
 
 | URL                                   | Composition / existing behavior                                      |
 | ------------------------------------- | -------------------------------------------------------------------- |
@@ -183,16 +187,16 @@ shared Orbita values; per-post metadata/SSR is not introduced.
 
 ## Context map and boundaries
 
-| Area         | Concrete entry points / dependencies                                 | Verification                                            |
-| ------------ | -------------------------------------------------------------------- | ------------------------------------------------------- |
-| Route shell  | main.tsx, app/routes.tsx, layouts, guards, Link/navigation consumers | actual router + browser matrix                          |
-| Build        | frontend package/tsconfig/eslint/Vite/Vitest, root lockfile          | locked install, strict static gates, build              |
-| HTTP/session | api.ts, providers, generated operations, tokenMemory                 | unchanged transport matrix + real auth                  |
-| SPA host     | gateway app/config/index, routes/spa.ts, API/WS proxies              | real host and gateway regressions                       |
-| Packaging    | gateway Dockerfile, root/E2E Compose, .dockerignore                  | secret-free clean context, rebuilt image                |
-| Workspace    | project.json, tools/workspace dev/build/snapshot                     | lifecycle, Nx build/output/cache checks                 |
-| Acceptance   | e2e/scripts + original specs + spa.spec.ts                           | managed built image and actual Spring/Postgres          |
-| CI           | frontend/gateway builds, lint/test/e2e workflows                     | local equivalents; remote execution reported separately |
+| Area         | Concrete entry points / dependencies                              | Verification                                            |
+| ------------ | ----------------------------------------------------------------- | ------------------------------------------------------- |
+| Route shell  | main.tsx, app/router, app/layouts, pages and navigation consumers | actual router + browser matrix                          |
+| Build        | frontend package/tsconfig/eslint/Vite/Vitest, root lockfile       | locked install, strict static gates, build              |
+| HTTP/session | api.ts, providers, generated operations, tokenMemory              | unchanged transport matrix + real auth                  |
+| SPA host     | gateway app/config/index, routes/spa.ts, API/WS proxies           | real host and gateway regressions                       |
+| Packaging    | gateway Dockerfile, root/E2E Compose, .dockerignore               | secret-free clean context, rebuilt image                |
+| Workspace    | project.json, tools/workspace dev/build/snapshot                  | lifecycle, Nx build/output/cache checks                 |
+| Acceptance   | e2e/scripts + original specs + spa.spec.ts                        | managed built image and actual Spring/Postgres          |
+| CI           | frontend/gateway builds, lint/test/e2e workflows                  | local equivalents; remote execution reported separately |
 
 Reference patterns are existing auth guards/providers, generated transport,
 WS boundary matching, workspace process ownership and E2E source snapshots.

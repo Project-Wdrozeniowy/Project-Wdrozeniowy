@@ -64,8 +64,9 @@ describe('component props naming', () => {
     expect(names).toEqual(expect.arrayContaining(['PostCard', 'FormField', 'AuthGuard']));
   });
 
-  it('route composition components take no framework-defined props', () => {
-    expect(all.some((c) => /(^|\/)(page|layout)\.tsx$/.test(c.file))).toBe(false);
+  it('includes page and reusable widget components in the naming policy', () => {
+    expect(all.some((c) => c.file.startsWith('pages/'))).toBe(true);
+    expect(all.some((c) => c.file.startsWith('widgets/post-feed/'))).toBe(true);
   });
 
   it.each(all.map((c) => [`${c.file} › ${c.component}`, c] as const))(
