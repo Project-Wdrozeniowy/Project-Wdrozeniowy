@@ -1,13 +1,32 @@
 # Experiment results
 
+The user-authorized route-structure follow-up is complete at
+`4ed8d99443b64fc1b6ae80c60bf19ee2566ddc9b`. Routing/guards now live in `app/router`,
+three layouts in `app/layouts`, providers in `app/providers`, ten screens in
+`pages`, and reusable post presentation in `widgets/post-feed`. Pathless auth
+and ADMIN groups replace two wrapper-only layouts. URLs and product behavior
+are preserved. See [the structure record](route-structure.md) and
+[current frontend guide](../../guides/frontend/README.md).
+
+For this revision, root check (10 targets), root build (6 targets) and
+frontend verified (8 targets, including uncached coverage/codegen/API checks)
+passed. All 705 frontend tests pass: 701 retained plus four source-boundary
+tests. Coverage: lines 98.20%, branches 93.33%, functions 96.47%; statement gate
+also passed. Backend/gateway/E2E source, generated bindings, dependencies and
+Nx/CI configuration did not change in this follow-up.
+
+**E2E were skipped at the user's explicit request. Full-stack validate was not
+rerun.** The browser/backend and clean-checkout evidence below belongs to the
+initial migration at `8094945`; it is not new acceptance evidence for `4ed8d99`.
+
 The migrated production SPA runs through Express and the unchanged real Spring
 backend. Local acceptance passed, including all original scenarios. The spike
 supports considering **SPA + existing Express** as a practical architecture;
 it does not adopt that architecture in develop or authorize a PR/merge.
 
-Clean-checkout reproduction passed. Tested implementation/test revision:
-`80949450ed58179e681da6c508402a785a25d57a`. The final documentation/tracking commit changes
-no executable source; its exact SHA is recorded in the handover. `git rev-parse
+Initial migration clean-checkout reproduction passed at implementation/test revision
+`80949450ed58179e681da6c508402a785a25d57a`. Documentation/tracking commits change
+no executable source; exact revisions are recorded in the handover. `git rev-parse
 HEAD` identifies the checked-out experimental revision. See also
 [verification.json](verification.json).
 
@@ -25,12 +44,12 @@ HEAD` identifies the checked-out experimental revision. See also
 - Node 24.15.0, npm 11.12.1, Java 17 via the existing Maven wrapper workflow,
   Docker Engine 29.4.3, PostgreSQL 16, pinned Playwright 1.64.1 Chromium, Windows.
 
-## Verification and reproducibility
+## Initial migration verification and reproducibility
 
 Commands and safe independent start/stop instructions: [README.md](README.md).
 Full local artifacts are ignored beneath the original shared workspace
 `D:/Projects/Wrdz/Project-Wdrozeniowy/.workspace-artifacts/pwdrz-160/evidence/`
-(`baseline/`, `experiment/`, `verification/`), and each worktree's
+(`baseline/`, `experiment/`, `verification/`, `route-structure/`), and each worktree's
 `e2e/artifacts/<id>/`. This shared evidence directory is outside the experimental
 Git root; fresh local runs create their own per-checkout artifacts. They are actual execution evidence, not source
 or credentials to be committed. Re-running the commands creates new owned evidence.
@@ -124,9 +143,11 @@ speed follows from passing these checks.
    APIs differ in push/replace options, search-param return shape and dynamic
    params. A local pagination helper collided with `navigate`; existing tests
    caught it. Guards, URL semantics and actual history received separate checks.
-2. **A SPA needs an explicit composition boundary.** The old route directories
-   remain for FSD ownership, but only `app/routes.tsx` interprets URLs. Data-mode
-   lazy/error/scroll support is used without loaders/actions or framework SSR.
+2. **A SPA needs an explicit composition boundary.** The first runnable version
+   retained the old route directories. The requested follow-up replaces them
+   with App routing/layouts and independent page slices. Only
+   `app/router/routes.tsx` interprets URLs. Data-mode lazy/error/scroll support
+   is used without loaders/actions or framework SSR.
 3. **Gateway hosting is real application work.** API/WS matching, fallback,
    MIME/cache, missing-build checks, headers and API-only rate scope moved into
    explicit tested Express behavior. Removing Next does not remove those duties.
@@ -204,7 +225,7 @@ to project automation. The same failure/workaround is reported in
 | Frontend workspace        | React/FSD/Query/Orval plus Next shell                                   | Same React/FSD/Query/Orval plus Vite and explicit routes                   |
 | Data fetching             | Current product data fetched in browser                                 | Same; no browser-to-backend bypass or new BFF                              |
 | Server HTML actually used | Layout/page shell and shared metadata, not product-data SSR             | Static entry document; app rendering requires JS                           |
-| Routing                   | Files/groups/layout conventions interpreted by Next                     | Explicit tree; old folders retain ownership, no routing magic              |
+| Routing                   | Files/groups/layout conventions interpreted by Next                     | Explicit App route tree, three layouts, independent page slices            |
 | Gateway                   | HTTP cross-cutting/proxy/limited WS                                     | Same functions plus static/fallback/cache/header responsibilities          |
 | Delivery                  | Frontend runtime and gateway release independently in principle         | Frontend artifact ships in gateway image; build/release coupling increases |
 | Origin/environment        | Separate browser/API origins in the verified baseline                   | One production origin and relative /api; Vite proxy during dev             |
@@ -236,8 +257,9 @@ features improve merely by changing the frontend build/router.
   and destination security remain PWDRZ-104; outage/matcher checks do not certify
   a completed realtime protocol. Redis and Socket.IO are retained.
 - Profile state/cache consolidation remains PWDRZ-150. No parallel form or
-  feedback work was imported. FSD/source ownership remains PWDRZ-149's boundary,
-  with branch-local routing interpretation documented explicitly.
+  feedback work was imported. The user-authorized App/pages/post-feed follow-up
+  is confined to this experiment; wider FSD/source ownership remains PWDRZ-149's
+  boundary. The follow-up does not change team architecture on develop.
 - Other retained provisional feature/API markers keep their existing owners
   and prerequisites. No marker states that completion of PWDRZ-160 alone enables
   that product work, and no other ticket is claimed unblocked by migration. Comments were already enabled

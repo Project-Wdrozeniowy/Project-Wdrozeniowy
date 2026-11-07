@@ -113,5 +113,57 @@
     "engineVersion": "29.4.3",
     "runtimeDirectoriesPreservedAndRecreated": true,
     "imagesVolumesAndVHDXReset": false
+  },
+  "recordScope": "Initial migration acceptance is recorded at the top level. The latest route organization and its separate verification limits are recorded in routeStructureFollowUp.",
+  "routeStructureFollowUp": {
+    "testedRevision": "4ed8d99443b64fc1b6ae80c60bf19ee2566ddc9b",
+    "previousRevision": "d0d230399357284eb4ab32fee7227d29a4eff989",
+    "check": {
+      "passed": true,
+      "targets": 10
+    },
+    "build": {
+      "passed": true,
+      "targets": 6
+    },
+    "frontendVerified": {
+      "passed": true,
+      "targets": 8,
+      "coverageCached": false,
+      "apiDriftAndCodegenPassed": true
+    },
+    "frontendTests": 705,
+    "sourceBoundaryTests": 4,
+    "coveragePercent": {
+      "lines": 98.20261437908496,
+      "branches": 93.33333333333333,
+      "functions": 96.46799116997792,
+      "statementsGatePassed": true
+    },
+    "e2e": {
+      "executed": false,
+      "reason": "User explicitly requested skipping E2E for this follow-up. Earlier 16-case real-stack runs certify only the initial migration revision."
+    },
+    "fullStackValidate": {
+      "executed": false,
+      "reason": "Includes E2E, skipped by user instruction. Backend/gateway are unchanged in this follow-up."
+    },
+    "unchanged": [
+      "backend",
+      "gateway",
+      "e2e",
+      "tools",
+      "CI",
+      "Nx configuration",
+      "dependencies/lockfile",
+      "generated bindings"
+    ],
+    "localEvidenceDirectory": "route-structure",
+    "publication": {
+      "pushed": false,
+      "PR": false,
+      "merge": false,
+      "jiraMutated": false
+    }
   }
 }
