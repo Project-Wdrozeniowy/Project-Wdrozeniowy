@@ -34,10 +34,12 @@ vi.stubGlobal('AbortController', transferableAbortController().constructor);
 afterAll(() => vi.unstubAllGlobals());
 
 const routers: ReturnType<typeof createMemoryRouter>[] = [];
-function open(path: string) {
+async function open(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   routers.push(router);
   render(<RouterProvider router={router} />);
+  // Route modules must finish loading before asserting guard/navigation behavior.
+  await waitFor(() => expect(router.state.initialized).toBe(true), { timeout: 5000 });
   return router;
 }
 beforeEach(() => {
@@ -55,7 +57,7 @@ afterEach(() => {
 it.each(['/login', '/register', '/', '/forum?tag=react&page=2', '/search?q=react'])(
   'resolves the actual public route %s without a Next runtime',
   async (path) => {
-    const router = open(path);
+    const router = await open(path);
     await waitFor(() => expect(router.state.navigation.state).toBe('idle'));
     await waitFor(() => expect(router.state.initialized).toBe(true), { timeout: 5000 });
     expect(router.state.errors).toBeNull();
@@ -64,13 +66,13 @@ it.each(['/login', '/register', '/', '/forum?tag=react&page=2', '/search?q=react
   }
 );
 it('reads the dynamic post slug from the browser route', async () => {
-  open('/forum/a-real-slug');
+  await open('/forum/a-real-slug');
   expect(await screen.findByText('Post slug: a-real-slug')).toBeVisible();
 });
 it.each(['/profile', '/settings', '/dashboard', '/admin'])(
   'redirects a guest opening %s directly',
   async (path) => {
-    const router = open(path);
+    const router = await open(path);
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
     expect(await screen.findByRole('heading', { name: 'Welcome Back' })).toBeVisible();
   }
@@ -79,7 +81,7 @@ it.each(['/profile', '/settings', '/dashboard', '/admin'])(
   'renders the implemented protected route %s for its permitted user',
   async (path) => {
     useStore.setState({ user: { ...user, role: 'ADMIN' }, isAuthenticated: true });
-    const router = open(path);
+    const router = await open(path);
     await waitFor(() => expect(router.state.initialized).toBe(true));
     expect(router.state.errors).toBeNull();
     expect(await screen.findByRole('button', { name: 'Sign out' })).toBeVisible();
@@ -88,12 +90,12 @@ it.each(['/profile', '/settings', '/dashboard', '/admin'])(
 );
 it('rejects the admin page for an ordinary authenticated user', async () => {
   useStore.setState({ user, isAuthenticated: true });
-  const router = open('/admin');
+  const router = await open('/admin');
   await waitFor(() => expect(router.state.location.pathname).toBe('/'));
   expect(screen.queryByText('Admin Dashboard')).not.toBeInTheDocument();
 });
 it('renders a client not-found view with a way home', async () => {
-  open('/not-a-route');
+  await open('/not-a-route');
   expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeVisible();
   expect(screen.getByRole('link', { name: 'Return home' })).toHaveAttribute('href', '/');
 });
