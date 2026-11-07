@@ -1,5 +1,13 @@
 # Experiment results
 
+The complete branch review is recorded in [review.md](review.md). At tested source
+revision `c468fc0afb66fc612ddc93d4051e0c8848137218`, two reproduced SPA-host issues
+are fixed: Accept negotiation and a non-file entry document passing preflight.
+Root static checks, frontend build/705 tests, gateway verified/69 tests and nine
+infrastructure unit tests pass with unchanged coverage gates. E2E/full-stack
+validation were not rerun, per the user's instruction. The review does not turn
+the historical real-stack results below into acceptance for the latest revision.
+
 The user-authorized route-structure follow-up is complete at
 `4ed8d99443b64fc1b6ae80c60bf19ee2566ddc9b`. Routing/guards now live in `app/router`,
 three layouts in `app/layouts`, providers in `app/providers`, ten screens in

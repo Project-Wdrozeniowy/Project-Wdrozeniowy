@@ -7,6 +7,7 @@ TanStack Query cache policy, forms and existing product limitations are preserve
 - Experiment: `PWDRZ-160-vite-spa-spike`.
 - Pinned baseline: `2bd7d6c8d0f24a737304fee07174de5a0c03477a` (`origin/develop` verified at kickoff).
 - Results, actual evidence and remaining acceptance: [results.md](results.md).
+- Complete branch review, fixed defects and current verification limits: [review.md](review.md).
 - `git rev-parse HEAD` identifies the checked-out experimental revision. Use the
   final handover SHA; uncommitted intermediate snapshots are not final evidence.
 

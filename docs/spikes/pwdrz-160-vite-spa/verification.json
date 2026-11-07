@@ -114,7 +114,7 @@
     "runtimeDirectoriesPreservedAndRecreated": true,
     "imagesVolumesAndVHDXReset": false
   },
-  "recordScope": "Initial migration acceptance is recorded at the top level. The latest route organization and its separate verification limits are recorded in routeStructureFollowUp.",
+  "recordScope": "Initial migration acceptance is recorded at the top level. Route organization and latest complete branch review have separate revisions and verification limits in routeStructureFollowUp and branchReview.",
   "routeStructureFollowUp": {
     "testedRevision": "4ed8d99443b64fc1b6ae80c60bf19ee2566ddc9b",
     "previousRevision": "d0d230399357284eb4ab32fee7227d29a4eff989",
@@ -165,5 +165,93 @@
       "merge": false,
       "jiraMutated": false
     }
+  },
+  "branchReview": {
+    "reviewedRevision": "9b2a1d3275ce554e0fbdf2dc4a2373a4c5f30b61",
+    "testedRevision": "c468fc0afb66fc612ddc93d4051e0c8848137218",
+    "comparisonBase": "2bd7d6c8d0f24a737304fee07174de5a0c03477a",
+    "skill": "review-and-refactor",
+    "findings": {
+      "fixed": 2,
+      "criticalIdentified": 0,
+      "subjects": ["HTML Accept negotiation and Vary", "Regular SPA entry file preflight"]
+    },
+    "regressionFirst": {
+      "before": {
+        "failed": 5,
+        "passed": 13
+      },
+      "after": {
+        "failed": 0,
+        "passed": 18
+      }
+    },
+    "rootCheck": {
+      "passed": true,
+      "targets": 10,
+      "cachedTargets": 6
+    },
+    "frontend": {
+      "tests": 705,
+      "coveragePassed": true,
+      "buildPassed": true,
+      "lintPassed": true,
+      "typecheckPassed": true,
+      "formatPassed": true,
+      "generatedFilesMatched": 75,
+      "codegenTestsPassed": true
+    },
+    "gatewayVerified": {
+      "passed": true,
+      "targets": 6,
+      "tests": 69,
+      "cached": false
+    },
+    "infrastructureUnitTests": {
+      "passed": 9,
+      "failed": 0,
+      "browserOrDockerStarted": false
+    },
+    "initialCombinedRun": {
+      "passed": false,
+      "failures": [
+        "Mandatory braces missing in first fix, corrected before final checks",
+        "Quota test exceeded unchanged 5-second timeout under redundant concurrent verification"
+      ],
+      "finalGatewayRunPassedWithoutTimeoutOrAssertionChanges": true
+    },
+    "coveragePercent": {
+      "frontend": {
+        "lines": 98.20261437908496,
+        "branches": 93.23076923076923,
+        "functions": 96.46799116997792,
+        "statementsGatePassed": true
+      },
+      "gateway": {
+        "lines": 97.5609756097561,
+        "branches": 90,
+        "functions": 93.93939393939394,
+        "statementsGatePassed": true
+      }
+    },
+    "e2e": {
+      "executed": false,
+      "reason": "Skipped by explicit user instruction; historical real-stack evidence is not current-revision acceptance."
+    },
+    "fullStackValidate": {
+      "executed": false,
+      "reason": "Includes E2E."
+    },
+    "backendTestsRerun": false,
+    "dockerRebuilt": false,
+    "remoteCIExecuted": false,
+    "executableChanges": ["gateway/src/routes/spa.ts"],
+    "generatedBindingsAndBackendUnchanged": true,
+    "dependenciesAndAutomationUnchanged": true,
+    "localEvidenceDirectory": "review",
+    "pushed": false,
+    "PR": false,
+    "merge": false,
+    "jiraMutated": false
   }
 }
