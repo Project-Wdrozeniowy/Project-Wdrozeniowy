@@ -1,7 +1,5 @@
-'use client';
-
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Link } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useId, useState } from 'react';
 import type { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent } from 'react';
 import { postHref, searchPageHref } from '@/shared/lib/searchUrl';
@@ -26,7 +24,7 @@ import {
  * highlighted, the results page), Escape closes the panel and, once closed, clears the input.
  */
 export default function SearchBar() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const optionPrefix = useId();
   const [value, setValue] = useState('');
   const [open, setOpen] = useState(false);
@@ -59,14 +57,14 @@ export default function SearchBar() {
   function openPost(post: PostSummary) {
     recent.add(trimmed);
     close();
-    router.push(postHref(post.slug));
+    navigate(postHref(post.slug));
   }
 
   function openResultsPage(query: string) {
     recent.add(query);
     setValue(query);
     close();
-    router.push(searchPageHref({ q: query }));
+    navigate(searchPageHref({ q: query }));
   }
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -109,7 +107,7 @@ export default function SearchBar() {
   return (
     <>
       <Link
-        href="/search"
+        to="/search"
         aria-label="Search"
         className="sm:hidden p-2 rounded text-slate-300 hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-blue-500"
       >

@@ -7,40 +7,14 @@ type ApiClientInstance = typeof ApiClientExport;
 // We need to test ApiClient by importing the module after mocking env vars.
 // Since apiClient is a singleton, we use the real axios interceptors via MockAdapter.
 
-describe('ApiClient >-65 resolveBaseURL', () => {
-  const originalEnv = process.env.NEXT_PUBLIC_API_URL;
-
-  afterEach(() => {
-    if (originalEnv === undefined) {
-      delete process.env.NEXT_PUBLIC_API_URL;
-    } else {
-      process.env.NEXT_PUBLIC_API_URL = originalEnv;
-    }
-  });
-
-  it('uses NEXT_PUBLIC_API_URL when set', async () => {
-    process.env.NEXT_PUBLIC_API_URL = 'http://custom-api.example.com';
-    // Re-import to get a fresh instance with new env
+describe('ApiClient same-origin base URL', () => {
+  it('uses /api regardless of a legacy Next environment variable', async () => {
+    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://obsolete.example/api');
     vi.resetModules();
     const { apiClient: fresh } = await import('../api');
-    // The instance should have been created with the custom URL
-    // We can verify indirectly: mock a request and check the base URL
-    const mock = new MockAdapter((fresh as unknown as { client: AxiosInstance }).client);
-    mock.onGet('/test').reply(200, { ok: true });
-    const result = await fresh.get('/test');
-    expect(result).toEqual({ ok: true });
-    mock.restore();
-  });
-
-  it('falls back to /api when window is defined (jsdom)', async () => {
-    delete process.env.NEXT_PUBLIC_API_URL;
-    vi.resetModules();
-    const { apiClient: fresh } = await import('../api');
-    const mock = new MockAdapter((fresh as unknown as { client: AxiosInstance }).client);
-    mock.onGet('/test').reply(200, { fallback: true });
-    const result = await fresh.get('/test');
-    expect(result).toEqual({ fallback: true });
-    mock.restore();
+    const client = (fresh as unknown as { client: AxiosInstance }).client;
+    expect(client.defaults.baseURL).toBe('/api');
+    vi.unstubAllEnvs();
   });
 });
 

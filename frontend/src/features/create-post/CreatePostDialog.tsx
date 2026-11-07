@@ -1,5 +1,3 @@
-'use client';
-
 import { useIsMutating } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';

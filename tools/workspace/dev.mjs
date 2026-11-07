@@ -25,15 +25,9 @@ function freePort(port) {
 await lifecycle(async (signal) => {
   const root = readEnv('.env');
   const gateway = readEnv('gateway/.env');
-  const frontend = readEnv('frontend/.env');
   if (!root.POSTGRES_PASSWORD || !root.JWT_SECRET || root.JWT_SECRET !== gateway.JWT_SECRET) {
     throw new Error(
       'Configure POSTGRES_PASSWORD and identical JWT_SECRET in .env and gateway/.env.'
-    );
-  }
-  if (frontend.NEXT_PUBLIC_API_URL !== 'http://localhost:3000/api') {
-    throw new Error(
-      'Root dev expects frontend/.env NEXT_PUBLIC_API_URL=http://localhost:3000/api; use direct commands for custom ports.'
     );
   }
   if (
@@ -71,7 +65,7 @@ await lifecycle(async (signal) => {
     {
       label: 'Run frontend and gateway with hot reload',
       signal,
-      env: { ...process.env, NX_TUI: 'false', NX_DAEMON: 'false' },
+      env: { ...process.env, NX_TUI: 'false', NX_DAEMON: 'false', SERVE_SPA: 'false' },
     }
   );
 });

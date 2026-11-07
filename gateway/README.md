@@ -1,6 +1,6 @@
 # API Gateway
 
-Node.js/Express proxy on `:3000` that validates JWTs and forwards `/api/*` requests to the Spring Boot backend on `:8080`.
+PWDRZ-160 experimental Node.js/Express SPA host and API proxy on `:3000` that validates JWTs and forwards `/api/*` requests to the Spring Boot backend on `:8080`.
 
 ---
 
@@ -10,7 +10,7 @@ Node.js/Express proxy on `:3000` that validates JWTs and forwards `/api/*` reque
 Client
   │
   ▼
-helmet → cors → morgan → rate limiter
+helmet → cors → morgan → /api rate limiter + JWT (API only)
   │
   ├─ GET /health ───────────────────────────→ { status: "ok" }
   │
@@ -84,7 +84,7 @@ Build the Docker image from the repository root:
 | Command | Purpose |
 |---|---|
 | `npm run dev` | Start with hot reload (`tsx watch`) |
-| `npm start` | Run compiled output from `dist/` |
+| `npm start` | Serve compiled API gateway and `../frontend/dist`; fails if HTML is missing |
 | `npm run build` | Compile TypeScript → `dist/` |
 | `npm run typecheck` | Type-check without emitting |
 | `npm run lint` | Run ESLint |
@@ -137,3 +137,9 @@ gateway/
 ├── eslint.config.mjs
 └── .prettierrc.json
 ```
+
+## Experimental SPA hosting
+
+See the [PWDRZ-160 runbook](../docs/spikes/pwdrz-160-vite-spa/README.md). Run root `npm run build`, then `npx nx run gateway:serve`; the target builds frontend and gateway first. `npm run dev` stays API-only, while Vite owns HMR. `--spa` or `SERVE_SPA=true` enables static hosting; `SPA_DIST_DIR` optionally overrides the default artifact directory.
+
+API and WS proxy handling precedes static files and browser fallback. HTML is revalidated (`no-cache`); fingerprinted assets are immutable. Missing assets and non-GET requests retain errors. Unknown client URLs receive the SPA shell (HTTP 200) and a client-side not-found view. API authorization and refresh cookie forwarding stay unchanged. Static and health traffic do not consume the API quota.

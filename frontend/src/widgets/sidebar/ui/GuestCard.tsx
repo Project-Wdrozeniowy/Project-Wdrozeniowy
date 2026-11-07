@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 
 export default function GuestCard() {
   return (
@@ -9,13 +9,13 @@ export default function GuestCard() {
       </p>
       <div className="flex gap-2">
         <Link
-          href="/login"
+          to="/login"
           className="flex-1 text-center py-2 rounded text-sm font-semibold text-gray-50 bg-slate-700 hover:bg-slate-600 transition-colors"
         >
           Sign in
         </Link>
         <Link
-          href="/register"
+          to="/register"
           className="flex-1 text-center py-2 rounded text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
         >
           Sign up

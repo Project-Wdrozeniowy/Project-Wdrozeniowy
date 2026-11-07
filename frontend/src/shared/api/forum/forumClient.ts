@@ -1,6 +1,6 @@
-// Provisional adapters: category writes PWDRZ-141; comments PWDRZ-142/67;
-// tags PWDRZ-143/107. Their backend controllers still return 501 and are hidden
-// from OpenAPI. Mocked success fixtures are planned UI behavior, not a live contract.
+// Manual adapters retain their existing ownership (PWDRZ-141/143/107).
+// Comments use a published API; PWDRZ-67 owns full acceptance. Mocked fixtures
+// are component/adapter evidence, not proof of the complete backend contract.
 import { apiClient } from '@/shared/api/client/api';
 import type { CategoryDto as Category } from '@/shared/api/generated/models/categoryDto.dto';
 import type { CreateCategoryRequest, UpdateCategoryRequest } from './category.dto';

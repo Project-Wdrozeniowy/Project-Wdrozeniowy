@@ -1,0 +1,257 @@
+{
+  "issue": "PWDRZ-160",
+  "baseCommit": "2bd7d6c8d0f24a737304fee07174de5a0c03477a",
+  "branch": "PWDRZ-160-vite-spa-spike",
+  "testedRevision": "80949450ed58179e681da6c508402a785a25d57a",
+  "localEvidenceRoot": "D:/Projects/Wrdz/Project-Wdrozeniowy/.workspace-artifacts/pwdrz-160/evidence",
+  "checks": {
+    "lockedInstall": true,
+    "check": true,
+    "build": true,
+    "validate": {
+      "passed": true,
+      "tasks": 22,
+      "coverageAndE2ECached": false
+    },
+    "orval": {
+      "passed": true,
+      "generatedFiles": 75
+    },
+    "frontendTests": 701,
+    "gatewayTests": 64,
+    "backendTests": 313,
+    "browserAndHttpCases": 16,
+    "negativeProbe": {
+      "expectedExit": 1,
+      "assertionFailureObserved": true,
+      "cleanup": true
+    },
+    "handledSIGINT": {
+      "expectedExit": 130,
+      "interrupted": true,
+      "cleanup": true
+    },
+    "forcedWindowsTerminal": {
+      "cleanupGuaranteed": false,
+      "ownedResourcesManuallyRemoved": true
+    },
+    "dev": {
+      "realProxyAuth": true,
+      "HMR": true,
+      "sourcePortsClosedOnCtrlC": true
+    },
+    "packaging": {
+      "twoRevisionsServed": true,
+      "missingBuildExit": 1,
+      "apiAndWsOutageStatus": 502
+    },
+    "publicBundleConfigurationScan": {
+      "passed": true,
+      "staleProofAsset": false
+    }
+  },
+  "coveragePercent": {
+    "frontend": {
+      "lines": 98.366,
+      "branches": 93.231,
+      "functions": 96.696,
+      "statementsGatePassed": true
+    },
+    "gateway": {
+      "lines": 97.516,
+      "branches": 88.406,
+      "functions": 93.939,
+      "statementsGatePassed": true
+    },
+    "backend": {
+      "lines": 99.007,
+      "branches": 92.22
+    }
+  },
+  "cleanCheckout": {
+    "initialRevision": "d6e76f5dcf9492506c1825dcec03385011ffba9e",
+    "lockedInstall": true,
+    "initialCheckAndBuildPassed": true,
+    "initialValidateFailed": true,
+    "reason": "New router assertion did not wait for lazy initialization",
+    "testOnlyFix": "80949450ed58179e681da6c508402a785a25d57a",
+    "lockChangedByFix": false,
+    "finalValidateExit": 0
+  },
+  "runs": {
+    "baseline": "1793993258833-97eff0a9",
+    "negative": "1794056321633-32c80f73",
+    "forcedTerminal": "1794056470457-f1051d2b",
+    "handledSignal": "1794056595998-4ac25ab3",
+    "expandedParity": "1794057324656-60431215",
+    "cleanFinal": "1794058270326-13660e12"
+  },
+  "remote": {
+    "implementationPublished": false,
+    "originBranchAtBase": true,
+    "registeredE2EWorkflowId": 387843571,
+    "executedCI": false,
+    "reason": "Separate publication/dispatch authorization has not been granted"
+  },
+  "preservedBoundaries": {
+    "backendSourceAndSchemaUnchanged": true,
+    "generatedBindingsUnchanged": true,
+    "originalCheckoutAndBaselineUnchanged": true,
+    "existingJiraPayloadsUnchanged": true,
+    "noPR": true,
+    "noMerge": true
+  },
+  "limitations": [
+    "Post detail body remains a placeholder",
+    "Dashboard/live activity retains sample data",
+    "PWDRZ-67 owns full comments acceptance; existing add/reload parity observed on both versions",
+    "PWDRZ-150 state ownership unchanged",
+    "PWDRZ-104 realtime/destination security remains separate",
+    "Forced process-tree termination cannot guarantee cleanup"
+  ],
+  "environmentRecovery": {
+    "engineVersion": "29.4.3",
+    "runtimeDirectoriesPreservedAndRecreated": true,
+    "imagesVolumesAndVHDXReset": false
+  },
+  "recordScope": "Initial migration acceptance is recorded at the top level. Route organization and latest complete branch review have separate revisions and verification limits in routeStructureFollowUp and branchReview.",
+  "routeStructureFollowUp": {
+    "testedRevision": "4ed8d99443b64fc1b6ae80c60bf19ee2566ddc9b",
+    "previousRevision": "d0d230399357284eb4ab32fee7227d29a4eff989",
+    "check": {
+      "passed": true,
+      "targets": 10
+    },
+    "build": {
+      "passed": true,
+      "targets": 6
+    },
+    "frontendVerified": {
+      "passed": true,
+      "targets": 8,
+      "coverageCached": false,
+      "apiDriftAndCodegenPassed": true
+    },
+    "frontendTests": 705,
+    "sourceBoundaryTests": 4,
+    "coveragePercent": {
+      "lines": 98.20261437908496,
+      "branches": 93.33333333333333,
+      "functions": 96.46799116997792,
+      "statementsGatePassed": true
+    },
+    "e2e": {
+      "executed": false,
+      "reason": "User explicitly requested skipping E2E for this follow-up. Earlier 16-case real-stack runs certify only the initial migration revision."
+    },
+    "fullStackValidate": {
+      "executed": false,
+      "reason": "Includes E2E, skipped by user instruction. Backend/gateway are unchanged in this follow-up."
+    },
+    "unchanged": [
+      "backend",
+      "gateway",
+      "e2e",
+      "tools",
+      "CI",
+      "Nx configuration",
+      "dependencies/lockfile",
+      "generated bindings"
+    ],
+    "localEvidenceDirectory": "route-structure",
+    "publication": {
+      "pushed": false,
+      "PR": false,
+      "merge": false,
+      "jiraMutated": false
+    }
+  },
+  "branchReview": {
+    "reviewedRevision": "9b2a1d3275ce554e0fbdf2dc4a2373a4c5f30b61",
+    "testedRevision": "c468fc0afb66fc612ddc93d4051e0c8848137218",
+    "comparisonBase": "2bd7d6c8d0f24a737304fee07174de5a0c03477a",
+    "skill": "review-and-refactor",
+    "findings": {
+      "fixed": 2,
+      "criticalIdentified": 0,
+      "subjects": ["HTML Accept negotiation and Vary", "Regular SPA entry file preflight"]
+    },
+    "regressionFirst": {
+      "before": {
+        "failed": 5,
+        "passed": 13
+      },
+      "after": {
+        "failed": 0,
+        "passed": 18
+      }
+    },
+    "rootCheck": {
+      "passed": true,
+      "targets": 10,
+      "cachedTargets": 6
+    },
+    "frontend": {
+      "tests": 705,
+      "coveragePassed": true,
+      "buildPassed": true,
+      "lintPassed": true,
+      "typecheckPassed": true,
+      "formatPassed": true,
+      "generatedFilesMatched": 75,
+      "codegenTestsPassed": true
+    },
+    "gatewayVerified": {
+      "passed": true,
+      "targets": 6,
+      "tests": 69,
+      "cached": false
+    },
+    "infrastructureUnitTests": {
+      "passed": 9,
+      "failed": 0,
+      "browserOrDockerStarted": false
+    },
+    "initialCombinedRun": {
+      "passed": false,
+      "failures": [
+        "Mandatory braces missing in first fix, corrected before final checks",
+        "Quota test exceeded unchanged 5-second timeout under redundant concurrent verification"
+      ],
+      "finalGatewayRunPassedWithoutTimeoutOrAssertionChanges": true
+    },
+    "coveragePercent": {
+      "frontend": {
+        "lines": 98.20261437908496,
+        "branches": 93.23076923076923,
+        "functions": 96.46799116997792,
+        "statementsGatePassed": true
+      },
+      "gateway": {
+        "lines": 97.5609756097561,
+        "branches": 90,
+        "functions": 93.93939393939394,
+        "statementsGatePassed": true
+      }
+    },
+    "e2e": {
+      "executed": false,
+      "reason": "Skipped by explicit user instruction; historical real-stack evidence is not current-revision acceptance."
+    },
+    "fullStackValidate": {
+      "executed": false,
+      "reason": "Includes E2E."
+    },
+    "backendTestsRerun": false,
+    "dockerRebuilt": false,
+    "remoteCIExecuted": false,
+    "executableChanges": ["gateway/src/routes/spa.ts"],
+    "generatedBindingsAndBackendUnchanged": true,
+    "dependenciesAndAutomationUnchanged": true,
+    "localEvidenceDirectory": "review",
+    "pushed": false,
+    "PR": false,
+    "merge": false,
+    "jiraMutated": false
+  }
+}

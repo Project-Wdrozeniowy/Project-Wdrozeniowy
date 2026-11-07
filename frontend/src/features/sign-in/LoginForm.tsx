@@ -1,6 +1,4 @@
-'use client';
-
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@/features/sign-in/login.schema';
@@ -49,7 +47,7 @@ export default function LoginForm() {
             Password
           </label>
           <Link
-            href="/forgot-password"
+            to="/forgot-password"
             className="text-blue-600 hover:underline text-xs font-semibold"
           >
             Forgot password?
@@ -78,7 +76,7 @@ export default function LoginForm() {
 
       <p className="text-gray-500 text-sm text-center">
         Don&apos;t have an account?{' '}
-        <Link href="/register" className="text-blue-600 hover:underline font-semibold">
+        <Link to="/register" className="text-blue-600 hover:underline font-semibold">
           Sign Up
         </Link>
       </p>

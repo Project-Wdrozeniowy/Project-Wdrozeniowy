@@ -1,5 +1,3 @@
-'use client';
-
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
 import { COMMENT_MAX_LENGTH } from '@/features/post-comments/comment.const';

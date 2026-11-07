@@ -1,4 +1,4 @@
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router';
 import { useState } from 'react';
 import { getRegisterError, toRegisterRequest } from '@/features/sign-up/register';
 import type { RegisterError } from '@/features/sign-up/register';
@@ -14,7 +14,7 @@ import { useStore } from '@/store';
  * server rejected (`onRejectedFields`, for the form to mark) or as a message for the whole form.
  */
 export function useSignUp(onRejectedFields: (fields: RegisterError['fields']) => void) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const setAuth = useStore((state) => state.setAuth);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -25,7 +25,7 @@ export function useSignUp(onRejectedFields: (fields: RegisterError['fields']) =>
       const user = await loadProfile(accessToken);
       setAuth(user, accessToken);
       toast.success('Your account has been created.');
-      router.push('/');
+      navigate('/');
     } catch (err: unknown) {
       const { fields, form } = getRegisterError(err);
       if (Object.keys(fields).length > 0) onRejectedFields(fields);

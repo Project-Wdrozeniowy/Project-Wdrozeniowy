@@ -8,7 +8,9 @@ import { CreatePostButton } from '../CreatePostButton';
 import { useStore } from '@/store';
 
 const push = vi.fn();
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => push })
+);
 const fixtureOperations = vi.hoisted(() => ({
   categoryService: { list: vi.fn().mockResolvedValue([]) },
   postService: { create: vi.fn() },

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { ChevronRightIcon } from '@/shared/ui/icons';
 import { TRENDING_TOPICS } from '@/widgets/sidebar/ui/sidebar.const';
 import { cn } from '@/shared/lib/cn';
@@ -11,7 +11,7 @@ export default function TrendingTopics() {
         {TRENDING_TOPICS.map(({ rank, name, color }) => (
           <Link
             key={name}
-            href={`/forum?${new URLSearchParams({ topic: name }).toString()}`}
+            to={`/forum?${new URLSearchParams({ topic: name }).toString()}`}
             className="flex items-center justify-between py-2 group"
           >
             <div className="flex items-center gap-3">

@@ -7,18 +7,16 @@
       "dependsOn": ["typecheck"],
       "inputs": [
         "default",
-        { "env": "NEXT_PUBLIC_API_URL" },
-        { "env": "NEXT_PUBLIC_DEV_ORIGIN" },
-        { "env": "NODE_ENV" },
+        {
+          "env": "NODE_ENV"
+        },
         "{workspaceRoot}/backend/openapi.json"
       ],
-      "outputs": [
-        "{projectRoot}/.next/**",
-        "!{projectRoot}/.next/cache/**",
-        "!{projectRoot}/.next/dev/**"
-      ]
+      "outputs": ["{projectRoot}/dist"]
     },
-    "lint": { "command": "node tools/workspace/npm.mjs run lint --workspace frontend" },
+    "lint": {
+      "command": "node tools/workspace/npm.mjs run lint --workspace frontend"
+    },
     "typecheck": {
       "command": "node tools/workspace/npm.mjs run typecheck --workspace frontend",
       "dependsOn": ["api-check"],

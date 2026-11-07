@@ -1,126 +1,162 @@
-# Frontend architecture: PWDRZ-149 target
+# Frontend architecture in the PWDRZ-160 experiment
 
-> [Русская версия / Russian translation ↓](#ru) — temporary reading aid; the English text is canonical.
+This guide describes the actual React + Vite + React Router SPA on the
+experimental branch. The user authorized this route-organization follow-up
+within PWDRZ-160. The pinned Next.js baseline and other branches retain their
+own structure; this document does not adopt the experiment for the team.
 
-This is the **human-facing target architecture** for the Next.js frontend. It is a migration plan, **not a description of the current directory tree**. The existing structure and runtime behaviour remain authoritative until [PWDRZ-149](https://project-wdrz.atlassian.net/browse/PWDRZ-149) is implemented. For setup, use the [frontend runbook](../../../frontend/README.md); for project-wide boundaries, use the [architecture guide](../architecture.md).
+Use the [frontend runbook](../../../frontend/README.md) and
+[spike comparison/run instructions](../../spikes/pwdrz-160-vite-spa/README.md).
+The source-backed [context map](../../spikes/pwdrz-160-vite-spa/route-structure.md)
+records the scope and verification of the restructuring.
 
-## Boundaries
+## Ownership
 
-Browser requests continue through the gateway to Spring Boot. The frontend owns presentation and interaction; it does not own backend business rules or duplicate HTTP contracts. The gateway remains an Express proxy and cross-cutting HTTP boundary, **not an FSD application**. Java packages and Flyway migrations remain backend-owned.
+| Location                                       | Responsibility                                                                         |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `src/main.tsx`                                 | Configure CSP-compatible validation, import global styles and mount App                |
+| `app/App.tsx`                                  | Render RouterProvider with the browser router                                          |
+| `app/router/router.ts`                         | Create one browser router outside component rendering                                  |
+| `app/router/routes.tsx`                        | URL matching, lazy page imports and nested layout/guard composition                    |
+| `app/router/RouteErrorBoundary.tsx`            | Global navigation/not-found error UI                                                   |
+| `app/router/guards/`                           | Existing UI session/role guards and session loader                                     |
+| `app/layouts/`                                 | Root provider/scroll/focus composition, auth frame, header/sidebar frame               |
+| `app/providers/`, `app/config/`, `app/styles/` | Application-wide providers, validation setup and CSS                                   |
+| `pages/<screen>/`                              | Screen composition and screen-private UI, helpers and display constants                |
+| `widgets/post-feed/`                           | Reused post cards, view mapping and feed error/loading presentation                    |
+| `widgets/header/`, `widgets/sidebar/`          | Existing reusable site regions                                                         |
+| `features/`                                    | Existing sign-in/up, profile/password editing, publishing, comments and voting actions |
+| `shared/api/`, `shared/auth/`                  | Existing API/Query/Orval and memory-token/session infrastructure                       |
+| `shared/ui/`                                   | Reusable presentation, including the profile-load error used by profile and settings   |
 
-Within `frontend/src`, apply FSD only where it clarifies responsibility:
-
-- **`app/`** keeps Next.js App Router special files, route groups, layouts, providers, guards and route composition. Route-private UI may live in `_ui/`; do not turn every route into a feature or create `_ui/` without a need. Keep route files thin.
-- **`widgets/`** holds substantial, reusable page regions such as the site header and sidebar. A single route's feed does not become a widget merely because it is large.
-- **`features/`** holds reusable user actions with a coherent behaviour and UI boundary: authentication actions, profile editing, comments and post interactions. `ActionButton` and `VoteButton` belong with `post-interactions`, not in a generic button collection. A feature must own meaningful behaviour, not just be a renamed component folder.
-- **`shared/`** holds the API transport and server-cache access, session infrastructure, generic UI and utilities. All TanStack Query hooks and mutations — including screen-specific queries — live under `shared/api/`. Their location does not make the backend response a second source of truth.
-
-**Do not create `pages/` or `entities/` merely to complete an FSD diagram.** Next.js already owns routing through `app/`, and the current frontend does not need an independent entity layer. Add a layer only when a real ownership boundary warrants it. Official FSD allows incremental adoption and does not require every layer ([overview](https://feature-sliced.design/docs/get-started/overview), [layers](https://feature-sliced.design/docs/reference/layers)); Next.js reserves route files and supports private folders ([project structure](https://nextjs.org/docs/app/getting-started/project-structure)). The exact combination below is a **project decision**, not an official FSD or Next.js template.
-
-## Target tree
-
-The tree names **intended ownership**, not directories that already exist. Omitted files stay with the nearest listed owner; create folders only when moving a real module.
-
-The layer-level [features](../../../frontend/src/features/ABOUT.md), [widgets](../../../frontend/src/widgets/ABOUT.md), [shared](../../../frontend/src/shared/ABOUT.md), [shared API](../../../frontend/src/shared/api/ABOUT.md), and [shared auth](../../../frontend/src/shared/auth/ABOUT.md) notes explain the scaffold. They do not imply that application files have already migrated.
+Page slices are home, forum, post, search, login, register, dashboard, profile,
+settings and admin. The post body remains a placeholder. Screen-specific code
+stays in its page; dashboard charts and a page's feed are not promoted to widgets
+just because they are large. The shared post-feed presentation is genuinely
+consumed by both home and forum.
 
 ```text
-frontend/src/
-├── app/                              # Next.js-owned routes and composition
-│   ├── _providers/                   # Query, auth and toast providers
-│   ├── _guards/                      # Route access guards
-│   ├── (auth)/                       # login and register route entries
-│   ├── (main)/
-│   │   ├── _ui/                      # route-group PostCard, HomeFeed, feed states
-│   │   ├── forum/
-│   │   │   ├── _ui/                  # feed, filter, pagination, states
-│   │   │   └── [slug]/              # post route composition
-│   │   └── (protected)/
-│   │       ├── dashboard/_ui/       # dashboard-only charts and cards
-│   │       └── profile/_ui/         # profile-only view and states
-│   ├── globals.css
-│   └── layout.tsx
-├── widgets/
-│   ├── site-header/ui/
-│   └── site-sidebar/ui/
-├── features/
-│   ├── sign-in/                      # LoginForm, useSignIn
-│   ├── sign-up/                      # RegisterForm, useSignUp
-│   ├── post-interactions/ui/         # ActionButton, VoteButton
-│   ├── post-comments/ui/             # comment form, item, section
-│   └── edit-profile/ui/              # ProfileForm
-├── shared/
-│   ├── api/
-│   │   ├── client/                  # ApiClient, HTTP errors
-│   │   ├── auth/                    # auth requests and DTOs
-│   │   ├── forum/                   # post/comment requests, queries, DTOs
-│   │   ├── profile/                 # profile requests, queries, mutation, DTOs
-│   │   ├── analytics/               # analytics requests and DTOs
-│   │   ├── notifications/           # notification requests and DTOs
-│   │   └── ai/                      # AI requests and DTOs
-│   ├── auth/                         # in-memory token and session lifecycle
-│   ├── ui/                           # generic form field, logo, icons
-│   └── lib/                          # generic formatting, URL, class-name utilities
-└── test/                             # shared test setup
+src/
+  main.tsx
+  app/
+    App.tsx
+    config/configureValidation.ts
+    layouts/{RootLayout,AuthLayout,MainLayout}.tsx
+    providers/
+    router/
+      router.ts
+      routes.tsx
+      RouteErrorBoundary.tsx
+      guards/
+      __tests__/
+    styles/globals.css
+  pages/
+    home/
+      index.ts
+      ui/{HomePage,HomeFeed}.tsx
+      config/homeFeed.const.ts
+    forum/
+      index.ts
+      ui/
+      lib/
+    post/
+      index.ts
+      ui/PostPage.tsx
+    ... other implemented screens
+  widgets/
+    post-feed/
+      index.ts
+      ui/
+      lib/
+      config/
+    header/
+    sidebar/
+  features/
+  shared/
+  store/   # existing state ownership, not reorganized here
+  utils/   # existing compatibility utilities, not reorganized here
+  test/
 ```
 
-These directories show intended ownership; do not create an empty API directory if its service is only a stub or has no consumer. The authentication and registration feature folders are conditional on the separately owned route extraction; do not create empty slices in advance.
+Only segments with real code are created. No new entities/processes layer,
+empty folder scaffold, generic base page or route-generation mechanism is added.
+Existing store/profile overlap remains PWDRZ-150's responsibility.
 
-## Import and state rules
+## Routing
 
-- Dependencies point downward: `app → widgets → features → shared`. A module may skip layers. **No same-layer cross-slice imports** between features or widgets. Route-private modules may use lower layers; lower layers never import a route.
-- Keep slice entry surfaces explicit with direct file imports. **Do not add `index.ts` barrels solely for FSD.** Existing public `index.ts` files can remain where they have a real purpose; PWDRZ-149 explicitly preserves those exceptions. Framework special filenames remain unchanged.
-- The shared `ApiClient` retains token refresh, cookie and 401 behaviour. A folder move must not create a second client or bypass the gateway.
-- TanStack Query owns server-cache state. `shared/api/` contains request adapters, keys, queries and mutations; a route or feature may consume them. `shared/auth/` owns the global session/token lifecycle, not a second independently editable copy of a user profile.
-- **Current gap:** `useMyProfile` caches `MyProfile` in TanStack Query while `authSlice` holds overlapping `UserProfile` in Zustand. [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150) owns consolidation. PWDRZ-149 may relocate these modules, but must not present the current two-copy state as the final design or silently absorb PWDRZ-150.
-- Route-local display state stays local. Do not create `_model/` for every route. Use a feature `model/` segment only for genuine feature-owned client state or logic; backend-driven data remains in `shared/api/`.
+React Router **7.18.5 Data Mode** uses explicit RouteObject configuration. The
+router is not configured by filenames. The former `(auth)`, `(main)`,
+`(protected)`, `[slug]`, `_ui`, `_lib`, `page.tsx` and `layout.tsx` structure has
+been removed from source. Components use the project's PascalCase filenames.
 
-## Naming and migration constraints
+The root `/` route composes RootLayout. Pathless AuthLayout/MainLayout routes
+select the frame without adding URL segments. The home page is an index route;
+`forum/:slug` is a dynamic segment. Pathless AuthGuard and ADMIN RoleGuard
+routes use Outlet directly, replacing two redundant wrapper-only layouts.
+All ten existing URLs and their redirect/initialization semantics are retained.
 
-Use the approved role suffixes in **new or changed modules**: `<name>.type.ts` for extracted non-DTO type modules, `<name>.dto.ts` for API shapes, `<name>.const.ts` for predefined constants, and `<name>.schema.ts` for Zod schemas. Component filenames remain PascalCase; hooks remain `useThing.ts`; tests and Next.js special files retain their expected names. A module does not gain a suffix merely because it contains a `const` or a type. See [naming conventions](../naming-conventions.md) and PWDRZ-149 for scope.
+Each page loads through its own public entry, for example:
 
-Move a module with its nearby tests, update imports and any necessary explicit exports, and run typecheck, lint, format, tests and build after each cohesive batch. Preserve routes, API semantics, token handling and visible behaviour. Do not merge this structural work with new forum functionality, the [PWDRZ-130](https://project-wdrz.atlassian.net/browse/PWDRZ-130) generated-contract change, or PWDRZ-150's state redesign.
+```tsx
+{
+  path: 'forum',
+  lazy: async () => ({ Component: (await import('@/pages/forum')).ForumPage }),
+}
+```
 
-<a id="ru"></a>
+The exported routes are also consumed by createMemoryRouter in integration
+tests. Test code does not import the live browser-router singleton. There is
+no React Router Framework Mode plugin, automatic filesystem routing or server
+rendering. Loaders/actions are not introduced: TanStack Query and the existing
+Orval transport continue to own server-cache access and mutation behavior.
 
-## Русская версия — временная вспомогательная локализация
+RootLayout keeps the current Query/Auth/Toast providers, scroll restoration
+and path-change focus behavior. Providers are not recreated per page. Query-only
+navigation keeps filter/pagination focus. The global route error boundary
+retains the existing not-found and failure UI. API authorization remains in
+Spring; the Express HTTP JWT boundary is unchanged.
 
-> Это перевод для раннего этапа разработки. **Канонический источник — английский текст выше.** Поддерживайте обе версии согласованными. Удаление временной локализации отслеживается в [PWDRZ-139](https://project-wdrz.atlassian.net/browse/PWDRZ-139).
+## Imports and public entries
 
-Это **целевая архитектура frontend** на Next.js, а не описание уже существующего дерева. Переход выполняется в [PWDRZ-149](https://project-wdrz.atlassian.net/browse/PWDRZ-149). Инструкции запуска — в [frontend README](../../../frontend/README.md), общие границы сервисов — в [архитектурном гайде](../architecture.md).
+Production dependencies flow `app → pages → widgets → features → shared`;
+layers may be skipped. Page, widget and feature slices do not import peers on
+the same layer. App and Shared are not partitioned into business slices.
 
-### Границы
+Every new page slice has one small `index.ts` exporting its page component.
+The new post-feed slice exposes only its supported components, view-data type
+and mapper. These entries provide a concrete stable contract for router/page
+consumers; they are not global barrels or a requirement to wrap every existing
+feature in an index. Internal modules import their own concrete files, never
+their own public barrel. No export-star surface or aggregate `pages/index.ts`
+is introduced, so route lazy loading remains separated by page.
 
-Запросы браузера по-прежнему идут через gateway в Spring Boot. Frontend отвечает за представление и взаимодействие, а не за серверные бизнес-правила. Gateway остаётся Express proxy и слоем сквозных HTTP-задач; **FSD к нему не применяется**. Java-пакеты и Flyway-миграции остаются в зоне backend.
+Existing feature/shared public files retain their explicit import conventions.
+Use `@/` for cross-module imports and relative paths within the same directory.
+Keep API DTO, constant, schema and extracted type suffixes from the naming guide.
+No transitional aliases or forwarding files point to the removed Next folders.
 
-- **`app/`** хранит обязательные файлы Next.js App Router, route groups, layouts, providers, guards и композицию маршрутов. Локальные компоненты маршрута могут лежать в `_ui/`, но такая папка не нужна каждому маршруту. Route files должны быть тонкими.
-- **`widgets/`** содержит крупные повторно используемые области страницы, например header и sidebar. Компонент одной страницы не становится widget только из-за размера.
-- **`features/`** содержит повторно используемые действия пользователя со связной логикой и UI: вход, регистрация, редактирование профиля, комментарии и действия с постом. `ActionButton` и `VoteButton` относятся к `post-interactions`, а не к коллекции универсальных кнопок. Feature должна иметь осмысленную ответственность.
-- **`shared/`** содержит общий API transport, доступ к server cache, инфраструктуру сессии, универсальные UI и утилиты. Все TanStack Query hooks и mutations, включая экранные, размещаются в `shared/api/`. Это не делает копию ответа backend отдельным источником истины.
+Pure ProfileLoadError presentation moved to shared UI because both profile and
+settings consume it. Settings does not depend on the profile page. Business
+requests and cache/session ownership were not moved into the error component.
 
-**Не создавайте `pages/` или `entities/` ради схемы FSD.** Next.js использует `app/` для маршрутов, а самостоятельный entity layer сейчас не нужен. FSD допускает неполный набор слоёв и постепенный переход ([overview](https://feature-sliced.design/docs/get-started/overview), [layers](https://feature-sliced.design/docs/reference/layers)); Next.js сохраняет специальные route files и private folders ([структура проекта](https://nextjs.org/docs/app/getting-started/project-structure)). Их конкретное сочетание — **решение проекта**, а не готовый официальный шаблон.
+## Tests and scope
 
-### Целевое дерево
+Tests move with their UI/helper modules. Page/form and session/provider
+integration tests live under app/router or app/providers, where assembling the
+participating layers is intentional. Existing behavioral assertions and all
+service coverage thresholds remain. New source-boundary checks cover downward
+imports, peer-slice isolation, public page/widget integration and self-barrel
+cycles. They do not claim that existing store/utils have been redesigned.
 
-Дерево выше показывает **будущих владельцев кода**, не уже созданные папки. Пустую API-директорию не нужно создавать, если сервис пока является только stub или у него нет потребителя. `sign-in/` и `sign-up/` появятся только при согласованном переносе из [PWDRZ-131](https://project-wdrz.atlassian.net/browse/PWDRZ-131); пустые slices заранее не создаются.
+Run root check, frontend coverage/build and managed real-stack E2E after a
+routing refactor. Never replace actual backend/browser acceptance with mocked
+planned feature success. Product placeholders and their owners stay unchanged.
 
-Краткие пояснения к пока пустому каркасу: [features](../../../frontend/src/features/ABOUT.md), [widgets](../../../frontend/src/widgets/ABOUT.md), [shared](../../../frontend/src/shared/ABOUT.md), [shared API](../../../frontend/src/shared/api/ABOUT.md) и [shared auth](../../../frontend/src/shared/auth/ABOUT.md). Их наличие не означает, что исходники уже перенесены.
+## References
 
-- `app/_providers`, `app/_guards` и route-private `_ui` обслуживают Next.js-композицию.
-- `widgets/site-header` и `widgets/site-sidebar` владеют повторно используемыми областями layout.
-- `features/post-interactions`, `post-comments` и `edit-profile` владеют действиями пользователя.
-- `shared/api` владеет общим клиентом, HTTP-адаптерами, DTO, query keys, queries и mutations; `shared/auth` — lifecycle сессии и токена; `shared/ui` и `shared/lib` — универсальными элементами.
-
-### Импорты и состояние
-
-- Зависимости направлены вниз: `app → widgets → features → shared`. Промежуточный слой можно пропустить. **Cross-import между slices одного слоя запрещён**; нижний слой не импортирует route.
-- Публичная поверхность slice — явные прямые импорты файлов. **Не добавляйте `index.ts` только ради FSD.** Существующие полезные public entry points и специальные имена Next.js могут остаться.
-- Общий `ApiClient` сохраняет refresh token, cookie и обработку 401. Перенос не должен создать второй HTTP-клиент или обход gateway.
-- TanStack Query владеет серверным кешем. Hooks и mutations размещаются в `shared/api/`; route или feature использует их. `shared/auth/` хранит lifecycle сессии и токена, а не вторую самостоятельно изменяемую копию профиля.
-- **Текущее расхождение:** `useMyProfile` кеширует `MyProfile` в TanStack Query, а `authSlice` хранит перекрывающийся `UserProfile` в Zustand. Устранение дублирования — [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150). PWDRZ-149 может переместить файлы, но не должна выдавать нынешнее состояние за конечную схему или незаметно поглощать эту работу.
-- Локальное состояние отображения остаётся локальным. Не создавайте `_model/` для каждого маршрута; `model/` feature нужен только для принадлежащей ей клиентской логики. Backend-driven data живёт в `shared/api/`.
-
-### Именование и ограничения миграции
-
-Для **новых или изменённых модулей** применяются суффиксы по роли: `<name>.type.ts` — отдельные не-DTO типы, `<name>.dto.ts` — API shapes, `<name>.const.ts` — заранее определённые константы, `<name>.schema.ts` — Zod schemas. Имена компонентов остаются PascalCase, hooks — `useThing.ts`, а тесты и специальные файлы Next.js сохраняют необходимые имена. Одно лишь наличие `const` или типа не требует суффикса. Подробнее — в [правилах именования](../naming-conventions.md) и PWDRZ-149.
-
-Перемещайте код вместе с соседними тестами, обновляйте импорты и необходимые exports, после каждого связного этапа запускайте typecheck, lint, format, tests и build. Сохраняйте маршруты, API-контракты, работу с токенами и пользовательское поведение. Не объединяйте структурный перенос с новой функциональностью форума, генерацией контрактов [PWDRZ-130](https://project-wdrz.atlassian.net/browse/PWDRZ-130) или изменением состояния [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150).
+The concrete tree is a project choice following
+[FSD layer responsibilities/import direction](https://feature-sliced.design/docs/reference/layers),
+[FSD public API boundaries](https://feature-sliced.design/docs/reference/public-api),
+and the installed version's
+[React Router data routing](https://reactrouter.com/7.18.5/start/data/routing) and
+[lazy route properties](https://reactrouter.com/7.18.5/start/data/route-object#lazy).

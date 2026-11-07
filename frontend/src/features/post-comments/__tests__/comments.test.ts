@@ -1,4 +1,4 @@
-// PROVISIONAL PWDRZ-142/67: local UI/model scenarios use planned comment fixtures; backend remains a 501 stub.
+// Component/model fixtures do not replace real backend acceptance owned by PWDRZ-67.
 import { canDeleteComment, canReplyToComment, isCommentDeleted } from '../comments';
 import type { Comment } from '@/shared/api/forum/comment.dto';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';

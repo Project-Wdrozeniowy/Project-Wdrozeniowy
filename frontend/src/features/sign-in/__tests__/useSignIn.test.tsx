@@ -10,7 +10,9 @@ const mocks = vi.hoisted(() => ({
   success: vi.fn(),
 }));
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => mocks.push })
+);
 vi.mock('@/shared/api/generated/orbita.api', () => ({ login: mocks.login }));
 vi.mock('@/shared/auth/loadProfile', () => ({ loadProfile: mocks.loadProfile }));
 vi.mock('@/store', () => ({

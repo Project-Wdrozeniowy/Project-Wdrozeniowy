@@ -13,7 +13,7 @@ import type { UserProfileDto as UserProfile } from '@/shared/api/generated/model
 /**
  * CommentSection -> useComments -> commentService -> the real ApiClient.
  * Only the network is faked, so planned URLs, bodies and UI behavior are covered.
- * PROVISIONAL: backend comments still return 501 (PWDRZ-142); PWDRZ-67 must
+ * The comments API is published; PWDRZ-67 still owns full acceptance and must
  * reconcile these fixtures with the implemented contract before live acceptance.
  */
 

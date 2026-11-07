@@ -1,5 +1,3 @@
-'use client';
-
 import { useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { addTag, removeTag } from '@/features/create-post/createPost';

@@ -8,15 +8,14 @@ replaces them nor contributes an E2E line-coverage percentage.
 
 - Node.js 24, npm and a running Docker Engine with Compose.
 - Network access for npm, browser downloads and initial Docker builds.
-- Free loopback ports 3101 (frontend), 3100 (gateway) and 8180 (backend).
+- Free loopback ports 3100 (browser/gateway) and 8180 (backend).
 - No host Java/Maven installation or developer `.env` files are needed.
 
 Install dependencies from the repository root with `npm ci` (the single workspace
 lockfile). Root `npm run test:e2e` delegates to this managed launcher through Nx.
 For a selective CI install, include both `orbita-e2e` and `frontend` with
 `--include-workspace-root`: Nx checks frontend binding drift before launching the
-stack, so the outer checkout also needs Orval. The later frontend snapshot install
-does not provide dependencies to that prerequisite.
+stack, so the outer checkout also needs Orval. The Docker builder installation does not provide dependencies to that outer prerequisite.
 After installation, direct commands from `e2e/` remain available:
 
 ```bash
@@ -35,12 +34,7 @@ arbitrary system Chrome. Windows verification uses Node 24.15.0 / bundled npm
 errors in this workspace. If needed, invoke the bundled npm CLI with Node rather
 than changing global configuration.
 
-`npm test` owns the complete lifecycle. It creates source snapshots without
-local secrets/dependencies/build output, installs and builds the snapshot
-frontend using the root workspace lockfile and selected workspace, builds the
-existing backend/gateway Dockerfiles, waits for real HTTP
-readiness, starts Next.js in production mode and runs Playwright. It never reuses
-an existing server or overwrites the developer's frontend `.next`.
+`npm test` owns the complete lifecycle. It creates a source snapshot without local secrets, dependencies or build output, then builds the backend and combined gateway/SPA image with the root lockfile. It waits for real HTTP readiness and runs Chromium against Express. No separate frontend process or host `dist` is reused.
 
 PWDRZ-126 makes snapshot installation workspace-aware: committed root manifests,
 the shared lockfile and Docker ignore rules are copied alongside service source.
@@ -61,8 +55,8 @@ are not copied into snapshots or loaded by Compose.
 
 | Setting                  | Value / behavior                                                                                         |
 | ------------------------ | -------------------------------------------------------------------------------------------------------- |
-| Frontend origin          | `http://127.0.0.1:3101`                                                                                  |
-| Gateway origin           | `http://127.0.0.1:3100`; frontend API base ends in `/api`                                                |
+| Browser / gateway origin | `http://127.0.0.1:3100` (Express serves the built SPA)                                                   |
+| API prefix               | Same browser origin, `/api`                                                                              |
 | Backend readiness        | `http://127.0.0.1:8180/api/forum/categories`                                                             |
 | Database                 | Fresh `orbita_e2e` database in a unique Compose project, tmpfs storage, no host DB port                  |
 | DB password / JWT secret | Generated per run; the same Base64 JWT key is supplied to backend and gateway                            |
@@ -71,21 +65,19 @@ are not copied into snapshots or loaded by Compose.
 | Migrations               | Normal Flyway V1–V7 and Hibernate validate; no create-drop profile                                       |
 | Rate limiting            | Test-only max 1000 avoids fixture/readiness exhaustion; rate limiting itself is tested in gateway suites |
 
-To resolve a port conflict, set `E2E_FRONTEND_PORT`, `E2E_GATEWAY_PORT` and/or
+To resolve a port conflict, set `E2E_GATEWAY_PORT` and/or
 `E2E_BACKEND_PORT` before `npm test`. Only distinct numeric ports are accepted;
 hostnames, credentials and production URLs cannot be selected through these
-options. All origins and the frontend build environment derive from those ports.
+options. The browser and gateway share the gateway port; `E2E_FRONTEND_PORT` is rejected as obsolete.
 Do not mix `localhost` and `127.0.0.1` in this stack.
 
 Each test uses a random `e2e_<hex>` username, `<username>@example.test` email and
 synthetic `E2ePassword123!` password. API fixtures create accounts using the real
 gateway registration endpoint; browser login remains a UI action. The browser
-registration test creates its own account through UI. Tests use Flyway's existing
-categories rather than inserting schema-dependent SQL or adding test-only Java
-endpoints. The fixture request context does not share browser session cookies.
+registration test creates its own account through UI. Tests use Flyway's existing categories. The SPA admin test promotes only its synthetic account directly in the uniquely named disposable database, with explicit project/username checks; it adds no application endpoint. The fixture request context does not share browser session cookies.
 
 Teardown runs in `finally` on normal success/failure and handled termination:
-stop the owned frontend, capture Compose logs, remove only the unique project's
+capture Compose logs, remove only the unique project's
 containers/networks/local image tags and delete its checked runtime directory.
 The tmpfs database is destroyed; no user-delete API or persistent developer data
 is needed. Docker volumes from the normal stack are not touched. Ctrl+C requests
@@ -114,9 +106,7 @@ never use real account credentials. CI artifact retention is seven days.
 6. Profile PATCH saves account fields and preserves them after reload.
 7. Password change succeeds and requires a new sign-in.
 8. Header search and the results page use the real documented search endpoint.
-9. **HTTP integration**: both provisional recommendation reads return real 501
-   responses through the gateway. PWDRZ-146 owns replacing these hidden stubs;
-   reconcile this regression with its published contract when that task lands.
+9. **HTTP integration**: real public and personalized recommendation reads, including invalid-limit validation and excluding the caller's own posts (PWDRZ-146).
 
 Registration checks that `displayName` goes out in the request and is stored; PWDRZ-154
 marks the interests as unavailable until the backend has a contract: they are shown as such
@@ -152,3 +142,7 @@ The verified required check uses strict mode on develop/main/staging and the
 GitHub Actions source. Existing organization-admin bypass on develop/main is
 preserved. A declared workflow alone is not proof of a passing or enforced gate.
 No screenshot/trace or `artifacts/` output belongs in Git.
+
+## PWDRZ-160 migration acceptance
+
+The launcher builds the SPA into the gateway image from a secret-free source snapshot. Production requires no Next/Vite process or host `dist`. `spa.spec.ts` adds direct route/reload, query pagination/history, guest/user/admin guards, cookie attributes, asset MIME/cache/fallback boundaries, browser/CSP errors and desktop/mobile screenshots. All original browser and HTTP assertions remain. See the [spike evidence](../docs/spikes/pwdrz-160-vite-spa/results.md) for actual results; definitions alone are not proof of a passing gate.

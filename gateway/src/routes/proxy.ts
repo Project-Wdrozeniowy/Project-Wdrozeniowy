@@ -30,7 +30,7 @@ const proxyMiddleware = createProxyMiddleware({
   // Forward the path unchanged: the backend serves its API under the same /api
   // context path (server.servlet.context-path), and the refresh cookie's
   // Path=/api/auth relies on both sides using the same prefix.
-  pathFilter: '/api',
+  pathFilter: (pathname) => pathname === '/api' || pathname.startsWith('/api/'),
   on: {
     error: handleProxyError,
   },
