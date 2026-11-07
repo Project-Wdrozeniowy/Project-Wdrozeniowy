@@ -1,0 +1,117 @@
+{
+  "issue": "PWDRZ-160",
+  "baseCommit": "2bd7d6c8d0f24a737304fee07174de5a0c03477a",
+  "branch": "PWDRZ-160-vite-spa-spike",
+  "testedRevision": "80949450ed58179e681da6c508402a785a25d57a",
+  "localEvidenceRoot": "D:/Projects/Wrdz/Project-Wdrozeniowy/.workspace-artifacts/pwdrz-160/evidence",
+  "checks": {
+    "lockedInstall": true,
+    "check": true,
+    "build": true,
+    "validate": {
+      "passed": true,
+      "tasks": 22,
+      "coverageAndE2ECached": false
+    },
+    "orval": {
+      "passed": true,
+      "generatedFiles": 75
+    },
+    "frontendTests": 701,
+    "gatewayTests": 64,
+    "backendTests": 313,
+    "browserAndHttpCases": 16,
+    "negativeProbe": {
+      "expectedExit": 1,
+      "assertionFailureObserved": true,
+      "cleanup": true
+    },
+    "handledSIGINT": {
+      "expectedExit": 130,
+      "interrupted": true,
+      "cleanup": true
+    },
+    "forcedWindowsTerminal": {
+      "cleanupGuaranteed": false,
+      "ownedResourcesManuallyRemoved": true
+    },
+    "dev": {
+      "realProxyAuth": true,
+      "HMR": true,
+      "sourcePortsClosedOnCtrlC": true
+    },
+    "packaging": {
+      "twoRevisionsServed": true,
+      "missingBuildExit": 1,
+      "apiAndWsOutageStatus": 502
+    },
+    "publicBundleConfigurationScan": {
+      "passed": true,
+      "staleProofAsset": false
+    }
+  },
+  "coveragePercent": {
+    "frontend": {
+      "lines": 98.366,
+      "branches": 93.231,
+      "functions": 96.696,
+      "statementsGatePassed": true
+    },
+    "gateway": {
+      "lines": 97.516,
+      "branches": 88.406,
+      "functions": 93.939,
+      "statementsGatePassed": true
+    },
+    "backend": {
+      "lines": 99.007,
+      "branches": 92.22
+    }
+  },
+  "cleanCheckout": {
+    "initialRevision": "d6e76f5dcf9492506c1825dcec03385011ffba9e",
+    "lockedInstall": true,
+    "initialCheckAndBuildPassed": true,
+    "initialValidateFailed": true,
+    "reason": "New router assertion did not wait for lazy initialization",
+    "testOnlyFix": "80949450ed58179e681da6c508402a785a25d57a",
+    "lockChangedByFix": false,
+    "finalValidateExit": 0
+  },
+  "runs": {
+    "baseline": "1793993258833-97eff0a9",
+    "negative": "1794056321633-32c80f73",
+    "forcedTerminal": "1794056470457-f1051d2b",
+    "handledSignal": "1794056595998-4ac25ab3",
+    "expandedParity": "1794057324656-60431215",
+    "cleanFinal": "1794058270326-13660e12"
+  },
+  "remote": {
+    "implementationPublished": false,
+    "originBranchAtBase": true,
+    "registeredE2EWorkflowId": 387843571,
+    "executedCI": false,
+    "reason": "Separate publication/dispatch authorization has not been granted"
+  },
+  "preservedBoundaries": {
+    "backendSourceAndSchemaUnchanged": true,
+    "generatedBindingsUnchanged": true,
+    "originalCheckoutAndBaselineUnchanged": true,
+    "existingJiraPayloadsUnchanged": true,
+    "noPR": true,
+    "noMerge": true
+  },
+  "limitations": [
+    "Post detail body remains a placeholder",
+    "Dashboard/live activity retains sample data",
+    "PWDRZ-67 owns full comments acceptance; existing add/reload parity observed on both versions",
+    "PWDRZ-150 state ownership unchanged",
+    "PWDRZ-104 realtime/destination security remains separate",
+    "Forced process-tree termination cannot guarantee cleanup"
+  ],
+  "environmentRecovery": {
+    "engineVersion": "29.4.3",
+    "runtimeDirectoriesPreservedAndRecreated": true,
+    "imagesVolumesAndVHDXReset": false
+  }
+}

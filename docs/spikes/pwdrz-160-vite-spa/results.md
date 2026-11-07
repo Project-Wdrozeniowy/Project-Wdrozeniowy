@@ -5,9 +5,11 @@ backend. Local acceptance passed, including all original scenarios. The spike
 supports considering **SPA + existing Express** as a practical architecture;
 it does not adopt that architecture in develop or authorize a PR/merge.
 
-Clean-checkout reproduction and final handover references are being recorded.
-The final exact SHA is recorded in the handover and local evidence manifest;
-`git rev-parse HEAD` identifies the checked-out experimental revision.
+Clean-checkout reproduction passed. Tested implementation/test revision:
+`80949450ed58179e681da6c508402a785a25d57a`. The final documentation/tracking commit changes
+no executable source; its exact SHA is recorded in the handover. `git rev-parse
+HEAD` identifies the checked-out experimental revision. See also
+[verification.json](verification.json).
 
 ## References and isolation
 
@@ -26,14 +28,16 @@ The final exact SHA is recorded in the handover and local evidence manifest;
 ## Verification and reproducibility
 
 Commands and safe independent start/stop instructions: [README.md](README.md).
-Full local artifacts are ignored beneath repository-root
-`.workspace-artifacts/pwdrz-160/evidence/{baseline,experiment}/`, and each
-worktree's `e2e/artifacts/<id>/`. They are actual execution evidence, not source
+Full local artifacts are ignored beneath the original shared workspace
+`D:/Projects/Wrdz/Project-Wdrozeniowy/.workspace-artifacts/pwdrz-160/evidence/`
+(`baseline/`, `experiment/`, `verification/`), and each worktree's
+`e2e/artifacts/<id>/`. This shared evidence directory is outside the experimental
+Git root; fresh local runs create their own per-checkout artifacts. They are actual execution evidence, not source
 or credentials to be committed. Re-running the commands creates new owned evidence.
 
 | Check                               | Pinned baseline                 | Migrated experiment                                                                 |
 | ----------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------- |
-| Root locked install                 | Passed                          | Passed initially; final clean checkout recorded below                               |
+| Root locked install                 | Passed                          | Passed from clean worktree; unchanged lock after test-only fix                      |
 | Root `check` / `build`              | Passed / passed                 | Passed / passed                                                                     |
 | Root `test`                         | Passed                          | Passed; frontend 701, gateway 64, backend 313 tests                                 |
 | Root tooling tests                  | Passed                          | Passed; Windows child cancellation requires normal process permissions              |
@@ -69,6 +73,8 @@ Traceable production runs:
   including hash, keyboard focus and populated mobile settings.
 - Final expanded parity suite: `1794057324656-60431215` (16/16), including the
   existing real comment create/reload path.
+- Clean-checkout final positive: `1794058270326-13660e12` (16/16), plus all
+  22 validate targets at `8094945`; `verification/result-final.json` records exit 0.
 - Packaging details: `experiment/package-proof/result.json`; actual image HTTP
   checks show unchanged API/WS 502 behavior and refreshed frontend content.
 - Dev details: `experiment/dev-smoke.json`; its owned DB/project and temporary
@@ -137,6 +143,10 @@ speed follows from passing these checks.
 7. **Tests needed a real router boundary.** Component mocks alone would miss
    route-tree defects. Actual-router tests were added; Node 24 native Request
    and jsdom AbortController need matching realms in that test environment.
+   A first clean coverage run also exposed an assertion racing lazy module
+   initialization. Commit `8094945` adds the missing initialization barrier;
+   assertions and retries are unchanged. The failed run is retained alongside
+   the successful full clean-checkout validate.
 8. **Tooling policy must survive removal of Next config.** Standalone ESLint
    preserves React/hooks and the baseline's selected accessibility rules.
    Applying the entire accessibility preset would introduce unrelated rules;
@@ -147,6 +157,23 @@ speed follows from passing these checks.
    ownership were not redesigned.
 10. **Runtime ownership is platform-sensitive.** See interruption and Docker
     environment notes below. These failures are not attributed to Vite or Next.
+
+### Clean-checkout record
+
+A separate detached worktree was created at `d6e76f5`, with no copied
+node_modules, dist, .env or developer services. npm 11 `ci`, root `check` and
+`build` passed. The first full validate failed one new guest-redirect unit case
+under cold lazy imports (700 passed/1 failed); its production E2E passed 16/16.
+This was not waived or hidden. After the test-only initialization fix, the
+clean verification worktree was checked out at `80949450ed58179e681da6c508402a785a25d57a`
+with the same byte-identical manifests/lock and the full validate passed 22/22.
+No retries, thresholds or production behavior were changed to fix that test.
+The failed and final logs/results remain in `evidence/verification/`.
+
+The dev smoke used `COMPOSE_FILE=e2e/compose.yml` and project
+`orbita-spike160-dev` with the normal source ports 3000/3001/8080, while its
+DB stayed unexposed in a disposable project. This avoided the pre-existing
+5432 service; temporary matching environment files were removed afterward.
 
 ### Interruption and environment limitations
 

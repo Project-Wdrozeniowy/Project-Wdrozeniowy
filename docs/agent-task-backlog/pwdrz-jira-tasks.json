@@ -31,11 +31,12 @@
         }
       },
       "localTracking": {
-        "status": "in_progress",
+        "status": "done",
         "owner": "Codex / PWDRZ-160 experimental worktree",
-        "updatedAt": "2026-11-07T12:38:41.312Z",
+        "updatedAt": "2026-11-07T13:35:47.948Z",
         "notes": [
-          "Execution approved by the user. Isolated branch PWDRZ-160-vite-spa-spike pins origin/develop 2bd7d6c8d0f24a737304fee07174de5a0c03477a. Local commits authorized with subject/body only. No PR, merge or Jira mutation. See docs/spikes/pwdrz-160-vite-spa/ for the parity matrix and verification evidence."
+          "Execution approved by the user. Isolated branch PWDRZ-160-vite-spa-spike pins origin/develop 2bd7d6c8d0f24a737304fee07174de5a0c03477a. Local commits authorized with subject/body only. No PR, merge or Jira mutation. See docs/spikes/pwdrz-160-vite-spa/ for the parity matrix and verification evidence.",
+          "Local spike complete at tested revision 8094945: clean locked install, check/build and 22-target validate; frontend 701, gateway 64, backend 313, production real-stack 16/16. Failure probe, handled SIGINT, dev/HMR and package invalidation verified. Windows forced-terminal cleanup limitation and initial cold-router test failure are retained in the report. Runtime/backend/schema/generated bindings preserved. Commits have subject/body only. Origin branch remains at base; implementation publication and remote CI await separate authorization. No PR, merge or Jira mutation."
         ]
       }
     },
