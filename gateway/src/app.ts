@@ -7,27 +7,48 @@ import authMiddleware from './middleware/auth';
 import proxyMiddleware from './routes/proxy';
 import { errorHandler, sendError } from './middleware/errorHandler';
 import wsProxyMiddleware from './routes/wsProxy';
+import config from './config';
+import { spaMiddleware } from './routes/spa';
 
-const app = express();
+export function createApp(spaDirectory?: string): express.Express {
+  const app = express();
 
-app.use(helmet());
-app.use(corsMiddleware);
-app.use(accessLogger);
-app.use(errorLogger);
-app.use(rateLimiter);
+  // The experiment is served over local HTTP. Do not upgrade its assets to HTTPS.
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          imgSrc: ["'self'", 'data:', 'https:', 'http:'],
+          upgradeInsecureRequests: null,
+        },
+      },
+    })
+  );
+  app.use(corsMiddleware);
+  app.use(accessLogger);
+  app.use(errorLogger);
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
-});
+  app.get('/health', (_req, res) => {
+    res.json({ status: 'ok' });
+  });
 
-app.use('/api', authMiddleware);
-app.use(proxyMiddleware);
-// WebSocket (STOMP) — auth handled inside the STOMP CONNECT frame
-app.use(wsProxyMiddleware);
+  app.use('/api', rateLimiter, authMiddleware);
+  app.use(proxyMiddleware);
+  app.use('/api', (req, res) => {
+    sendError(res, req, 404, 'Not found');
+  });
+  // WebSocket (STOMP) — auth handled inside the STOMP CONNECT frame
+  app.use(wsProxyMiddleware);
+  if (spaDirectory) {
+    app.use(...spaMiddleware(spaDirectory));
+  }
 
-app.use((req, res) => {
-  sendError(res, req, 404, 'Not found');
-});
-app.use(errorHandler);
+  app.use((req, res) => {
+    sendError(res, req, 404, 'Not found');
+  });
+  app.use(errorHandler);
 
-export default app;
+  return app;
+}
+
+export default createApp(config.spa.enabled ? config.spa.directory : undefined);

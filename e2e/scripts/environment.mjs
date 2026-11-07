@@ -1,7 +1,10 @@
 import path from 'node:path';
 
 export function testPorts(env) {
-  const defaults = { FRONTEND: 3101, GATEWAY: 3100, BACKEND: 8180 };
+  if (env.E2E_FRONTEND_PORT !== undefined) {
+    throw new Error('E2E_FRONTEND_PORT is obsolete: the SPA uses E2E_GATEWAY_PORT.');
+  }
+  const defaults = { GATEWAY: 3100, BACKEND: 8180 };
   const ports = Object.fromEntries(
     Object.entries(defaults).map(([service, fallback]) => {
       const raw = env[`E2E_${service}_PORT`] ?? String(fallback);
@@ -11,7 +14,7 @@ export function testPorts(env) {
       return [service, port];
     })
   );
-  if (new Set(Object.values(ports)).size !== 3) throw new Error('Test ports must be distinct');
+  if (new Set(Object.values(ports)).size !== 2) throw new Error('Test ports must be distinct');
   return ports;
 }
 

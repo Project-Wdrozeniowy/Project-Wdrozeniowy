@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import { ROLE_LABELS } from '@/app/(main)/(protected)/profile/_ui/profileView.const';
 import { isHttpUrl } from '@/shared/lib/url';
@@ -35,7 +33,6 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
       <div className="flex items-center gap-4">
         <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-2xl font-bold shrink-0 overflow-hidden">
           {showAvatar ? (
-            // eslint-disable-next-line @next/next/no-img-element -- user-provided URL on any host
             <img
               src={profile.avatarUrl ?? undefined}
               alt={`Avatar of ${name}`}

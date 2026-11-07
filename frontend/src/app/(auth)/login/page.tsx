@@ -1,8 +1,6 @@
 import LoginForm from '@/features/sign-in/LoginForm';
 import OrbitaLogo from '@/shared/ui/OrbitaLogo';
 
-export const dynamic = 'force-dynamic';
-
 export default function LoginPage() {
   return (
     <div className="w-full max-w-md">

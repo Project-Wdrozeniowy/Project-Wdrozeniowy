@@ -65,6 +65,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      SERVE_SPA: 'true'
       PORT: 3000
       BACKEND_URL: http://backend:8080
       JWT_SECRET: ${JWT_SECRET}

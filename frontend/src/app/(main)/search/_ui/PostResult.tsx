@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { postHref } from '@/shared/lib/searchUrl';
 import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 
@@ -10,7 +10,7 @@ export default function PostResult({ post }: PostResultProps) {
   return (
     <li>
       <Link
-        href={postHref(post.slug)}
+        to={postHref(post.slug)}
         className="flex flex-col gap-0.5 px-4 py-3 hover:bg-slate-700/50 focus-visible:outline-2 focus-visible:outline-blue-500"
       >
         <span className="text-sm font-medium text-slate-100 break-words">{post.title}</span>

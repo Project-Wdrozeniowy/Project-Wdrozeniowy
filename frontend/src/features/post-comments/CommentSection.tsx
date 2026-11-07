@@ -1,7 +1,5 @@
-// PROVISIONAL PWDRZ-142/67: the reachable UI awaits the implemented comments API (currently 501).
-'use client';
-
-import Link from 'next/link';
+// PWDRZ-67 owns full comments acceptance; the published API is implemented.
+import { Link } from 'react-router';
 import { useCallback } from 'react';
 import { useComments } from '@/shared/api/forum/useComments';
 import { apiErrorMessage, apiErrorStatus } from '@/shared/api/client/apiError';
@@ -60,7 +58,7 @@ export function CommentSection({ slug }: CommentSectionProps) {
       ) : (
         isInitialized && (
           <p className="text-sm text-slate-400">
-            <Link href="/login" className="text-blue-400 hover:text-blue-300">
+            <Link to="/login" className="text-blue-400 hover:text-blue-300">
               Sign in
             </Link>{' '}
             to leave a comment.

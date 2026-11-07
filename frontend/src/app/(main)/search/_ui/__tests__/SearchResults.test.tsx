@@ -11,10 +11,14 @@ const mockPush = vi.fn();
 const mockReplace = vi.fn();
 let query = '';
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
-  useSearchParams: () => new URLSearchParams(query),
-}));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({
+    useNavigate:
+      () => (url: string, options?: { replace?: boolean; preventScrollReset?: boolean }) =>
+        options?.replace ? mockReplace(url, options) : mockPush(url),
+    useSearchParams: () => [new URLSearchParams(query), vi.fn()],
+  })
+);
 
 const fixtureOperations = vi.hoisted(() => ({
   searchService: { search: vi.fn() },
@@ -152,7 +156,10 @@ describe('SearchResults', () => {
     renderResults();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Load more results' }));
-    expect(mockReplace).toHaveBeenCalledWith('/search?q=react&page=2', { scroll: false });
+    expect(mockReplace).toHaveBeenCalledWith('/search?q=react&page=2', {
+      replace: true,
+      preventScrollReset: true,
+    });
   });
 
   it('says so when nothing matches', async () => {

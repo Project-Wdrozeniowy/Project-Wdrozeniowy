@@ -31,23 +31,9 @@ class ApiClient {
   private client: AxiosInstance;
   private refreshing: Promise<string> | null = null;
 
-  private static resolveBaseURL(): string {
-    const envURL = process.env.NEXT_PUBLIC_API_URL;
-    if (envURL) return envURL;
-
-    // Client-side: relative URL is fine — the browser resolves it against the origin
-    if (typeof window !== 'undefined') return '/api';
-
-    // Server-side in production: env var is required (relative URLs are invalid in Node.js)
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('NEXT_PUBLIC_API_URL must be set in production');
-    }
-
-    return 'http://localhost:3000/api';
-  }
-
   constructor() {
-    const baseURL = ApiClient.resolveBaseURL();
+    // Same-origin in production; Vite forwards this prefix to the gateway in development.
+    const baseURL = '/api';
     this.client = axios.create({
       baseURL,
       timeout: 10000,

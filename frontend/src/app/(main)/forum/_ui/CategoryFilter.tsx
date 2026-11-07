@@ -1,5 +1,3 @@
-'use client';
-
 import { ALL_TOPICS, CATEGORIES } from '@/shared/constants/categories.const';
 import { cn } from '@/shared/lib/cn';
 

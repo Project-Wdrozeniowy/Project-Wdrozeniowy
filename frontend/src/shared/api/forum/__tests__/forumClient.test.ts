@@ -1,4 +1,4 @@
-// PROVISIONAL sections: category writes PWDRZ-141, comments PWDRZ-142/67, tags PWDRZ-143/107. Their mocked fixtures are planned adapter behavior, not implemented backend contracts.
+// Adapter mocks are isolated tests, not real API acceptance. Comments are published; PWDRZ-67 retains full acceptance ownership. Category/tag work keeps its existing owners.
 import { vi } from 'vitest';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import type { CategoryDto as Category } from '@/shared/api/generated/models/categoryDto.dto';

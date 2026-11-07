@@ -1,18 +1,15 @@
-'use client';
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import dynamic from 'next/dynamic';
+import { lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { apiErrorStatus } from '@/shared/api/client/apiError';
 import { FEED_QUERY_KEY } from '@/shared/api/forum/feedQuery.const';
 import { useStore } from '@/store';
 
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = import.meta.env.DEV;
 
-const ReactQueryDevtools = dynamic(
-  () => import('@tanstack/react-query-devtools').then((m) => m.ReactQueryDevtools),
-  { ssr: false }
+const ReactQueryDevtools = lazy(() =>
+  import('@tanstack/react-query-devtools').then((m) => ({ default: m.ReactQueryDevtools }))
 );
 
 interface QueryProviderProps {
@@ -61,7 +58,11 @@ export default function QueryProvider({ children }: QueryProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {isDev && <ReactQueryDevtools initialIsOpen={false} />}
+      {isDev && (
+        <Suspense fallback={null}>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </Suspense>
+      )}
     </QueryClientProvider>
   );
 }

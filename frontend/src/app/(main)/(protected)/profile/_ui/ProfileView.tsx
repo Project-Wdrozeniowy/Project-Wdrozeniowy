@@ -1,5 +1,3 @@
-'use client';
-
 import { useMyProfile } from '@/shared/api/profile/useMyProfile';
 import ProfileCard from './ProfileCard';
 import ProfileForm from '../../../../../features/edit-profile/ProfileForm';

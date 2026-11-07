@@ -1,6 +1,4 @@
-'use client';
-
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import PostCard from '@/app/(main)/_ui/PostCard';
 import { ALL_TOPICS, isTopic } from '@/shared/constants/categories.const';
 import { useForumPosts } from '@/shared/api/forum/useForumPosts';
@@ -24,9 +22,9 @@ import PostPagination from './PostPagination';
  * survive a reload and work with the Back button.
  */
 export default function ForumFeed() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const pathname = useLocation().pathname;
+  const [searchParams] = useSearchParams();
 
   const topicParam = searchParams.get('topic');
   const activeTopic = isTopic(topicParam) ? topicParam : ALL_TOPICS;
@@ -44,20 +42,20 @@ export default function ForumFeed() {
     refetch,
   } = useForumPosts({ page, categorySlug, tag });
 
-  function navigate(update: (params: URLSearchParams) => void, mode: 'push' | 'replace') {
+  function updateLocation(update: (params: URLSearchParams) => void, mode: 'push' | 'replace') {
     const params = new URLSearchParams(searchParams.toString());
     update(params);
     const query = params.toString();
     const url = query ? `${pathname}?${query}` : pathname;
     if (mode === 'push') {
-      router.push(url);
+      navigate(url);
     } else {
-      router.replace(url, { scroll: false });
+      navigate(url, { replace: true, preventScrollReset: true });
     }
   }
 
   function handleSelectTopic(label: string) {
-    navigate((params) => {
+    updateLocation((params) => {
       if (label === ALL_TOPICS) {
         params.delete('topic');
       } else {
@@ -77,7 +75,7 @@ export default function ForumFeed() {
   }
 
   function handlePageChange(nextPage: number) {
-    navigate((params) => {
+    updateLocation((params) => {
       if (nextPage <= 0) {
         params.delete('page');
       } else {

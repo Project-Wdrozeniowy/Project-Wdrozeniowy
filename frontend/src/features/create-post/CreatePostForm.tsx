@@ -1,7 +1,5 @@
-'use client';
-
 import { zodResolver } from '@hookform/resolvers/zod';
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -156,7 +154,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
           <p className="text-xs text-emerald-700">
             Your post is now live and visible to the community.{' '}
             <Link
-              href={`/forum/${publishedSlug}`}
+              to={`/forum/${publishedSlug}`}
               onClick={onViewPost}
               className="text-sm font-semibold text-emerald-700 underline"
             >

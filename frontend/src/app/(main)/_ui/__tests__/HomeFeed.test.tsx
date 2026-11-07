@@ -12,7 +12,9 @@ import { useStore } from '@/store';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => vi.fn() })
+);
 const fixtureOperations = vi.hoisted(() => ({
   postService: { list: vi.fn() },
   voteService: { cast: vi.fn(), retract: vi.fn() },

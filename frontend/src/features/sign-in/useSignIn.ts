@@ -1,4 +1,4 @@
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router';
 import { useState } from 'react';
 import {
   INVALID_CREDENTIALS_MESSAGE,
@@ -16,7 +16,7 @@ import { useStore } from '@/store';
  * the greeting and the way on to the home page. The form only shows what this reports.
  */
 export function useSignIn() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const setAuth = useStore((state) => state.setAuth);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -27,7 +27,7 @@ export function useSignIn() {
       const user = await loadProfile(accessToken);
       setAuth(user, accessToken);
       toast.success(`Welcome back, ${user.displayName ?? user.username}!`);
-      router.push('/');
+      navigate('/');
     } catch (err: unknown) {
       setServerError(
         apiErrorStatus(err) === 401

@@ -3,20 +3,8 @@ import { join, relative, sep } from 'node:path';
 
 /**
  * Component props are named `<ComponentName>Props` (docs/guides/naming-conventions.md).
- * Next.js special files (pages, layouts, ...) are the exception: the framework defines their
- * props, so their shapes stay as the framework documents them.
  */
 const SRC = join(__dirname, '..');
-const NEXT_SPECIAL_FILES = new Set([
-  'page.tsx',
-  'layout.tsx',
-  'template.tsx',
-  'loading.tsx',
-  'error.tsx',
-  'global-error.tsx',
-  'not-found.tsx',
-  'default.tsx',
-]);
 
 function componentFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -24,10 +12,7 @@ function componentFiles(dir: string): string[] {
     if (entry.isDirectory()) {
       return entry.name === '__tests__' || entry.name === 'test' ? [] : componentFiles(path);
     }
-    const isComponentFile =
-      entry.name.endsWith('.tsx') &&
-      !entry.name.endsWith('.test.tsx') &&
-      !NEXT_SPECIAL_FILES.has(entry.name);
+    const isComponentFile = entry.name.endsWith('.tsx') && !entry.name.endsWith('.test.tsx');
     return isComponentFile ? [path] : [];
   });
 }
@@ -79,7 +64,7 @@ describe('component props naming', () => {
     expect(names).toEqual(expect.arrayContaining(['PostCard', 'FormField', 'AuthGuard']));
   });
 
-  it('does not check the files the framework owns', () => {
+  it('route composition components take no framework-defined props', () => {
     expect(all.some((c) => /(^|\/)(page|layout)\.tsx$/.test(c.file))).toBe(false);
   });
 

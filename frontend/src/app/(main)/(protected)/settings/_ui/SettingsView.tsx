@@ -1,5 +1,3 @@
-'use client';
-
 import ProfileLoadError from '@/app/(main)/(protected)/profile/_ui/ProfileLoadError';
 import ChangePasswordForm from '@/features/change-password/ChangePasswordForm';
 import ProfileForm from '@/features/edit-profile/ProfileForm';

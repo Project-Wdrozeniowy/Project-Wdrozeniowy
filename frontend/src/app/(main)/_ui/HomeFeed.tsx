@@ -1,6 +1,4 @@
-'use client';
-
-import Link from 'next/link';
+import { Link } from 'react-router';
 import PostCard from '@/app/(main)/_ui/PostCard';
 import { HOME_ALL_POSTS_LABEL, HOME_EMPTY_MESSAGE } from '@/app/(main)/_ui/homeFeed.const';
 import { toPostCardData } from '@/app/(main)/_lib/postCard';
@@ -38,7 +36,7 @@ export default function HomeFeed() {
       </div>
       {data.totalPages > 1 && (
         <Link
-          href="/forum"
+          to="/forum"
           className="self-start text-blue-400 hover:text-blue-300 text-sm font-semibold"
         >
           {HOME_ALL_POSTS_LABEL} →

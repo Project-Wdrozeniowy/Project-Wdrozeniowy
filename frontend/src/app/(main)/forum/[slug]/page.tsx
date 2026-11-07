@@ -1,7 +1,8 @@
+import { useParams } from 'react-router';
 import { CommentSection } from '@/features/post-comments/CommentSection';
 
-export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default function PostPage() {
+  const { slug = '' } = useParams();
 
   return (
     <div className="flex flex-col gap-6">

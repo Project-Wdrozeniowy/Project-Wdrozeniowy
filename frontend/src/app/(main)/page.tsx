@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import { CreatePostButton } from '@/features/create-post/CreatePostButton';
 import HomeFeed from './_ui/HomeFeed';

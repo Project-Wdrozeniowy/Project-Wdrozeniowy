@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { tagHref } from '@/shared/lib/tagUrl';
 import type { TagDto as Tag } from '@/shared/api/generated/models/tagDto.dto';
 
@@ -11,7 +11,7 @@ export default function TagResult({ tag }: TagResultProps) {
   return (
     <li>
       <Link
-        href={tagHref(tag.slug)}
+        to={tagHref(tag.slug)}
         className="flex items-center gap-3 px-4 py-3 hover:bg-slate-700/50 focus-visible:outline-2 focus-visible:outline-blue-500"
       >
         <span

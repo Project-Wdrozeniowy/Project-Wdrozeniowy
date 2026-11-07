@@ -15,11 +15,15 @@ import { toast } from '@/shared/lib/toast';
 
 let search = '';
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-  usePathname: () => '/forum',
-  useSearchParams: () => new URLSearchParams(search),
-}));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({
+    useNavigate:
+      () => (url: string, options?: { replace?: boolean; preventScrollReset?: boolean }) =>
+        options?.replace ? vi.fn()(url, options) : vi.fn()(url),
+    useLocation: () => ({ pathname: '/forum', search: '', hash: '', state: null, key: 'test' }),
+    useSearchParams: () => [new URLSearchParams(search), vi.fn()],
+  })
+);
 
 vi.mock('@/shared/lib/toast', () => ({
   API_ERROR_TOAST_ID: 'api-error',

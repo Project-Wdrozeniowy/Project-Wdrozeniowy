@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { tagHref } from '@/shared/lib/tagUrl';
 import type { TagDto as Tag } from '@/shared/api/generated/models/tagDto.dto';
 
@@ -12,7 +12,7 @@ interface SearchTagRowProps {
 export default function SearchTagRow({ tag, onNavigate }: SearchTagRowProps) {
   return (
     <Link
-      href={tagHref(tag.slug)}
+      to={tagHref(tag.slug)}
       onClick={onNavigate}
       className="flex items-center gap-3 px-3 py-2 text-slate-200 hover:bg-slate-700/60 focus-visible:outline-2 focus-visible:outline-blue-500"
     >

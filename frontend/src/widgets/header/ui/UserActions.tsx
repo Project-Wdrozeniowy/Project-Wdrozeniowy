@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { BellIcon, TrendingIcon } from '@/shared/ui/icons';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 
@@ -33,7 +33,7 @@ export default function UserActions({ isAuthenticated, user, logout }: UserActio
             {user?.displayName ?? user?.username}
           </span>
           <Link
-            href="/settings"
+            to="/settings"
             className="text-sm text-slate-400 hover:text-gray-50 transition-colors"
           >
             Settings
@@ -48,13 +48,13 @@ export default function UserActions({ isAuthenticated, user, logout }: UserActio
       ) : (
         <div className="flex items-center gap-2">
           <Link
-            href="/login"
+            to="/login"
             className="text-sm text-gray-50 hover:text-slate-300 transition-colors px-3 py-1.5"
           >
             Sign in
           </Link>
           <Link
-            href="/register"
+            to="/register"
             className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded transition-colors"
           >
             Sign up

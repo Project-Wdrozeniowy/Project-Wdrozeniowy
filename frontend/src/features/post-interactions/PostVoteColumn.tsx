@@ -1,6 +1,4 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router';
 import { VoteColumn } from '@/features/post-interactions/VoteColumn';
 import type { MyVoteDto as MyVote } from '@/shared/api/generated/models/myVoteDto.dto';
 import type { VoteRequestVoteType as VoteType } from '@/shared/api/generated/models/voteRequestVoteType.dto';
@@ -15,7 +13,7 @@ interface PostVoteColumnProps {
 
 /** The vote buttons of a post from the API. A guest is sent to sign in instead of voting. */
 export function PostVoteColumn({ postId, score, myVote }: PostVoteColumnProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const isAuthenticated = useStore((state) => state.isAuthenticated);
   const isInitialized = useStore((state) => state.isInitialized);
   const { mutate, isPending } = useVotePost(postId);
@@ -23,7 +21,7 @@ export function PostVoteColumn({ postId, score, myVote }: PostVoteColumnProps) {
   function handleVote(direction: VoteType) {
     if (isPending) return;
     if (!isAuthenticated) {
-      router.push('/login');
+      navigate('/login');
       return;
     }
     mutate({ clicked: direction, voteScore: score, myVote });

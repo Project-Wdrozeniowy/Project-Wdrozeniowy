@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect } from 'react';
 import { apiClient } from '@/shared/api/client/api';
 import { loadProfile } from '@/shared/auth/loadProfile';

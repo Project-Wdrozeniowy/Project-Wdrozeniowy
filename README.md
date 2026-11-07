@@ -1,5 +1,7 @@
 # Orbita
 
+> **PWDRZ-160 experimental branch.** [Run, compare and inspect the spike](docs/spikes/pwdrz-160-vite-spa/README.md). This branch does not adopt the migration or change team architecture decisions.
+
 [![Frontend Build](https://img.shields.io/github/actions/workflow/status/Project-Wdrozeniowy/Project-Wdrozeniowy/frontend-build.yml?style=flat-square&label=Frontend)](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions)
 [![Gateway Build](https://img.shields.io/github/actions/workflow/status/Project-Wdrozeniowy/Project-Wdrozeniowy/gateway-build.yml?style=flat-square&label=Gateway)](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions)
 [![Backend Build](https://img.shields.io/github/actions/workflow/status/Project-Wdrozeniowy/Project-Wdrozeniowy/backend-build.yml?style=flat-square&label=Backend)](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions)
@@ -11,13 +13,13 @@ notifications retain task-specific limitations.
 
 ## Architecture
 
-Nx orchestrates three services and the E2E project. npm workspaces shares Node
+Nx orchestrates the frontend build, gateway, backend and E2E project. Production runs the gateway (including static frontend) and backend. npm workspaces shares Node
 installation; Maven owns Java dependencies. See the [monorepo guide](docs/guides/monorepo.md)
 for task ownership, cache boundaries and direct-service escape paths.
 
 ```
-Frontend (Next.js 16)       port 3001
-       ↓
+Browser SPA (React + Vite build)
+       ↓  HTML/assets and relative /api on one origin
 Gateway (Express 5)         port 3000   ← JWT verification, rate limiting, CORS
        ↓
 Backend (Spring Boot 4)     port 8080   ← business logic, REST API
@@ -27,7 +29,7 @@ PostgreSQL 16               port 5432
 
 | Service | Stack |
 |---------|-------|
-| **Frontend** | Next.js 16, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod |
+| **Frontend** | Vite 7, React Router 7, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod |
 | **Gateway** | Node.js, Express 5, TypeScript 6, JWT, Helmet, express-rate-limit |
 | **Backend** | Java 17, Spring Boot 4, Spring Security, Spring Data JPA, Flyway, jjwt |
 | **Infra** | PostgreSQL 16, Redis 7 (Docker Compose) |
@@ -49,7 +51,7 @@ cp .env.example .env
 # Gateway environment
 cp gateway/.env.example gateway/.env
 
-# Frontend API base URL
+# Optional frontend development environment (no API URL required)
 cp frontend/.env.example frontend/.env
 ```
 
@@ -86,7 +88,7 @@ npm run dev
 ```
 
 Root dev starts PostgreSQL/Redis/backend in Compose and frontend/gateway from
-source with hot reload. Configure all three `.env` files first. Ctrl+C stops
+source with hot reload. Configure root and gateway `.env` files first; frontend `.env` is optional. Ctrl+C stops
 frontend/gateway; Compose data and services remain. Stop those explicitly with
 `docker compose stop` when desired. Do not also run the Compose gateway on 3000.
 
@@ -95,7 +97,7 @@ frontend/gateway; Compose data and services remain. Stop those explicitly with
 | Command | Purpose |
 | --- | --- |
 | `npm run check` | Lint, typecheck and formatting |
-| `npm run build` | Build all applications; requires explicit `NEXT_PUBLIC_API_URL` |
+| `npm run build` | Build static frontend, gateway and backend |
 | `npm test` | Service coverage gates; backend uses an owned temporary DB |
 | `npm run test:e2e` | Isolated real-stack browser/integration gate |
 | `npm run validate` | Full build/check/coverage/E2E requirements |
@@ -118,11 +120,11 @@ terminals. Choose one backend/gateway workflow so each port has one owner.
 docker compose up -d
 ```
 
-In a separate terminal, start the frontend on `http://localhost:3001`:
+Open the built frontend at `http://localhost:3000`. No separate frontend server is required. For an optional HMR development frontend at `http://localhost:3001`:
 
 ```bash
 cd frontend
-npm run dev -- -p 3001
+npm run dev -- --port 3001
 ```
 
 ### Run backend and gateway from source
@@ -158,7 +160,7 @@ Terminal 4, from the repository root (frontend on `http://localhost:3001`):
 
 ```bash
 cd frontend
-npm run dev -- -p 3001
+npm run dev -- --port 3001
 ```
 
 On Windows PowerShell, Terminal 3 uses the same values from the root `.env`:

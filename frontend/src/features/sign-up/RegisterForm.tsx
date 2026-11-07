@@ -1,6 +1,4 @@
-'use client';
-
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import InterestsPicker from '@/features/sign-up/InterestsPicker';
@@ -151,7 +149,7 @@ export default function RegisterForm() {
 
       <p className="text-gray-500 text-sm text-center">
         Already have an account?{' '}
-        <Link href="/login" className="text-blue-600 hover:underline font-semibold">
+        <Link to="/login" className="text-blue-600 hover:underline font-semibold">
           Sign In
         </Link>
       </p>

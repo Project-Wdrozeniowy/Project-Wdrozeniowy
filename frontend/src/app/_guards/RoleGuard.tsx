@@ -1,7 +1,5 @@
-'use client';
-
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router';
 import { useStore } from '@/store';
 import type { UserProfileDtoRole as UserRole } from '@/shared/api/generated/models/userProfileDtoRole.dto';
 import SessionLoader from './SessionLoader';
@@ -16,7 +14,7 @@ interface RoleGuardProps {
  * users to /. This is only a UX layer: the API enforces the same roles with @PreAuthorize.
  */
 export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const isInitialized = useStore((s) => s.isInitialized);
   const user = useStore((s) => s.user);
 
@@ -25,11 +23,11 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   useEffect(() => {
     if (!isInitialized) return;
     if (user === null) {
-      router.replace('/login');
+      navigate('/login', { replace: true });
     } else if (!hasAccess) {
-      router.replace('/');
+      navigate('/', { replace: true });
     }
-  }, [isInitialized, user, hasAccess, router]);
+  }, [isInitialized, user, hasAccess, navigate]);
 
   if (!isInitialized) return <SessionLoader />;
   if (!hasAccess) return null;

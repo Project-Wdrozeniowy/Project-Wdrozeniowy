@@ -10,9 +10,9 @@ import { RECENT_SEARCHES_KEY } from '@/shared/lib/recentSearches';
 
 const mockPush = vi.fn();
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
-}));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => mockPush })
+);
 
 const fixtureOperations = vi.hoisted(() => ({
   searchService: { search: vi.fn() },

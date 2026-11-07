@@ -4,10 +4,8 @@ import { AxiosError } from 'axios';
 import QueryProvider from '../QueryProvider';
 import { useStore } from '@/store';
 
-// next/dynamic is not supported in vitest jsdom – mock it to render nothing
-vi.mock('next/dynamic', () => ({
-  default: () => () => null,
-}));
+// the optional devtools
+vi.mock('@tanstack/react-query-devtools', () => ({ ReactQueryDevtools: () => null }));
 
 describe('QueryProvider >-65', () => {
   it('does not retry a terminal 401 after the transport has exhausted session recovery', async () => {

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 
 interface ActiveTagFilterProps {
   tag: string;
@@ -14,7 +14,7 @@ export default function ActiveTagFilter({ tag, clearHref }: ActiveTagFilterProps
         Posts tagged <span className="font-semibold text-blue-400 break-all">#{tag}</span>
       </p>
       <Link
-        href={clearHref}
+        to={clearHref}
         className="text-sm font-semibold text-slate-300 hover:text-white underline focus-visible:outline-2 focus-visible:outline-blue-500"
       >
         Show all posts

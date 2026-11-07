@@ -1,5 +1,7 @@
 # Frontend architecture: PWDRZ-149 target
 
+> **PWDRZ-160 experiment:** use [the spike runbook](../../spikes/pwdrz-160-vite-spa/README.md) for this branch. Its explicit SPA routes, Vite build, relative `/api` and Express static hosting supersede Next-specific runtime/setup examples below. Other ownership, security, testing and Git rules remain applicable. This is an isolated experiment, not a team-wide architecture decision.
+
 > [Русская версия / Russian translation ↓](#ru) — temporary reading aid; the English text is canonical.
 
 This is the **human-facing target architecture** for the Next.js frontend. It is a migration plan, **not a description of the current directory tree**. The existing structure and runtime behaviour remain authoritative until [PWDRZ-149](https://project-wdrz.atlassian.net/browse/PWDRZ-149) is implemented. For setup, use the [frontend runbook](../../../frontend/README.md); for project-wide boundaries, use the [architecture guide](../architecture.md).

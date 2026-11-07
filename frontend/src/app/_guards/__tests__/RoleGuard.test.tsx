@@ -6,9 +6,9 @@ import type { UserProfileDtoRole as UserRole } from '@/shared/api/generated/mode
 
 const mockReplace = vi.fn();
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: mockReplace }),
-}));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => mockReplace })
+);
 
 vi.mock('@/store', () => ({
   useStore: vi.fn(),
@@ -49,7 +49,7 @@ describe('RoleGuard – guest', () => {
   it('renders nothing and redirects to /login', () => {
     const { container } = renderGuard();
     expect(container).toBeEmptyDOMElement();
-    expect(mockReplace).toHaveBeenCalledWith('/login');
+    expect(mockReplace).toHaveBeenCalledWith('/login', { replace: true });
   });
 });
 
@@ -75,7 +75,7 @@ describe('RoleGuard – forbidden role', () => {
       mockState(true, role);
       const { container } = renderGuard(['ADMIN']);
       expect(container).toBeEmptyDOMElement();
-      expect(mockReplace).toHaveBeenCalledWith('/');
+      expect(mockReplace).toHaveBeenCalledWith('/', { replace: true });
     }
   );
 });

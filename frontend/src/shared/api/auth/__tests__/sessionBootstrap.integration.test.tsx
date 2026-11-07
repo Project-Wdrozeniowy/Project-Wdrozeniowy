@@ -32,7 +32,9 @@ vi.mock('@/shared/api/client/api', () => ({
     refreshAccessToken: mocks.refreshAccessToken,
   },
 }));
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => mocks.push })
+);
 vi.mock('@/shared/lib/toast', () => ({ toast: { success: mocks.success } }));
 
 const profile = { id: 1, username: 'alice', displayName: null };

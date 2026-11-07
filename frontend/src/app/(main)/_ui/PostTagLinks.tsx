@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import type { PostCardTag } from '@/app/(main)/_lib/postCard';
 import { tagHref } from '@/shared/lib/tagUrl';
 
@@ -14,7 +14,7 @@ export default function PostTagLinks({ tags }: PostTagLinksProps) {
       {tags.map((tag) => (
         <li key={tag.slug}>
           <Link
-            href={tagHref(tag.slug)}
+            to={tagHref(tag.slug)}
             className="inline-block bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium px-2 py-0.5 rounded focus-visible:outline-2 focus-visible:outline-blue-500"
           >
             #{tag.name}

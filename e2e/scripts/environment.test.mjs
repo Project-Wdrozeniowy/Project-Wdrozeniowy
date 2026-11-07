@@ -37,12 +37,12 @@ test('source snapshots exclude local secrets, dependencies and generated build t
 });
 
 test('test endpoints cannot be external URLs or collide within a managed run', () => {
-  assert.deepEqual(testPorts({}), { FRONTEND: 3101, GATEWAY: 3100, BACKEND: 8180 });
+  assert.deepEqual(testPorts({}), { GATEWAY: 3100, BACKEND: 8180 });
   for (const env of [
     { E2E_FRONTEND_PORT: 'http://production' },
     { E2E_FRONTEND_PORT: '0' },
     { E2E_BACKEND_PORT: '65536' },
-    { E2E_GATEWAY_PORT: '3101' },
+    { E2E_GATEWAY_PORT: '8180' },
   ])
     assert.throws(() => testPorts(env));
 });

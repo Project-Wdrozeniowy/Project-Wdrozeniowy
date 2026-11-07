@@ -1,7 +1,5 @@
-'use client';
-
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import PasswordChangeConfirm from '@/features/change-password/PasswordChangeConfirm';
@@ -36,7 +34,7 @@ const EMPTY_VALUES: ChangePasswordFormData = {
  * asks for confirmation, and a successful change ends this session here too.
  */
 export default function ChangePasswordForm() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const logout = useStore((state) => state.logout);
   const { mutateAsync, isPending } = useChangePassword({ request: { skipErrorToast: true } });
   // The values that passed validation, kept while the user confirms: that is what is sent.
@@ -79,7 +77,7 @@ export default function ChangePasswordForm() {
     // to log out of there. End the session here; this also clears the cached profile.
     logout();
     toast.success(PASSWORD_CHANGED_MESSAGE);
-    router.replace('/login');
+    navigate('/login', { replace: true });
   }
 
   function describedBy(id: string, field: keyof ChangePasswordFormData, hint = false) {

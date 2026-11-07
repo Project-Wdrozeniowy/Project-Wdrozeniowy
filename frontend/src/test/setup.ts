@@ -1,4 +1,7 @@
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
+
+vi.mock('react-router', async () => (await import('./routerMock')).routerMock());
 
 class LocalStorageMock implements Storage {
   private store: Record<string, string> = {};

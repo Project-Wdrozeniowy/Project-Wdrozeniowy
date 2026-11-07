@@ -42,10 +42,11 @@ services:
       context: ${E2E_RUNTIME}
       dockerfile: gateway/Dockerfile
     environment:
+      SERVE_SPA: 'true'
       PORT: 3000
       BACKEND_URL: http://backend:8080
       JWT_SECRET: ${E2E_JWT_SECRET}
-      CORS_ORIGINS: http://127.0.0.1:${E2E_FRONTEND_PORT:?Managed port required}
+      CORS_ORIGINS: http://127.0.0.1:${E2E_GATEWAY_PORT:?Managed port required}
       # Fixtures/readiness must not exhaust a shared per-run IP quota.
       # Rate-limit semantics remain covered by gateway's service tests.
       RATE_LIMIT_MAX: 1000

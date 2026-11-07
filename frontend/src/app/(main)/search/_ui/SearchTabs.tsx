@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { cn } from '@/shared/lib/cn';
 import { searchPageHref } from '@/shared/lib/searchUrl';
 import type { SearchType } from '@/shared/api/generated/models/searchType.dto';
@@ -18,7 +18,7 @@ export default function SearchTabs({ term, active }: SearchTabsProps) {
         return (
           <Link
             key={tab.label}
-            href={searchPageHref({ q: term, type: tab.type })}
+            to={searchPageHref({ q: term, type: tab.type })}
             aria-current={current ? 'page' : undefined}
             className={cn(
               'px-4 py-2 text-sm font-medium -mb-px border-b-2 focus-visible:outline-2 focus-visible:outline-blue-500',

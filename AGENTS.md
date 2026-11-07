@@ -1,5 +1,7 @@
 # AGENTS.md
 
+> **PWDRZ-160 experiment:** use [the spike runbook](docs/spikes/pwdrz-160-vite-spa/README.md) for this branch. Its explicit SPA routes, Vite build, relative `/api` and Express static hosting supersede Next-specific runtime/setup examples below. Other ownership, security, testing and Git rules remain applicable. This is an isolated experiment, not a team-wide architecture decision.
+
 > Agent/tooling entry point. Developers should start with [README.md](README.md)
 > and the [documentation map](docs/README.md); team contribution rules live in
 > [docs/guides/README.md](docs/guides/README.md). Commands and architecture

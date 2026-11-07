@@ -1,8 +1,6 @@
 import RegisterForm from '@/features/sign-up/RegisterForm';
 import OrbitaLogo from '@/shared/ui/OrbitaLogo';
 
-export const dynamic = 'force-dynamic';
-
 export default function RegisterPage() {
   return (
     <div className="w-full max-w-2xl">

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { cn } from '@/shared/lib/cn';
 
 interface NavLink {
@@ -24,7 +24,7 @@ export default function NavLinks({ links, pathname }: NavLinksProps) {
         return (
           <Link
             key={href}
-            href={href}
+            to={href}
             aria-current={active ? 'page' : undefined}
             className={cn(
               'flex items-center gap-2 px-3 py-1.5 rounded text-sm font-semibold transition-colors',

@@ -1,6 +1,4 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { searchPageHref } from '@/shared/lib/searchUrl';
@@ -21,13 +19,13 @@ interface SearchPageFormProps {
 }
 
 export default function SearchPageForm({ term, type }: SearchPageFormProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [value, setValue] = useState(term);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = value.trim();
-    if (isSearchableTerm(trimmed)) router.push(searchPageHref({ q: trimmed, type }));
+    if (isSearchableTerm(trimmed)) navigate(searchPageHref({ q: trimmed, type }));
   }
 
   return (

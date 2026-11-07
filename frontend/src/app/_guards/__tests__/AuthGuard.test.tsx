@@ -5,9 +5,9 @@ import { useStore } from '@/store';
 
 const mockReplace = vi.fn();
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: mockReplace }),
-}));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => mockReplace })
+);
 
 vi.mock('@/store', () => ({
   useStore: vi.fn(),
@@ -56,7 +56,7 @@ describe('AuthGuard – guest', () => {
 
   it('redirects to /login', () => {
     renderGuard();
-    expect(mockReplace).toHaveBeenCalledWith('/login');
+    expect(mockReplace).toHaveBeenCalledWith('/login', { replace: true });
   });
 });
 

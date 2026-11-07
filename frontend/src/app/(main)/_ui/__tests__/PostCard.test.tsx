@@ -23,7 +23,9 @@ const post: PostCardData = {
   voting: { postId: 5, myVote: null },
 };
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => vi.fn() })
+);
 
 beforeEach(() => useStore.setState({ user: null, isAuthenticated: false, isInitialized: true }));
 

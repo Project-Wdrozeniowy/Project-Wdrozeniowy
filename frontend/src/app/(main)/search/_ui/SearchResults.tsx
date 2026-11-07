@@ -1,6 +1,4 @@
-'use client';
-
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useNavigate, useSearchParams } from 'react-router';
 import { searchPageHref } from '@/shared/lib/searchUrl';
 import { isSearchableTerm, useSearchPages } from '@/shared/api/search/useSearch';
 import {
@@ -36,8 +34,8 @@ import UserResult from './UserResult';
  * "Load more" raises `page`; the pages already shown stay.
  */
 export default function SearchResults() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const term = parseSearchTerm(searchParams.get('q'));
   const type = parseSearchType(searchParams.get('type'));
   const pages = parsePagesParam(searchParams.get('page'));
@@ -54,7 +52,10 @@ export default function SearchResults() {
   }
 
   function loadMore() {
-    router.replace(searchPageHref({ q: term, type, page: pages + 1 }), { scroll: false });
+    navigate(searchPageHref({ q: term, type, page: pages + 1 }), {
+      replace: true,
+      preventScrollReset: true,
+    });
   }
 
   const retryButton = (

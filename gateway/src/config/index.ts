@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import path from 'node:path';
 import type { GatewayConfig } from '../types';
 
 function requireEnv(key: string): string {
@@ -30,6 +31,12 @@ function parseOrigins(raw: string): string[] {
 }
 
 const config: GatewayConfig = {
+  spa: {
+    enabled: process.argv.includes('--spa') || process.env.SERVE_SPA === 'true',
+    directory: path.resolve(
+      process.env.SPA_DIST_DIR ?? path.join(__dirname, '../../../frontend/dist')
+    ),
+  },
   port: getIntEnv('PORT', '3000'),
   backendUrl: getEnv('BACKEND_URL', 'http://localhost:8080'),
   jwtSecret: requireEnv('JWT_SECRET'),

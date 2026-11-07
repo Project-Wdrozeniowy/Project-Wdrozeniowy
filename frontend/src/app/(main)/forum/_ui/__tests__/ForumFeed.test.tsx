@@ -14,11 +14,15 @@ const mockPush = vi.fn();
 const mockReplace = vi.fn();
 let search = '';
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
-  usePathname: () => '/forum',
-  useSearchParams: () => new URLSearchParams(search),
-}));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({
+    useNavigate:
+      () => (url: string, options?: { replace?: boolean; preventScrollReset?: boolean }) =>
+        options?.replace ? mockReplace(url, options) : mockPush(url),
+    useLocation: () => ({ pathname: '/forum', search: '', hash: '', state: null, key: 'test' }),
+    useSearchParams: () => [new URLSearchParams(search), vi.fn()],
+  })
+);
 
 const fixtureOperations = vi.hoisted(() => ({
   postService: { list: vi.fn() },
@@ -409,7 +413,10 @@ describe('ForumFeed – topic filter', () => {
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Science' }));
 
-    expect(mockReplace).toHaveBeenCalledWith('/forum?topic=Science', { scroll: false });
+    expect(mockReplace).toHaveBeenCalledWith('/forum?topic=Science', {
+      replace: true,
+      preventScrollReset: true,
+    });
   });
 
   it('removes the topic when All is selected but keeps unrelated parameters', async () => {
@@ -420,7 +427,10 @@ describe('ForumFeed – topic filter', () => {
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'All' }));
 
-    expect(mockReplace).toHaveBeenCalledWith('/forum?utm=x', { scroll: false });
+    expect(mockReplace).toHaveBeenCalledWith('/forum?utm=x', {
+      replace: true,
+      preventScrollReset: true,
+    });
   });
 });
 
@@ -566,7 +576,10 @@ describe('ForumFeed – tag filter', () => {
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Gaming' }));
 
-    expect(mockReplace).toHaveBeenCalledWith('/forum?tag=react&topic=Gaming', { scroll: false });
+    expect(mockReplace).toHaveBeenCalledWith('/forum?tag=react&topic=Gaming', {
+      replace: true,
+      preventScrollReset: true,
+    });
   });
 
   it('says so for an unknown or empty tag instead of showing other posts', async () => {

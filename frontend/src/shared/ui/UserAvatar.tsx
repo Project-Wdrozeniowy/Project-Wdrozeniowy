@@ -24,7 +24,6 @@ export default function UserAvatar({
 
   if (avatarUrl && isHttpUrl(avatarUrl)) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- user-provided URL on any host
       <img
         src={avatarUrl}
         alt=""

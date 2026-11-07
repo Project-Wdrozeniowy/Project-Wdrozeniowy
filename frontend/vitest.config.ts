@@ -20,8 +20,6 @@ export default defineConfig({
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
         'node_modules/**',
-        '.next/**',
-        'next.config.*',
         'postcss.config.*',
         'eslint.config.*',
         'tailwind.config.*',

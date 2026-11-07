@@ -19,9 +19,13 @@ import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/my
 
 const mockReplace = vi.fn();
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: mockReplace, push: vi.fn() }),
-}));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({
+    useNavigate:
+      () => (url: string, options?: { replace?: boolean; preventScrollReset?: boolean }) =>
+        options?.replace ? mockReplace(url, options) : vi.fn()(url),
+  })
+);
 
 vi.mock('@/shared/lib/toast', () => ({
   API_ERROR_TOAST_ID: 'api-error',
@@ -179,7 +183,7 @@ describe('password change', () => {
     await user.click(screen.getByRole('button', { name: 'Change password' }));
     await user.click(await screen.findByRole('button', { name: 'Change password and sign out' }));
 
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'));
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login', { replace: true }));
     expect(mock.history.post).toHaveLength(1);
     expect(JSON.parse(mock.history.post[0].data)).toEqual({
       currentPassword: 'old-password',

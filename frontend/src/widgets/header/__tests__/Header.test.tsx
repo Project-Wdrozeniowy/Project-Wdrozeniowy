@@ -6,10 +6,14 @@ import { logout as revokeSession } from '@/shared/api/generated/orbita.api';
 import { toast } from '@/shared/lib/toast';
 import { useStore } from '@/store';
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-}));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({
+    useLocation: () => ({ pathname: '/', search: '', hash: '', state: null, key: 'test' }),
+    useNavigate:
+      () => (url: string, options?: { replace?: boolean; preventScrollReset?: boolean }) =>
+        options?.replace ? vi.fn()(url, options) : vi.fn()(url),
+  })
+);
 
 vi.mock('@/shared/api/generated/orbita.api', () => ({ logout: vi.fn() }));
 

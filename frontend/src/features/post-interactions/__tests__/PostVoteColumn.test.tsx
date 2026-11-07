@@ -19,7 +19,9 @@ import { toast } from '@/shared/lib/toast';
 import { useStore } from '@/store';
 
 const push = vi.fn();
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => push })
+);
 vi.mock('@/shared/lib/toast', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 const fixtureOperations = vi.hoisted(() => ({
   voteService: { cast: vi.fn(), retract: vi.fn() },

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 import { NAV_LINKS, USER_STATS } from '@/widgets/sidebar/ui/sidebar.const';
 import { cn } from '@/shared/lib/cn';
@@ -12,7 +12,7 @@ interface UserCardProps {
 export default function UserCard({ user, initials, pathname }: UserCardProps) {
   return (
     <div className="bg-slate-800 rounded-xl p-4 flex flex-col gap-4">
-      <Link href="/profile" className="flex items-center gap-3">
+      <Link to="/profile" className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-900 font-semibold text-base shrink-0">
           {initials}
         </div>
@@ -30,7 +30,7 @@ export default function UserCard({ user, initials, pathname }: UserCardProps) {
           return (
             <Link
               key={href}
-              href={href}
+              to={href}
               className={cn(
                 'flex items-center px-3 py-2.5 rounded text-sm transition-colors',
                 active ? 'bg-slate-700 text-gray-50' : 'text-white hover:bg-slate-700'
@@ -46,7 +46,7 @@ export default function UserCard({ user, initials, pathname }: UserCardProps) {
         {USER_STATS.map(({ label }, i) => (
           <Link
             key={label}
-            href="/profile"
+            to="/profile"
             className="flex-1 flex flex-col items-center py-3 rounded hover:bg-slate-700 transition-colors"
           >
             <span className="text-white font-semibold text-lg leading-none">

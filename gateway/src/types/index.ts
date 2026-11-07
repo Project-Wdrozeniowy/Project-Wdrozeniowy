@@ -9,6 +9,7 @@ export interface ErrorResponse {
 }
 
 export interface GatewayConfig {
+  spa: { enabled: boolean; directory: string };
   port: number;
   backendUrl: string;
   jwtSecret: string;

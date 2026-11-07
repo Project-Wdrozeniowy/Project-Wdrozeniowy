@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { searchPageHref } from '@/shared/lib/searchUrl';
 import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 import type { SearchResultsDto as SearchResults } from '@/shared/api/generated/models/searchResultsDto.dto';
@@ -153,7 +153,7 @@ function Results({ results, term, activeIndex, optionId, onSelectPost, onNavigat
         </SearchSection>
       )}
       <Link
-        href={searchPageHref({ q: term })}
+        to={searchPageHref({ q: term })}
         onClick={onNavigate}
         className="block border-t border-slate-700 px-3 py-2 text-center text-xs font-semibold text-blue-400 hover:bg-slate-700/60 focus-visible:outline-2 focus-visible:outline-blue-500"
       >
