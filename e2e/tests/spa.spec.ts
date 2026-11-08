@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { test, expect, signIn, apiResponse, gatewayURL } from '../support/fixtures.js';
+import { test, expect, signIn, apiResponse, apiSignIn } from '../support/fixtures.js';
 
 // Migration parity for an already reachable flow, not full PWDRZ-67 acceptance.
 test('SPA: the existing comment flow keeps working on the dynamic post route', async ({
@@ -7,12 +7,9 @@ test('SPA: the existing comment flow keeps working on the dynamic post route', a
   request,
   account,
 }) => {
-  const login = await request.post('/api/auth/login', {
-    data: { username: account.username, password: account.password },
-  });
-  expect(login.status()).toBe(200);
+  const headers = await apiSignIn(request, account);
   const created = await request.post('/api/forum/posts', {
-    headers: { Authorization: `Bearer ${(await login.json()).accessToken}` },
+    headers,
     data: {
       title: `Comment parity ${account.username}`,
       content: 'A real published post for existing comment routing parity.',
@@ -69,8 +66,8 @@ test('SPA: production assets, fallback and API failures retain their boundaries'
   const unknownApi = await request.get('/api/spike-unknown', {
     headers: { Accept: 'text/html' },
   });
-  expect(unknownApi.status()).toBe(401);
-  expect(unknownApi.headers()['content-type']).toContain('application/json');
+  expect(unknownApi.status()).toBe(404);
+  expect(unknownApi.headers()['content-type']).toContain('application/problem+json');
   const wrongMethod = await request.post('/forum', { headers: { Accept: 'text/html' } });
   expect(wrongMethod.status()).toBe(404);
   await page.goto('/spike-unknown');
@@ -85,11 +82,8 @@ test('SPA: query pagination, history and category filters survive navigation and
   request,
   account,
 }) => {
-  const login = await request.post(`${gatewayURL}/api/auth/login`, {
-    data: { username: account.username, password: account.password },
-  });
-  expect(login.status()).toBe(200);
-  const headers = { Authorization: `Bearer ${(await login.json()).accessToken}` };
+  const headers = await apiSignIn(request, account);
+
   const categories = await (await request.get('/api/forum/categories')).json();
   const tag = `spike-${account.username.slice(-10)}`;
   for (let index = 0; index < 11; index++) {
@@ -142,7 +136,7 @@ test('SPA: query pagination, history and category filters survive navigation and
   await expect(page.locator('main').first()).toBeFocused();
 });
 
-test('SPA: guest and user guards, same-origin refresh cookies and protected reloads', async ({
+test('SPA: guest and user guards, same-origin session cookies and protected reloads', async ({
   page,
   context,
   account,
@@ -156,7 +150,12 @@ test('SPA: guest and user guards, same-origin refresh cookies and protected relo
   const cookies = await context.cookies();
   expect(
     cookies.some(
-      (cookie) => cookie.httpOnly && cookie.sameSite === 'Strict' && cookie.path === '/api/auth'
+      (cookie) =>
+        cookie.name === 'SESSION' &&
+        cookie.httpOnly &&
+        cookie.sameSite === 'Strict' &&
+        cookie.path === '/' &&
+        cookie.expires === -1
     )
   ).toBe(true);
   for (const path of ['/profile', '/settings', '/dashboard']) {

@@ -1,4 +1,5 @@
-import { test, expect, gatewayURL } from '../support/fixtures.js';
+import { test, expect, gatewayURL, apiSignIn } from '../support/fixtures.js';
+import { request as apiRequest } from '@playwright/test';
 
 // PWDRZ-146: recommendations are public and ranked by documented rules; a bearer
 // token personalises them. API-level evidence through the real gateway and backend.
@@ -27,11 +28,7 @@ test('integration: signed-in callers are not recommended their own posts', async
   request,
   account,
 }) => {
-  const login = await request.post(`${gatewayURL}/api/auth/login`, {
-    data: { username: account.username, password: account.password },
-  });
-  expect(login.status()).toBe(200);
-  const headers = { Authorization: `Bearer ${(await login.json()).accessToken}` };
+  const headers = await apiSignIn(request, account);
 
   const categories = await (await request.get(`${gatewayURL}/api/forum/categories`)).json();
   const created = await request.post(`${gatewayURL}/api/forum/posts`, {
@@ -46,9 +43,15 @@ test('integration: signed-in callers are not recommended their own posts', async
   expect(created.status()).toBe(201);
   const post = await created.json();
 
-  const anonymous = await (
-    await request.get(`${gatewayURL}/api/recommendations/posts`, { params: { limit: 100 } })
-  ).json();
+  const guest = await apiRequest.newContext();
+  let anonymous: { id: number; reason: string }[];
+  try {
+    anonymous = await (
+      await guest.get(`${gatewayURL}/api/recommendations/posts`, { params: { limit: 100 } })
+    ).json();
+  } finally {
+    await guest.dispose();
+  }
   expect(anonymous.map((p: { id: number }) => p.id)).toContain(post.id);
   expect(anonymous.every((p: { reason: string }) => p.reason === 'trending')).toBe(true);
 

@@ -59,7 +59,7 @@ are not copied into snapshots or loaded by Compose.
 | API prefix               | Same browser origin, `/api`                                                                              |
 | Backend readiness        | `http://127.0.0.1:8180/api/forum/categories`                                                             |
 | Database                 | Fresh `orbita_e2e` database in a unique Compose project, tmpfs storage, no host DB port                  |
-| DB password / JWT secret | Generated per run; the same Base64 JWT key is supplied to backend and gateway                            |
+| DB password / JWT secret | Generated per run; the Base64 legacy WS key is supplied only to backend                                  |
 | CORS                     | Exact frontend origin                                                                                    |
 | Cookies                  | `COOKIE_SECURE=false` on this HTTP-only local stack; HttpOnly/SameSite/path behavior stays real          |
 | Migrations               | Normal Flyway V1–V7 and Hibernate validate; no create-drop profile                                       |
@@ -87,7 +87,7 @@ prune/down commands. A conflicting leftover service makes the next run fail
 rather than reuse an unverified stack. GitHub hosted runners are ephemeral.
 
 Direct `npx playwright test` is intentionally rejected without the managed-run
-environment. `storageState` from a shared rotating refresh session is not reused.
+environment. `storageState` from another authenticated session is not reused.
 No token is placed in localStorage/sessionStorage or read from `document.cookie`.
 Artifacts contain synthetic account/network data; keep access restricted and
 never use real account credentials. CI artifact retention is seven days.
@@ -95,7 +95,7 @@ never use real account credentials. CI artifact retention is seven days.
 ## Scenario boundaries
 
 1. Browser registration → HTTP 201/profile 200 → authenticated UI.
-2. Browser login → reload with actual refresh → logout 204 → reload remains guest.
+2. Browser login → reload with actual server-session bootstrap → logout 204 → reload remains guest.
 3. Invalid credentials → actual 401 and visible error, no authenticated UI.
 4. Browser post creation → protected gateway POST 201 → persisted post visible
    in the feed after reload; an additional real API read confirms stored content.
@@ -112,9 +112,9 @@ Registration checks that `displayName` goes out in the request and is stored; PW
 marks the interests as unavailable until the backend has a contract: they are shown as such
 and never sent. Post details remain a placeholder,
 so the forum scenario does not fake a completed detail screen. Comments
-(PWDRZ-142/67), notifications/STOMP (PWDRZ-104), full JWT expiry/replay matrices,
+(PWDRZ-142/67), notifications/STOMP (PWDRZ-104), full session expiry/concurrency matrices,
 cross-browser expansion and performance are not part of this initial gate.
-Logout is not claimed to revoke already issued stateless access JWTs.
+Logout rejects subsequent HTTP reuse of the revoked session. See [PWDRZ-99 evidence](../docs/agent-task-backlog/pwdrz-99-execution.md) for unrun lifecycle acceptance.
 
 ## Controlled failure and CI
 
