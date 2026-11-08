@@ -1,6 +1,6 @@
 package com.devpulse.websocket.interceptor;
 
-import com.devpulse.security.JwtUtil;
+import com.devpulse.support.JwtTestTokens;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -50,7 +50,7 @@ class WebSocketAuthInterceptorTest {
             "dGVzdC1zZWNyZXQta2V5LXRoYXQtaXMtbG9uZy1lbm91Z2gtZm9yLWhtYWMtc2hhMjU2";
     private static final String OTHER_SECRET = "another-secret-that-is-at-least-32-bytes-long";
 
-    private final JwtUtil jwtUtil = new JwtUtil(SECRET, 900L);
+    private final JwtTestTokens jwtUtil = new JwtTestTokens(SECRET, 900L);
     private final UserDetails alice = User.withUsername("alice")
             .password("irrelevant")
             .roles("MODERATOR")
@@ -88,7 +88,7 @@ class WebSocketAuthInterceptorTest {
 
     @Test
     void aTokenSignedWithAnotherKeyFailsTheConnect() {
-        String forged = new JwtUtil(OTHER_SECRET, 900L).generateAccessToken(alice);
+        String forged = new JwtTestTokens(OTHER_SECRET, 900L).generateAccessToken(alice);
 
         assertThatThrownBy(() -> interceptor.preSend(connect("Bearer " + forged), channel))
                 .isInstanceOf(JwtException.class);
@@ -102,7 +102,7 @@ class WebSocketAuthInterceptorTest {
 
     @Test
     void anExpiredTokenFailsTheConnect() {
-        String expired = new JwtUtil(SECRET, -60L).generateAccessToken(alice);
+        String expired = new JwtTestTokens(SECRET, -60L).generateAccessToken(alice);
 
         assertThatThrownBy(() -> interceptor.preSend(connect("Bearer " + expired), channel))
                 .isInstanceOf(ExpiredJwtException.class);

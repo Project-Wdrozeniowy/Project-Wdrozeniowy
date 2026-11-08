@@ -1,288 +1,116 @@
 package com.devpulse.auth.service;
 
 import com.devpulse.auth.dto.AuthRequest;
-import com.devpulse.auth.dto.AuthResponse;
 import com.devpulse.auth.dto.RegisterRequest;
-import com.devpulse.auth.entity.RefreshToken;
-import com.devpulse.auth.entity.Role;
 import com.devpulse.auth.entity.User;
-import com.devpulse.auth.repository.RefreshTokenRepository;
+import com.devpulse.auth.entity.UserStatus;
 import com.devpulse.auth.repository.UserRepository;
+import com.devpulse.auth.session.SessionLifecycle;
 import com.devpulse.exception.AppException;
-import com.devpulse.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
+    @Mock UserRepository users;
+    @Mock PasswordEncoder passwords;
+    @Mock AuthenticationManager authenticationManager;
+    @Mock SessionLifecycle sessions;
+    @Mock jakarta.persistence.EntityManager entityManager;
+    @InjectMocks AuthService service;
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    User user;
 
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private RefreshTokenRepository refreshTokenRepository;
-    @Mock
-    private PasswordEncoder passwordEncoder;
-    @Mock
-    private JwtUtil jwtUtil;
-    @Mock
-    private AuthenticationManager authenticationManager;
-    @Mock
-    private UserDetailsService userDetailsService;
-
-    @InjectMocks
-    private AuthService authService;
-
-    @BeforeEach
-    void setUp() {
-        ReflectionTestUtils.setField(authService, "accessExpirySeconds", 900L);
-        ReflectionTestUtils.setField(authService, "refreshExpirySeconds", 604800L);
+    @BeforeEach void setUp() {
+        user = User.builder().id(1L).username("alice").email("alice@example.test").passwordHash("hash").build();
     }
 
-    // ───────────────────────── register ─────────────────────────
-
-    @Test
-    void registerReturnsATokenPair() {
-        RegisterRequest req = new RegisterRequest();
-        req.setUsername("alice");
-        req.setEmail("alice@example.com");
-        req.setPassword("password123");
-
-        when(userRepository.existsByUsername("alice")).thenReturn(false);
-        when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("hashed");
-
-        User savedUser = User.builder()
-                .id(1L)
-                .username("alice")
-                .email("alice@example.com")
-                .passwordHash("hashed")
-                .role(Role.USER)
-                .build();
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-        UserDetails ud = org.springframework.security.core.userdetails.User
-                .withUsername("alice").password("hashed").authorities(Collections.emptyList()).build();
-        when(userDetailsService.loadUserByUsername("alice")).thenReturn(ud);
-        when(jwtUtil.generateAccessToken(ud)).thenReturn("access-token");
-        when(jwtUtil.generateRefreshToken()).thenReturn("refresh-token");
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(null);
-
-        AuthResponse response = authService.register(req);
-
-        assertThat(response.getAccessToken()).isEqualTo("access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
-        assertThat(response.getExpiresIn()).isEqualTo(900L);
-        assertThat(response.getTokenType()).isEqualTo("Bearer");
-        verify(userRepository).save(any(User.class));
-        verify(refreshTokenRepository).save(any(RefreshToken.class));
+    @Test void registrationHashesThePasswordAndEstablishesTheSavedIdentity() {
+        var input = registration();
+        input.setDisplayName("Alice");
+        when(passwords.encode("password123")).thenReturn("hash");
+        when(users.saveAndFlush(any())).thenAnswer(call -> {
+            User saved = call.getArgument(0);
+            assertThat(saved.getPasswordHash()).isEqualTo("hash");
+            assertThat(saved.getDisplayName()).isEqualTo("Alice");
+            return user;
+        });
+        service.register(input, request, response);
+        verify(sessions).establish(user, request, response);
     }
 
-    @Test
-    void registerStoresTheDisplayName() {
-        RegisterRequest req = registerRequest();
-        req.setDisplayName("Alice Liddell");
-
-        assertThat(registeredUser(req).getDisplayName()).isEqualTo("Alice Liddell");
+    @Test void registrationWithoutADisplayNameDoesNotInventOne() {
+        when(users.saveAndFlush(any())).thenAnswer(call -> {
+            User saved = call.getArgument(0);
+            assertThat(saved.getDisplayName()).isNull();
+            return user;
+        });
+        service.register(registration(), request, response);
     }
 
-    @Test
-    void registerWithoutDisplayNameLeavesItEmpty() {
-        assertThat(registeredUser(registerRequest()).getDisplayName()).isNull();
+    @Test void duplicateUsernameDoesNotCreateAnAccountOrSession() {
+        when(users.existsByUsername("alice")).thenReturn(true);
+        assertThatThrownBy(() -> service.register(registration(), request, response)).isInstanceOf(AppException.class);
+        verify(users, never()).saveAndFlush(any());
+        verifyNoInteractions(sessions);
     }
 
-    @Test
-    void registerRejectsATakenUsernameWithConflict() {
-        RegisterRequest req = new RegisterRequest();
-        req.setUsername("alice");
-        req.setEmail("alice@example.com");
-        req.setPassword("password123");
-
-        when(userRepository.existsByUsername("alice")).thenReturn(true);
-
-        assertThatThrownBy(() -> authService.register(req))
-                .isInstanceOf(AppException.class)
-                .hasMessageContaining("Username already taken")
-                .satisfies(e -> assertThat(((AppException) e).getStatus())
-                        .isEqualTo(HttpStatus.CONFLICT));
-
-        verify(userRepository, never()).save(any());
+    @Test void duplicateEmailDoesNotCreateAnAccountOrSession() {
+        when(users.existsByEmail("alice@example.test")).thenReturn(true);
+        assertThatThrownBy(() -> service.register(registration(), request, response)).isInstanceOf(AppException.class);
+        verifyNoInteractions(sessions);
     }
 
-    @Test
-    void registerRejectsATakenEmailWithConflict() {
-        RegisterRequest req = new RegisterRequest();
-        req.setUsername("alice");
-        req.setEmail("alice@example.com");
-        req.setPassword("password123");
-
-        when(userRepository.existsByUsername("alice")).thenReturn(false);
-        when(userRepository.existsByEmail("alice@example.com")).thenReturn(true);
-
-        assertThatThrownBy(() -> authService.register(req))
-                .isInstanceOf(AppException.class)
-                .hasMessageContaining("Email already registered")
-                .satisfies(e -> assertThat(((AppException) e).getStatus())
-                        .isEqualTo(HttpStatus.CONFLICT));
-
-        verify(userRepository, never()).save(any());
+    @Test void loginChecksCredentialsWhileHoldingTheUserLockAndDoesNotRevokeOtherDevices() {
+        when(users.lockByUsername("alice")).thenReturn(Optional.of(user));
+        service.login(login(), request, response);
+        var order = inOrder(users, entityManager, authenticationManager, sessions);
+        order.verify(users).lockByUsername("alice");
+        order.verify(entityManager).refresh(user);
+        order.verify(authenticationManager).authenticate(any());
+        order.verify(sessions).establish(user, request, response);
+        verify(sessions, never()).logout(any(), any());
     }
 
-    // ───────────────────────── login ─────────────────────────
-
-    @Test
-    void loginReturnsTokensAndRevokesTheOldRefreshTokens() {
-        AuthRequest req = new AuthRequest();
-        req.setUsername("alice");
-        req.setPassword("password123");
-
-        when(authenticationManager.authenticate(any())).thenReturn(
-                new UsernamePasswordAuthenticationToken("alice", "password123"));
-
-        User user = User.builder()
-                .id(1L).username("alice").email("alice@example.com")
-                .passwordHash("hashed").role(Role.USER).build();
-        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
-
-        UserDetails ud = org.springframework.security.core.userdetails.User
-                .withUsername("alice").password("hashed").authorities(Collections.emptyList()).build();
-        when(userDetailsService.loadUserByUsername("alice")).thenReturn(ud);
-        when(jwtUtil.generateAccessToken(ud)).thenReturn("access-token");
-        when(jwtUtil.generateRefreshToken()).thenReturn("refresh-token");
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(null);
-
-        AuthResponse response = authService.login(req);
-
-        assertThat(response.getAccessToken()).isEqualTo("access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
-        verify(refreshTokenRepository).revokeAllActiveByUser(eq(user), any(OffsetDateTime.class));
+    @Test void badCredentialsNeverEstablishASession() {
+        when(users.lockByUsername("alice")).thenReturn(Optional.of(user));
+        when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("bad"));
+        assertThatThrownBy(() -> service.login(login(), request, response)).isInstanceOf(BadCredentialsException.class);
+        verifyNoInteractions(sessions);
     }
 
-    @Test
-    void loginPropagatesTheAuthenticationExceptionForBadCredentials() {
-        AuthRequest req = new AuthRequest();
-        req.setUsername("alice");
-        req.setPassword("wrong-password");
-
-        when(authenticationManager.authenticate(any()))
-                .thenThrow(new BadCredentialsException("Bad credentials"));
-
-        assertThatThrownBy(() -> authService.login(req))
-                .isInstanceOf(BadCredentialsException.class);
-
-        verify(userRepository, never()).findByUsername(any());
+    @Test void unknownUserNeverEstablishesASession() {
+        assertThatThrownBy(() -> service.login(login(), request, response)).isInstanceOf(BadCredentialsException.class);
+        verifyNoInteractions(sessions);
     }
 
-    // ───────────────────────── refresh ─────────────────────────
-
-    @Test
-    void refreshRotatesTheAccessAndRefreshTokens() {
-        User user = User.builder()
-                .id(1L).username("alice").passwordHash("hashed").role(Role.USER).build();
-        RefreshToken stored = RefreshToken.builder()
-                .id(10L)
-                .token("valid-refresh")
-                .user(user)
-                .expiresAt(OffsetDateTime.now().plusHours(1))
-                .build();
-
-        when(refreshTokenRepository.findByToken("valid-refresh")).thenReturn(Optional.of(stored));
-        when(refreshTokenRepository.revokeIfActive(eq("valid-refresh"), any())).thenReturn(1);
-
-        UserDetails ud = org.springframework.security.core.userdetails.User
-                .withUsername("alice").password("hashed").authorities(Collections.emptyList()).build();
-        when(userDetailsService.loadUserByUsername("alice")).thenReturn(ud);
-        when(jwtUtil.generateAccessToken(ud)).thenReturn("new-access-token");
-        when(jwtUtil.generateRefreshToken()).thenReturn("rotated-refresh");
-
-        AuthResponse response = authService.refresh("valid-refresh");
-
-        assertThat(response.getAccessToken()).isEqualTo("new-access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("rotated-refresh");
-        assertThat(response.getExpiresIn()).isEqualTo(900L);
-        verify(refreshTokenRepository).linkReplacedBy(eq(10L), any(RefreshToken.class));
+    @Test void disabledAccountCannotEstablishASession() {
+        user.setStatus(UserStatus.DEACTIVATED);
+        when(users.lockByUsername("alice")).thenReturn(Optional.of(user));
+        assertThatThrownBy(() -> service.login(login(), request, response)).isInstanceOf(BadCredentialsException.class);
+        verifyNoInteractions(sessions);
     }
 
-    @Test
-    void refreshRejectsAnUnknownTokenAsUnauthorized() {
-        when(refreshTokenRepository.findByToken("unknown-token")).thenReturn(Optional.empty());
-
-        // The client-facing message is deliberately generic so that an
-        // unauthenticated caller can't tell "never existed" apart from
-        // "expired" or "revoked" — see refreshRejectsAnExpiredTokenAsUnauthorized
-        // and AuthServiceRefreshTest for the other two cases.
-        assertThatThrownBy(() -> authService.refresh("unknown-token"))
-                .isInstanceOf(AppException.class)
-                .hasMessageContaining("Invalid refresh token")
-                .satisfies(e -> assertThat(((AppException) e).getStatus())
-                        .isEqualTo(HttpStatus.UNAUTHORIZED));
+    private AuthRequest login() {
+        var input = new AuthRequest(); input.setUsername("alice"); input.setPassword("password123"); return input;
     }
-
-    @Test
-    void refreshRejectsAnExpiredTokenAsUnauthorized() {
-        User user = User.builder()
-                .id(1L).username("alice").passwordHash("hashed").role(Role.USER).build();
-        RefreshToken expired = RefreshToken.builder()
-                .token("expired-refresh")
-                .user(user)
-                .expiresAt(OffsetDateTime.now().minusHours(1))
-                .build();
-
-        when(refreshTokenRepository.findByToken("expired-refresh")).thenReturn(Optional.of(expired));
-
-        assertThatThrownBy(() -> authService.refresh("expired-refresh"))
-                .isInstanceOf(AppException.class)
-                .hasMessageContaining("Invalid refresh token")
-                .satisfies(e -> assertThat(((AppException) e).getStatus())
-                        .isEqualTo(HttpStatus.UNAUTHORIZED));
-    }
-
-    private static RegisterRequest registerRequest() {
-        RegisterRequest req = new RegisterRequest();
-        req.setUsername("alice");
-        req.setEmail("alice@example.com");
-        req.setPassword("password123");
-        return req;
-    }
-
-    /** Registers {@code req} against stubbed collaborators and returns the user it saved. */
-    private User registeredUser(RegisterRequest req) {
-        when(passwordEncoder.encode(req.getPassword())).thenReturn("hashed");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        UserDetails ud = org.springframework.security.core.userdetails.User
-                .withUsername(req.getUsername()).password("hashed").authorities(Collections.emptyList()).build();
-        when(userDetailsService.loadUserByUsername(req.getUsername())).thenReturn(ud);
-        when(jwtUtil.generateAccessToken(ud)).thenReturn("access-token");
-        when(jwtUtil.generateRefreshToken()).thenReturn("refresh-token");
-
-        authService.register(req);
-
-        ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(saved.capture());
-        return saved.getValue();
+    private RegisterRequest registration() {
+        var input = new RegisterRequest(); input.setUsername("alice"); input.setEmail("alice@example.test");
+        input.setPassword("password123"); return input;
     }
 }

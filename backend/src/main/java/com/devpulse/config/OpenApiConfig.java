@@ -27,13 +27,12 @@ import java.util.List;
  *   <li>API metadata: title, version, description.</li>
  *   <li>The server URL, relative so the document is the same whichever host
  *       serves it: the backend itself or the gateway, both under {@code /api}.</li>
- *   <li>Bearer JWT authentication scheme — allows requests to secured
- *       endpoints directly from Swagger UI.</li>
+ *   <li>Cookie session and CSRF header schemes; bootstrap CSRF before unsafe operations.</li>
  *   <li>Tags and their display order in Swagger UI.</li>
  * </ul>
  *
  * <p>The global {@code SecurityRequirement} is intentionally omitted here.
- * Only endpoints annotated with {@code @SecurityRequirement(name = "bearerAuth")}
+ * Only endpoints annotated with {@code @SecurityRequirement(name = "sessionAuth")}
  * will show the lock icon, keeping public endpoints clearly marked as open.
  *
  * <p>Swagger UI is available at {@code /api/swagger-ui/index.html} when
@@ -44,7 +43,7 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI openAPI() {
-        final String securitySchemeName = "bearerAuth";
+        final String securitySchemeName = "sessionAuth";
 
         return new OpenAPI()
                 .info(new Info()
@@ -56,9 +55,12 @@ public class OpenApiConfig {
                 .tags(new ArrayList<>(tags()))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName, new SecurityScheme()
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
-                                .bearerFormat("JWT")));
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.COOKIE)
+                                .name("SESSION"))
+                        .addSecuritySchemes("csrfToken", new SecurityScheme().type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.HEADER).name("X-CSRF-TOKEN")
+                                .description("Session-backed token from GET /auth/csrf; renew after authentication/logout")));
     }
 
     /**
@@ -69,7 +71,7 @@ public class OpenApiConfig {
      */
     static List<Tag> tags() {
         return List.of(
-                new Tag().name("Auth").description("Registration, login, token management"),
+                new Tag().name("Auth").description("Session authentication and CSRF"),
                 new Tag().name("Users").description("User profile endpoints"),
                 new Tag().name("Forum \u2013 Categories").description("Browse and manage forum categories"),
                 new Tag().name("Forum \u2013 Posts").description("Browse and manage forum posts"),

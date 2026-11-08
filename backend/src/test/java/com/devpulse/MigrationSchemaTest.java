@@ -1,10 +1,8 @@
 package com.devpulse;
 
-import com.devpulse.auth.entity.RefreshToken;
 import com.devpulse.auth.entity.Role;
 import com.devpulse.auth.entity.User;
 import com.devpulse.auth.entity.UserStatus;
-import com.devpulse.auth.repository.RefreshTokenRepository;
 import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.forum.entity.Category;
 import com.devpulse.forum.entity.Comment;
@@ -66,8 +64,6 @@ class MigrationSchemaTest {
     @Autowired
     private TagRepository tagRepository;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     private VoteRepository voteRepository;
@@ -272,21 +268,14 @@ class MigrationSchemaTest {
      * and a value the writer sets itself is kept.
      */
     @Test
-    void updatedAtFollowsUpdatesOutsideTheEntities() {
-        User owner = userRepository.saveAndFlush(user("schema-audit", Role.USER));
-        RefreshToken token = refreshTokenRepository.saveAndFlush(RefreshToken.builder()
-                .user(owner)
-                .token("a".repeat(64))
-                .expiresAt(OffsetDateTime.now().plusDays(1))
-                .build());
-        assertThat(token.getUpdatedAt()).isNotNull();
-        OffsetDateTime past = OffsetDateTime.parse("2026-01-01T00:00:00Z");
-
-        jdbc.update("UPDATE refresh_tokens SET updated_at = ? WHERE id = ?", past, token.getId());
-        assertThat(tokenUpdatedAt(token.getId())).isAtSameInstantAs(past);
-
-        refreshTokenRepository.revokeAllActiveByUser(owner, OffsetDateTime.now());
-        assertThat(tokenUpdatedAt(token.getId())).isAfter(past);
+    void authenticationVersionRoundTripsWithoutChangingCredentials() {
+        User owner = userRepository.saveAndFlush(user("schema-auth-version", Role.USER));
+        String hash = owner.getPasswordHash();
+        jdbc.update("UPDATE users SET auth_version = auth_version + 1 WHERE id = ?", owner.getId());
+        entityManager.clear();
+        User loaded = userRepository.findById(owner.getId()).orElseThrow();
+        assertThat(loaded.getAuthVersion()).isEqualTo(1);
+        assertThat(loaded.getPasswordHash()).isEqualTo(hash);
     }
 
     /** {@code votes.vote_type} is the native {@code vote_type} enum, for votes on posts and on comments. */
@@ -344,9 +333,6 @@ class MigrationSchemaTest {
         assertThat(subscriptionRepository.unsubscribe(owner.getId(), postId)).isOne();
     }
 
-    private OffsetDateTime tokenUpdatedAt(Long id) {
-        return jdbc.queryForObject("SELECT updated_at FROM refresh_tokens WHERE id = ?", OffsetDateTime.class, id);
-    }
 
     private static User user(String username, Role role) {
         return User.builder()

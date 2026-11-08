@@ -1,7 +1,6 @@
 package com.devpulse.user.service;
 
 import com.devpulse.auth.entity.User;
-import com.devpulse.auth.repository.RefreshTokenRepository;
 import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.auth.util.AuthenticatedUserResolver;
 import com.devpulse.exception.AppException;
@@ -34,9 +33,9 @@ public class UserService {
     static final String EMAIL_TAKEN_MESSAGE = "Email is already used by another account";
 
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticatedUserResolver currentUser;
+    private final jakarta.persistence.EntityManager entityManager;
 
     /**
      * Returns the full profile of the currently authenticated user.
@@ -109,7 +108,7 @@ public class UserService {
      * Changes the authenticated user's password.
      *
      * <p>Verifies the current password using BCrypt, hashes the new one and
-     * invalidates every existing refresh token for the user so all sessions
+     * revokes every prior server session for the user so all sessions
      * must re-authenticate.
      *
      * @param request the current and new password
@@ -117,17 +116,19 @@ public class UserService {
      */
     @Transactional
     public void changePassword(ChangePasswordRequest request) {
-        User user = currentUser.currentUser();
+        User user = userRepository.lockById(currentUser.currentUser().getId())
+                .orElseThrow(() -> new AppException("Not authenticated", HttpStatus.UNAUTHORIZED));
+        entityManager.refresh(user);
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
             throw new AppException("Current password is incorrect", HttpStatus.BAD_REQUEST);
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setAuthVersion(user.getAuthVersion() + 1);
         userRepository.save(user);
 
-        // Force re-login on every device, this one included, by revoking all active refresh tokens.
-        refreshTokenRepository.revokeAllActiveByUser(user, OffsetDateTime.now());
+        // Version comparison rejects all prior sessions, even a session saved after this transaction.
     }
 
     private static AppException emailTaken() {

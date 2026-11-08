@@ -43,7 +43,7 @@ public class CategoryController {
     }
 
     /** Creates a category; administrators only. */
-    @Operation(summary = "Create a category", security = @SecurityRequirement(name = "bearerAuth"),
+    @Operation(summary = "Create a category", security = @SecurityRequirement(name = "sessionAuth"),
             description = "Administrators only. The name is unique ignoring case and the slug is unique.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Category created"),
@@ -73,7 +73,7 @@ public class CategoryController {
     }
 
     /** Updates a visible or hidden category; administrators only. */
-    @Operation(summary = "Update a category by slug", security = @SecurityRequirement(name = "bearerAuth"),
+    @Operation(summary = "Update a category by slug", security = @SecurityRequirement(name = "sessionAuth"),
             description = "Administrators only; works on hidden categories too. Omitted fields stay as they are.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Category updated"),
@@ -92,7 +92,7 @@ public class CategoryController {
     }
 
     /** Deletes a visible or hidden category and keeps its posts; administrators only. */
-    @Operation(summary = "Delete a category by slug", security = @SecurityRequirement(name = "bearerAuth"),
+    @Operation(summary = "Delete a category by slug", security = @SecurityRequirement(name = "sessionAuth"),
             description = "Administrators only; works on hidden categories too. The category's posts stay, "
                     + "without a category.")
     @ApiResponses({

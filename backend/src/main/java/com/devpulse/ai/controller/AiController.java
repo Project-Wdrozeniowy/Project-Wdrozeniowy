@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "AI", description = "AI-assisted features: tag suggestions")
 @RestController
 @RequestMapping("/ai")
-@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "sessionAuth")
 @RequiredArgsConstructor
 public class AiController {
 

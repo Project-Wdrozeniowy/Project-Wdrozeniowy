@@ -49,7 +49,7 @@ public class CommentController {
     /** Adds a comment or a reply by the caller. */
     @Operation(summary = "Add a comment to a post",
             description = "With parentId the comment replies to that comment of the same post.",
-            security = @SecurityRequirement(name = "bearerAuth"))
+            security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Comment created"),
         @ApiResponse(responseCode = "400", description = "Validation error"),
@@ -69,7 +69,7 @@ public class CommentController {
 
     /** Replaces the content of a comment. */
     @Operation(summary = "Update a comment", description = "The author or staff.",
-            security = @SecurityRequirement(name = "bearerAuth"))
+            security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Comment updated"),
         @ApiResponse(responseCode = "400", description = "Validation error"),
@@ -87,7 +87,7 @@ public class CommentController {
     /** Soft-deletes a comment. */
     @Operation(summary = "Delete a comment",
             description = "The author or staff. The comment stays in its thread as a placeholder.",
-            security = @SecurityRequirement(name = "bearerAuth"))
+            security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Comment deleted"),
         @ApiResponse(responseCode = "401", description = "Not authenticated"),

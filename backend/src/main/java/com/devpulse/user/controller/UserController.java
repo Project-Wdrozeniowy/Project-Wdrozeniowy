@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.*;
  * REST controller exposing user profile endpoints.
  *
  * <p>All {@code /users/me} routes require an authenticated principal —
- * authorization is enforced by the default JWT filter chain in
+ * authorization is enforced by the session security filter chain in
  * {@link com.devpulse.config.SecurityConfig}. The lookup-by-username
- * route ({@code GET /users/{username}}) is publicly accessible — no JWT required.
+ * route ({@code GET /users/{username}}) is publicly accessible — no authentication required.
  */
 @Tag(name = "Users", description = "User profile endpoints")
 @RestController
@@ -31,13 +31,14 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final com.devpulse.auth.session.SessionLifecycle sessions;
 
     /**
      * Returns the caller's full profile.
      *
      * @return {@link MyProfileDto}; HTTP 200
      */
-    @Operation(summary = "Get own profile", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Get own profile", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Profile returned"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
@@ -53,7 +54,7 @@ public class UserController {
      * @param request validated profile updates
      * @return the updated profile; HTTP 200
      */
-    @Operation(summary = "Update own profile", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update own profile", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Profile updated"),
         @ApiResponse(responseCode = "400", description = "Validation error; `errors` has a message for each rejected field"),
@@ -66,12 +67,12 @@ public class UserController {
     }
 
     /**
-     * Changes the caller's password. On success all active refresh tokens
+     * Changes the caller's password. On success all prior server sessions
      * for the user are invalidated, forcing re-login on every device.
      *
      * @param request current and new password
      */
-    @Operation(summary = "Change own password", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Change own password", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Password changed"),
         @ApiResponse(responseCode = "400", description = "Validation error or wrong current password"),
@@ -79,8 +80,11 @@ public class UserController {
     })
     @PostMapping("/me/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+    public void changePassword(@Valid @RequestBody ChangePasswordRequest request,
+                               jakarta.servlet.http.HttpServletRequest httpRequest,
+                               jakarta.servlet.http.HttpServletResponse response) {
         userService.changePassword(request);
+        sessions.logout(httpRequest, response);
     }
 
     /**

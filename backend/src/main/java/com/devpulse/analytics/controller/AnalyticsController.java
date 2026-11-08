@@ -26,7 +26,7 @@ import java.util.List;
 @Tag(name = "Analytics", description = "Activity and engagement analytics")
 @RestController
 @RequestMapping("/analytics")
-@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "sessionAuth")
 @RequiredArgsConstructor
 public class AnalyticsController {
 
@@ -97,6 +97,7 @@ public class AnalyticsController {
         @ApiResponse(responseCode = "200", description = "Trending posts returned"),
         @ApiResponse(responseCode = "400", description = "Invalid period or limit")
     })
+    @io.swagger.v3.oas.annotations.security.SecurityRequirements
     @GetMapping("/trending-posts")
     public List<PostSummaryDto> getTrendingPosts(
             @Parameter(description = "Time window", example = "24h",

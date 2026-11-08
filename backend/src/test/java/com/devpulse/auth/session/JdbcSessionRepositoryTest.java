@@ -97,11 +97,22 @@ class JdbcSessionRepositoryTest {
     @Test
     void aNewRepositoryCanReadPersistedAttributes() {
         var session = repository.createSession();
-        session.setAttribute("authenticatedAt", Instant.now().minusSeconds(10));
+        var at = Instant.now().minusSeconds(10);
+        var principal = new SessionPrincipal(1L, "alice", 3, at);
+        var context = org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated(
+                principal, null, java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"))));
+        session.setAttribute("SPRING_SECURITY_CONTEXT", context);
+        repository.save(session);
+        session.changeSessionId();
+        session.setAttribute("csrfRenewal", "new-token");
         repository.save(session);
         var restarted = newRepository();
-        assertThat(restarted.findById(session.getId()).<Instant>getAttribute("authenticatedAt"))
-                .isEqualTo(session.<Instant>getAttribute("authenticatedAt"));
+        var restored = restarted.findById(session.getId())
+                .<org.springframework.security.core.context.SecurityContext>getAttribute("SPRING_SECURITY_CONTEXT");
+        assertThat(restored.getAuthentication().getPrincipal()).isEqualTo(principal);
+        assertThat(((SessionPrincipal) restored.getAuthentication().getPrincipal()).authenticatedAt()).isEqualTo(at);
+        assertThat(restored.getAuthentication().getCredentials()).isNull();
         restarted.deleteById(session.getId());
     }
 }

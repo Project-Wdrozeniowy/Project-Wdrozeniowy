@@ -33,7 +33,7 @@ public class AdminController {
      *
      * @return a small JSON payload confirming admin access; HTTP 200
      */
-    @Operation(summary = "Check that the caller has admin access", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Check that the caller has admin access", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Caller is an admin; body is {\"status\": \"ok\", \"scope\": \"admin\"}"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),

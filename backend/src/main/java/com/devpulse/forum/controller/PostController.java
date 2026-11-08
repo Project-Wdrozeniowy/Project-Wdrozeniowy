@@ -101,7 +101,7 @@ public class PostController {
     }
 
     /** Creates a new post, published or as a draft. */
-    @Operation(summary = "Create a new post", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Create a new post", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Post created"),
         @ApiResponse(responseCode = "400", description = "Validation error or unknown category"),
@@ -128,7 +128,7 @@ public class PostController {
     }
 
     /** Updates an existing post (author or staff). Only non-null fields are applied. */
-    @Operation(summary = "Update a post by slug", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update a post by slug", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Post updated"),
         @ApiResponse(responseCode = "400", description = "Validation error or unknown category"),
@@ -144,7 +144,7 @@ public class PostController {
     }
 
     /** Soft-deletes a post (author or staff). */
-    @Operation(summary = "Delete a post by slug", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Delete a post by slug", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Post deleted"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -159,7 +159,7 @@ public class PostController {
     }
 
     /** Pins or unpins a post (moderators and admins). */
-    @Operation(summary = "Toggle pin status of a post", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Toggle pin status of a post", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Pin status toggled"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
