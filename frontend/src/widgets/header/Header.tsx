@@ -16,8 +16,7 @@ export default function Header() {
 
   async function handleSignOut() {
     try {
-      // Revokes the server session and clears its cookie. If this fails the cookie stays
-      // valid and the next page load would sign the user back in, so keep the session.
+      // The coordinator verifies logout, or hides identity and offers reconciliation after an ambiguous failure.
       await signOutSession();
     } catch {
       toast.error('Could not sign out. Please try again.', API_ERROR_TOAST_ID);

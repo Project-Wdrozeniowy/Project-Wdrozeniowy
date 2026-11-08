@@ -190,7 +190,7 @@ npm run test              # jest --coverage
 npm run test:coverage     # same command, alias
 
 # Run a specific test file
-npx jest src/middleware/__tests__/auth.test.ts
+npx jest src/routes/__tests__/httpBoundary.test.ts
 
 # Run tests matching a pattern
 npx jest --testNamePattern "should return 401"
@@ -276,7 +276,7 @@ npm run typecheck     # tsc --noEmit
 
 ### Path alias (frontend only)
 
-`@/*` maps to `frontend/src/*`. Example: `import type { AuthResponse } from '@/shared/api/generated/models/authResponse.dto'`.
+`@/*` maps to `frontend/src/*`. Example: `import type { MyProfileDto } from '@/shared/api/generated/models/myProfileDto.dto'`.
 Defined in `frontend/tsconfig.json`. Always use `@/` for cross-module imports; relative imports only within the same folder.
 
 ---
@@ -299,7 +299,7 @@ frontend/src/
   store/slices/    ← Zustand slices: authSlice, uiSlice
 
 gateway/src/
-  middleware/      ← auth, cors, rateLimiter, logger
+  middleware/      ← boundedBody, cors, rateLimiter, logger
   routes/          ← proxy.ts (proxies /api/* to backend)
   config/          ← env loading with validation
   types/           ← GatewayConfig, Express extensions

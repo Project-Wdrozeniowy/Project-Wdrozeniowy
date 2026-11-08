@@ -2,7 +2,8 @@
 
 Base: `4c8f082807a264d5b3fbe377c1f98a4c99aff540`, verified equal to fetched
 `origin/develop` on 2026-11-08. Branch: `PWDRZ-99-session-http-boundary`.
-Local commits are authorized; no push or Jira mutation is authorized.
+The initial implementation used authorized local commits; branch publication was later explicitly authorized.
+The review pass below does not commit, push, dispatch CI or mutate Jira.
 
 ## Verification boundaries
 
@@ -168,3 +169,111 @@ reserved; PWDRZ-150 profile consolidation and unrelated stubs are unchanged.
 
 Checks above cover this implementation tree. The following documentation commit
 records policy/evidence only. Remote publication and CI have not been requested.
+
+## PR79 review and CI corrections (2026-11-08)
+
+Reviewed the complete task diff against fetched origin/develop `4c8f082`,
+PR head `55305f0`, current Jira Scope/AC/DoD, active instructions and adjacent
+provisional auth/WS code using the review-and-refactor skill. Review changes are
+an uncommitted worktree diff on that head, not a new published CI revision.
+The existing acceptance policy and all coverage thresholds remain unchanged.
+
+### CI evidence read
+
+- [Tests run 42491426493](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/42491426493):
+  frontend coverage never started because codegen used removed token schemas;
+  backend ran 311 tests with one failure and four errors before verify could finish.
+- [E2E run 42491426523](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/42491426523):
+  15/16 browser/HTTP scenarios passed. The failed search-after-reload case received
+  actual search HTTP 200 while a concurrent guest profile 401 changed the client
+  generation and discarded the result. Artifact trace/network/error-context were read;
+  no local E2E run or retry was substituted for that evidence.
+
+### Findings and fixes
+
+☢️ Issue — codegen still depended on the retired token contract
+
+Referencing AuthResponse/expiresIn and bearerAuth stopped the coverage dependency
+before it could test the new implementation.
+Fix: mutate CsrfResponse for drift and use an invalid schema reference for input
+rejection, retaining deterministic generation, missing/extra/changed output and
+non-destructive failure assertions.
+
+☢️ Issue — schema and session test fixtures assumed the old lifecycle
+
+An empty MockMvc cookie array threw before three lifecycle cases executed; the
+historical V7 audit test read refresh_tokens after V9 dropped it, while the schema
+inventory applied domain timestamp rules to standard Spring Session tables.
+Fix: omit empty cookie arguments, check V7 before the latest upgrade, assert latest
+retirement and preservation of user/hash/content/history, and explicitly verify
+all ten audited domain tables plus the two standard session tables. Historical
+migrations and production schema were not edited. These DB cases compile but
+still need real PostgreSQL execution.
+
+☢️ Issue — session probes invalidated legitimate guest queries
+
+Bootstrap/focus could discard a successful public search, and unconditional
+focus generations could cancel ongoing authentication.
+Fix: defer initial page query mounting until the first session probe settles;
+coordinator-owned profile probes handle their own 401; unchanged background
+identity does not change the generation; focus does not supersede an explicit
+pending authentication mutation. Forms stay mounted during later auth transitions.
+Actual Axios/Orval/Query regression cases cover guest search and original profile
+401 preservation after successful login, without replaying the mutation (PWDRZ-155).
+
+☢️ Issue — post-response callbacks could affect a newer identity
+
+A profile save waited for query cancellation before updating store/cache, and an
+older password-change completion could sign out a newer session after the HTTP
+transport had already accepted the response.
+Fix: recheck generation and identity across awaited work, and fence password
+completion/error handling. Regression tests switch accounts inside those callback
+boundaries and assert that the newer identity and cache remain isolated.
+
+☢️ Issue — non-MVC SockJS mappings fell through the unknown-route policy
+
+RequestMappingHandlerMapping does not own SockJS routes, so the MVC 404 fallback
+made the actual guest /ws/info return 200 where the prior default auth boundary
+required authentication.
+Fix: explicitly require authenticated HTTP access to /ws and /ws/\*\*. A real
+SockJS-handler/MockMvc negative control failed before the fix (expected 401,
+observed 200), then the full corrected unit suite passed. The test also verifies
+valid-session info access; it does not claim established connection, CONNECT,
+origin or destination security. Those remain PWDRZ-104.
+
+☢️ Issue — active review guidance still recommended the removed refresh flow
+
+Those instructions could reintroduce legacy authentication during follow-up edits.
+Fix: update the bounded auth examples to SESSION/CSRF and actual remaining files;
+also isolate Gateway config tests from dotenv, following the existing test rule.
+The unticketed stale Header/SessionLoader auth comments were resolved as directly
+related guidance. No unrelated architectural cleanup or new task was added.
+
+### Review verification boundary
+
+New local checks and final results are recorded below. Real PostgreSQL, managed
+E2E, full backend verify/coverage, production HTTPS and new remote CI remain unrun
+under the user's development-time constraint. Reading an earlier CI run is not a
+successful rerun of these fixes. No thresholds, discovery patterns, workflow gates
+or scoped migration files were weakened; no commit/push/Jira mutation was made.
+
+| Review check                                                                          | Observed result                                                                                             |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| All database-free backend suites + OpenApiContractTest, using the selection above     | 159 passed, zero skipped/failed; includes actual SockJS HTTP mapping and the fixed private boundary         |
+| Backend package after that run (`-Dmaven.test.skip=true`)                             | Passed; not a full verify/coverage substitute                                                               |
+| Frontend `test:coverage -- --maxWorkers=1`                                            | 696 passed / 68 files; statements 97.09%, branches 92.44%, functions 95.71%, lines 97.93%; all gates passed |
+| Gateway `test:coverage -- --runInBand --silent`                                       | 83 passed / 8 suites; statements 98.45%, branches 88.39%, functions 95.00%, lines 98.42%; all gates passed  |
+| `npx nx run-many -t api-check,codegen-test --projects=frontend --output-style=static` | Both actual CI prerequisites passed; 75 generated files match; no cache hits                                |
+| Root `npm run check -- --skip-nx-cache --output-style=static`                         | All lint/type/format targets passed uncached                                                                |
+| Frontend/Gateway production builds                                                    | Passed; large-chunk warning retained without a threshold change                                             |
+| Pure Node workspace/environment unit tests                                            | 9 passed; no database/browser stack launched                                                                |
+| `git diff --check`; original Jira payload comparison                                  | Passed; index untouched and only localTracking metadata edited                                              |
+
+The corrected DB-specific cases are compiled by Maven but unrun locally. In
+particular, actual application-level PostgreSQL logout/login and password-change/
+login races remain acceptance evidence to obtain; repository interleaving tests
+alone do not prove those application transactions. Re-run the unchanged backend
+coverage and managed E2E CI gates against the published corrections before merge.
+No green remote run is claimed for this uncommitted review tree. PWDRZ-99 remains
+in progress; PWDRZ-104/161 ownership and the initial real-stack acceptance limits
+are preserved.

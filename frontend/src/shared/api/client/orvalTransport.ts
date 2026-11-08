@@ -4,7 +4,7 @@ import { apiClient } from './api';
 /** Generated operations own the route, method, parameters and payload. */
 export type ApiRequestOptions = Pick<
   AxiosRequestConfig,
-  'signal' | 'headers' | 'timeout' | 'skipErrorToast'
+  'signal' | 'headers' | 'timeout' | 'skipErrorToast' | 'skipUnauthorizedHandler'
 >;
 
 export function orvalTransport<T>(

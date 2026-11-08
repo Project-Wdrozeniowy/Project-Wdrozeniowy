@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import AuthProvider from '@/app/providers/AuthProvider';
 import { useStore } from '@/store';
@@ -32,15 +32,31 @@ it('restores presentation from the existing session profile without refresh', as
   expect(useStore.getState().user?.username).toBe('alice');
 });
 
-it('renders children while session verification is pending', () => {
+it('defers page queries until the initial cookie identity has been verified', () => {
   vi.mocked(currentProfile).mockReturnValue(new Promise(() => {}));
   render(
     <AuthProvider>
       <div>app</div>
     </AuthProvider>
   );
-  expect(screen.getByText('app')).toBeInTheDocument();
+  expect(screen.queryByText('app')).not.toBeInTheDocument();
+  expect(screen.getByRole('status')).toBeVisible();
   expect(useStore.getState().isInitialized).toBe(false);
+});
+
+it('keeps an entered draft mounted during later authentication transitions', async () => {
+  vi.mocked(currentProfile).mockRejectedValue({ isAxiosError: true, response: { status: 401 } });
+  render(
+    <AuthProvider>
+      <input aria-label="Draft" defaultValue="Unsaved input" />
+    </AuthProvider>
+  );
+  const input = await screen.findByRole('textbox', { name: 'Draft' });
+  act(() => {
+    useStore.getState().setSessionStatus('checking');
+  });
+  expect(screen.getByRole('textbox', { name: 'Draft' })).toBe(input);
+  expect(input).toHaveValue('Unsaved input');
 });
 
 it('treats a verified 401 as guest', async () => {

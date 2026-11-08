@@ -19,6 +19,7 @@ import { cn } from '@/shared/lib/cn';
 import { toast } from '@/shared/lib/toast';
 import FormField from '@/shared/ui/FormField';
 import { sessionRevoked } from '@/shared/auth/session';
+import { sessionEvents } from '@/shared/auth/sessionEvents';
 
 const SUBMIT_CLASS =
   'bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
@@ -60,10 +61,12 @@ export default function ChangePasswordForm() {
 
   async function changePassword() {
     if (isPending || !validated) return;
+    const generation = sessionEvents.current();
     setFormError(null);
     try {
       await mutateAsync({ data: toChangePasswordRequest(validated) });
     } catch (error: unknown) {
+      if (generation !== sessionEvents.current()) return;
       const { fields, form } = getPasswordChangeError(error);
       setValidated(null);
       const rejected = PASSWORD_FIELDS.filter((field) => fields[field]);
@@ -72,6 +75,7 @@ export default function ChangePasswordForm() {
       setFormError(form ?? null);
       return;
     }
+    if (generation !== sessionEvents.current()) return;
     // The server has revoked every server session, this device's included, so there is nothing left
     // to log out of there. End the session here; this also clears the cached profile.
     sessionRevoked();

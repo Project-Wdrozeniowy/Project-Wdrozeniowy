@@ -168,7 +168,7 @@ class AuthCookieFlowTest {
         csrf = JsonPath.read(response.getContentAsString(), "$.token");
     }
     private MockHttpServletResponse send(MockHttpServletRequestBuilder request, boolean unsafe) throws Exception {
-        request.cookie(cookies.values().toArray(Cookie[]::new));
+        if (!cookies.isEmpty()) request.cookie(cookies.values().toArray(Cookie[]::new));
         if (unsafe) request.header("X-CSRF-TOKEN", csrf);
         var response = mvc.perform(request).andReturn().getResponse();
         for (String header : response.getHeaders("Set-Cookie")) {

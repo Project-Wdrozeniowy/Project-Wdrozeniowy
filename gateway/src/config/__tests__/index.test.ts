@@ -1,4 +1,5 @@
 import type { GatewayConfig } from '../../types';
+jest.mock('dotenv/config', () => ({}));
 function loadConfig(): GatewayConfig {
   jest.resetModules();
   return jest.requireActual<{ default: GatewayConfig }>('../index').default;

@@ -107,6 +107,9 @@ public class SecurityConfig {
                         .requestMatchers("/users/me/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users/*").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/users/*").permitAll()
+                        // SockJS uses a separate HandlerMapping, not MVC controller mappings.
+                        // Preserve its authenticated HTTP boundary; full WS security remains PWDRZ-104.
+                        .requestMatchers("/ws", "/ws/**").authenticated()
                         // OpenAPI / Swagger UI
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         // Everything else requires session authentication; fine-grained role checks via @PreAuthorize

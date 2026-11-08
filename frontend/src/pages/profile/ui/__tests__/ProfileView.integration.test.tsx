@@ -1,5 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
@@ -8,6 +16,9 @@ import ProfileView from '@/pages/profile/ui/ProfileView';
 import { toast } from '@/shared/lib/toast';
 import { apiClient } from '@/shared/api/client/api';
 import { useStore } from '@/store';
+import { sessionEvents } from '@/shared/auth/sessionEvents';
+import { useUpdateProfile } from '@/shared/api/profile/useUpdateProfile';
+import { myProfileQueryKey } from '@/shared/api/profile/useMyProfile';
 import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 /**
@@ -76,6 +87,41 @@ beforeEach(() => {
 
 afterEach(() => {
   mock.restore();
+});
+
+it('cannot restore the previous account after a profile save waits for cache cancellation', async () => {
+  mock.onPatch('/users/me').reply(200, { ...PROFILE, displayName: 'Saved Alice' });
+  const client = new QueryClient();
+  let finishCancellation!: () => void;
+  const cancellation = vi.spyOn(client, 'cancelQueries').mockImplementation(
+    () =>
+      new Promise<void>((resolve) => {
+        finishCancellation = resolve;
+      })
+  );
+  const { result } = renderHook(() => useUpdateProfile(), {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    ),
+  });
+  let saving!: Promise<MyProfile>;
+  act(() => {
+    saving = result.current.mutateAsync({ data: { displayName: 'Saved Alice' } });
+  });
+  await waitFor(() => expect(finishCancellation).toBeDefined());
+  const bob = { ...PROFILE, id: 2, username: 'bob', email: 'bob@example.com', displayName: 'Bob' };
+  act(() => {
+    sessionEvents.advance();
+    useStore.getState().setAuth(bob);
+    finishCancellation();
+  });
+  await act(async () => {
+    await saving;
+  });
+  expect(useStore.getState().user).toEqual(bob);
+  expect(client.getQueryData(myProfileQueryKey(PROFILE.id))).toBeUndefined();
+  cancellation.mockRestore();
+  client.clear();
 });
 
 describe('loading the profile', () => {

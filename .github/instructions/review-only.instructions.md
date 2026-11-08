@@ -1,6 +1,6 @@
 ---
-applyTo: "**"
-excludeAgent: "cloud-agent"
+applyTo: '**'
+excludeAgent: 'cloud-agent'
 ---
 
 # PR Review Instructions
@@ -12,6 +12,7 @@ For every issue found, use exactly this format:
 ⭐ Suggestion — improvement worth considering
 
 Each comment must include:
+
 - Label + short title on line 1
 - One sentence why it matters
 - A concrete fix or example
@@ -23,8 +24,8 @@ End every review with a ## Summary paragraph and a ## What is good section listi
 ## Auth Token Storage
 
 ☢️ Issue — browser-persistent JWT storage
-New code storing tokens in localStorage or sessionStorage increases XSS exposure. The implemented flow keeps access tokens in memory and refresh tokens in an HttpOnly cookie.
-Fix: Remove the storage call; use the existing token-memory and refresh flow instead.
+New code storing tokens in localStorage or sessionStorage increases XSS exposure. REST authentication uses a host-only HttpOnly SESSION cookie and session-backed CSRF through the shared transport.
+Fix: Remove browser credential storage and Bearer/refresh logic; use the existing session/CSRF transport. Nonsensitive cross-tab change notifications are permitted.
 
 ```ts
 // Flag:
@@ -57,8 +58,8 @@ Fix: Use the typed `forumService` adapter and the documented endpoint contract; 
 
 ```ts
 // Flag:
-axios.get('/api/posts')
-apiClient.post('/api/forum/unknown-feature')
+axios.get('/api/posts');
+apiClient.post('/api/forum/unknown-feature');
 ```
 
 ---
@@ -112,7 +113,7 @@ Fix: Revert the removal; both placeholders must remain in place.
 redis:
   image: redis:7-alpine
 # Flag removal from gateway/package.json:
-"socket.io": "..."
+'socket.io': '...'
 ```
 
 ---
@@ -174,8 +175,8 @@ Fix: Extract shared types to a published package or duplicate the minimal type; 
 
 ```ts
 // Flag:
-import something from '../../backend/...'
-import something from '../frontend/...'
+import something from '../../backend/...';
+import something from '../frontend/...';
 ```
 
 ---
@@ -225,7 +226,9 @@ Fix: Confirm `POST /api/auth/login` and `POST /api/auth/register` pass through t
 ## End-of-Review Template
 
 ## Summary
+
 One paragraph: what the PR changes, which issue categories appeared most, and whether it is safe to merge.
 
 ## What is good
+
 2-4 specific things done well (e.g. test coverage, correct ProblemDetail usage, clean migration structure, proper @/ imports).

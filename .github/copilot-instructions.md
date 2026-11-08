@@ -41,14 +41,14 @@ frontend/src/
   features/          ← user actions, form schemas and request mapping
   widgets/           ← reusable page regions
   shared/api/        ← existing transport, generated Orval bindings and Query composition
-  shared/auth/       ← session infrastructure and in-memory tokens
+  shared/auth/       ← session presentation, generations and tab reconciliation
   shared/ui/         ← reusable UI
   shared/lib/        ← utilities
   shared/constants/  ← static data
   store/slices/      ← shared application-state slices
 
 gateway/src/
-  middleware/        ← auth, cors, rateLimiter, logger
+  middleware/        ← boundedBody, cors, rateLimiter, logger
   routes/            ← proxy.ts and wsProxy.ts
   config/            ← env validation
   types/             ← GatewayConfig, Express extensions
@@ -57,7 +57,7 @@ backend/src/main/java/com/devpulse/
   <domain>/          ← controller, service, repository, entity, dto, filter
   config/            ← SecurityConfig, OpenApiConfig
   exception/         ← AppException, GlobalExceptionHandler
-  security/          ← JwtUtil
+  security/          ← WsTokenVerifier (legacy WS-only compatibility)
 ```
 
 Tests live in `__tests__/` subdirectories next to the module (frontend/gateway) or mirror the source tree (backend).

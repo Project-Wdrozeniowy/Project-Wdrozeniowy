@@ -94,14 +94,47 @@ it('keeps the current page and draft mounted during a focus check of the same se
   );
   const stop = observeSessionChanges();
   try {
+    const generation = sessionEvents.current();
     window.dispatchEvent(new Event('focus'));
     expect(useStore.getState().sessionStatus).toBe('authenticated');
     expect(useStore.getState().user).toEqual(alice);
+    expect(sessionEvents.current()).toBe(generation);
     finish(alice);
     await vi.waitFor(() => expect(useStore.getState().user).toEqual(alice));
   } finally {
     stop();
   }
+});
+
+it('a focus check does not cancel or supersede an explicit login still in flight', async () => {
+  let finish!: () => void;
+  const mutation = vi.fn().mockReturnValue(
+    new Promise<void>((resolve) => {
+      finish = resolve;
+    })
+  );
+  vi.mocked(currentProfile).mockResolvedValue(bob);
+  const pending = authenticateSession(mutation);
+  const generation = sessionEvents.current();
+  await reconcileSession(true);
+  expect(currentProfile).not.toHaveBeenCalled();
+  expect(sessionEvents.current()).toBe(generation);
+  finish();
+  await expect(pending).resolves.toEqual(bob);
+});
+
+it('a focus check invalidates old work when it discovers another account or confirmed expiry', async () => {
+  useStore.getState().setAuth(alice);
+  let generation = sessionEvents.current();
+  vi.mocked(currentProfile).mockResolvedValue(bob);
+  await reconcileSession(true);
+  expect(useStore.getState().user).toEqual(bob);
+  expect(sessionEvents.current()).toBeGreaterThan(generation);
+  generation = sessionEvents.current();
+  vi.mocked(currentProfile).mockRejectedValue({ isAxiosError: true, response: { status: 401 } });
+  await reconcileSession(true);
+  expect(useStore.getState().sessionStatus).toBe('guest');
+  expect(sessionEvents.current()).toBeGreaterThan(generation);
 });
 
 it('reconciles a cross-tab signal without Web Locks or BroadcastChannel', async () => {

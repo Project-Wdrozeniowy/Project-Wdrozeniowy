@@ -6,6 +6,7 @@ import { useStore } from '@/store';
 
 const CHANNEL = 'orbita-session-change';
 let channel: BroadcastChannel | undefined;
+let pendingAuthMutations = 0;
 function publish(type: 'changing' | 'settled') {
   const message = { type, nonce: Math.random() };
   if (typeof BroadcastChannel !== 'undefined') {
@@ -28,14 +29,23 @@ function begin() {
 }
 
 export async function reconcileSession(background = false) {
+  if (background && pendingAuthMutations > 0) return;
   // A focus check must not unmount the current account's form while its session is still valid.
-  const generation = background ? sessionEvents.advance() : begin();
+  const generation = background ? sessionEvents.current() : begin();
   const { controller, release } = sessionEvents.controller();
   try {
-    const user = await currentProfile({ signal: controller.signal, skipErrorToast: true });
-    if (generation === sessionEvents.current()) useStore.getState().setAuth(user);
+    const user = await currentProfile({
+      signal: controller.signal,
+      skipErrorToast: true,
+      skipUnauthorizedHandler: true,
+    });
+    if (generation === sessionEvents.current()) {
+      if (background && useStore.getState().user?.id !== user.id) begin();
+      useStore.getState().setAuth(user);
+    }
   } catch (error) {
     if (generation === sessionEvents.current()) {
+      if (background && useStore.getState().isAuthenticated) begin();
       useStore.getState().setSessionStatus(apiErrorStatus(error) === 401 ? 'guest' : 'error');
     }
   } finally {
@@ -48,11 +58,16 @@ export async function authenticateSession(mutation: (signal: AbortSignal) => Pro
   const generation = begin();
   publish('changing');
   const { controller, release } = sessionEvents.controller();
+  pendingAuthMutations += 1;
   try {
     await mutation(controller.signal);
     apiClient.clearCsrf();
     await apiClient.csrfToken();
-    const user = await currentProfile({ signal: controller.signal, skipErrorToast: true });
+    const user = await currentProfile({
+      signal: controller.signal,
+      skipErrorToast: true,
+      skipUnauthorizedHandler: true,
+    });
     if (generation !== sessionEvents.current()) return undefined;
     useStore.getState().setAuth(user);
     return user;
@@ -61,6 +76,7 @@ export async function authenticateSession(mutation: (signal: AbortSignal) => Pro
     useStore.getState().setSessionStatus('error');
     throw error;
   } finally {
+    pendingAuthMutations -= 1;
     release();
     publish('settled');
   }
@@ -69,6 +85,7 @@ export async function authenticateSession(mutation: (signal: AbortSignal) => Pro
 export async function signOutSession() {
   const generation = begin();
   publish('changing');
+  pendingAuthMutations += 1;
   try {
     await logout();
     if (generation === sessionEvents.current()) {
@@ -79,6 +96,7 @@ export async function signOutSession() {
     if (generation === sessionEvents.current()) useStore.getState().setSessionStatus('error');
     throw error;
   } finally {
+    pendingAuthMutations -= 1;
     publish('settled');
   }
 }

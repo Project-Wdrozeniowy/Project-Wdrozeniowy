@@ -1,5 +1,5 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
@@ -8,6 +8,7 @@ import SettingsView from '@/pages/settings/ui/SettingsView';
 import { toast } from '@/shared/lib/toast';
 import { apiClient } from '@/shared/api/client/api';
 import { useStore } from '@/store';
+import { sessionEvents } from '@/shared/auth/sessionEvents';
 import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 /**
@@ -48,8 +49,7 @@ const PROFILE: MyProfile = {
 const axiosInstance = (apiClient as unknown as { client: AxiosInstance }).client;
 let mock: MockAdapter;
 
-function renderView() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderView(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   return render(
     <QueryClientProvider client={client}>
       <SettingsView />
@@ -141,6 +141,41 @@ describe('account settings', () => {
 });
 
 describe('password change', () => {
+  it('does not sign out a newer identity when an older password change finishes its callbacks', async () => {
+    const bob = {
+      ...PROFILE,
+      id: 2,
+      username: 'bob',
+      email: 'bob@example.com',
+      displayName: 'Bob',
+    };
+    const completed = vi.fn(() => {
+      sessionEvents.advance();
+      useStore.getState().setAuth(bob);
+    });
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+      mutationCache: new MutationCache({ onSuccess: completed }),
+    });
+    mock
+      .onGet('/users/me')
+      .reply(() => [200, useStore.getState().user?.id === bob.id ? bob : PROFILE]);
+    mock.onPost('/users/me/password').reply(204);
+    renderView(client);
+    await screen.findByRole('form', { name: 'Change password' });
+    const user = await fillPasswords();
+    await user.click(screen.getByRole('button', { name: 'Change password' }));
+    await user.click(await screen.findByRole('button', { name: 'Change password and sign out' }));
+    await waitFor(() => expect(completed).toHaveBeenCalledOnce());
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(useStore.getState().user).toEqual(bob);
+    expect(useStore.getState().isAuthenticated).toBe(true);
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+    client.clear();
+  });
   it('asks for confirmation first and sends nothing until it is given', async () => {
     mock.onGet('/users/me').reply(200, PROFILE);
     renderView();

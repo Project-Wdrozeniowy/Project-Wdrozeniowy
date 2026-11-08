@@ -8,6 +8,8 @@ declare module 'axios' {
   export interface AxiosRequestConfig {
     skipErrorToast?: boolean;
     sessionGeneration?: number;
+    /** Session probes own their 401 outcome, including ordinary guest bootstrap. */
+    skipUnauthorizedHandler?: boolean;
   }
 }
 
@@ -58,7 +60,12 @@ class ApiClient {
           return Promise.reject(new axios.CanceledError('Session changed'));
         }
         const status = error.response?.status;
-        if (status === 401 && !config?.url?.startsWith('/auth/')) this.onUnauthorized?.();
+        if (
+          status === 401 &&
+          !config?.skipUnauthorizedHandler &&
+          !config?.url?.startsWith('/auth/')
+        )
+          this.onUnauthorized?.();
         if (status === 403) this.csrf = null; // next user action can bootstrap; this mutation is never replayed
         if (!config?.skipErrorToast && (status === undefined || status >= 500)) {
           toast.error(apiErrorMessage(error, FALLBACK_ERROR_MESSAGE), API_ERROR_TOAST_ID);

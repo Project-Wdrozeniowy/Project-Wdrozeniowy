@@ -85,6 +85,17 @@ class HttpSessionSecurityTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test void sockJsTransportDoesNotBecomePublicThroughTheUnknownMvcRoutePolicy() throws Exception {
+        mvc.perform(get("/ws/info")).andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"));
+        mvc.perform(post("/ws/000/synthetic/xhr").with(csrf())).andExpect(status().isUnauthorized());
+        when(users.findById(1L)).thenReturn(Optional.of(User.builder().id(1L).username("alice").build()));
+        // The actual SockJS info handler remains reachable for an authenticated HTTP session.
+        // Established connection, CONNECT and destination security remain PWDRZ-104.
+        mvc.perform(get("/ws/info").session(authenticated())).andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"));
+    }
+
     @Test void spaCanUseTheActualJsonCsrfTokenWithTheSameSession() throws Exception {
         var bootstrap = mvc.perform(get("/auth/csrf")).andExpect(status().isOk())
                 .andExpect(header().string("Cache-Control", "no-store")).andReturn();
@@ -122,13 +133,16 @@ class HttpSessionSecurityTest {
 
     @TestConfiguration
     @EnableWebMvc
-    @Import({SecurityConfig.class, AuthController.class, UserController.class,
+    @Import({SecurityConfig.class, WebSocketConfig.class, AuthController.class, UserController.class,
             AdminController.class, GlobalExceptionHandler.class})
     static class SecurityTestConfiguration {
         @Bean UserRepository users() { return mock(UserRepository.class); }
         @Bean AuthService auth() { return mock(AuthService.class); }
         @Bean SessionLifecycle sessions() { return mock(SessionLifecycle.class); }
         @Bean UserService userService() { return mock(UserService.class); }
+        @Bean com.devpulse.websocket.interceptor.WebSocketAuthInterceptor wsAuthentication() {
+            return mock(com.devpulse.websocket.interceptor.WebSocketAuthInterceptor.class);
+        }
         @Bean Clock clock() { return Clock.fixed(NOW, ZoneOffset.UTC); }
         @Bean UserDetailsService userDetails() { return username -> org.springframework.security.core.userdetails.User
                 .withUsername(username).password("unused").roles("USER").build(); }

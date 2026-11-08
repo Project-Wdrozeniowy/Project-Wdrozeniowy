@@ -36,6 +36,10 @@ before verifying credentials.
 
 1. Read `GET /api/users/me` to restore presentation from an existing session.
    A 401 means guest/expired; network/5xx failures are recoverable unknown state.
+   Initial page queries mount after this attempt settles, so an unknown cookie
+   identity cannot populate a public cache before bootstrap. Later authentication
+   transitions keep forms mounted. A focus check of an unchanged identity does
+   not invalidate successful in-flight guest reads or supersede explicit login.
 2. Before an unsafe operation, read `GET /api/auth/csrf`. It creates/reuses an
    anonymous session if needed and returns `{token, headerName}` with no-store.
 3. Send the returned token in its named header, with cookies. This also applies
@@ -125,6 +129,8 @@ path, default `/api/auth`). Existing users sign in again. Gateway no longer need
 
 PWDRZ-104 owns session-principal handshake integration, origin/CONNECT CSRF,
 destination/recipient checks and expiry/logout for established connections.
+The HTTP `/ws` and `/ws/**` boundary explicitly requires authentication: SockJS
+uses a separate HandlerMapping and must not fall through the MVC unknown-path rule.
 `WsTokenVerifier` is isolated legacy compatibility, with no REST issuer or SPA
 token consumer. Existing provisional WS behavior is not a completed secure WS
 flow, and this change does not claim PWDRZ-104 unblocked.

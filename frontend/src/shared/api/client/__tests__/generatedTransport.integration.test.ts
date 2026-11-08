@@ -27,6 +27,140 @@ beforeEach(async () => {
 });
 afterEach(() => mock.restore());
 
+it('preserves a profile 401 after successful login instead of treating it as a superseded mutation', async () => {
+  const { authenticateSession, observeSessionChanges } = await import('@/shared/auth/session');
+  const { useStore } = await import('@/store');
+  vi.stubGlobal('BroadcastChannel', undefined);
+  useStore.getState().logout();
+  mock.onPost('/auth/login').reply(204);
+  mock.onGet('/users/me').reply(401, { detail: 'Authentication failed' });
+  const stop = observeSessionChanges();
+  try {
+    await expect(
+      authenticateSession((signal) =>
+        operations.login({ username: 'alice', password: 'password123' }, { signal })
+      )
+    ).rejects.toMatchObject({ response: { status: 401 } });
+    expect(mock.history.post.filter((request) => request.url === '/auth/login')).toHaveLength(1);
+    expect(useStore.getState().sessionStatus).toBe('error');
+    expect(useStore.getState().user).toBeNull();
+  } finally {
+    stop();
+    vi.unstubAllGlobals();
+  }
+});
+
+it('starts generated search queries only after initial guest bootstrap and caches the successful response', async () => {
+  const { createElement, useEffect } = await import('react');
+  const { render, waitFor, cleanup } = await import('@testing-library/react/pure');
+  const { default: AuthProvider } = await import('@/app/providers/AuthProvider');
+  const { useStore } = await import('@/store');
+  vi.stubGlobal('BroadcastChannel', undefined);
+  useStore.getState().logout();
+  let finishProfile!: (response: [number, object]) => void;
+  mock.onGet('/users/me').reply(
+    () =>
+      new Promise((resolve) => {
+        finishProfile = resolve;
+      })
+  );
+  const results = {
+    query: 'alice',
+    posts: null,
+    tags: null,
+    users: {
+      content: [],
+      page: 0,
+      size: 10,
+      totalElements: 0,
+      totalPages: 0,
+      first: true,
+      last: true,
+    },
+  };
+  mock.onGet('/search').reply(200, results);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const options = operations.getSearchQueryOptions({ q: 'alice', type: 'USER' });
+  function SearchConsumer() {
+    useEffect(() => {
+      void client.fetchQuery(options);
+    }, []);
+    return null;
+  }
+  try {
+    render(createElement(AuthProvider, null, createElement(SearchConsumer)));
+    await waitFor(() => expect(finishProfile).toBeDefined());
+    expect(mock.history.get.filter((request) => request.url === '/search')).toHaveLength(0);
+    finishProfile([401, {}]);
+    await waitFor(() => expect(client.getQueryData(options.queryKey)).toEqual(results));
+    expect(mock.history.get.filter((request) => request.url === '/search')).toHaveLength(1);
+    expect(useStore.getState().sessionStatus).toBe('guest');
+  } finally {
+    cleanup();
+    client.clear();
+    vi.unstubAllGlobals();
+  }
+});
+
+it('keeps a public search result usable when a concurrent focus probe confirms the guest session', async () => {
+  const { reconcileSession, observeSessionChanges } = await import('@/shared/auth/session');
+  const { useStore } = await import('@/store');
+  const { sessionEvents } = await import('@/shared/auth/sessionEvents');
+  vi.stubGlobal('BroadcastChannel', undefined);
+  useStore.getState().logout();
+  let finishProfile!: (response: [number, object]) => void;
+  let finishSearch!: (response: [number, object]) => void;
+  mock.onGet('/users/me').reply(
+    () =>
+      new Promise((resolve) => {
+        finishProfile = resolve;
+      })
+  );
+  mock.onGet('/search').reply(
+    () =>
+      new Promise((resolve) => {
+        finishSearch = resolve;
+      })
+  );
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const stop = observeSessionChanges();
+  try {
+    const bootstrap = reconcileSession(true);
+    const generation = sessionEvents.current();
+    const options = operations.getSearchQueryOptions({ q: 'alice', type: 'USER' });
+    const searching = client.fetchQuery(options);
+    await vi.waitFor(() => expect(finishSearch).toBeDefined());
+    finishProfile([401, {}]);
+    await bootstrap;
+    expect(useStore.getState().sessionStatus).toBe('guest');
+    expect(sessionEvents.current()).toBe(generation);
+    const results = {
+      query: 'alice',
+      posts: null,
+      tags: null,
+      users: {
+        content: [
+          { id: 1, username: 'alice', displayName: null, avatarUrl: null, role: 'USER' as const },
+        ],
+        page: 0,
+        size: 10,
+        totalElements: 1,
+        totalPages: 1,
+        first: true,
+        last: true,
+      },
+    };
+    finishSearch([200, results]);
+    await expect(searching).resolves.toEqual(results);
+    expect(client.getQueryData(options.queryKey)).toEqual(results);
+    expect(mock.history.get.filter((request) => request.url === '/search')).toHaveLength(1);
+  } finally {
+    stop();
+    client.clear();
+    vi.unstubAllGlobals();
+  }
+});
+
 it('uses the published notification bindings with session cookies, pagination, nullable fields and empty 204', async () => {
   const notification = {
     id: 9,
