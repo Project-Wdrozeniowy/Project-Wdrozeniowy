@@ -17,17 +17,18 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const navigate = useNavigate();
   const isInitialized = useStore((s) => s.isInitialized);
   const user = useStore((s) => s.user);
+  const status = useStore((s) => s.sessionStatus);
 
   const hasAccess = user !== null && allowedRoles.includes(user.role);
 
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || status === 'error') return;
     if (user === null) {
       navigate('/login', { replace: true });
     } else if (!hasAccess) {
       navigate('/', { replace: true });
     }
-  }, [isInitialized, user, hasAccess, navigate]);
+  }, [isInitialized, user, hasAccess, status, navigate]);
 
   if (!isInitialized) return <SessionLoader />;
   if (!hasAccess) return null;

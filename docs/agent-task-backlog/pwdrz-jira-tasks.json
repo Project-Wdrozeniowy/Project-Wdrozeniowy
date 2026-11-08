@@ -17395,10 +17395,10 @@
       },
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-99",
       "localTracking": {
-        "status": "done",
-        "updatedAt": "2026-10-16T09:10:13.360Z",
-        "owner": "Codex",
-        "notes": "Removed unused cookie page guard under the user-approved current API-only architecture; references and gateway checks verified. Uncommitted working copy; Jira status unchanged."
+        "status": "in_progress",
+        "updatedAt": "2026-11-08T15:25:43.710Z",
+        "owner": "Codex / PWDRZ-99",
+        "notes": "PR79 review against origin/develop and current Jira: corrected stale codegen/session/schema fixtures identified by CI; guest bootstrap/search and post-response account-isolation races; explicit private SockJS HTTP boundary verified with a negative control; active auth guidance updated. Local checks recorded in pwdrz-99-execution.md. PostgreSQL/full verify/E2E/HTTPS and new remote CI remain pending under the user's development-time constraint. Review changes are uncommitted; no push/Jira mutation or CI dispatch."
       }
     },
     {

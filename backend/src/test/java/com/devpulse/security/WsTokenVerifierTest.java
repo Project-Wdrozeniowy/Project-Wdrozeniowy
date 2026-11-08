@@ -1,4 +1,5 @@
 package com.devpulse.security;
+import com.devpulse.support.JwtTestTokens;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,7 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.*;
 
-class JwtUtilTest {
+class WsTokenVerifierTest {
 
     // Base64 of "test-secret-key-that-is-long-enough-for-hs256-algorithm" (54 bytes)
     private static final String BASE64_SECRET =
@@ -21,12 +22,12 @@ class JwtUtilTest {
     // Plain text 32-byte secret
     private static final String PLAIN_SECRET = "plain-secret-32-bytes-padding-ab";
 
-    private JwtUtil jwtUtil;
+    private JwtTestTokens jwtUtil;
     private UserDetails userDetails;
 
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil(BASE64_SECRET, 900L);
+        jwtUtil = new JwtTestTokens(BASE64_SECRET, 900L);
         userDetails = User.withUsername("testuser")
                 .password("irrelevant")
                 .authorities(Collections.emptyList())
@@ -35,17 +36,17 @@ class JwtUtilTest {
 
     @Test
     void constructorAcceptsBase64Secret() {
-        assertThatNoException().isThrownBy(() -> new JwtUtil(BASE64_SECRET, 900L));
+        assertThatNoException().isThrownBy(() -> new JwtTestTokens(BASE64_SECRET, 900L));
     }
 
     @Test
     void constructorAcceptsPlainTextSecret() {
-        assertThatNoException().isThrownBy(() -> new JwtUtil(PLAIN_SECRET, 900L));
+        assertThatNoException().isThrownBy(() -> new JwtTestTokens(PLAIN_SECRET, 900L));
     }
 
     @Test
     void constructorRejectsTooShortSecret() {
-        assertThatThrownBy(() -> new JwtUtil("tooshort", 900L))
+        assertThatThrownBy(() -> new JwtTestTokens("tooshort", 900L))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("32 bytes");
     }
@@ -68,7 +69,7 @@ class JwtUtilTest {
         // The gateway only accepts HS256; jjwt would choose HS512 for a 64-byte key on its own.
         byte[] secret = new byte[64];
         new SecureRandom().nextBytes(secret);
-        String token = new JwtUtil(Base64.getEncoder().encodeToString(secret), 900L)
+        String token = new JwtTestTokens(Base64.getEncoder().encodeToString(secret), 900L)
                 .generateAccessToken(userDetails);
 
         String header = new String(Base64.getUrlDecoder().decode(token.split("\\.")[0]), StandardCharsets.UTF_8);
@@ -76,21 +77,7 @@ class JwtUtilTest {
         assertThat(header).contains("\"alg\":\"HS256\"");
     }
 
-    @Test
-    void generateRefreshTokenIs64HexChars() {
-        String refreshToken = jwtUtil.generateRefreshToken();
-        assertThat(refreshToken)
-                .isNotBlank()
-                .hasSize(64)
-                .matches("[0-9a-f]{64}");
-    }
 
-    @Test
-    void generateRefreshTokenIsUnique() {
-        String token1 = jwtUtil.generateRefreshToken();
-        String token2 = jwtUtil.generateRefreshToken();
-        assertThat(token1).isNotEqualTo(token2);
-    }
 
     @Test
     void isTokenValidReturnsTrueForValidToken() {
@@ -110,7 +97,7 @@ class JwtUtilTest {
 
     @Test
     void isTokenValidReturnsFalseForExpiredToken() {
-        JwtUtil shortLivedUtil = new JwtUtil(BASE64_SECRET, -1L);
+        JwtTestTokens shortLivedUtil = new JwtTestTokens(BASE64_SECRET, -1L);
         String expiredToken = shortLivedUtil.generateAccessToken(userDetails);
         assertThat(jwtUtil.isTokenValid(expiredToken, userDetails)).isFalse();
     }

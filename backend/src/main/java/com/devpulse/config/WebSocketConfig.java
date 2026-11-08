@@ -32,8 +32,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  *   /app/unsubscribe-post/{postId}   — stop receiving updates for a post thread
  * </pre>
  *
- * <p>Authentication: clients must send the JWT access token in the STOMP
- * {@code CONNECT} frame header ({@code Authorization: Bearer <token>}).
+ * <p>Provisional compatibility only (PWDRZ-104): the retained verifier accepts a legacy JWT in the STOMP
+ * {@code CONNECT} frame header ({@code Authorization: Bearer <token>}). REST no longer issues tokens.
+ * PWDRZ-104 owns the HTTP-session principal handshake and established connection revocation.
  * The token is validated by {@link com.devpulse.websocket.interceptor.WebSocketAuthInterceptor}.
  */
 @Configuration

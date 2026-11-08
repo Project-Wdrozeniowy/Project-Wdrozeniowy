@@ -1,135 +1,198 @@
-import type { AxiosRequestConfig } from 'axios';
-import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
-import AuthProvider from '@/app/providers/AuthProvider';
-import { SIGN_IN_FAILED_MESSAGE } from '@/features/sign-in/login.const';
-import { useSignIn } from '@/features/sign-in/useSignIn';
-import { REGISTER_ERROR_MESSAGE } from '@/features/sign-up/register.const';
-import { useSignUp } from '@/features/sign-up/useSignUp';
-import { tokenMemory } from '@/shared/auth/tokenMemory';
+import {
+  authenticateSession,
+  reconcileSession,
+  sessionRevoked,
+  signOutSession,
+  observeSessionChanges,
+} from '@/shared/auth/session';
+import { sessionEvents } from '@/shared/auth/sessionEvents';
 import { useStore } from '@/store';
+import { currentProfile, logout } from '@/shared/api/generated/orbita.api';
 
-/**
- * The real `authService.loadProfile` behind the three places that call it (session restore,
- * sign-in, sign-up). Only the transport is faked, so these show that a failed profile load leaves
- * no token behind and is never reported as a success (PWDRZ-155).
- */
-
-const mocks = vi.hoisted(() => ({
-  get: vi.fn(),
-  post: vi.fn(),
-  refreshAccessToken: vi.fn(),
-  push: vi.fn(),
-  success: vi.fn(),
-}));
-
+vi.mock('@/shared/api/generated/orbita.api', () => ({ currentProfile: vi.fn(), logout: vi.fn() }));
 vi.mock('@/shared/api/client/api', () => ({
   apiClient: {
-    request: (config: AxiosRequestConfig) =>
-      config.method === 'GET' ? mocks.get() : mocks.post(config.data),
-    get: mocks.get,
-    post: mocks.post,
-    refreshAccessToken: mocks.refreshAccessToken,
+    clearCsrf: vi.fn(),
+    csrfToken: vi.fn().mockResolvedValue({}),
+    setUnauthorizedHandler: vi.fn(),
   },
 }));
-vi.mock('react-router', async () =>
-  (await import('@/test/routerMock')).routerMock({ useNavigate: () => mocks.push })
-);
-vi.mock('@/shared/lib/toast', () => ({ toast: { success: mocks.success } }));
 
-const profile = { id: 1, username: 'alice', displayName: null };
-const signInForm = { username: 'alice', password: 'Password123' };
-const signUpForm = {
-  username: 'alice',
-  email: 'alice@example.com',
-  password: 'Password123',
-  confirmPassword: 'Password123',
-  displayName: '',
-  terms: true as const,
-};
-
+const alice = { id: 1, username: 'alice' } as Awaited<ReturnType<typeof currentProfile>>;
+const bob = { ...alice, id: 2, username: 'bob' };
 beforeEach(() => {
-  vi.resetAllMocks();
-  tokenMemory.set(null);
-  useStore.setState({ user: null, isAuthenticated: false, isInitialized: false });
+  vi.stubGlobal('BroadcastChannel', undefined);
+  vi.clearAllMocks();
+  sessionEvents.advance();
+  useStore.getState().logout();
+  vi.mocked(logout).mockResolvedValue(undefined);
 });
 
-describe('restoring the session on load', () => {
-  function renderProvider() {
-    return render(
-      <AuthProvider>
-        <div>app</div>
-      </AuthProvider>
-    );
+it('does not publish a pending bootstrap after logout', async () => {
+  let finish!: (user: typeof alice) => void;
+  vi.mocked(currentProfile).mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    })
+  );
+  const pending = reconcileSession();
+  sessionRevoked();
+  finish(alice);
+  await pending;
+  expect(useStore.getState().sessionStatus).toBe('guest');
+  expect(useStore.getState().user).toBeNull();
+});
+
+it('a superseded login cannot publish its profile or navigate as the old account', async () => {
+  let finish!: (user: typeof alice) => void;
+  vi.mocked(currentProfile)
+    .mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    )
+    .mockResolvedValueOnce(bob);
+  const first = authenticateSession(vi.fn().mockResolvedValue(undefined));
+  await vi.waitFor(() => expect(finish).toBeDefined());
+  await authenticateSession(vi.fn().mockResolvedValue(undefined));
+  finish(alice);
+  expect(await first).toBeUndefined();
+  expect(useStore.getState().user?.username).toBe('bob');
+});
+
+it('profile failure after successful authentication preserves the original error and never repeats the mutation', async () => {
+  const failure = new Error('upstream unavailable');
+  const mutation = vi.fn().mockResolvedValue(undefined);
+  vi.mocked(currentProfile).mockRejectedValue(failure);
+  await expect(authenticateSession(mutation)).rejects.toBe(failure);
+  expect(mutation).toHaveBeenCalledTimes(1);
+  expect(useStore.getState().sessionStatus).toBe('error');
+});
+
+it('does not claim logout succeeded after an ambiguous network result', async () => {
+  useStore.getState().setAuth(alice);
+  vi.mocked(logout).mockRejectedValue(new Error('network'));
+  await expect(signOutSession()).rejects.toThrow('network');
+  expect(useStore.getState().sessionStatus).toBe('error');
+  expect(useStore.getState().user).toBeNull();
+});
+
+it('successful logout clears the local identity only after the server response', async () => {
+  vi.mocked(logout).mockResolvedValue(undefined);
+  await signOutSession();
+  expect(useStore.getState().sessionStatus).toBe('guest');
+});
+
+it('keeps the current page and draft mounted during a focus check of the same session', async () => {
+  useStore.getState().setAuth(alice);
+  let finish!: (user: typeof alice) => void;
+  vi.mocked(currentProfile).mockReturnValue(
+    new Promise((resolve) => {
+      finish = resolve;
+    })
+  );
+  const stop = observeSessionChanges();
+  try {
+    const generation = sessionEvents.current();
+    window.dispatchEvent(new Event('focus'));
+    expect(useStore.getState().sessionStatus).toBe('authenticated');
+    expect(useStore.getState().user).toEqual(alice);
+    expect(sessionEvents.current()).toBe(generation);
+    finish(alice);
+    await vi.waitFor(() => expect(useStore.getState().user).toEqual(alice));
+  } finally {
+    stop();
   }
-
-  it('keeps the token and signs in when the profile loads', async () => {
-    mocks.refreshAccessToken.mockImplementation(async () => {
-      tokenMemory.set('restored-token');
-      return 'restored-token';
-    });
-    mocks.get.mockResolvedValue(profile);
-    renderProvider();
-
-    await waitFor(() => expect(useStore.getState().isAuthenticated).toBe(true));
-    expect(tokenMemory.get()).toBe('restored-token');
-  });
-
-  it('stays a guest and sends no token afterwards when the profile cannot be loaded', async () => {
-    mocks.refreshAccessToken.mockImplementation(async () => {
-      tokenMemory.set('restored-token');
-      return 'restored-token';
-    });
-    mocks.get.mockRejectedValue(new Error('500'));
-    renderProvider();
-
-    await waitFor(() => expect(useStore.getState().isInitialized).toBe(true));
-    expect(screen.getByText('app')).toBeInTheDocument();
-    expect(useStore.getState().isAuthenticated).toBe(false);
-    expect(tokenMemory.get()).toBeNull();
-  });
 });
 
-describe('signing in', () => {
-  it('leaves no token and no success when the profile cannot be loaded', async () => {
-    mocks.post.mockResolvedValue({ accessToken: 'issued-token' });
-    mocks.get.mockRejectedValue(new Error('500'));
-    const { result } = renderHook(() => useSignIn());
-
-    await act(() => result.current.signIn(signInForm));
-
-    expect(tokenMemory.get()).toBeNull();
-    expect(useStore.getState().isAuthenticated).toBe(false);
-    expect(result.current.serverError).toBe(SIGN_IN_FAILED_MESSAGE);
-    expect(mocks.success).not.toHaveBeenCalled();
-    expect(mocks.push).not.toHaveBeenCalled();
-  });
-
-  it('keeps the issued token and signs in when the profile loads', async () => {
-    mocks.post.mockResolvedValue({ accessToken: 'issued-token' });
-    mocks.get.mockResolvedValue(profile);
-    const { result } = renderHook(() => useSignIn());
-
-    await act(() => result.current.signIn(signInForm));
-
-    expect(tokenMemory.get()).toBe('issued-token');
-    expect(useStore.getState().isAuthenticated).toBe(true);
-    expect(mocks.push).toHaveBeenCalledWith('/');
-  });
+it('a focus check does not cancel or supersede an explicit login still in flight', async () => {
+  let finish!: () => void;
+  const mutation = vi.fn().mockReturnValue(
+    new Promise<void>((resolve) => {
+      finish = resolve;
+    })
+  );
+  vi.mocked(currentProfile).mockResolvedValue(bob);
+  const pending = authenticateSession(mutation);
+  const generation = sessionEvents.current();
+  await reconcileSession(true);
+  expect(currentProfile).not.toHaveBeenCalled();
+  expect(sessionEvents.current()).toBe(generation);
+  finish();
+  await expect(pending).resolves.toEqual(bob);
 });
 
-describe('signing up', () => {
-  it('leaves no token and no success when the profile cannot be loaded', async () => {
-    mocks.post.mockResolvedValue({ accessToken: 'issued-token' });
-    mocks.get.mockRejectedValue(new Error('500'));
-    const { result } = renderHook(() => useSignUp(vi.fn()));
+it('a focus check invalidates old work when it discovers another account or confirmed expiry', async () => {
+  useStore.getState().setAuth(alice);
+  let generation = sessionEvents.current();
+  vi.mocked(currentProfile).mockResolvedValue(bob);
+  await reconcileSession(true);
+  expect(useStore.getState().user).toEqual(bob);
+  expect(sessionEvents.current()).toBeGreaterThan(generation);
+  generation = sessionEvents.current();
+  vi.mocked(currentProfile).mockRejectedValue({ isAxiosError: true, response: { status: 401 } });
+  await reconcileSession(true);
+  expect(useStore.getState().sessionStatus).toBe('guest');
+  expect(sessionEvents.current()).toBeGreaterThan(generation);
+});
 
-    await act(() => result.current.signUp(signUpForm));
+it('reconciles a cross-tab signal without Web Locks or BroadcastChannel', async () => {
+  vi.mocked(currentProfile).mockResolvedValue(bob);
+  const stop = observeSessionChanges();
+  window.dispatchEvent(
+    new StorageEvent('storage', {
+      key: 'orbita-session-change',
+      newValue: JSON.stringify({ type: 'settled' }),
+    })
+  );
+  await vi.waitFor(() => expect(useStore.getState().user?.username).toBe('bob'));
+  stop();
+});
 
-    expect(tokenMemory.get()).toBeNull();
-    expect(useStore.getState().isAuthenticated).toBe(false);
-    expect(result.current.serverError).toBe(REGISTER_ERROR_MESSAGE);
-    expect(mocks.success).not.toHaveBeenCalled();
-    expect(mocks.push).not.toHaveBeenCalled();
+it('hides the old identity while another tab changes it', () => {
+  useStore.getState().setAuth(alice);
+  const stop = observeSessionChanges();
+  window.dispatchEvent(
+    new StorageEvent('storage', {
+      key: 'orbita-session-change',
+      newValue: JSON.stringify({ type: 'changing' }),
+    })
+  );
+  expect(useStore.getState().user).toBeNull();
+  expect(useStore.getState().sessionStatus).toBe('checking');
+  stop();
+});
+
+it('uses one BroadcastChannel and reconciles another tab without receiving its own publish', async () => {
+  const postMessage = vi.fn();
+  const close = vi.fn();
+  const receiver = {
+    onmessage: null as ((event: MessageEvent) => void) | null,
+    postMessage,
+    close,
+  };
+  const factory = vi.fn(function () {
+    return receiver;
   });
+  vi.stubGlobal('BroadcastChannel', factory);
+  vi.mocked(currentProfile).mockResolvedValue(alice);
+  const stop = observeSessionChanges();
+  try {
+    await authenticateSession(vi.fn().mockResolvedValue(undefined));
+    expect(factory).toHaveBeenCalledTimes(1);
+    expect(postMessage.mock.calls.map(([message]) => message.type)).toEqual([
+      'changing',
+      'settled',
+    ]);
+    expect(useStore.getState().user).toEqual(alice);
+    receiver.onmessage?.(new MessageEvent('message', { data: { type: 'changing' } }));
+    expect(useStore.getState().user).toBeNull();
+    vi.mocked(currentProfile).mockResolvedValue(bob);
+    receiver.onmessage?.(new MessageEvent('message', { data: { type: 'settled' } }));
+    await vi.waitFor(() => expect(useStore.getState().user).toEqual(bob));
+  } finally {
+    stop();
+  }
+  expect(close).toHaveBeenCalledOnce();
 });

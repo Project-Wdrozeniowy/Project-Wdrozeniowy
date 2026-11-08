@@ -25,7 +25,7 @@ for (const [key, value, expected] of [
       fs.writeFileSync(path.join(fixture, '.env'), 'POSTGRES_PASSWORD=test\nJWT_SECRET=test\n');
       fs.writeFileSync(
         path.join(fixture, 'gateway/.env'),
-        'PORT=3000\nBACKEND_URL=http://localhost:8080\nJWT_SECRET=test\n'
+        'PORT=3000\nBACKEND_URL=http://localhost:8080\n'
       );
       fs.writeFileSync(
         path.join(fixture, 'frontend/.env'),

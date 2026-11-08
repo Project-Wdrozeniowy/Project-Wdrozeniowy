@@ -26,8 +26,6 @@ import type { ActivityTrendDto } from './models/activityTrendDto.dto';
 
 import type { AuthRequest } from './models/authRequest.dto';
 
-import type { AuthResponse } from './models/authResponse.dto';
-
 import type { CategoryDto } from './models/categoryDto.dto';
 
 import type { ChangePasswordRequest } from './models/changePasswordRequest.dto';
@@ -39,6 +37,8 @@ import type { CreateCategoryRequest } from './models/createCategoryRequest.dto';
 import type { CreateCommentRequest } from './models/createCommentRequest.dto';
 
 import type { CreatePostRequest } from './models/createPostRequest.dto';
+
+import type { CsrfResponse } from './models/csrfResponse.dto';
 
 import type { GetActivityTrendParams } from './models/getActivityTrendParams.dto';
 
@@ -988,14 +988,118 @@ export const invalidateGetActivityTrend = async (
 };
 
 /**
- * @summary Login and receive an access token
+ * @summary Obtain the session-backed CSRF token
+ */
+export const csrf = (options?: SecondParameter<typeof orvalTransport>, signal?: AbortSignal) => {
+  return orvalTransport<CsrfResponse>({ url: `/auth/csrf`, method: 'GET', signal }, options);
+};
+
+export const getCsrfQueryKey = () => {
+  return [`/auth/csrf`] as const;
+};
+
+export const getCsrfQueryOptions = <
+  TData = Awaited<ReturnType<typeof csrf>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof csrf>>, TError, TData>>;
+  request?: SecondParameter<typeof orvalTransport>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getCsrfQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof csrf>>> = ({ signal }) =>
+    csrf(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof csrf>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CsrfQueryResult = NonNullable<Awaited<ReturnType<typeof csrf>>>;
+export type CsrfQueryError = ErrorType<unknown>;
+
+export function useCsrf<TData = Awaited<ReturnType<typeof csrf>>, TError = ErrorType<unknown>>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof csrf>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof csrf>>,
+          TError,
+          Awaited<ReturnType<typeof csrf>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCsrf<TData = Awaited<ReturnType<typeof csrf>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof csrf>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof csrf>>,
+          TError,
+          Awaited<ReturnType<typeof csrf>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCsrf<TData = Awaited<ReturnType<typeof csrf>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof csrf>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Obtain the session-backed CSRF token
+ */
+
+export function useCsrf<TData = Awaited<ReturnType<typeof csrf>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof csrf>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getCsrfQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useCsrf} query
+ */
+export const invalidateCsrf = async (
+  queryClient: QueryClient,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getCsrfQueryKey() }, options);
+
+  return queryClient;
+};
+
+/**
+ * @summary Login and establish an independent server session
  */
 export const login = (
   authRequest: BodyType<AuthRequest>,
   options?: SecondParameter<typeof orvalTransport>,
   signal?: AbortSignal
 ) => {
-  return orvalTransport<AuthResponse>(
+  return orvalTransport<void>(
     {
       url: `/auth/login`,
       method: 'POST',
@@ -1050,7 +1154,7 @@ export type LoginMutationError = ErrorType<ProblemDetail>;
 export type LoginMutationVariables = { data: BodyType<AuthRequest> };
 
 /**
- * @summary Login and receive an access token
+ * @summary Login and establish an independent server session
  */
 export const useLogin = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
   options?: {
@@ -1073,8 +1177,8 @@ export const useLogin = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
 };
 
 /**
- * The refresh cookie itself acts as the credential, so no access token is required. Idempotent: a missing, unknown or already-revoked token also returns 204.
- * @summary Logout — revoke the refresh token and clear the cookie
+ * Requires CSRF, including for guests
+ * @summary Invalidate the current server session
  */
 export const logout = (options?: SecondParameter<typeof orvalTransport>, signal?: AbortSignal) => {
   return orvalTransport<void>({ url: `/auth/logout`, method: 'POST', signal }, options);
@@ -1083,7 +1187,7 @@ export const logout = (options?: SecondParameter<typeof orvalTransport>, signal?
 export const getLogoutMutationKey = () => ['logout'] as const;
 
 export const getLogoutMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<ProblemDetail>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError, void, TContext>;
@@ -1105,12 +1209,12 @@ export const getLogoutMutationOptions = <
 
 export type LogoutMutationResult = NonNullable<Awaited<ReturnType<typeof logout>>>;
 
-export type LogoutMutationError = ErrorType<unknown>;
+export type LogoutMutationError = ErrorType<ProblemDetail>;
 
 /**
- * @summary Logout — revoke the refresh token and clear the cookie
+ * @summary Invalidate the current server session
  */
-export const useLogout = <TError = ErrorType<unknown>, TContext = unknown>(
+export const useLogout = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError, void, TContext>;
     request?: SecondParameter<typeof orvalTransport>;
@@ -1121,61 +1225,14 @@ export const useLogout = <TError = ErrorType<unknown>, TContext = unknown>(
 };
 
 /**
- * @summary Refresh the access token using the refresh cookie
- */
-export const refresh = (options?: SecondParameter<typeof orvalTransport>, signal?: AbortSignal) => {
-  return orvalTransport<AuthResponse>({ url: `/auth/refresh`, method: 'POST', signal }, options);
-};
-
-export const getRefreshMutationKey = () => ['refresh'] as const;
-
-export const getRefreshMutationOptions = <
-  TError = ErrorType<ProblemDetail>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof refresh>>, TError, void, TContext>;
-  request?: SecondParameter<typeof orvalTransport>;
-}): UseMutationOptions<Awaited<ReturnType<typeof refresh>>, TError, void, TContext> => {
-  const mutationKey = getRefreshMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof refresh>>, void> = () => {
-    return refresh(requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type RefreshMutationResult = NonNullable<Awaited<ReturnType<typeof refresh>>>;
-
-export type RefreshMutationError = ErrorType<ProblemDetail>;
-
-/**
- * @summary Refresh the access token using the refresh cookie
- */
-export const useRefresh = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof refresh>>, TError, void, TContext>;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<Awaited<ReturnType<typeof refresh>>, TError, void, TContext> => {
-  return useMutation(getRefreshMutationOptions(options), queryClient);
-};
-
-/**
- * @summary Register a new account
+ * @summary Register and establish a server session
  */
 export const register = (
   registerRequest: BodyType<RegisterRequest>,
   options?: SecondParameter<typeof orvalTransport>,
   signal?: AbortSignal
 ) => {
-  return orvalTransport<AuthResponse>(
+  return orvalTransport<void>(
     {
       url: `/auth/register`,
       method: 'POST',
@@ -1231,7 +1288,7 @@ export type RegisterMutationError = ErrorType<ProblemDetail>;
 export type RegisterMutationVariables = { data: BodyType<RegisterRequest> };
 
 /**
- * @summary Register a new account
+ * @summary Register and establish a server session
  */
 export const useRegister = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
   options?: {
@@ -1463,87 +1520,6 @@ export const useCreateCategory = <TError = ErrorType<ProblemDetail>, TContext = 
 };
 
 /**
- * Administrators only; works on hidden categories too. The category's posts stay, without a category.
- * @summary Delete a category by slug
- */
-export const deleteCategory = (
-  slug: string,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<void>(
-    { url: `/forum/categories/${encodeURIComponent(String(slug))}`, method: 'DELETE', signal },
-    options
-  );
-};
-
-export const getDeleteCategoryMutationKey = () => ['deleteCategory'] as const;
-
-export const getDeleteCategoryMutationOptions = <
-  TError = ErrorType<ProblemDetail>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteCategory>>,
-    TError,
-    DeleteCategoryMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof orvalTransport>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteCategory>>,
-  TError,
-  DeleteCategoryMutationVariables,
-  TContext
-> => {
-  const mutationKey = getDeleteCategoryMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteCategory>>,
-    DeleteCategoryMutationVariables
-  > = (props) => {
-    const { slug } = props ?? {};
-
-    return deleteCategory(slug, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCategory>>>;
-
-export type DeleteCategoryMutationError = ErrorType<ProblemDetail>;
-export type DeleteCategoryMutationVariables = { slug: string };
-
-/**
- * @summary Delete a category by slug
- */
-export const useDeleteCategory = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteCategory>>,
-      TError,
-      DeleteCategoryMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteCategory>>,
-  TError,
-  DeleteCategoryMutationVariables,
-  TContext
-> => {
-  return useMutation(getDeleteCategoryMutationOptions(options), queryClient);
-};
-
-/**
  * @summary Get a category by slug
  */
 export const getCategory = (
@@ -1675,6 +1651,87 @@ export const invalidateGetCategory = async (
   await queryClient.invalidateQueries({ queryKey: getGetCategoryQueryKey(slug) }, options);
 
   return queryClient;
+};
+
+/**
+ * Administrators only; works on hidden categories too. The category's posts stay, without a category.
+ * @summary Delete a category by slug
+ */
+export const deleteCategory = (
+  slug: string,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    { url: `/forum/categories/${encodeURIComponent(String(slug))}`, method: 'DELETE', signal },
+    options
+  );
+};
+
+export const getDeleteCategoryMutationKey = () => ['deleteCategory'] as const;
+
+export const getDeleteCategoryMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCategory>>,
+    TError,
+    DeleteCategoryMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteCategory>>,
+  TError,
+  DeleteCategoryMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteCategoryMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteCategory>>,
+    DeleteCategoryMutationVariables
+  > = (props) => {
+    const { slug } = props ?? {};
+
+    return deleteCategory(slug, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCategory>>>;
+
+export type DeleteCategoryMutationError = ErrorType<ProblemDetail>;
+export type DeleteCategoryMutationVariables = { slug: string };
+
+/**
+ * @summary Delete a category by slug
+ */
+export const useDeleteCategory = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteCategory>>,
+      TError,
+      DeleteCategoryMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteCategory>>,
+  TError,
+  DeleteCategoryMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeleteCategoryMutationOptions(options), queryClient);
 };
 
 /**
@@ -2156,86 +2213,6 @@ export const useCreatePost = <TError = ErrorType<ProblemDetail>, TContext = unkn
 };
 
 /**
- * @summary Delete a post by slug
- */
-export const deletePost = (
-  slug: string,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<void>(
-    { url: `/forum/posts/${encodeURIComponent(String(slug))}`, method: 'DELETE', signal },
-    options
-  );
-};
-
-export const getDeletePostMutationKey = () => ['deletePost'] as const;
-
-export const getDeletePostMutationOptions = <
-  TError = ErrorType<ProblemDetail>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deletePost>>,
-    TError,
-    DeletePostMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof orvalTransport>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deletePost>>,
-  TError,
-  DeletePostMutationVariables,
-  TContext
-> => {
-  const mutationKey = getDeletePostMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deletePost>>,
-    DeletePostMutationVariables
-  > = (props) => {
-    const { slug } = props ?? {};
-
-    return deletePost(slug, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type DeletePostMutationResult = NonNullable<Awaited<ReturnType<typeof deletePost>>>;
-
-export type DeletePostMutationError = ErrorType<ProblemDetail>;
-export type DeletePostMutationVariables = { slug: string };
-
-/**
- * @summary Delete a post by slug
- */
-export const useDeletePost = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deletePost>>,
-      TError,
-      DeletePostMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deletePost>>,
-  TError,
-  DeletePostMutationVariables,
-  TContext
-> => {
-  return useMutation(getDeletePostMutationOptions(options), queryClient);
-};
-
-/**
  * Public. A draft is visible only to its author and to admins, who need to send their bearer token.
  * @summary Get a post by slug
  */
@@ -2368,6 +2345,86 @@ export const invalidateGetPost = async (
   await queryClient.invalidateQueries({ queryKey: getGetPostQueryKey(slug) }, options);
 
   return queryClient;
+};
+
+/**
+ * @summary Delete a post by slug
+ */
+export const deletePost = (
+  slug: string,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    { url: `/forum/posts/${encodeURIComponent(String(slug))}`, method: 'DELETE', signal },
+    options
+  );
+};
+
+export const getDeletePostMutationKey = () => ['deletePost'] as const;
+
+export const getDeletePostMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deletePost>>,
+    TError,
+    DeletePostMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deletePost>>,
+  TError,
+  DeletePostMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeletePostMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deletePost>>,
+    DeletePostMutationVariables
+  > = (props) => {
+    const { slug } = props ?? {};
+
+    return deletePost(slug, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeletePostMutationResult = NonNullable<Awaited<ReturnType<typeof deletePost>>>;
+
+export type DeletePostMutationError = ErrorType<ProblemDetail>;
+export type DeletePostMutationVariables = { slug: string };
+
+/**
+ * @summary Delete a post by slug
+ */
+export const useDeletePost = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deletePost>>,
+      TError,
+      DeletePostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof deletePost>>,
+  TError,
+  DeletePostMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeletePostMutationOptions(options), queryClient);
 };
 
 /**
@@ -2773,6 +2830,87 @@ export const useTogglePin = <TError = ErrorType<ProblemDetail>, TContext = unkno
 };
 
 /**
+ * Idempotent: subscribing again changes nothing.
+ * @summary Subscribe to a post
+ */
+export const subscribe = (
+  slug: string,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    { url: `/forum/posts/${encodeURIComponent(String(slug))}/subscription`, method: 'PUT', signal },
+    options
+  );
+};
+
+export const getSubscribeMutationKey = () => ['subscribe'] as const;
+
+export const getSubscribeMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof subscribe>>,
+    TError,
+    SubscribeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof subscribe>>,
+  TError,
+  SubscribeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSubscribeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof subscribe>>,
+    SubscribeMutationVariables
+  > = (props) => {
+    const { slug } = props ?? {};
+
+    return subscribe(slug, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubscribeMutationResult = NonNullable<Awaited<ReturnType<typeof subscribe>>>;
+
+export type SubscribeMutationError = ErrorType<ProblemDetail>;
+export type SubscribeMutationVariables = { slug: string };
+
+/**
+ * @summary Subscribe to a post
+ */
+export const useSubscribe = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof subscribe>>,
+      TError,
+      SubscribeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof subscribe>>,
+  TError,
+  SubscribeMutationVariables,
+  TContext
+> => {
+  return useMutation(getSubscribeMutationOptions(options), queryClient);
+};
+
+/**
  * Idempotent: unsubscribing without a subscription changes nothing.
  * @summary Unsubscribe from a post
  */
@@ -2855,87 +2993,6 @@ export const useUnsubscribe = <TError = ErrorType<ProblemDetail>, TContext = unk
   TContext
 > => {
   return useMutation(getUnsubscribeMutationOptions(options), queryClient);
-};
-
-/**
- * Idempotent: subscribing again changes nothing.
- * @summary Subscribe to a post
- */
-export const subscribe = (
-  slug: string,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<void>(
-    { url: `/forum/posts/${encodeURIComponent(String(slug))}/subscription`, method: 'PUT', signal },
-    options
-  );
-};
-
-export const getSubscribeMutationKey = () => ['subscribe'] as const;
-
-export const getSubscribeMutationOptions = <
-  TError = ErrorType<ProblemDetail>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof subscribe>>,
-    TError,
-    SubscribeMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof orvalTransport>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof subscribe>>,
-  TError,
-  SubscribeMutationVariables,
-  TContext
-> => {
-  const mutationKey = getSubscribeMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof subscribe>>,
-    SubscribeMutationVariables
-  > = (props) => {
-    const { slug } = props ?? {};
-
-    return subscribe(slug, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type SubscribeMutationResult = NonNullable<Awaited<ReturnType<typeof subscribe>>>;
-
-export type SubscribeMutationError = ErrorType<ProblemDetail>;
-export type SubscribeMutationVariables = { slug: string };
-
-/**
- * @summary Subscribe to a post
- */
-export const useSubscribe = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof subscribe>>,
-      TError,
-      SubscribeMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof subscribe>>,
-  TError,
-  SubscribeMutationVariables,
-  TContext
-> => {
-  return useMutation(getSubscribeMutationOptions(options), queryClient);
 };
 
 /**

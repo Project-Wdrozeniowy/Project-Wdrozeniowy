@@ -41,6 +41,8 @@ class UserControllerTest {
 
     @Mock
     private UserService userService;
+    @Mock
+    private com.devpulse.auth.session.SessionLifecycle sessions;
 
     @InjectMocks
     private UserController userController;

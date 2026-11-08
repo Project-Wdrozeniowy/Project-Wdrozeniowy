@@ -21,11 +21,11 @@ Frontend (Next.js 16)  →  Gateway (Express 5)  →  Backend (Spring Boot 4)  �
 ```
 
 - **Frontend** (`frontend/`) — Next.js 16 App Router, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod, React Hook Form
-- **Gateway** (`gateway/`) — Node.js, Express 5, TypeScript 6; performs JWT verification, rate limiting, CORS, and reverse-proxies all `/api/*` traffic to the backend
-- **Backend** (`backend/`) — Java 17, Spring Boot 4, Spring Security, Spring Data JPA, PostgreSQL, Flyway migrations, JWT (jjwt 0.12.6)
+- **Gateway** (`gateway/`) — Node.js, Express 5, TypeScript 6; performs rate limiting, CORS and bounded HTTP forwarding, and reverse-proxies all `/api/*` traffic to the backend
+- **Backend** (`backend/`) — Java 17, Spring Boot 4, Spring Security, Spring Data JPA, PostgreSQL, Flyway migrations, Spring Session JDBC; jjwt is WS-only compatibility
 - **Infra** — PostgreSQL 16 + Redis 7 (via Docker Compose); Redis is provisioned but not yet wired in application code
 
-Database schema is managed by Flyway (V1–V7: users, forum, notifications, analytics, refresh-token rotation, the default forum categories, and audit timestamps).
+Database schema is managed by Flyway (V1–V9: users, forum, notifications, analytics, refresh-token rotation, the default forum categories, audit timestamps, JDBC sessions and HTTP refresh retirement).
 ER diagrams live in `docs/db-schema*.mmd`.
 
 ---
@@ -57,8 +57,8 @@ cp frontend/.env.example frontend/.env
 #   Generate: openssl rand -base64 64 | tr -d '\n'
 ```
 
-> **Critical**: `JWT_SECRET` must be **identical** in root `.env` (used by backend via Docker Compose)
-> and in `gateway/.env`. A mismatch causes 401 on every authenticated request.
+> `JWT_SECRET` is backend-only for provisional WS compatibility (PWDRZ-104).
+> Gateway needs no signing key. REST uses [server sessions](docs/guides/sessions.md).
 
 ### 2. Start the database and backend via Docker Compose
 
@@ -133,15 +133,13 @@ cd backend
 
 ```
 Browser (localhost:3001)
-  → Gateway (localhost:3000/api/*)   ← JWT verified here
-    → Backend (localhost:8080/api/*) ← Spring Security re-validates JWT
+  → Gateway (localhost:3000/api/*)   ← bounded HTTP forwarding
+    → Backend (localhost:8080/api/*) ← Spring Security sessions/CSRF
       → PostgreSQL (localhost:5432)
 ```
 
-Public auth routes that bypass bearer JWT: `POST /api/auth/login`,
-`POST /api/auth/register`, `POST /api/auth/refresh`, and
-`POST /api/auth/logout`. Read-only forum and public-profile routes are also
-listed in `gateway/src/config/index.ts`.
+Spring owns the [endpoint/method access matrix and CSRF policy](docs/guides/sessions.md).
+Gateway has no REST public-route allowlist.
 
 ---
 
@@ -192,7 +190,7 @@ npm run test              # jest --coverage
 npm run test:coverage     # same command, alias
 
 # Run a specific test file
-npx jest src/middleware/__tests__/auth.test.ts
+npx jest src/routes/__tests__/httpBoundary.test.ts
 
 # Run tests matching a pattern
 npx jest --testNamePattern "should return 401"
@@ -267,18 +265,18 @@ npm run typecheck     # tsc --noEmit
 
 ### Naming conventions
 
-| Item | Convention | Example |
-|------|-----------|---------|
-| React component files | PascalCase `.tsx` | `PostCard.tsx` |
-| Non-component TS files | camelCase `.ts` | `authService.ts`, `usePosts.ts` |
-| TypeScript interfaces/types | PascalCase, no `I` prefix | `AuthResponse`, `User` |
-| Zustand slices | camelCase, `Slice` suffix | `createAuthSlice`, `AuthSlice` |
-| Java classes | PascalCase | `AuthController`, `JwtUtil` |
-| Java packages | `com.devpulse.<domain>.<layer>` | `com.devpulse.auth.service` |
+| Item                        | Convention                      | Example                         |
+| --------------------------- | ------------------------------- | ------------------------------- |
+| React component files       | PascalCase `.tsx`               | `PostCard.tsx`                  |
+| Non-component TS files      | camelCase `.ts`                 | `authService.ts`, `usePosts.ts` |
+| TypeScript interfaces/types | PascalCase, no `I` prefix       | `AuthResponse`, `User`          |
+| Zustand slices              | camelCase, `Slice` suffix       | `createAuthSlice`, `AuthSlice`  |
+| Java classes                | PascalCase                      | `AuthController`, `JwtUtil`     |
+| Java packages               | `com.devpulse.<domain>.<layer>` | `com.devpulse.auth.service`     |
 
 ### Path alias (frontend only)
 
-`@/*` maps to `frontend/src/*`. Example: `import type { AuthResponse } from '@/shared/api/generated/models/authResponse.dto'`.
+`@/*` maps to `frontend/src/*`. Example: `import type { MyProfileDto } from '@/shared/api/generated/models/myProfileDto.dto'`.
 Defined in `frontend/tsconfig.json`. Always use `@/` for cross-module imports; relative imports only within the same folder.
 
 ---
@@ -294,27 +292,27 @@ frontend/src/
   features/        ← user actions, form schemas and request mapping
   widgets/         ← reusable header/sidebar regions
   shared/api/      ← single transport, generated bindings and Query compositions
-  shared/auth/     ← session bootstrap and in-memory token infrastructure
+  shared/auth/     ← session bootstrap, generations and cross-tab reconciliation
   shared/ui/       ← reusable UI
   shared/lib/      ← shared utilities
   shared/constants/ ← static data
   store/slices/    ← Zustand slices: authSlice, uiSlice
 
 gateway/src/
-  middleware/      ← auth, cors, rateLimiter, logger
+  middleware/      ← boundedBody, cors, rateLimiter, logger
   routes/          ← proxy.ts (proxies /api/* to backend)
   config/          ← env loading with validation
   types/           ← GatewayConfig, Express extensions
 
 backend/src/main/java/com/devpulse/
-  auth/            ← controller, service, repository, entity, dto, filter
+  auth/            ← controller, service, repository, entity, dto, session
   config/          ← SecurityConfig, OpenApiConfig
   exception/       ← AppException, GlobalExceptionHandler
-  security/        ← JwtUtil (sign, verify, parse)
+  security/        ← WsTokenVerifier (legacy WS-only verification)
 
 backend/src/main/resources/
   application.properties
-  db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics), V5 (refresh-token rotation), V6 (default categories), V7 (audit timestamps)
+  db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics), V5 (refresh-token rotation), V6 (default categories), V7 (audit timestamps), V8 (sessions/auth_version), V9 (HTTP refresh retirement)
 
 docs/
   README.md        ← documentation map by audience and purpose
@@ -327,9 +325,9 @@ docs/
 
 ## Architecture Decisions to Know
 
-1. **Dual JWT verification is intentional** — the gateway verifies the token before proxying, and Spring Security re-validates it as defence-in-depth. The same `JWT_SECRET` must be configured in both.
+1. **Spring owns HTTP authentication** — JDBC sessions, account validity, CSRF and resource authorization. Express forwards HTTP without a REST JWT boundary.
 
-2. **Token storage** — the access token lives only in memory (`frontend/src/shared/auth/tokenMemory.ts`). The refresh token is an `HttpOnly; SameSite=Strict` cookie (`/api/auth` path) set by the backend and never appears in a request or response body. On page load `AuthProvider` calls `POST /auth/refresh`, then `GET /users/me`. Never write tokens to `localStorage`/`sessionStorage`. Set `COOKIE_SECURE=false` for plain-HTTP local dev (Safari ignores `Secure` cookies on `http://localhost`).
+2. **Session cookie** — SESSION is host-only, HttpOnly, Path=/, SameSite=Strict, Secure outside explicit HTTP development and has no normal Max-Age/Expires. Idle is 60 minutes; absolute is 12 hours. Bootstrap reads GET /users/me. The shared transport obtains CSRF for unsafe requests. No Bearer/refresh flow or browser credential storage. See [session guide](docs/guides/sessions.md).
 
 3. **Forum feed and creation use real APIs** — home/forum read through `src/shared/api/forum/useForumPosts.ts`; `CreatePostForm` publishes through `POST /api/forum/posts` and invalidates feed queries. PWDRZ-81/111/101 delivered these paths, so E2E must exercise their real API flow. The post detail body is still a placeholder; adjacent comments, tag-list and category-management APIs remain provisional under their own tasks.
 
@@ -343,12 +341,10 @@ docs/
 
 ### Gateway authentication boundary (PWDRZ-99 / PWDRZ-118)
 
-The gateway verifies Bearer JWTs on API requests; the backend owns token issuance,
-refresh rotation and resource authorization. Next.js serves pages independently,
-so frontend AuthGuard/RoleGuard and session initialization remain UI concerns.
-The unused gateway page redirect guard based on an `orbita_session` cookie was
-removed. Do not reintroduce it as a replacement for the current frontend guards
-without an explicit BFF/SSR architecture decision.
+Spring owns JDBC session validity, CSRF and resource authorization. Express serves
+the SPA and proxies HTTP without a REST access allowlist. Frontend guards and
+session reconciliation remain presentation concerns. Do not replace them with a
+Gateway page-cookie guard. See [session policy](docs/guides/sessions.md).
 
 ## Task Backlog Tracking
 
@@ -393,14 +389,14 @@ report findings without making implementation changes beyond the requested revie
 
 ### Decide within scope and ownership
 
-| Finding | Required action |
-| --- | --- |
-| A marker says to remove/enable something after the **current ticket** | Verify that its prerequisite is now satisfied. Perform the bounded change within the current task when it belongs to its scope and ownership and needs no substantial refactor; update relevant tests and remove/update the resolved marker. Do not defer an obvious in-scope consequence merely because it was not repeated in acceptance criteria. |
-| A marker delegates implementation to **another ticket** | Preserve that ownership. Do not implement the other ticket automatically. Check whether the current task satisfies its dependency and whether any other blockers remain. |
-| A marker has **no ticket**, in the same feature/module | A bounded resolution is allowed when the task works on the same functionality and substantially fulfills the reason for the temporary mechanism. Verify the prerequisite, resolve the marker and related tests, and explicitly identify this additional logically related work in the final response. Mere proximity is insufficient. |
-| A related marker is across a **service/layer or ownership boundary** | Unless the user's existing authorization already includes that change, do not implement it. Briefly describe the problem, its relationship to the current task, the existing ticket or probable need for a separate ticket, and ask whether to address it now if technically feasible. Wait for the answer before the cross-boundary change. |
-| A temporary flag/guard's enabling condition **has occurred** | Complete its intended transition when it is bounded and authorized within scope. Otherwise record an explicit owner/follow-up and why it remains; do not silently leave an expired mechanism indefinitely. Crossing a boundary still requires the preceding rule. |
-| A temporary flag/guard's enabling condition **has not occurred or is unverified** | Preserve the provisional behavior and document the remaining prerequisite or uncertainty. Do not enable it, delete the guard, or describe it as production-ready. |
+| Finding                                                                           | Required action                                                                                                                                                                                                                                                                                                                                      |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A marker says to remove/enable something after the **current ticket**             | Verify that its prerequisite is now satisfied. Perform the bounded change within the current task when it belongs to its scope and ownership and needs no substantial refactor; update relevant tests and remove/update the resolved marker. Do not defer an obvious in-scope consequence merely because it was not repeated in acceptance criteria. |
+| A marker delegates implementation to **another ticket**                           | Preserve that ownership. Do not implement the other ticket automatically. Check whether the current task satisfies its dependency and whether any other blockers remain.                                                                                                                                                                             |
+| A marker has **no ticket**, in the same feature/module                            | A bounded resolution is allowed when the task works on the same functionality and substantially fulfills the reason for the temporary mechanism. Verify the prerequisite, resolve the marker and related tests, and explicitly identify this additional logically related work in the final response. Mere proximity is insufficient.                |
+| A related marker is across a **service/layer or ownership boundary**              | Unless the user's existing authorization already includes that change, do not implement it. Briefly describe the problem, its relationship to the current task, the existing ticket or probable need for a separate ticket, and ask whether to address it now if technically feasible. Wait for the answer before the cross-boundary change.         |
+| A temporary flag/guard's enabling condition **has occurred**                      | Complete its intended transition when it is bounded and authorized within scope. Otherwise record an explicit owner/follow-up and why it remains; do not silently leave an expired mechanism indefinitely. Crossing a boundary still requires the preceding rule.                                                                                    |
+| A temporary flag/guard's enabling condition **has not occurred or is unverified** | Preserve the provisional behavior and document the remaining prerequisite or uncertainty. Do not enable it, delete the guard, or describe it as production-ready.                                                                                                                                                                                    |
 
 For clearly out-of-scope work or a substantial refactor, reuse an existing Jira
 task or create a separate scoped follow-up when authorized, after checking for
@@ -488,7 +484,7 @@ is not a passed gate. Selective CI and wider branch-rule changes remain PWDRZ-13
 ## Common Gotchas
 
 - **`NEXT_PUBLIC_API_URL` not set** → the API client falls back to `http://localhost:3000/api` during development; production builds require an explicit value. Set it in `frontend/.env`.
-- **JWT_SECRET mismatch** → gateway returns 401 on every non-public request with no descriptive error. Check that `JWT_SECRET` in `gateway/.env` and in root `.env` (passed to backend via Docker Compose) are identical.
+- **Protected API 401** → missing, expired or revoked server session; sign in again. JWT_SECRET is backend-only WS compatibility, not an HTTP authentication setting.
 - **Flyway migration failure** → inspect the migration error and database state first. `docker compose down -v` deletes local PostgreSQL data; use it only when that data is disposable and a reset is intended.
 - **`@/*` alias not resolving in tests** → Vitest resolves aliases via `resolve.alias` in `vitest.config.ts`. Do not use `tsconfig.json` paths alone — they must be mirrored in the vitest config.
 - **Port conflicts** → Next.js defaults to port 3000, so run it with `-p 3001` while the gateway owns 3000. `NEXT_PUBLIC_API_URL` controls the API target, not the frontend listening port.

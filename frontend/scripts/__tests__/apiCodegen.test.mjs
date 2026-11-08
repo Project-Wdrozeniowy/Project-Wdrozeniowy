@@ -47,11 +47,12 @@ test('clean generation is deterministic and drift checks reject changed, missing
     const contractPath = path.join(fixture, 'backend/openapi.json');
     const original = await fs.readFile(contractPath, 'utf8');
     const changed = JSON.parse(original);
-    changed.components.schemas.AuthResponse.properties.expiresIn.type = 'string';
+    changed.components.schemas.CsrfResponse.properties.token.type = 'integer';
     await fs.writeFile(contractPath, JSON.stringify(changed));
-    await assert.rejects(codegen('check', fixture), /authResponse.dto.ts/);
+    await assert.rejects(codegen('check', fixture), /csrfResponse.dto.ts/);
     const invalid = JSON.parse(original);
-    invalid.components.securitySchemes.bearerAuth.name = 'bearerAuth';
+    invalid.paths['/auth/csrf'].get.responses['200'].content['application/json'].schema.$ref =
+      '#/components/schemas/MissingCsrfResponse';
     await fs.writeFile(contractPath, JSON.stringify(invalid));
     await assert.rejects(codegen('generate', fixture));
     assert.deepEqual(await files(output), first, 'invalid input must preserve existing output');

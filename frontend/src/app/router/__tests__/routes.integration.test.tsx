@@ -2,24 +2,24 @@ import { transferableAbortController } from 'node:util';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { vi } from 'vitest';
-import { apiClient } from '@/shared/api/client/api';
 import { orvalTransport } from '@/shared/api/client/orvalTransport';
 import { routes } from '@/app/router/routes';
 import { useStore } from '@/store';
-import type { UserProfileDto } from '@/shared/api/generated/models/userProfileDto.dto';
+import type { MyProfileDto } from '@/shared/api/generated/models/myProfileDto.dto';
 
 vi.unmock('react-router');
 vi.mock('@/shared/api/client/api', () => ({
-  apiClient: { refreshAccessToken: vi.fn().mockRejectedValue(new Error('No session')) },
+  apiClient: { clearCsrf: vi.fn(), setUnauthorizedHandler: vi.fn() },
 }));
 vi.mock('@/shared/api/client/orvalTransport', () => ({
   orvalTransport: vi.fn().mockRejectedValue(new Error('Network is isolated in this routing test')),
 }));
 vi.mock('@tanstack/react-query-devtools', () => ({ ReactQueryDevtools: () => null }));
 
-const user: UserProfileDto = {
+const user: MyProfileDto = {
   id: 1,
   username: 'route-user',
+  email: 'route-user@example.test',
   displayName: 'Route User',
   avatarUrl: null,
   bio: null,
@@ -43,8 +43,7 @@ async function open(path: string) {
   return router;
 }
 beforeEach(() => {
-  vi.mocked(apiClient.refreshAccessToken).mockRejectedValue(new Error('No session'));
-  vi.mocked(orvalTransport).mockRejectedValue({ response: { status: 401 } });
+  vi.mocked(orvalTransport).mockRejectedValue({ isAxiosError: true, response: { status: 401 } });
   useStore.setState({ user: null, isInitialized: true, isAuthenticated: false });
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 });
@@ -81,15 +80,23 @@ it.each(['/profile', '/settings', '/dashboard', '/admin'])(
   'renders the implemented protected route %s for its permitted user',
   async (path) => {
     useStore.setState({ user: { ...user, role: 'ADMIN' }, isAuthenticated: true });
+    vi.mocked(orvalTransport).mockImplementation(async (config) => {
+      if (config.url === '/users/me') return { ...user, role: 'ADMIN' } as never;
+      throw new Error('Network is isolated in this routing test');
+    });
     const router = await open(path);
     await waitFor(() => expect(router.state.initialized).toBe(true));
     expect(router.state.errors).toBeNull();
-    expect(await screen.findByRole('button', { name: 'Sign out' })).toBeVisible();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible());
     expect(router.state.location.pathname).toBe(path);
   }
 );
 it('rejects the admin page for an ordinary authenticated user', async () => {
   useStore.setState({ user, isAuthenticated: true });
+  vi.mocked(orvalTransport).mockImplementation(async (config) => {
+    if (config.url === '/users/me') return user as never;
+    throw new Error('Network is isolated in this routing test');
+  });
   const router = await open('/admin');
   await waitFor(() => expect(router.state.location.pathname).toBe('/'));
   expect(screen.queryByText('Admin Dashboard')).not.toBeInTheDocument();

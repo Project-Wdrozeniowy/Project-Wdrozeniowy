@@ -6,10 +6,9 @@ import {
 } from '@/features/sign-in/login.const';
 import type { LoginFormData } from '@/features/sign-in/login.schema';
 import { login } from '@/shared/api/generated/orbita.api';
-import { loadProfile } from '@/shared/auth/loadProfile';
+import { authenticateSession } from '@/shared/auth/session';
 import { apiErrorMessage, apiErrorStatus } from '@/shared/api/client/apiError';
 import { toast } from '@/shared/lib/toast';
-import { useStore } from '@/store';
 
 /**
  * Signing in: the request, the profile that goes with the new token, the shared session state,
@@ -17,15 +16,15 @@ import { useStore } from '@/store';
  */
 export function useSignIn() {
   const navigate = useNavigate();
-  const setAuth = useStore((state) => state.setAuth);
   const [serverError, setServerError] = useState<string | null>(null);
 
   async function signIn(data: LoginFormData) {
     setServerError(null);
     try {
-      const { accessToken } = await login(data);
-      const user = await loadProfile(accessToken);
-      setAuth(user, accessToken);
+      const user = await authenticateSession((signal) =>
+        login(data, { signal, skipErrorToast: true })
+      );
+      if (!user) return;
       toast.success(`Welcome back, ${user.displayName ?? user.username}!`);
       navigate('/');
     } catch (err: unknown) {

@@ -1,5 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
@@ -8,6 +16,9 @@ import ProfileView from '@/pages/profile/ui/ProfileView';
 import { toast } from '@/shared/lib/toast';
 import { apiClient } from '@/shared/api/client/api';
 import { useStore } from '@/store';
+import { sessionEvents } from '@/shared/auth/sessionEvents';
+import { useUpdateProfile } from '@/shared/api/profile/useUpdateProfile';
+import { myProfileQueryKey } from '@/shared/api/profile/useMyProfile';
 import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 /**
@@ -64,6 +75,9 @@ async function loaded() {
 beforeEach(() => {
   vi.clearAllMocks();
   mock = new MockAdapter(axiosInstance);
+  apiClient.clearCsrf();
+  mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
+  apiClient.setUnauthorizedHandler(undefined);
   useStore.setState({ user: PROFILE, isAuthenticated: true, isInitialized: true });
   Object.defineProperty(window, 'location', {
     writable: true,
@@ -73,6 +87,41 @@ beforeEach(() => {
 
 afterEach(() => {
   mock.restore();
+});
+
+it('cannot restore the previous account after a profile save waits for cache cancellation', async () => {
+  mock.onPatch('/users/me').reply(200, { ...PROFILE, displayName: 'Saved Alice' });
+  const client = new QueryClient();
+  let finishCancellation!: () => void;
+  const cancellation = vi.spyOn(client, 'cancelQueries').mockImplementation(
+    () =>
+      new Promise<void>((resolve) => {
+        finishCancellation = resolve;
+      })
+  );
+  const { result } = renderHook(() => useUpdateProfile(), {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    ),
+  });
+  let saving!: Promise<MyProfile>;
+  act(() => {
+    saving = result.current.mutateAsync({ data: { displayName: 'Saved Alice' } });
+  });
+  await waitFor(() => expect(finishCancellation).toBeDefined());
+  const bob = { ...PROFILE, id: 2, username: 'bob', email: 'bob@example.com', displayName: 'Bob' };
+  act(() => {
+    sessionEvents.advance();
+    useStore.getState().setAuth(bob);
+    finishCancellation();
+  });
+  await act(async () => {
+    await saving;
+  });
+  expect(useStore.getState().user).toEqual(bob);
+  expect(client.getQueryData(myProfileQueryKey(PROFILE.id))).toBeUndefined();
+  cancellation.mockRestore();
+  client.clear();
 });
 
 describe('loading the profile', () => {
@@ -151,12 +200,14 @@ describe('loading the profile', () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it('sends an expired session to the login page without showing server text', async () => {
+  it('does not perform a hard navigation or refresh after expired authentication', async () => {
     mock.onGet('/users/me').reply(401, { status: 401, detail: 'Authentication failed' });
-    mock.onPost('/auth/refresh').reply(401, { status: 401, detail: 'Invalid refresh token' });
     renderView();
 
-    await waitFor(() => expect(window.location.href).toBe('/login'));
+    await waitFor(() =>
+      expect(mock.history.get.some((request) => request.url === '/users/me')).toBe(true)
+    );
+    expect(window.location.href).toBe('/profile');
     expect(document.body).not.toHaveTextContent('Authentication failed');
     expect(document.body).not.toHaveTextContent('Invalid refresh token');
     // The redirect is a full-page navigation; until the browser leaves, only the fixed message shows.
@@ -431,7 +482,7 @@ describe('save failures', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('retries once with a refreshed token when the access token expired, then saves', async () => {
+  it('does not replay an expired-session mutation and preserves the draft', async () => {
     let patchCalls = 0;
     mock.onPatch('/users/me').reply(() => {
       patchCalls += 1;
@@ -439,20 +490,21 @@ describe('save failures', () => {
         ? [401, { status: 401, detail: 'Authentication failed' }]
         : [200, { ...PROFILE, bio: 'Hello there more' }];
     });
-    mock.onPost('/auth/refresh').reply(200, { accessToken: 'fresh', tokenType: 'Bearer' });
     await editBioAndSave();
 
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Profile saved.'));
-    expect(patchCalls).toBe(2);
+    await waitFor(() => expect(patchCalls).toBe(1));
+    expect(toast.success).not.toHaveBeenCalled();
     expect(window.location.href).toBe('/profile');
   });
 
-  it('sends the user to login when the session is gone, without showing server text', async () => {
+  it('preserves the failed edit without showing authentication internals', async () => {
     mock.onPatch('/users/me').reply(401, { status: 401, detail: 'Authentication failed' });
-    mock.onPost('/auth/refresh').reply(401, { status: 401, detail: 'Invalid refresh token' });
     await editBioAndSave();
 
-    await waitFor(() => expect(window.location.href).toBe('/login'));
+    await waitFor(() =>
+      expect(mock.history.get.some((request) => request.url === '/users/me')).toBe(true)
+    );
+    expect(window.location.href).toBe('/profile');
     expect(document.body).not.toHaveTextContent('Authentication failed');
     expect(toast.success).not.toHaveBeenCalled();
   });
@@ -560,6 +612,7 @@ describe('data staying in step with the server', () => {
     let staleRequested = false;
     let releaseStale: () => void = () => {};
     mock.resetHandlers();
+    mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
     mock.onGet('/users/me').reply(() => {
       if (!slowMode) return [200, PROFILE];
       staleRequested = true;

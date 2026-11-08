@@ -31,8 +31,7 @@ npm run bootstrap
 This includes the locked install and Java/Compose checks. If prerequisites are
 already checked, use `npm ci` as the install-only alternative rather than running both.
 
-Configure `.env`, `gateway/.env`, `frontend/.env` using their templates. JWT secrets
-must match. Root dev expects frontend 3001, gateway 3000, backend 8080 and frontend
+Configure `.env`, `gateway/.env`, `frontend/.env` using their templates. The backend-only JWT_SECRET remains for provisional WS; Gateway has no REST signing key. Root dev expects frontend 3001, gateway 3000, backend 8080 and frontend
 API URL `http://localhost:3000/api`.
 
 Exported environment variables take precedence over `.env`, as in the service
@@ -158,8 +157,7 @@ npm run bootstrap
 Это locked install и проверки Java/Compose. Если prerequisites уже проверены,
 используйте `npm ci` как альтернативу только для установки; обе команды подряд не нужны.
 
-Настройте `.env`, `gateway/.env`, `frontend/.env` по шаблонам. JWT secrets должны
-совпадать. Root dev ожидает frontend 3001, gateway 3000, backend 8080 и frontend
+Настройте `.env`, `gateway/.env`, `frontend/.env` по шаблонам. JWT_SECRET нужен только backend для временного WS verifier; Gateway не требует REST signing key. Root dev ожидает frontend 3001, gateway 3000, backend 8080 и frontend
 API URL `http://localhost:3000/api`.
 
 Экспортированные переменные окружения имеют приоритет над `.env`, как и при

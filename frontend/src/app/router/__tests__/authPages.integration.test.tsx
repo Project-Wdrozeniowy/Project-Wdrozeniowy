@@ -20,7 +20,14 @@ vi.mock('@/shared/api/generated/orbita.api', () => ({
   login: mocks.login,
   register: mocks.register,
 }));
-vi.mock('@/shared/auth/loadProfile', () => ({ loadProfile: mocks.loadProfile }));
+vi.mock('@/shared/auth/session', () => ({
+  authenticateSession: async (mutation: (signal: AbortSignal) => Promise<unknown>) => {
+    await mutation(new AbortController().signal);
+    const user = await mocks.loadProfile();
+    mocks.setAuth(user);
+    return user;
+  },
+}));
 vi.mock('@/store', () => ({
   useStore: (select: (state: { setAuth: typeof mocks.setAuth }) => unknown) =>
     select({ setAuth: mocks.setAuth }),
@@ -57,9 +64,12 @@ it('loads the authenticated profile before setting auth and navigating', async (
   const user = await fillLogin();
   await user.click(screen.getByRole('button', { name: 'Sign In' }));
   await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/'));
-  expect(mocks.login).toHaveBeenCalledWith({ username: 'alice', password: 'Password123' });
-  expect(mocks.loadProfile).toHaveBeenCalledWith('access');
-  expect(mocks.setAuth).toHaveBeenCalledWith(profile, 'access');
+  expect(mocks.login).toHaveBeenCalledWith(
+    { username: 'alice', password: 'Password123' },
+    expect.objectContaining({ signal: expect.any(AbortSignal) })
+  );
+  expect(mocks.loadProfile).toHaveBeenCalledWith();
+  expect(mocks.setAuth).toHaveBeenCalledWith(profile);
 });
 
 it('shows the credential error for 401 without establishing a session', async () => {
@@ -115,13 +125,16 @@ it('submits the supported registration fields and establishes auth after profile
   await user.click(screen.getByRole('button', { name: 'Create Account' }));
   await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/'));
   // Exactly the API's fields: no repeated password or terms, and no interests (PWDRZ-154).
-  expect(mocks.register).toHaveBeenCalledWith({
-    username: 'alice',
-    email: 'alice@example.com',
-    password: 'Password123',
-    displayName: 'Alice',
-  });
-  expect(mocks.setAuth).toHaveBeenCalledWith(profile, 'access');
+  expect(mocks.register).toHaveBeenCalledWith(
+    {
+      username: 'alice',
+      email: 'alice@example.com',
+      password: 'Password123',
+      displayName: 'Alice',
+    },
+    expect.objectContaining({ signal: expect.any(AbortSignal) })
+  );
+  expect(mocks.setAuth).toHaveBeenCalledWith(profile);
 });
 
 it('shows registration failure and retains safe form fields without announcing success', async () => {

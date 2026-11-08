@@ -1,6 +1,6 @@
 /**
  * Shown by the route guards while AuthProvider restores the session from the
- * refresh cookie, so protected content neither flashes nor redirects early.
+ * server session, so content neither flashes nor redirects early.
  */
 export default function SessionLoader() {
   return (

@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { useLocation } from 'react-router';
-import { logout as revokeSession } from '@/shared/api/generated/orbita.api';
+import { signOutSession } from '@/shared/auth/session';
 import { useStore } from '@/store';
 import OrbitaLogo from '@/shared/ui/OrbitaLogo';
 import NavLinks from './ui/NavLinks';
@@ -13,18 +13,15 @@ export default function Header() {
   const pathname = useLocation().pathname;
   const isAuthenticated = useStore((state) => state.isAuthenticated);
   const user = useStore((state) => state.user);
-  const logout = useStore((state) => state.logout);
 
   async function handleSignOut() {
     try {
-      // Revokes the refresh token and clears its cookie. If this fails the cookie stays
-      // valid and the next page load would sign the user back in, so keep the session.
-      await revokeSession();
+      // The coordinator verifies logout, or hides identity and offers reconciliation after an ambiguous failure.
+      await signOutSession();
     } catch {
       toast.error('Could not sign out. Please try again.', API_ERROR_TOAST_ID);
       return;
     }
-    logout();
     toast.success('You have been signed out.');
   }
 

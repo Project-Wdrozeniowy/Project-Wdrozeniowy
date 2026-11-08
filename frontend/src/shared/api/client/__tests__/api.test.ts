@@ -1,328 +1,97 @@
-import type { AxiosInstance } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import type { apiClient as ApiClientExport } from '../api';
+import { vi } from 'vitest';
+import { apiClient } from '../api';
+import { sessionEvents } from '@/shared/auth/sessionEvents';
 
-type ApiClientInstance = typeof ApiClientExport;
+vi.mock('@/shared/lib/toast', () => ({ toast: { error: vi.fn() }, API_ERROR_TOAST_ID: 'api' }));
+let mock: MockAdapter;
+beforeEach(() => {
+  mock = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
+  apiClient.clearCsrf();
+  apiClient.setUnauthorizedHandler(undefined);
+  sessionEvents.advance();
+});
+afterEach(() => mock.restore());
 
-// We need to test ApiClient by importing the module after mocking env vars.
-// Since apiClient is a singleton, we use the real axios interceptors via MockAdapter.
-
-describe('ApiClient same-origin base URL', () => {
-  it('uses /api regardless of a legacy Next environment variable', async () => {
-    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://obsolete.example/api');
-    vi.resetModules();
-    const { apiClient: fresh } = await import('../api');
-    const client = (fresh as unknown as { client: AxiosInstance }).client;
-    expect(client.defaults.baseURL).toBe('/api');
-    vi.unstubAllEnvs();
+it('uses cookies and sends no Bearer authentication', async () => {
+  mock.onGet('/users/me').reply((config) => {
+    expect(config.withCredentials).toBe(true);
+    expect(config.headers?.Authorization).toBeUndefined();
+    return [200, { id: 1 }];
   });
+  expect(await apiClient.get('/users/me')).toEqual({ id: 1 });
 });
 
-describe('ApiClient >-65 HTTP methods', () => {
-  let mock: MockAdapter;
-  let testClient: ApiClientInstance;
-
-  beforeEach(async () => {
-    vi.resetModules();
-    const { apiClient } = await import('../api');
-    mock = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
-    testClient = apiClient;
+it('bootstraps CSRF once for concurrent mutations and preserves their bodies', async () => {
+  mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
+  mock.onPost('/forum/posts').reply((config) => {
+    expect(config.headers?.['X-CSRF-TOKEN']).toBe('csrf');
+    expect(JSON.parse(config.data as string)).toEqual({ content: 'body' });
+    return [201, { id: 2 }];
   });
-
-  afterEach(() => {
-    mock.restore();
-  });
-
-  it('get() calls GET and returns response.data', async () => {
-    mock.onGet('/users').reply(200, [{ id: '1' }]);
-    const result = await testClient.get('/users');
-    expect(result).toEqual([{ id: '1' }]);
-  });
-
-  it('post() calls POST and returns response.data', async () => {
-    mock.onPost('/users').reply(201, { id: '2' });
-    const result = await testClient.post('/users', { name: 'New' });
-    expect(result).toEqual({ id: '2' });
-  });
-
-  it('put() calls PUT and returns response.data', async () => {
-    mock.onPut('/users/1').reply(200, { id: '1', name: 'Updated' });
-    const result = await testClient.put('/users/1', { name: 'Updated' });
-    expect(result).toEqual({ id: '1', name: 'Updated' });
-  });
-
-  it('patch() calls PATCH and returns response.data', async () => {
-    mock.onPatch('/users/1').reply(200, { id: '1', email: 'new@example.com' });
-    const result = await testClient.patch('/users/1', {
-      email: 'new@example.com',
-    });
-    expect(result).toEqual({ id: '1', email: 'new@example.com' });
-  });
-
-  it('delete() calls DELETE and returns response.data', async () => {
-    mock.onDelete('/users/1').reply(200, null);
-    const result = await testClient.delete('/users/1');
-    expect(result).toBeNull();
-  });
+  await Promise.all([
+    apiClient.post('/forum/posts', { content: 'body' }),
+    apiClient.post('/forum/posts', { content: 'body' }),
+  ]);
+  expect(mock.history.get.filter((config) => config.url === '/auth/csrf')).toHaveLength(1);
 });
 
-describe('ApiClient >-65 request interceptor (Authorization header)', () => {
-  afterEach(() => {
-    vi.resetModules();
-  });
-
-  async function setup() {
-    vi.resetModules();
-    const { tokenMemory } = await import('@/shared/auth/tokenMemory');
-    const { apiClient } = await import('../api');
-    const mock = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
-    return { tokenMemory, apiClient, mock };
+it.each([401, 403, 500, 502, 504])(
+  'never refreshes or replays an unsafe request after %s',
+  async (status) => {
+    mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
+    mock.onPost('/forum/posts').reply(status, { detail: 'Rejected' });
+    await expect(apiClient.post('/forum/posts', {})).rejects.toBeDefined();
+    expect(mock.history.post).toHaveLength(1);
+    expect(mock.history.post.some((config) => config.url === '/auth/refresh')).toBe(false);
   }
+);
 
-  it('attaches the Bearer token held in memory', async () => {
-    const { tokenMemory, apiClient, mock } = await setup();
-    tokenMemory.set('test-jwt-token');
-
-    let capturedHeader: string | undefined;
-    mock.onGet('/secure').reply((config) => {
-      capturedHeader = config.headers?.Authorization as string;
-      return [200, {}];
-    });
-
-    await apiClient.get('/secure');
-    expect(capturedHeader).toBe('Bearer test-jwt-token');
-    mock.restore();
-  });
-
-  it('does not attach Authorization when there is no token', async () => {
-    const { apiClient, mock } = await setup();
-
-    let capturedHeader: string | undefined;
-    mock.onGet('/public').reply((config) => {
-      capturedHeader = config.headers?.Authorization as string;
-      return [200, {}];
-    });
-
-    await apiClient.get('/public');
-    expect(capturedHeader).toBeUndefined();
-    mock.restore();
-  });
-
-  it('never reads tokens from localStorage', async () => {
-    const { apiClient, mock } = await setup();
-    localStorage.setItem('accessToken', 'stale-token');
-
-    let capturedHeader: string | undefined;
-    mock.onGet('/public').reply((config) => {
-      capturedHeader = config.headers?.Authorization as string;
-      return [200, {}];
-    });
-
-    await apiClient.get('/public');
-    expect(capturedHeader).toBeUndefined();
-    localStorage.clear();
-    mock.restore();
-  });
+it('normalizes an empty 204 response', async () => {
+  mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
+  mock.onPost('/auth/login').reply(204);
+  expect(await apiClient.post('/auth/login', {})).toBeUndefined();
 });
 
-describe('ApiClient response interceptor (error toasts)', () => {
-  async function setup() {
-    vi.resetModules();
-    const toastModule = await import('@/shared/lib/toast');
-    const errorSpy = vi.spyOn(toastModule.toast, 'error').mockImplementation(() => 'toast-id');
-    const { apiClient } = await import('../api');
-    const mock = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
-    return { apiClient, mock, errorSpy };
-  }
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('toasts the ProblemDetail detail on 5xx', async () => {
-    const { apiClient, mock, errorSpy } = await setup();
-    mock.onGet('/boom').reply(500, { status: 500, detail: 'Database is down' });
-
-    await expect(apiClient.get('/boom')).rejects.toBeDefined();
-    expect(errorSpy).toHaveBeenCalledWith('Database is down', 'api-error');
-  });
-
-  it('toasts a fallback message on network errors', async () => {
-    const { apiClient, mock, errorSpy } = await setup();
-    mock.onGet('/offline').networkError();
-
-    await expect(apiClient.get('/offline')).rejects.toBeDefined();
-    expect(errorSpy).toHaveBeenCalledWith('Something went wrong. Please try again.', 'api-error');
-  });
-
-  it('does not toast when the request opts out, so the caller can show its own message', async () => {
-    const { apiClient, mock, errorSpy } = await setup();
-    mock.onGet('/boom').reply(500, { status: 500, detail: 'PSQLException: internal' });
-
-    await expect(apiClient.get('/boom', { skipErrorToast: true })).rejects.toBeDefined();
-    expect(errorSpy).not.toHaveBeenCalled();
-  });
-
-  it('does not toast a network error when the request opts out', async () => {
-    const { apiClient, mock, errorSpy } = await setup();
-    mock.onGet('/offline').networkError();
-
-    await expect(apiClient.get('/offline', { skipErrorToast: true })).rejects.toBeDefined();
-    expect(errorSpy).not.toHaveBeenCalled();
-  });
-
-  it('does not toast 4xx errors', async () => {
-    const { apiClient, mock, errorSpy } = await setup();
-    mock.onGet('/missing').reply(404, { status: 404, detail: 'Not found' });
-
-    await expect(apiClient.get('/missing')).rejects.toBeDefined();
-    expect(errorSpy).not.toHaveBeenCalled();
-  });
-
-  function setLocation(href: string) {
-    Object.defineProperty(window, 'location', {
-      writable: true,
-      value: { ...window.location, href },
-    });
-  }
-
-  it('does not redirect on 401 from /auth endpoints', async () => {
-    const { apiClient, mock, errorSpy } = await setup();
-    setLocation('/forum');
-    mock.onPost('/auth/login').reply(401, { status: 401, detail: 'Bad credentials' });
-
-    await expect(apiClient.post('/auth/login', {})).rejects.toBeDefined();
-    expect(window.location.href).toBe('/forum');
-    expect(errorSpy).not.toHaveBeenCalled();
-  });
-
-  it('still redirects on 401 from paths that only start with "auth"', async () => {
-    const { apiClient, mock } = await setup();
-    setLocation('/forum');
-    mock.onGet('/authors').reply(401, { status: 401 });
-
-    await expect(apiClient.get('/authors')).rejects.toBeDefined();
-    expect(window.location.href).toBe('/login');
-  });
+it('rejects a late old-generation response before a caller can cache it', async () => {
+  let finish!: (value: [number, object]) => void;
+  mock.onGet('/slow').reply(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+  );
+  const pending = apiClient.get('/slow');
+  await vi.waitFor(() => expect(finish).toBeDefined());
+  sessionEvents.advance();
+  finish([200, { old: true }]);
+  await expect(pending).rejects.toSatisfy(axios.isCancel);
 });
 
-describe('ApiClient >-65 session refresh', () => {
-  afterEach(() => {
-    vi.resetModules();
-  });
+it('a stale 401 cannot terminate a newer identity', async () => {
+  let finish!: (value: [number, object]) => void;
+  const unauthorized = vi.fn();
+  apiClient.setUnauthorizedHandler(unauthorized);
+  mock.onGet('/slow').reply(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+  );
+  const pending = apiClient.get('/slow');
+  await vi.waitFor(() => expect(finish).toBeDefined());
+  sessionEvents.advance();
+  finish([401, {}]);
+  await expect(pending).rejects.toSatisfy(axios.isCancel);
+  expect(unauthorized).not.toHaveBeenCalled();
+});
 
-  async function setup() {
-    vi.resetModules();
-    const { tokenMemory } = await import('@/shared/auth/tokenMemory');
-    const { apiClient } = await import('../api');
-    const axiosInstance = (apiClient as unknown as { client: AxiosInstance }).client;
-    const mock = new MockAdapter(axiosInstance);
-    Object.defineProperty(window, 'location', {
-      writable: true,
-      value: { ...window.location, href: '/current' },
-    });
-    return { tokenMemory, apiClient, mock, axiosInstance };
-  }
-
-  it('sends credentials so the httpOnly refresh cookie is included', async () => {
-    const { axiosInstance } = await setup();
-    expect(axiosInstance.defaults.withCredentials).toBe(true);
-  });
-
-  it('refreshAccessToken stores the new token in memory', async () => {
-    const { tokenMemory, apiClient, mock } = await setup();
-    mock.onPost('/auth/refresh').reply(200, { accessToken: 'new-token', tokenType: 'Bearer' });
-
-    await expect(apiClient.refreshAccessToken()).resolves.toBe('new-token');
-    expect(tokenMemory.get()).toBe('new-token');
-  });
-
-  it('shares one request between concurrent refresh calls', async () => {
-    const { apiClient, mock } = await setup();
-    mock.onPost('/auth/refresh').reply(200, { accessToken: 'new-token', tokenType: 'Bearer' });
-
-    const [a, b] = await Promise.all([
-      apiClient.refreshAccessToken(),
-      apiClient.refreshAccessToken(),
-    ]);
-
-    expect(a).toBe('new-token');
-    expect(b).toBe('new-token');
-    expect(mock.history.post.filter((r) => r.url === '/auth/refresh')).toHaveLength(1);
-  });
-
-  it('starts a new request once the previous refresh has settled', async () => {
-    const { apiClient, mock } = await setup();
-    mock.onPost('/auth/refresh').reply(200, { accessToken: 'new-token', tokenType: 'Bearer' });
-
-    await apiClient.refreshAccessToken();
-    await apiClient.refreshAccessToken();
-
-    expect(mock.history.post.filter((r) => r.url === '/auth/refresh')).toHaveLength(2);
-  });
-
-  it('refreshes and retries the request once after a 401', async () => {
-    const { tokenMemory, apiClient, mock } = await setup();
-    tokenMemory.set('expired-token');
-    mock.onPost('/auth/refresh').reply(200, { accessToken: 'new-token', tokenType: 'Bearer' });
-    let calls = 0;
-    mock.onGet('/protected').reply((config) => {
-      calls += 1;
-      return calls === 1
-        ? [401, {}]
-        : [200, { ok: config.headers?.Authorization === 'Bearer new-token' }];
-    });
-
-    await expect(apiClient.get('/protected')).resolves.toEqual({ ok: true });
-    expect(calls).toBe(2);
-    expect(window.location.href).toBe('/current');
-  });
-
-  it('clears the token and redirects to /login when the refresh fails', async () => {
-    const { tokenMemory, apiClient, mock } = await setup();
-    tokenMemory.set('expired-token');
-    mock.onPost('/auth/refresh').reply(401, {});
-    mock.onGet('/protected').reply(401, {});
-
-    await expect(apiClient.get('/protected')).rejects.toBeDefined();
-    expect(tokenMemory.get()).toBeNull();
-    expect(window.location.href).toBe('/login');
-  });
-
-  it('passes errors of the repeated request to the caller without signing out', async () => {
-    const { tokenMemory, apiClient, mock } = await setup();
-    tokenMemory.set('expired-token');
-    mock.onPost('/auth/refresh').reply(200, { accessToken: 'new-token', tokenType: 'Bearer' });
-    let calls = 0;
-    mock.onGet('/protected').reply(() => {
-      calls += 1;
-      return calls === 1 ? [401, {}] : [403, { detail: 'Access is denied' }];
-    });
-
-    await expect(apiClient.get('/protected')).rejects.toMatchObject({ response: { status: 403 } });
-    expect(tokenMemory.get()).toBe('new-token');
-    expect(window.location.href).toBe('/current');
-  });
-
-  it('does not retry a request that already failed after a refresh', async () => {
-    const { tokenMemory, apiClient, mock } = await setup();
-    tokenMemory.set('token');
-    mock.onPost('/auth/refresh').reply(200, { accessToken: 'new-token', tokenType: 'Bearer' });
-    mock.onGet('/protected').reply(401, {});
-
-    await expect(apiClient.get('/protected')).rejects.toBeDefined();
-    expect(mock.history.get.filter((r) => r.url === '/protected')).toHaveLength(2);
-    // A fresh token being rejected as well means the session is gone.
-    expect(tokenMemory.get()).toBeNull();
-    expect(window.location.href).toBe('/login');
-  });
-
-  it('does not refresh or redirect on 401 from /auth endpoints', async () => {
-    const { apiClient, mock } = await setup();
-    mock.onPost('/auth/login').reply(401, { detail: 'Bad credentials' });
-
-    await expect(apiClient.post('/auth/login', {})).rejects.toBeDefined();
-    expect(mock.history.post.filter((r) => r.url === '/auth/refresh')).toHaveLength(0);
-    expect(window.location.href).toBe('/current');
-  });
+it('lets a user bootstrap a new CSRF token after rejection without replaying the failed mutation', async () => {
+  mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
+  mock.onPost('/edit').replyOnce(403).onPost('/edit').reply(204);
+  await expect(apiClient.post('/edit', {})).rejects.toBeDefined();
+  await apiClient.post('/edit', {});
+  expect(mock.history.get).toHaveLength(2);
+  expect(mock.history.post).toHaveLength(2);
 });

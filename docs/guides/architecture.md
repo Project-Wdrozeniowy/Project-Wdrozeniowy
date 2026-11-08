@@ -25,13 +25,13 @@ Browser → Next.js frontend (:3001) → Express gateway (:3000)
   use its shared `ApiClient` and pass through the gateway, not directly to the
   backend.
 - The gateway owns cross-cutting HTTP concerns such as CORS, rate limiting,
-  access-token verification, and proxying. It must not become a second business
+  bounded HTTP forwarding, and proxying. It must not become a second business
   logic or persistence layer.
 - The backend owns HTTP endpoints, authorization, business rules, and database
   access. Flyway migrations own the schema; existing migrations are immutable.
-- The gateway and backend intentionally verify access tokens independently.
-  Both need the same JWT signing configuration. The frontend keeps access
-  tokens in memory and receives refresh tokens only through an HttpOnly cookie.
+- Spring owns JDBC sessions, CSRF, authentication and current resource authorization.
+  Express has no REST JWT policy or signing key. The SPA restores presentation
+  through `/users/me`; see [session policy and access matrix](sessions.md).
 
 > **Planned, not active:** Redis is provisioned in Compose but has no
 > application consumer. Socket.IO is installed in the gateway but has no
@@ -71,7 +71,7 @@ before migration**, not new placement rules:
   components or hooks rather than growing route files.
 - `src/services/` currently holds HTTP requests and the shared `ApiClient`.
   The target moves these responsibilities under `shared/api/`; routes and UI
-  must not create a second client or bypass token-refresh behaviour.
+  must not create a second client or bypass session/CSRF handling.
 - `src/store/` currently holds shared client/application state. React Query
   owns server-cache state; the overlapping user profile copies are tracked in
   [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150).
@@ -168,14 +168,12 @@ application behavior; hidden `501` API contracts remain provisional. See the
 - Frontend отвечает за представление и взаимодействие с пользователем.
   Браузерные API-запросы идут через общий `ApiClient` и gateway, не напрямую
   в backend.
-- Gateway отвечает за сквозные HTTP-задачи: CORS, rate limiting, проверку
-  access token и proxy. Он не должен становиться вторым слоем бизнес-логики
+- Gateway отвечает за сквозные HTTP-задачи: CORS, rate limiting, ограничения HTTP и proxy. Он не должен становиться вторым слоем бизнес-логики
   или хранения данных.
 - Backend отвечает за HTTP endpoints, авторизацию, бизнес-правила и БД.
   Схема принадлежит Flyway; уже применённые миграции неизменяемы.
-- Gateway и backend намеренно проверяют access token независимо и должны
-  использовать одинаковую конфигурацию подписи JWT. Frontend хранит access
-  token только в памяти, а refresh token получает лишь через HttpOnly cookie.
+- Spring владеет JDBC-сессиями, CSRF и авторизацией; Express не проверяет REST JWT.
+  SPA читает `/users/me`. См. [политику сессий и матрицу доступа](sessions.md).
 
 > **Планируется, но не работает сейчас:** Redis есть в Compose, но приложение
 > пока его не использует. Socket.IO установлен в gateway, однако активной
@@ -215,7 +213,7 @@ PostgreSQL enum mapping **обязателен round-trip тест с мигра
   компоненты или hooks, а не наращивайте route files.
 - `src/services/` сейчас содержит HTTP-запросы и общий `ApiClient`. В целевой
   структуре они переходят в `shared/api/`; routes/UI не должны создавать
-  второй клиент или обходить refresh.
+  второй клиент или обходить session/CSRF transport.
 - `src/store/` сейчас содержит общее клиентское/application state. Серверный
   кеш принадлежит React Query; перекрывающиеся копии профиля вынесены в
   [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150).

@@ -30,6 +30,7 @@ import java.time.OffsetDateTime;
  * and editable through the {@code /users/me} endpoints.
  */
 @Entity
+@org.hibernate.annotations.DynamicUpdate
 @Table(name = "users")
 @Data
 @Builder
@@ -56,6 +57,11 @@ public class User {
      */
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
+
+    /** Changes atomically with password revocation; sessions retain the version they authenticated with. */
+    @Column(name = "auth_version", nullable = false)
+    @Builder.Default
+    private long authVersion = 0;
 
     /** Optional public display name (falls back to {@link #username} in the UI). */
     @Column(name = "display_name", length = 100)

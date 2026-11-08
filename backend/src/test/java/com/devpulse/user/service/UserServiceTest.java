@@ -3,7 +3,7 @@ package com.devpulse.user.service;
 import com.devpulse.auth.entity.Role;
 import com.devpulse.auth.entity.User;
 import com.devpulse.auth.entity.UserStatus;
-import com.devpulse.auth.repository.RefreshTokenRepository;
+
 import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.auth.util.AuthenticatedUserResolver;
 import com.devpulse.exception.AppException;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.when;
 class UserServiceTest {
 
     @Mock private UserRepository userRepository;
-    @Mock private RefreshTokenRepository refreshTokenRepository;
+    @Mock private jakarta.persistence.EntityManager entityManager;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private AuthenticatedUserResolver currentUser;
 
@@ -183,6 +183,7 @@ class UserServiceTest {
     @Test
     void changePasswordRejectsAWrongCurrentPassword() {
         when(currentUser.currentUser()).thenReturn(principal);
+        when(userRepository.lockById(1L)).thenReturn(Optional.of(principal));
         when(passwordEncoder.matches("nope", "hashed")).thenReturn(false);
 
         ChangePasswordRequest req = new ChangePasswordRequest("nope", "brandNew123");
@@ -192,12 +193,13 @@ class UserServiceTest {
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.BAD_REQUEST));
         verify(userRepository, never()).save(any());
-        verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
+        assertThat(principal.getAuthVersion()).isZero();
     }
 
     @Test
-    void changePasswordHashesAndInvalidatesRefreshTokens() {
+    void changePasswordHashesAndInvalidatesAllPriorSessionVersions() {
         when(currentUser.currentUser()).thenReturn(principal);
+        when(userRepository.lockById(1L)).thenReturn(Optional.of(principal));
         when(passwordEncoder.matches("oldPass", "hashed")).thenReturn(true);
         when(passwordEncoder.encode("brandNew123")).thenReturn("newHash");
 
@@ -207,6 +209,6 @@ class UserServiceTest {
 
         assertThat(principal.getPasswordHash()).isEqualTo("newHash");
         verify(userRepository).save(principal);
-        verify(refreshTokenRepository).revokeAllActiveByUser(eq(principal), any(OffsetDateTime.class));
+        assertThat(principal.getAuthVersion()).isEqualTo(1);
     }
 }

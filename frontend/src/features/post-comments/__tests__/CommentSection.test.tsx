@@ -82,6 +82,8 @@ function signedIn(user: UserProfile = alice) {
 
 beforeEach(() => {
   mock = new MockAdapter(axiosInstance);
+  apiClient.clearCsrf();
+  mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
   useStore.setState({ user: null, isAuthenticated: false, isInitialized: true });
 });
 
@@ -197,7 +199,7 @@ describe('CommentSection – while the session is being restored', () => {
     renderSection();
     await screen.findByText('Comment 1');
 
-    act(() => useStore.getState().setAuth(alice, 'token'));
+    act(() => useStore.getState().setAuth(alice));
 
     expect(await screen.findByLabelText('Add a comment')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();

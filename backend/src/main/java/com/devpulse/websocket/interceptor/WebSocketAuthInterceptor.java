@@ -1,6 +1,6 @@
 package com.devpulse.websocket.interceptor;
 
-import com.devpulse.security.JwtUtil;
+import com.devpulse.security.WsTokenVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
-    private final JwtUtil jwtUtil;
+    private final WsTokenVerifier jwtUtil;
     private final UserDetailsService userDetailsService;
 
     @Override

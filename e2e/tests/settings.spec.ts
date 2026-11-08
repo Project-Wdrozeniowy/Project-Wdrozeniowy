@@ -1,4 +1,4 @@
-import { test, expect, signIn, apiResponse, gatewayURL } from '../support/fixtures.js';
+import { test, expect, signIn, apiResponse, gatewayURL, csrfHeaders } from '../support/fixtures.js';
 
 // PWDRZ-108: the settings page against the real backend. Account edits go through
 // PATCH /api/users/me, the password change through POST /api/users/me/password.
@@ -62,11 +62,13 @@ test('changes the password through POST /api/users/me/password and forces a new 
   await expect(page).toHaveURL(/\/login$/);
 
   const withOld = await request.post(`${gatewayURL}/api/auth/login`, {
+    headers: await csrfHeaders(request),
     data: { username: account.username, password: account.password },
   });
   expect(withOld.status()).toBe(401);
   const withNew = await request.post(`${gatewayURL}/api/auth/login`, {
+    headers: await csrfHeaders(request),
     data: { username: account.username, password: newPassword },
   });
-  expect(withNew.status()).toBe(200);
+  expect(withNew.status()).toBe(204);
 });

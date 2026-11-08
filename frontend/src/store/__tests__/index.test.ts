@@ -1,6 +1,5 @@
 import { useStore } from '../index';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
-import { tokenMemory } from '@/shared/auth/tokenMemory';
 
 const mockUser: UserProfile = {
   id: 42,
@@ -16,7 +15,6 @@ const mockUser: UserProfile = {
 };
 
 beforeEach(() => {
-  tokenMemory.set(null);
   // Reset store state between tests
   useStore.setState({
     user: null,
@@ -33,15 +31,14 @@ describe('Combined store >-65', () => {
   });
 
   it('exposes setAuth from AuthSlice', () => {
-    useStore.getState().setAuth(mockUser, 'access-xyz');
+    useStore.getState().setAuth(mockUser);
     const state = useStore.getState();
     expect(state.user).toEqual(mockUser);
-    expect(tokenMemory.get()).toBe('access-xyz');
     expect(state.isAuthenticated).toBe(true);
   });
 
   it('exposes logout from AuthSlice', () => {
-    useStore.getState().setAuth(mockUser, 'access-xyz');
+    useStore.getState().setAuth(mockUser);
     useStore.getState().logout();
     expect(useStore.getState().user).toBeNull();
     expect(useStore.getState().isAuthenticated).toBe(false);
@@ -49,7 +46,7 @@ describe('Combined store >-65', () => {
 
   it('UISlice and AuthSlice state are independent', () => {
     useStore.getState().setLoading(true);
-    useStore.getState().setAuth(mockUser, 'access-xyz');
+    useStore.getState().setAuth(mockUser);
     expect(useStore.getState().isLoading).toBe(true);
     expect(useStore.getState().isAuthenticated).toBe(true);
   });

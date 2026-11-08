@@ -37,10 +37,8 @@ test('signs in, restores the session after reload, and remains signed out after 
   account,
 }) => {
   await signIn(page, account);
-  const refresh = apiResponse(page, '/auth/refresh', 'POST');
   const profile = apiResponse(page, '/users/me', 'GET');
   await page.reload();
-  expect((await refresh).status()).toBe(200);
   const loaded = await profile;
   expect(loaded.status()).toBe(200);
   expect((await loaded.json()).username).toBe(account.username);
@@ -49,12 +47,12 @@ test('signs in, restores the session after reload, and remains signed out after 
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   expect((await logout).status()).toBe(204);
   await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
-  const rejectedRefresh = apiResponse(page, '/auth/refresh', 'POST');
+  const rejectedProfile = apiResponse(page, '/users/me', 'GET');
   await page.reload();
-  expect((await rejectedRefresh).status()).toBe(401);
+  expect((await rejectedProfile).status()).toBe(401);
   await expect(page.getByRole('banner').getByRole('link', { name: /sign in/i })).toBeVisible();
   // No document.cookie, browser token storage, or inspection of HttpOnly values.
-  // Stateless access JWT revocation is not asserted as a logout guarantee.
+  // Reusing the server session after logout is rejected; no automatic restoration exists.
 });
 
 test('rejects wrong credentials without creating an authenticated browser session', async ({

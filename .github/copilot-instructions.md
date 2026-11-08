@@ -18,12 +18,12 @@ or change service coverage gates while editing orchestration.
 Use the versions declared by the owning project; incompatible TypeScript/ESLint
 majors must not be unified incidentally. Shared Nx/Prettier live at root.
 
-| Service  | Runtime       | Key Versions                                                       |
-| -------- | ------------- | ------------------------------------------------------------------ |
-| Frontend | Node.js ≥ 24  | Next.js 16, React 19, TypeScript 5, Tailwind CSS 4                 |
-| Gateway  | Node.js ≥ 24  | Express 5, TypeScript 6                                            |
-| Backend  | Java 17       | Spring Boot 4, Spring Security, Spring Data JPA, jjwt 0.12.6      |
-| Infra    | Docker        | PostgreSQL 16, Redis 7                                             |
+| Service  | Runtime      | Key Versions                                                 |
+| -------- | ------------ | ------------------------------------------------------------ |
+| Frontend | Node.js ≥ 24 | Next.js 16, React 19, TypeScript 5, Tailwind CSS 4           |
+| Gateway  | Node.js ≥ 24 | Express 5, TypeScript 6                                      |
+| Backend  | Java 17      | Spring Boot 4, Spring Security, Spring Data JPA, jjwt 0.12.6 |
+| Infra    | Docker       | PostgreSQL 16, Redis 7                                       |
 
 Frontend additional libraries: Zustand, React Query, Axios, Zod, React Hook Form.
 
@@ -41,14 +41,14 @@ frontend/src/
   features/          ← user actions, form schemas and request mapping
   widgets/           ← reusable page regions
   shared/api/        ← existing transport, generated Orval bindings and Query composition
-  shared/auth/       ← session infrastructure and in-memory tokens
+  shared/auth/       ← session presentation, generations and tab reconciliation
   shared/ui/         ← reusable UI
   shared/lib/        ← utilities
   shared/constants/  ← static data
   store/slices/      ← shared application-state slices
 
 gateway/src/
-  middleware/        ← auth, cors, rateLimiter, logger
+  middleware/        ← boundedBody, cors, rateLimiter, logger
   routes/            ← proxy.ts and wsProxy.ts
   config/            ← env validation
   types/             ← GatewayConfig, Express extensions
@@ -57,7 +57,7 @@ backend/src/main/java/com/devpulse/
   <domain>/          ← controller, service, repository, entity, dto, filter
   config/            ← SecurityConfig, OpenApiConfig
   exception/         ← AppException, GlobalExceptionHandler
-  security/          ← JwtUtil
+  security/          ← WsTokenVerifier (legacy WS-only compatibility)
 ```
 
 Tests live in `__tests__/` subdirectories next to the module (frontend/gateway) or mirror the source tree (backend).
@@ -68,15 +68,15 @@ This frontend layout is a hybrid with feature-local UI and centralized
 
 ## Naming Conventions
 
-| Item                      | Convention                  | Example                         |
-| ------------------------- | --------------------------- | ------------------------------- |
-| React component files     | PascalCase `.tsx`           | `PostCard.tsx`                  |
-| Non-component TS files    | camelCase `.ts`             | `authService.ts`, `usePosts.ts` |
-| TypeScript interfaces/types | PascalCase, no `I` prefix | `AuthResponse`, `User`          |
-| Zustand slices            | camelCase `Slice` suffix    | `createAuthSlice`, `AuthSlice`  |
-| Java classes              | PascalCase                  | `AuthController`, `JwtUtil`     |
-| Java packages             | `com.devpulse.<domain>.<layer>` | `com.devpulse.auth.service` |
-| Custom React hooks        | camelCase `use` prefix      | `usePosts.ts`                   |
+| Item                        | Convention                      | Example                         |
+| --------------------------- | ------------------------------- | ------------------------------- |
+| React component files       | PascalCase `.tsx`               | `PostCard.tsx`                  |
+| Non-component TS files      | camelCase `.ts`                 | `authService.ts`, `usePosts.ts` |
+| TypeScript interfaces/types | PascalCase, no `I` prefix       | `AuthResponse`, `User`          |
+| Zustand slices              | camelCase `Slice` suffix        | `createAuthSlice`, `AuthSlice`  |
+| Java classes                | PascalCase                      | `AuthController`, `JwtUtil`     |
+| Java packages               | `com.devpulse.<domain>.<layer>` | `com.devpulse.auth.service`     |
+| Custom React hooks          | camelCase `use` prefix          | `usePosts.ts`                   |
 
 Project-owned acronyms follow word casing (`ApiClient`, `JwtUtil`, `clientIp`).
 Name component props `<ComponentName>Props`; gateway modules target named
@@ -101,6 +101,7 @@ cleanup target as already implemented.
 Prettier config (both services): `semi: true`, `singleQuote: true`, `tabWidth: 2`, `trailingComma: "es5"`, `printWidth: 100`, `endOfLine: "lf"`, `jsxSingleQuote: false`.
 
 After any TypeScript/JS change run in the affected service directory:
+
 ```bash
 npm run format   # prettier --write
 npm run lint     # eslint src (--fix for gateway)
@@ -118,7 +119,7 @@ npm run lint     # eslint src (--fix for gateway)
 
 ## Hard Constraints
 
-1. **Do not add browser-persistent token storage.** Access tokens use in-memory `tokenMemory`; refresh tokens use an `HttpOnly` cookie. Do not add `localStorage` or `sessionStorage` token handling.
+1. **REST uses server sessions.** Use the shared cookie/CSRF transport; do not add Bearer/refresh flows or browser-persistent credentials. See [session policy](../docs/guides/sessions.md).
 
 2. **Do not remove Redis** from Docker Compose or remove any `depends_on` referencing it as a documentation cleanup. It is provisioned for future integration, but its first use case is not yet selected.
 
@@ -147,20 +148,20 @@ npm run lint     # eslint src (--fix for gateway)
 
 ## Architecture Decisions
 
-- **Dual JWT verification is intentional.** Gateway verifies before proxying; Spring Security re-validates as defence-in-depth. Both must share the same `JWT_SECRET`.
-- **JWT_SECRET must be identical** in root `.env` (backend) and `gateway/.env`. A mismatch causes 401 on every authenticated request with no descriptive error.
-- **Public routes** (no bearer JWT): `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/refresh`, `POST /api/auth/logout`.
+- **Spring owns REST sessions and authorization.** Gateway has no JWT allowlist or signing key.
+- **JWT_SECRET is backend-only provisional WS compatibility** pending PWDRZ-104.
+- **Session and CSRF access matrix:** see [HTTP sessions](../docs/guides/sessions.md); unsafe auth operations require CSRF.
 - **Forum posts API exists**, but the forum feed still uses mock data through `usePosts.ts`. Keep API and UI integration work scoped to their tasks.
 
 ---
 
 ## Testing Conventions
 
-| Service  | Framework                           | Test location                                          |
-| -------- | ----------------------------------- | ------------------------------------------------------ |
-| Frontend | Vitest 3 + React Testing Library    | `src/**/__tests__/*.test.ts(x)`                        |
-| Gateway  | Jest 29 + ts-jest + supertest       | source-local `__tests__/` (including `src/config/` and `src/routes/`); root `src/__tests__/` for `app.ts` |
-| Backend  | JUnit 5 + Mockito + Spring Boot Test | mirrors `src/main/java/`                              |
+| Service  | Framework                            | Test location                                                                                             |
+| -------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Frontend | Vitest 3 + React Testing Library     | `src/**/__tests__/*.test.ts(x)`                                                                           |
+| Gateway  | Jest 29 + ts-jest + supertest        | source-local `__tests__/` (including `src/config/` and `src/routes/`); root `src/__tests__/` for `app.ts` |
+| Backend  | JUnit 5 + Mockito + Spring Boot Test | mirrors `src/main/java/`                                                                                  |
 
 - Frontend uses Vitest 3.2.4 + Istanbul; frontend and gateway enforce four independent service-specific gates. Backend enforces JaCoCo LINE ≥95% and BRANCH ≥85% at `verify`; METHOD/INSTRUCTION are diagnostic. See the canonical [coverage policy](../docs/guides/testing.md#coverage-policy-pwdrz-118) for scope, rationale and execution-data handling.
 - Frontend includes all `src/**/*.{ts,tsx}` production code, including UI, hooks and shared code; do not restore broad directory exclusions. See `frontend/vitest.config.ts` for declaration/test/setup and non-production exclusions.

@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Notifications", description = "Manage user notifications")
 @RestController
 @RequestMapping("/notifications")
-@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "sessionAuth")
 @RequiredArgsConstructor
 public class NotificationController {
 

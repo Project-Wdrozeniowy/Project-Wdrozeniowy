@@ -81,6 +81,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   search = '';
   mock = new MockAdapter(axiosInstance);
+  apiClient.clearCsrf();
+  mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
 });
 
 afterEach(() => {

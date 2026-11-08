@@ -50,7 +50,7 @@ it.each(['text/html;q=0', 'text/html;q=0, */*;q=1', 'text/html-not-a-document'])
   async (accept) => {
     const response = await request(createApp(directory)).get('/forum').set('Accept', accept);
     expect(response.status).toBe(404);
-    expect(response.type).toBe('application/json');
+    expect(response.type).toBe('application/problem+json');
     expect(response.headers.vary).toMatch(/\bAccept\b/);
   }
 );
@@ -110,13 +110,13 @@ it('does not consume the API quota while loading static files', async () => {
   for (let index = 0; index < 105; index++) {
     expect((await request(app).get('/assets/index-abcdefgh.js')).status).toBe(200);
   }
-  // This protected request exercises the actual limiter and auth, without contacting a backend.
+  // Authentication is Spring-owned; this request reaches the unavailable upstream.
   const api = await request(app).get('/api/analytics/trends');
-  expect(api.status).toBe(401);
+  expect(api.status).toBe(502);
   expect(api.headers['ratelimit-remaining']).toBe('99');
   // The unchanged default policy still exhausts after 100 API requests.
   for (let index = 0; index < 99; index++) {
-    expect((await request(app).get('/api/analytics/trends')).status).toBe(401);
+    expect((await request(app).get('/api/analytics/trends')).status).toBe(502);
   }
   const limited = await request(app).get('/api/analytics/trends');
   expect(limited.status).toBe(429);

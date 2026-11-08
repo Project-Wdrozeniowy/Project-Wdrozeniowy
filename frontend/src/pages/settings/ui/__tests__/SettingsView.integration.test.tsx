@@ -1,5 +1,5 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
@@ -7,8 +7,8 @@ import { vi } from 'vitest';
 import SettingsView from '@/pages/settings/ui/SettingsView';
 import { toast } from '@/shared/lib/toast';
 import { apiClient } from '@/shared/api/client/api';
-import { tokenMemory } from '@/shared/auth/tokenMemory';
 import { useStore } from '@/store';
+import { sessionEvents } from '@/shared/auth/sessionEvents';
 import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 /**
@@ -49,8 +49,7 @@ const PROFILE: MyProfile = {
 const axiosInstance = (apiClient as unknown as { client: AxiosInstance }).client;
 let mock: MockAdapter;
 
-function renderView() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderView(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   return render(
     <QueryClientProvider client={client}>
       <SettingsView />
@@ -71,13 +70,13 @@ async function fillPasswords(current = 'old-password', next = 'new-password-1', 
 beforeEach(() => {
   vi.clearAllMocks();
   mock = new MockAdapter(axiosInstance);
-  tokenMemory.set('access-token');
+  apiClient.clearCsrf();
+  mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
   useStore.setState({ user: PROFILE, isAuthenticated: true, isInitialized: true });
 });
 
 afterEach(() => {
   mock.restore();
-  tokenMemory.set(null);
 });
 
 describe('loading', () => {
@@ -142,6 +141,41 @@ describe('account settings', () => {
 });
 
 describe('password change', () => {
+  it('does not sign out a newer identity when an older password change finishes its callbacks', async () => {
+    const bob = {
+      ...PROFILE,
+      id: 2,
+      username: 'bob',
+      email: 'bob@example.com',
+      displayName: 'Bob',
+    };
+    const completed = vi.fn(() => {
+      sessionEvents.advance();
+      useStore.getState().setAuth(bob);
+    });
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+      mutationCache: new MutationCache({ onSuccess: completed }),
+    });
+    mock
+      .onGet('/users/me')
+      .reply(() => [200, useStore.getState().user?.id === bob.id ? bob : PROFILE]);
+    mock.onPost('/users/me/password').reply(204);
+    renderView(client);
+    await screen.findByRole('form', { name: 'Change password' });
+    const user = await fillPasswords();
+    await user.click(screen.getByRole('button', { name: 'Change password' }));
+    await user.click(await screen.findByRole('button', { name: 'Change password and sign out' }));
+    await waitFor(() => expect(completed).toHaveBeenCalledOnce());
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(useStore.getState().user).toEqual(bob);
+    expect(useStore.getState().isAuthenticated).toBe(true);
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+    client.clear();
+  });
   it('asks for confirmation first and sends nothing until it is given', async () => {
     mock.onGet('/users/me').reply(200, PROFILE);
     renderView();
@@ -191,7 +225,6 @@ describe('password change', () => {
     });
     expect(toast.success).toHaveBeenCalledWith('Password changed. Please sign in again.');
     expect(useStore.getState().isAuthenticated).toBe(false);
-    expect(tokenMemory.get()).toBeNull();
   });
 
   it('does not let Cancel call off a change that is already sent', async () => {
@@ -229,7 +262,6 @@ describe('password change', () => {
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(mockReplace).not.toHaveBeenCalled();
     expect(useStore.getState().isAuthenticated).toBe(true);
-    expect(tokenMemory.get()).toBe('access-token');
   });
 
   it('shows a fixed message on a server failure and keeps the session', async () => {

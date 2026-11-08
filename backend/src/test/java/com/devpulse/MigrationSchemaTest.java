@@ -1,10 +1,8 @@
 package com.devpulse;
 
-import com.devpulse.auth.entity.RefreshToken;
 import com.devpulse.auth.entity.Role;
 import com.devpulse.auth.entity.User;
 import com.devpulse.auth.entity.UserStatus;
-import com.devpulse.auth.repository.RefreshTokenRepository;
 import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.forum.entity.Category;
 import com.devpulse.forum.entity.Comment;
@@ -66,8 +64,6 @@ class MigrationSchemaTest {
     @Autowired
     private TagRepository tagRepository;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     private VoteRepository voteRepository;
@@ -221,13 +217,13 @@ class MigrationSchemaTest {
                 });
     }
 
-    /** Every table has non-null {@code created_at} and {@code updated_at} with defaults and the V7 trigger. */
+    /** Domain tables retain V7 auditing; Spring Session uses its own lifecycle/expiry columns. */
     @Test
     void everyTableHasAuditTimestamps() {
         List<String> tables = jdbc.queryForList("""
                 SELECT table_name FROM information_schema.tables
                 WHERE table_schema = current_schema() AND table_type = 'BASE TABLE'
-                  AND table_name <> 'flyway_schema_history'
+                  AND table_name NOT IN ('flyway_schema_history', 'spring_session', 'spring_session_attributes')
                 """, String.class);
         List<String> missingColumns = jdbc.queryForList("""
                 SELECT t.table_name || '.' || wanted.name
@@ -237,16 +233,23 @@ class MigrationSchemaTest {
                        ON c.table_schema = t.table_schema AND c.table_name = t.table_name
                       AND c.column_name = wanted.name AND c.is_nullable = 'NO' AND c.column_default IS NOT NULL
                 WHERE t.table_schema = current_schema() AND t.table_type = 'BASE TABLE'
-                  AND t.table_name <> 'flyway_schema_history' AND c.column_name IS NULL
+                  AND t.table_name NOT IN ('flyway_schema_history', 'spring_session', 'spring_session_attributes')
+                  AND c.column_name IS NULL
                 """, String.class);
         List<String> triggered = jdbc.queryForList("""
                 SELECT event_object_table FROM information_schema.triggers
                 WHERE trigger_schema = current_schema() AND action_statement LIKE '%set_updated_at()%'
                 """, String.class);
 
-        assertThat(tables).hasSize(11);
+        assertThat(tables).containsExactlyInAnyOrder("users", "posts", "categories", "post_tags", "comments",
+                "tags", "votes", "notifications", "post_subscriptions", "activity_events");
         assertThat(missingColumns).isEmpty();
         assertThat(triggered).containsExactlyInAnyOrderElementsOf(tables);
+        assertThat(jdbc.queryForList("""
+                SELECT table_name FROM information_schema.tables
+                WHERE table_schema = current_schema() AND table_type = 'BASE TABLE'
+                  AND table_name IN ('refresh_tokens', 'spring_session', 'spring_session_attributes')
+                """, String.class)).containsExactlyInAnyOrder("spring_session", "spring_session_attributes");
     }
 
     /** The timestamp columns added by V7 are mapped and filled on insert. */
@@ -272,21 +275,14 @@ class MigrationSchemaTest {
      * and a value the writer sets itself is kept.
      */
     @Test
-    void updatedAtFollowsUpdatesOutsideTheEntities() {
-        User owner = userRepository.saveAndFlush(user("schema-audit", Role.USER));
-        RefreshToken token = refreshTokenRepository.saveAndFlush(RefreshToken.builder()
-                .user(owner)
-                .token("a".repeat(64))
-                .expiresAt(OffsetDateTime.now().plusDays(1))
-                .build());
-        assertThat(token.getUpdatedAt()).isNotNull();
-        OffsetDateTime past = OffsetDateTime.parse("2026-01-01T00:00:00Z");
-
-        jdbc.update("UPDATE refresh_tokens SET updated_at = ? WHERE id = ?", past, token.getId());
-        assertThat(tokenUpdatedAt(token.getId())).isAtSameInstantAs(past);
-
-        refreshTokenRepository.revokeAllActiveByUser(owner, OffsetDateTime.now());
-        assertThat(tokenUpdatedAt(token.getId())).isAfter(past);
+    void authenticationVersionRoundTripsWithoutChangingCredentials() {
+        User owner = userRepository.saveAndFlush(user("schema-auth-version", Role.USER));
+        String hash = owner.getPasswordHash();
+        jdbc.update("UPDATE users SET auth_version = auth_version + 1 WHERE id = ?", owner.getId());
+        entityManager.clear();
+        User loaded = userRepository.findById(owner.getId()).orElseThrow();
+        assertThat(loaded.getAuthVersion()).isEqualTo(1);
+        assertThat(loaded.getPasswordHash()).isEqualTo(hash);
     }
 
     /** {@code votes.vote_type} is the native {@code vote_type} enum, for votes on posts and on comments. */
@@ -344,9 +340,6 @@ class MigrationSchemaTest {
         assertThat(subscriptionRepository.unsubscribe(owner.getId(), postId)).isOne();
     }
 
-    private OffsetDateTime tokenUpdatedAt(Long id) {
-        return jdbc.queryForObject("SELECT updated_at FROM refresh_tokens WHERE id = ?", OffsetDateTime.class, id);
-    }
 
     private static User user(String username, Role role) {
         return User.builder()

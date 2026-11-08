@@ -80,7 +80,7 @@ class RecommendationApiTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+        mockMvc = MockMvcBuilders.webAppContextSetup(context).defaultRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())).apply(springSecurity()).build();
         jdbc.update("UPDATE posts SET status = 'DELETED' WHERE status IN ('PUBLISHED', 'LOCKED')");
         jdbc.update("UPDATE tags SET post_count = 0");
 

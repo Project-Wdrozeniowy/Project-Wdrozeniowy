@@ -56,8 +56,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * committed copy from the {@code backend} directory:
  * <pre>./mvnw test -Dtest=OpenApiContractTest -Dopenapi.contract.update=true</pre>
  */
-@SpringBootTest(properties = "springdoc.api-docs.enabled=true")
-@ActiveProfiles("test")
+@SpringBootTest(classes = ContractTestApplication.class, properties = "springdoc.api-docs.enabled=true")
+@ActiveProfiles({"test", "contract"})
 class OpenApiContractTest {
 
     /** Committed copy of the document; Maven runs the tests in the backend module directory. */
@@ -105,12 +105,12 @@ class OpenApiContractTest {
     }
 
     @Test
-    void bearerSchemeUsesOnlyHttpSecurityFields() throws Exception {
-        Map<String, Object> bearer = JsonPath.read(generatedDocument(), "$.components.securitySchemes.bearerAuth");
-        assertThat(bearer).containsEntry("type", "http")
-                .containsEntry("scheme", "bearer")
-                .containsEntry("bearerFormat", "JWT")
-                .doesNotContainKeys("name", "in");
+    void sessionSchemeDescribesTheOpaqueCookie() throws Exception {
+        Map<String, Object> session = JsonPath.read(generatedDocument(), "$.components.securitySchemes.sessionAuth");
+        assertThat(session).containsEntry("type", "apiKey")
+                .containsEntry("name", "SESSION")
+                .containsEntry("in", "cookie")
+                .doesNotContainKeys("scheme", "bearerFormat");
     }
 
     @Test

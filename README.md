@@ -20,19 +20,19 @@ for task ownership, cache boundaries and direct-service escape paths.
 ```
 Browser SPA (React + Vite build)
        ↓  HTML/assets and relative /api on one origin
-Gateway (Express 5)         port 3000   ← JWT verification, rate limiting, CORS
+Gateway (Express 5)         port 3000   ← rate limiting, CORS, HTTP proxy
        ↓
 Backend (Spring Boot 4)     port 8080   ← business logic, REST API
        ↓
 PostgreSQL 16               port 5432
 ```
 
-| Service | Stack |
-|---------|-------|
+| Service      | Stack                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------ |
 | **Frontend** | Vite 7, React Router 7, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod |
-| **Gateway** | Node.js, Express 5, TypeScript 6, JWT, Helmet, express-rate-limit |
-| **Backend** | Java 17, Spring Boot 4, Spring Security, Spring Data JPA, Flyway, jjwt |
-| **Infra** | PostgreSQL 16, Redis 7 (Docker Compose) |
+| **Gateway**  | Node.js, Express 5, TypeScript 6, Helmet, express-rate-limit                                     |
+| **Backend**  | Java 17, Spring Boot 4, Spring Security, Spring Data JPA, Flyway, Spring Session JDBC            |
+| **Infra**    | PostgreSQL 16, Redis 7 (Docker Compose)                                                          |
 
 ## Getting Started
 
@@ -45,7 +45,7 @@ PostgreSQL 16               port 5432
 ### 1. Configure environment
 
 ```bash
-# Root secrets — PostgreSQL credentials, shared JWT secret, Redis config
+# Root secrets — PostgreSQL credentials, backend-only legacy WS key, Redis config
 cp .env.example .env
 
 # Gateway environment
@@ -66,9 +66,8 @@ JWT_SECRET=your_base64_secret
 ```
 
 > [!IMPORTANT]
-> Copy the same generated `JWT_SECRET` value into `gateway/.env`. The root `.env`
-> supplies the Compose services; `gateway/.env` is used when running the gateway
-> from source. A mismatch causes 401 on authenticated requests.
+> `JWT_SECRET` is backend-only compatibility for provisional WS (PWDRZ-104).
+> Gateway does not require a signing key. REST uses [server sessions](docs/guides/sessions.md).
 
 ### 2. Install the workspace
 
@@ -94,14 +93,14 @@ frontend/gateway; Compose data and services remain. Stop those explicitly with
 
 ## Root commands
 
-| Command | Purpose |
-| --- | --- |
-| `npm run check` | Lint, typecheck and formatting |
-| `npm run build` | Build static frontend, gateway and backend |
-| `npm test` | Service coverage gates; backend uses an owned temporary DB |
-| `npm run test:e2e` | Isolated real-stack browser/integration gate |
-| `npm run validate` | Full build/check/coverage/E2E requirements |
-| `npm run graph` | Nx project graph |
+| Command            | Purpose                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| `npm run check`    | Lint, typecheck and formatting                             |
+| `npm run build`    | Build static frontend, gateway and backend                 |
+| `npm test`         | Service coverage gates; backend uses an owned temporary DB |
+| `npm run test:e2e` | Isolated real-stack browser/integration gate               |
+| `npm run validate` | Full build/check/coverage/E2E requirements                 |
+| `npm run graph`    | Nx project graph                                           |
 
 Install browser binaries once with
 `npm exec --workspace orbita-e2e -- playwright install chromium`.
@@ -267,10 +266,10 @@ gateway/src/
   config/              ← env loading with validation
 
 backend/src/main/java/com/devpulse/
-  auth/                ← controller, service, repository, entity, dto, filter
+  auth/                ← controller, service, repository, entity, dto, session
   config/              ← SecurityConfig, OpenApiConfig
   exception/           ← GlobalExceptionHandler (RFC 9457 ProblemDetail)
-  security/            ← JwtUtil
+  security/            ← WsTokenVerifier (legacy WS only)
 
 backend/src/main/resources/db/migration/
   V1__create_users.sql
@@ -278,6 +277,10 @@ backend/src/main/resources/db/migration/
   V3__create_notifications.sql
   V4__create_analytics_tables.sql
   V5__add_replaced_by_to_refresh_tokens.sql
+  V6__seed_default_categories.sql
+  V7__add_audit_timestamps.sql
+  V8__create_server_sessions.sql
+  V9__retire_http_refresh_tokens.sql
 ```
 
 Start with the [developer guides](docs/guides/README.md) for architecture,
@@ -313,11 +316,12 @@ enforcement must be checked rather than inferred from this README.
 
 ## Troubleshooting
 
-**401 on every request** — `JWT_SECRET` in `gateway/.env` does not match the one in `.env`. They must be identical.
+**401 on protected requests** — the server session is absent, expired or revoked. Sign in again; REST has no JWT refresh fallback.
 
 **Backend fails to start (Flyway error)** — inspect the migration error and
 database state first. If this is disposable local data and you intentionally
 want a fresh database, the following command deletes the Compose volumes:
+
 ```bash
 docker compose down -v && docker compose up -d
 ```

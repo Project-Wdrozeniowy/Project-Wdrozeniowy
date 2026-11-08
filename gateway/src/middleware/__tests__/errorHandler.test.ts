@@ -1,159 +1,64 @@
-import type { Request, Response, NextFunction } from 'express';
-import { logger } from '../logger';
-import { sendError, errorHandler } from '../errorHandler';
-import type { ErrorResponse } from '../../types';
-import { createServer } from 'http';
 import request from 'supertest';
+import express from 'express';
+import { createServer } from 'node:http';
+import { sendError, errorHandler } from '../errorHandler';
+import { logger } from '../logger';
 
-function mockReq(url = '/api/test'): Partial<Request> {
-  return { originalUrl: url } as Partial<Request>;
-}
+describe('shared ProblemDetail errors', () => {
+  it.each([{ statusCode: 400 }, { status: 200 }, { status: 600 }, { status: 400.5 }])(
+    'normalizes parser status without exposing details: %j',
+    async (properties) => {
+      const app = express();
+      app.get('/bad', (_req, _res, next) => {
+        next(Object.assign(new Error('private'), properties));
+      });
+      app.use(errorHandler);
+      const response = await request(app).get('/bad');
+      expect(response.status).toBe(properties.statusCode === 400 ? 400 : 500);
+      expect((response.body as { detail: string }).detail).not.toContain('private');
+    }
+  );
+  it.each([401, 403, 404, 408, 413, 415, 429, 500, 502, 504, 599])(
+    'writes status %s without query credentials',
+    async (status) => {
+      const server = createServer((req, res) => {
+        sendError(res, req, status, 'Safe failure');
+      });
+      const response = await request(server).get('/api/test?secret=must-not-escape');
+      expect(response.status).toBe(status);
+      expect(response.headers['content-type']).toContain('application/problem+json');
+      expect(response.body).toMatchObject({
+        type: 'about:blank',
+        status,
+        detail: 'Safe failure',
+        instance: '/api/test',
+      });
+      expect(JSON.stringify(response.body)).not.toContain('must-not-escape');
+    }
+  );
 
-function mockRes(): { status: jest.Mock; json: jest.Mock } {
-  return {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
-  };
-}
-
-describe('sendError()', () => {
-  it('writes the unified JSON error to a raw upstream HTTP response', async () => {
-    const server = createServer((req, res) => {
-      sendError(res, req, 502, 'Backend unavailable');
+  it('masks unexpected error details in responses and logs', async () => {
+    const log = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const app = express();
+    app.get('/fail', (_req, _res, next) => {
+      next(new Error('session=private-cookie'));
     });
-    const response = await request(server).get('/api/raw');
+    app.use(errorHandler);
+    const response = await request(app).get('/fail?password=private');
+    expect(response.status).toBe(500);
+    expect((response.body as { detail: string }).detail).toBe('Internal server error');
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/private|password|session=/);
+    log.mockRestore();
+  });
 
-    expect(response.status).toBe(502);
-    expect(response.headers['content-type']).toContain('application/json');
-    expect(response.body).toEqual(
-      expect.objectContaining({
-        status: 502,
-        error: 'Bad Gateway',
-        message: 'Backend unavailable',
-        path: '/api/raw',
-      })
+  it('destroys a partial response instead of appending a second JSON body', () => {
+    const destroy = jest.fn();
+    sendError(
+      { headersSent: true, destroy } as unknown as express.Response,
+      {} as express.Request,
+      502,
+      'failure'
     );
-  });
-
-  it('calls res.status() with the given status code', () => {
-    const req = mockReq();
-    const res = mockRes();
-
-    sendError(res as unknown as Response, req as Request, 401, 'Token expired');
-
-    expect(res.status).toHaveBeenCalledWith(401);
-  });
-
-  it('returns the correct ErrorResponse shape', () => {
-    const req = mockReq('/api/users');
-    const res = mockRes();
-
-    sendError(res as unknown as Response, req as Request, 401, 'Token expired');
-
-    const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
-    expect(body.status).toBe(401);
-    expect(body.error).toBe('Unauthorized');
-    expect(body.message).toBe('Token expired');
-    expect(body.path).toBe('/api/users');
-    expect(typeof body.timestamp).toBe('string');
-    expect(() => new Date(body.timestamp)).not.toThrow();
-  });
-
-  it('maps 500 to "Internal Server Error"', () => {
-    const req = mockReq();
-    const res = mockRes();
-
-    sendError(res as unknown as Response, req as Request, 500, 'Something went wrong');
-
-    const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
-    expect(body.error).toBe('Internal Server Error');
-  });
-
-  it('maps 502 to "Bad Gateway"', () => {
-    const req = mockReq();
-    const res = mockRes();
-
-    sendError(res as unknown as Response, req as Request, 502, 'Backend unavailable');
-
-    const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
-    expect(body.error).toBe('Bad Gateway');
-  });
-
-  it('maps 429 to "Too Many Requests"', () => {
-    const req = mockReq();
-    const res = mockRes();
-
-    sendError(res as unknown as Response, req as Request, 429, 'Slow down');
-
-    const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
-    expect(body.error).toBe('Too Many Requests');
-  });
-
-  it('maps 418 to the standard Node reason phrase', () => {
-    const req = mockReq();
-    const res = mockRes();
-
-    sendError(res as unknown as Response, req as Request, 418, "I'm a teapot");
-
-    const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
-    expect(body.error).toBe("I'm a Teapot");
-  });
-
-  it('uses "Unknown Error" for unmapped status codes', () => {
-    const req = mockReq();
-    const res = mockRes();
-
-    sendError(res as unknown as Response, req as Request, 599, 'Custom failure');
-
-    const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
-    expect(body.error).toBe('Unknown Error');
-  });
-});
-
-describe('errorHandler()', () => {
-  it('responds with 500 and ErrorResponse shape', () => {
-    const err = new Error('boom');
-    const req = mockReq('/api/boom') as Request;
-    req.method = 'GET';
-    const res = mockRes();
-    const next: NextFunction = jest.fn();
-
-    errorHandler(err, req, res as unknown as Response, next);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
-    expect(body.status).toBe(500);
-    expect(body.error).toBe('Internal Server Error');
-    expect(body.message).toBe('Internal server error');
-  });
-
-  it('logs the error through the shared logger', () => {
-    const spy = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
-    const err = new Error('unexpected');
-    const req = mockReq() as Request;
-    req.method = 'POST';
-    const res = mockRes();
-    const next: NextFunction = jest.fn();
-
-    errorHandler(err, req, res as unknown as Response, next);
-
-    expect(spy).toHaveBeenCalled();
-    spy.mockRestore();
-  });
-
-  it('honors err.status when present', () => {
-    const err = new Error('bad request') as Error & { status?: number };
-    err.status = 400;
-    const req = mockReq('/api/bad') as Request;
-    req.method = 'POST';
-    const res = mockRes();
-    const next: NextFunction = jest.fn();
-
-    errorHandler(err, req, res as unknown as Response, next);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    const body = (res.json.mock.calls[0] as [ErrorResponse])[0];
-    expect(body.status).toBe(400);
-    expect(body.message).toBe('bad request');
+    expect(destroy).toHaveBeenCalled();
   });
 });

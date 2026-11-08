@@ -59,7 +59,7 @@ class CommentControllerApiTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+        mockMvc = MockMvcBuilders.webAppContextSetup(context).defaultRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())).apply(springSecurity()).build();
         author = saveUser("author", Role.USER);
         other = saveUser("other", Role.USER);
         moderator = saveUser("mod", Role.MODERATOR);

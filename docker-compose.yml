@@ -6,11 +6,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-devpulse}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-devpulse} -d ${POSTGRES_DB:-devpulse}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-devpulse} -d ${POSTGRES_DB:-devpulse}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,11 +20,11 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -36,15 +36,14 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - '8080:8080'
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-devpulse}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-devpulse}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-900}
-      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-604800}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      COOKIE_PATH: ${COOKIE_PATH:-/api/auth}
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
       AI_BASE_URL: ${AI_BASE_URL:-}
       AI_API_KEY: ${AI_API_KEY:-}
@@ -63,15 +62,21 @@ services:
       context: .
       dockerfile: gateway/Dockerfile
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       SERVE_SPA: 'true'
       PORT: 3000
       BACKEND_URL: http://backend:8080
-      JWT_SECRET: ${JWT_SECRET}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001}
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+      LOGIN_RATE_LIMIT_MAX: ${LOGIN_RATE_LIMIT_MAX:-10}
+      CSRF_RATE_LIMIT_MAX: ${CSRF_RATE_LIMIT_MAX:-30}
+      API_MAX_BODY_BYTES: ${API_MAX_BODY_BYTES:-1048576}
+      UPSTREAM_TIMEOUT_MS: ${UPSTREAM_TIMEOUT_MS:-25000}
+      BODY_TIMEOUT_MS: ${BODY_TIMEOUT_MS:-10000}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
+      NODE_ENV: ${NODE_ENV:-development}
     depends_on:
       - backend
     networks:
