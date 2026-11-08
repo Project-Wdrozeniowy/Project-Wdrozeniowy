@@ -28,7 +28,7 @@ and contents, including missing and obsolete files, without repairing the checko
 `api:generate` replaces only the owned generated directory after successful generation.
 
 After changing a backend API, regenerate its contract first (from `backend/`, with
-the normal test PostgreSQL environment configured):
+a persistence-free controller contract context):
 
 ```bash
 ./mvnw test -Dtest=OpenApiContractTest -Dopenapi.contract.update=true
@@ -41,8 +41,7 @@ generated diff and consumers together. Do not remove invalid schema fields in a
 frontend transformer or disable validation to make generation pass.
 
 The generated set follows the published inventory; hidden `501` operations do not
-become usable bindings. After PWDRZ-144/145 the inventory contains 32 operations
-and generates 61 files, including notifications and analytics. Published but
+become usable bindings. The inventory includes session CSRF bootstrap, notifications and analytics. Published but
 currently unused bindings require no new UI in this task.
 
 PR checks use the merge result with the current base branch. If `develop` gains
@@ -54,20 +53,14 @@ make CI repair artifacts or validate only an outdated PR head to hide this drift
 
 - `shared/api/client/orvalTransport.ts` forwards generated requests to the existing
   `ApiClient.request`. It does not create an HTTP instance or manage a session.
-- `ApiClient` owns the gateway base ending in `/api`, timeout, bearer injection,
-  credentials, error policy and one retry after a shared rotating refresh. Orval's
-  empty base URL prevents duplicating `/api`.
-- Public reads still receive a bearer when available: responses can contain personal
-  `myVote`/`subscribed` fields. Public does not mean anonymous-only.
-- Access tokens remain in memory. Refresh tokens stay in HttpOnly cookies and are
-  never generated request-body fields or application arguments.
-- Low-level `refreshAccessToken` deliberately uses the same private HTTP instance
-  and a generated response DTO. It remains outside Query caching and generated
-  runtime imports to avoid a transport → generated operations → transport cycle.
-- `shared/auth/loadProfile.ts` preserves pending-token cleanup (PWDRZ-155). Sign-in,
-  sign-up and reload establish the session only after profile loading succeeds.
-- A failed server logout keeps the current session because the cookie may still be
-  valid. Terminal transport 401 ends the session; Query does not retry it again.
+- `ApiClient` owns relative `/api`, cookie credentials, deadlines, CSRF single-flight
+  and error policy. Orval does not create another transport.
+- Public reads may be personalized by a valid session. There is no Bearer injection,
+  refresh endpoint, token DTO or automatic mutation replay.
+- `shared/auth/session.ts` coordinates profile bootstrap, explicit auth mutations,
+  generations and tab reconciliation. Failed profile reads never repeat login.
+- Confirmed 401 becomes guest; ambiguous network/5xx failures remain recoverable.
+  A 403 does not trigger login. Query does not retry 401/403.
 - Error response data is unknown until narrowed. Backend ProblemDetail, gateway
   envelopes, network failures and cancellation are not interchangeable. Cancellation
   does not display a network error toast; feature-specific errors can suppress the

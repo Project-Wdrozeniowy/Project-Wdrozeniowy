@@ -114,7 +114,7 @@ RootLayout keeps the current Query/Auth/Toast providers, scroll restoration
 and path-change focus behavior. Providers are not recreated per page. Query-only
 navigation keeps filter/pagination focus. The global route error boundary
 retains the existing not-found and failure UI. API authorization remains in
-Spring; the Express HTTP JWT boundary is unchanged.
+Spring; Spring owns JDBC sessions and CSRF; Express transparently forwards HTTP (PWDRZ-99).
 
 ## Imports and public entries
 

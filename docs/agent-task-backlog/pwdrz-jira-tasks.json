@@ -17396,9 +17396,9 @@
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-99",
       "localTracking": {
         "status": "in_progress",
-        "updatedAt": "2026-11-08T09:34:29.505Z",
+        "updatedAt": "2026-11-08T10:48:53.040Z",
         "owner": "Codex / PWDRZ-99",
-        "notes": "Removed unused cookie page guard under the user-approved current API-only architecture; references and gateway checks verified. Uncommitted working copy; Jira status unchanged."
+        "notes": "Session HTTP boundary implemented with Spring Session JDBC/CSRF, minimal race handling, SPA isolation, transparent bounded Gateway, forward-only legacy retirement and updated contracts/runbooks. Local commits authorized; no push/Jira mutation. Database-free backend tests, frontend/Gateway coverage, builds and static checks passed. PostgreSQL migration/concurrency/full verify, HTTPS/browser E2E and remote CI remain unrun at the user's explicit development-time request; full acceptance is not marked complete. See pwdrz-99-execution.md."
       }
     },
     {
