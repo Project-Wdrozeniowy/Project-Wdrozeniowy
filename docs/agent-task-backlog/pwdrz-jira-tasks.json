@@ -17395,9 +17395,9 @@
       },
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-99",
       "localTracking": {
-        "status": "done",
-        "updatedAt": "2026-10-16T09:10:13.360Z",
-        "owner": "Codex",
+        "status": "in_progress",
+        "updatedAt": "2026-11-08T09:34:29.505Z",
+        "owner": "Codex / PWDRZ-99",
         "notes": "Removed unused cookie page guard under the user-approved current API-only architecture; references and gateway checks verified. Uncommitted working copy; Jira status unchanged."
       }
     },
