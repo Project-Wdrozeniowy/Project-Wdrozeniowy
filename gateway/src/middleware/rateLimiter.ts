@@ -14,3 +14,23 @@ const rateLimiter = rateLimit({
 });
 
 export default rateLimiter;
+
+export const loginLimiter = rateLimit({
+  windowMs: config.rateLimit.windowMs,
+  limit: config.rateLimit.loginMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    sendError(res, req, 429, 'Too many login attempts');
+  },
+});
+
+export const csrfLimiter = rateLimit({
+  windowMs: config.rateLimit.windowMs,
+  limit: config.rateLimit.csrfMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    sendError(res, req, 429, 'Too many session bootstrap requests');
+  },
+});

@@ -1,99 +1,61 @@
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-jest.mock('dotenv/config', () => {});
 import type { GatewayConfig } from '../../types';
+function loadConfig(): GatewayConfig {
+  jest.resetModules();
+  return jest.requireActual<{ default: GatewayConfig }>('../index').default;
+}
 
-describe('Gateway config', () => {
-  const originalEnv = { ...process.env };
-
-  beforeEach(() => {
-    // Restore env to setup values before each test
-    process.env.JWT_SECRET = 'dGVzdA==';
-    process.env.CORS_ORIGINS = 'http://localhost:3001';
-    delete process.env.PORT;
-    delete process.env.BACKEND_URL;
-    delete process.env.RATE_LIMIT_WINDOW_MS;
-    delete process.env.RATE_LIMIT_MAX;
-  });
-
-  afterAll(() => {
-    Object.assign(process.env, originalEnv);
-  });
-
-  function loadConfig(): GatewayConfig {
-    jest.resetModules();
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const mod = require('../index') as { default: GatewayConfig };
-    return mod.default;
+beforeEach(() => {
+  for (const key of [
+    'JWT_SECRET',
+    'PORT',
+    'BACKEND_URL',
+    'TRUSTED_PROXY_CIDRS',
+    'API_MAX_BODY_BYTES',
+    'UPSTREAM_TIMEOUT_MS',
+    'LOGIN_RATE_LIMIT_MAX',
+    'CSRF_RATE_LIMIT_MAX',
+  ]) {
+    Reflect.deleteProperty(process.env, key);
   }
+});
 
-  it('throws when JWT_SECRET is missing', () => {
-    delete process.env.JWT_SECRET;
-    expect(() => loadConfig()).toThrow('Missing required environment variable: JWT_SECRET');
-  });
+test('starts without a JWT secret or a public-route access policy', () => {
+  const config = loadConfig();
+  expect(config).not.toHaveProperty('jwtSecret');
+  expect(config).not.toHaveProperty('publicRoutes');
+  expect(config.trustedProxies).toEqual([]);
+  expect(config.port).toBe(3000);
+});
 
-  it('uses default port 3000 when PORT is not set', () => {
-    const config = loadConfig();
-    expect(config.port).toBe(3000);
-  });
+test.each(['0', '-1', '1.5', '12junk', 'NaN', '9007199254740992'])(
+  'rejects invalid positive-integer budgets: %s',
+  (value) => {
+    process.env.UPSTREAM_TIMEOUT_MS = value;
+    expect(loadConfig).toThrow('positive integer');
+  }
+);
 
-  it('uses custom PORT when set', () => {
-    process.env.PORT = '4500';
-    const config = loadConfig();
-    expect(config.port).toBe(4500);
-  });
+test.each(['true', '*', '1', 'proxy.example', '127.0.0.1/99', '::1/129', '::1/', '::1/64/1'])(
+  'rejects unrestricted or ambiguous proxy trust: %s',
+  (value) => {
+    process.env.TRUSTED_PROXY_CIDRS = value;
+    expect(loadConfig).toThrow('explicit IP');
+  }
+);
 
-  it('throws when PORT is not a valid integer', () => {
-    process.env.PORT = 'not-a-number';
-    expect(() => loadConfig()).toThrow('must be an integer');
-  });
+test('accepts explicit proxy addresses and subnets', () => {
+  process.env.TRUSTED_PROXY_CIDRS = '127.0.0.1,10.0.0.0/24,::1,::/64';
+  expect(loadConfig().trustedProxies).toHaveLength(4);
+});
 
-  it('uses default backendUrl when BACKEND_URL is not set', () => {
-    const config = loadConfig();
-    expect(config.backendUrl).toBe('http://localhost:8080');
-  });
-
-  it('uses custom BACKEND_URL when set', () => {
-    process.env.BACKEND_URL = 'http://my-backend.example.com';
-    const config = loadConfig();
-    expect(config.backendUrl).toBe('http://my-backend.example.com');
-  });
-
-  it('parses CORS_ORIGINS correctly (comma-separated with spaces)', () => {
-    process.env.CORS_ORIGINS = 'http://a.example.com, http://b.example.com, ';
-    const config = loadConfig();
-    expect(config.cors.origins).toEqual(['http://a.example.com', 'http://b.example.com']);
-  });
-
-  it('uses default CORS origin when CORS_ORIGINS is not set', () => {
-    delete process.env.CORS_ORIGINS;
-    const config = loadConfig();
-    expect(config.cors.origins).toEqual(['http://localhost:3001']);
-  });
-
-  it('always includes POST /api/auth/login in publicRoutes', () => {
-    const config = loadConfig();
-    expect(config.publicRoutes).toContainEqual({ method: 'POST', path: '/api/auth/login' });
-  });
-
-  it('always includes POST /api/auth/register in publicRoutes', () => {
-    const config = loadConfig();
-    expect(config.publicRoutes).toContainEqual({ method: 'POST', path: '/api/auth/register' });
-  });
-
-  it('includes GET /api/search in publicRoutes', () => {
-    const config = loadConfig();
-    expect(config.publicRoutes).toContainEqual({ method: 'GET', path: '/api/search' });
-  });
-
-  it('uses custom rate limit window', () => {
-    process.env.RATE_LIMIT_WINDOW_MS = '30000';
-    const config = loadConfig();
-    expect(config.rateLimit.windowMs).toBe(30000);
-  });
-
-  it('uses custom rate limit max', () => {
-    process.env.RATE_LIMIT_MAX = '50';
-    const config = loadConfig();
-    expect(config.rateLimit.max).toBe(50);
-  });
+test.each([
+  'file:///tmp',
+  'http://user:pass@localhost',
+  'http://localhost/api',
+  'http://localhost?target=other',
+  'http://:password@localhost',
+  'http://localhost#fragment',
+])('rejects a non-origin upstream: %s', (value) => {
+  process.env.BACKEND_URL = value;
+  expect(loadConfig).toThrow('fixed HTTP(S) origin');
 });

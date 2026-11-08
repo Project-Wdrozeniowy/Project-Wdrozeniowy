@@ -1,143 +1,58 @@
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import express from 'express';
-import type { Request, Response, NextFunction, Express } from 'express';
-import helmet from 'helmet';
 import app from '../app';
 import { errorHandler } from '../middleware/errorHandler';
 
-// Mock the proxy middleware so it doesn't try to forward requests to a real backend
-jest.mock('../routes/proxy', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
-  const exp: typeof express = require('express');
-  const router = exp.Router();
-  // Forward everything – let auth middleware decide
-  router.use((_req: Request, _res: Response, next: NextFunction): void => {
+jest.mock('../routes/proxy', () => ({
+  __esModule: true,
+  default: (_req: express.Request, _res: express.Response, next: express.NextFunction): void => {
     next();
-  });
-  return router;
+  },
+}));
+
+test('health is public and carries security headers', async () => {
+  const response = await request(app).get('/health');
+  expect(response.status).toBe(200);
+  expect(response.body).toEqual({ status: 'ok' });
+  expect(response.headers['x-content-type-options']).toBe('nosniff');
 });
 
-const JWT_SECRET_BUF = Buffer.from('dGVzdA==', 'base64');
+test.each([undefined, 'Bearer malformed', 'Bearer expired'])(
+  'leaves API authentication to Spring: %s',
+  async (authorization) => {
+    const call = request(app).get('/api/users/me');
+    if (authorization) {
+      call.set('Authorization', authorization);
+    }
+    expect((await call).status).toBe(404); // the proxy mock falls through, never a Gateway auth rejection
+  }
+);
 
-function makeToken(payload: object = { sub: 'user-1', role: 'user' }): string {
-  return jwt.sign(payload, JWT_SECRET_BUF, {
-    algorithm: 'HS256',
-    expiresIn: '1h',
-  } as jwt.SignOptions);
-}
-
-describe('GET /health', () => {
-  it('returns 200 with { status: "ok" }', async () => {
-    const res = await request(app).get('/health');
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: 'ok' });
-  });
+test('CORS allows only configured development origins and the CSRF header', async () => {
+  const allowed = await request(app)
+    .options('/api/auth/login')
+    .set('Origin', 'http://localhost:3001')
+    .set('Access-Control-Request-Method', 'POST')
+    .set('Access-Control-Request-Headers', 'X-CSRF-TOKEN');
+  expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:3001');
+  expect(allowed.headers['access-control-allow-headers']).toContain('X-CSRF-TOKEN');
+  const denied = await request(app).get('/health').set('Origin', 'https://untrusted.example');
+  expect(denied.headers['access-control-allow-origin']).toBeUndefined();
 });
 
-describe('Security headers (Helmet)', () => {
-  it('adds X-Content-Type-Options header', async () => {
-    const res = await request(app).get('/health');
-    expect(res.headers['x-content-type-options']).toBe('nosniff');
-  });
-
-  it('adds X-DNS-Prefetch-Control header', async () => {
-    const res = await request(app).get('/health');
-    expect(res.headers['x-dns-prefetch-control']).toBeDefined();
-  });
+test('unknown API paths remain ProblemDetail with HTML Accept', async () => {
+  const response = await request(app).get('/api/unknown').set('Accept', 'text/html');
+  expect(response.status).toBe(404);
+  expect(response.type).toBe('application/problem+json');
 });
 
-describe('Auth guard on /api routes', () => {
-  it('returns 401 when no Authorization header is provided', async () => {
-    const res = await request(app).get('/api/analytics/trends');
-    expect(res.status).toBe(401);
-    expect(res.body).toHaveProperty('message');
+test('unexpected errors are masked', async () => {
+  const failing = express();
+  failing.get('/fail', (_req, _res, next) => {
+    next(new Error('private'));
   });
-
-  it('returns 401 with "Missing or invalid Authorization header" message', async () => {
-    const res = await request(app).get('/api/analytics/trends');
-    expect((res.body as { message: string }).message).toBe(
-      'Missing or invalid Authorization header'
-    );
-  });
-
-  it('passes auth guard with a valid Bearer token', async () => {
-    const token = makeToken();
-    const res = await request(app)
-      .get('/api/analytics/trends')
-      .set('Authorization', `Bearer ${token}`);
-    // Proxy mock calls next(), so Express responds with 404 (no route registered)
-    // but it should NOT be 401
-    expect(res.status).not.toBe(401);
-  });
-
-  it('returns 401 with "Token expired" for an expired token', async () => {
-    const expiredToken = jwt.sign({ sub: 'user-1' }, JWT_SECRET_BUF, {
-      algorithm: 'HS256',
-      expiresIn: -1,
-    } as jwt.SignOptions);
-    const res = await request(app)
-      .get('/api/analytics/trends')
-      .set('Authorization', `Bearer ${expiredToken}`);
-    expect(res.status).toBe(401);
-    expect((res.body as { message: string }).message).toBe('Token expired');
-  });
-
-  it('allows POST /api/auth/login without a token (public route)', async () => {
-    const res = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'user@example.com', password: 'secret' });
-    // Should NOT return 401 (auth is skipped for public routes)
-    expect(res.status).not.toBe(401);
-  });
-
-  it('allows POST /api/auth/register without a token (public route)', async () => {
-    const res = await request(app)
-      .post('/api/auth/register')
-      .send({ email: 'new@example.com', password: 'secret', name: 'New' });
-    expect(res.status).not.toBe(401);
-  });
-});
-
-describe('CORS headers', () => {
-  it('allows requests from whitelisted origin', async () => {
-    const res = await request(app).get('/health').set('Origin', 'http://localhost:3001');
-    expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3001');
-  });
-
-  it('does not set Access-Control-Allow-Origin for unknown origin', async () => {
-    const res = await request(app).get('/health').set('Origin', 'http://evil.example.com');
-    expect(res.headers['access-control-allow-origin']).toBeUndefined();
-  });
-});
-
-describe('Global error handler', () => {
-  it('returns 500 JSON for unexpected errors', async () => {
-    const errorApp: Express = express();
-    errorApp.use(helmet());
-    errorApp.get('/boom', (_req: Request, _res: Response, next: NextFunction): void => {
-      next(new Error('unexpected error'));
-    });
-    errorApp.use(errorHandler);
-
-    const res = await request(errorApp).get('/boom');
-    expect(res.status).toBe(500);
-    expect((res.body as { status: number; message: string }).status).toBe(500);
-    expect((res.body as { message: string }).message).toBe('Internal server error');
-  });
-});
-
-describe('Not found handler', () => {
-  it('returns a unified 404 JSON response for unknown paths', async () => {
-    const res = await request(app).get('/unknown-route');
-    expect(res.status).toBe(404);
-    expect(res.body).toEqual(
-      expect.objectContaining({
-        status: 404,
-        error: 'Not Found',
-        message: 'Not found',
-        path: '/unknown-route',
-      })
-    );
-  });
+  failing.use(errorHandler);
+  const response = await request(failing).get('/fail');
+  expect(response.status).toBe(500);
+  expect((response.body as { detail: string }).detail).toBe('Internal server error');
 });

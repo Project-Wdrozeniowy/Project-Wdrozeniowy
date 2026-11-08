@@ -4,33 +4,32 @@ import { STATUS_CODES } from 'http';
 import type { ErrorResponse } from '../types';
 import { logger } from './logger';
 
-function getReasonPhrase(status: number): string {
-  return STATUS_CODES[status] ?? 'Unknown Error';
+export function safePath(req: Request | IncomingMessage): string {
+  return ('originalUrl' in req ? req.originalUrl : (req.url ?? '/')).split('?')[0];
 }
 
 export function sendError(
   res: Response | ServerResponse,
   req: Request | IncomingMessage,
   status: number,
-  message: string
+  detail: string
 ): void {
-  const path = 'originalUrl' in req ? req.originalUrl : (req.url ?? '/');
-  const body: ErrorResponse = {
-    status,
-    error: getReasonPhrase(status),
-    message,
-    path,
-    timestamp: new Date().toISOString(),
-  };
-
-  if ('status' in res && typeof res.status === 'function' && typeof res.json === 'function') {
-    res.status(status).json(body);
+  if (res.headersSent) {
+    res.destroy();
     return;
   }
-
-  const rawRes = res as ServerResponse;
-  rawRes.writeHead(status, { 'Content-Type': 'application/json' });
-  rawRes.end(JSON.stringify(body));
+  const body: ErrorResponse = {
+    type: 'about:blank',
+    title: STATUS_CODES[status] ?? 'Unknown Error',
+    status,
+    detail,
+    instance: safePath(req),
+  };
+  res.writeHead(status, {
+    'Content-Type': 'application/problem+json',
+    'Cache-Control': 'no-store',
+  });
+  res.end(JSON.stringify(body));
 }
 
 export function errorHandler(
@@ -39,8 +38,17 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
-  const status = err.status ?? err.statusCode ?? 500;
-  const message = status >= 500 ? 'Internal server error' : err.message;
-  logger.error(`[error] ${req.method} ${req.originalUrl} — ${err.message}`);
-  sendError(res, req, status, message);
+  const candidate = err.status ?? err.statusCode ?? 500;
+  const status =
+    Number.isInteger(candidate) && candidate >= 400 && candidate <= 599 ? candidate : 500;
+  const detail =
+    status === 413
+      ? 'Request body too large'
+      : status === 415
+        ? 'Unsupported content encoding'
+        : status >= 500
+          ? 'Internal server error'
+          : 'Invalid request';
+  logger.error(`[http] ${req.method} ${safePath(req)} ${String(status)}`);
+  sendError(res, req, status, detail);
 }
