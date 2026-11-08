@@ -56,7 +56,7 @@ function isProfileField(key: string): key is ProfileField {
 /**
  * Turns a failed save into messages written by us. Server texts are never shown: validation
  * messages are not meant for users and anything else (5xx, network) could expose internals.
- * A 401 never gets here: the API client refreshes the session or sends the user to /login.
+ * A 401 never gets here: confirmed expiry clears the session presentation.
  */
 export function getProfileSaveError(error: unknown): ProfileSaveError {
   const status = apiErrorStatus(error);

@@ -7,7 +7,6 @@ import { vi } from 'vitest';
 import SettingsView from '@/pages/settings/ui/SettingsView';
 import { toast } from '@/shared/lib/toast';
 import { apiClient } from '@/shared/api/client/api';
-import { tokenMemory } from '@/shared/auth/tokenMemory';
 import { useStore } from '@/store';
 import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
@@ -71,13 +70,13 @@ async function fillPasswords(current = 'old-password', next = 'new-password-1', 
 beforeEach(() => {
   vi.clearAllMocks();
   mock = new MockAdapter(axiosInstance);
-  tokenMemory.set('access-token');
+  apiClient.clearCsrf();
+  mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
   useStore.setState({ user: PROFILE, isAuthenticated: true, isInitialized: true });
 });
 
 afterEach(() => {
   mock.restore();
-  tokenMemory.set(null);
 });
 
 describe('loading', () => {
@@ -191,7 +190,6 @@ describe('password change', () => {
     });
     expect(toast.success).toHaveBeenCalledWith('Password changed. Please sign in again.');
     expect(useStore.getState().isAuthenticated).toBe(false);
-    expect(tokenMemory.get()).toBeNull();
   });
 
   it('does not let Cancel call off a change that is already sent', async () => {
@@ -229,7 +227,6 @@ describe('password change', () => {
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(mockReplace).not.toHaveBeenCalled();
     expect(useStore.getState().isAuthenticated).toBe(true);
-    expect(tokenMemory.get()).toBe('access-token');
   });
 
   it('shows a fixed message on a server failure and keeps the session', async () => {

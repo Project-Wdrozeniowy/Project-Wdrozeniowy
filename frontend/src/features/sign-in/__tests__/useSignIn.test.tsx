@@ -14,7 +14,14 @@ vi.mock('react-router', async () =>
   (await import('@/test/routerMock')).routerMock({ useNavigate: () => mocks.push })
 );
 vi.mock('@/shared/api/generated/orbita.api', () => ({ login: mocks.login }));
-vi.mock('@/shared/auth/loadProfile', () => ({ loadProfile: mocks.loadProfile }));
+vi.mock('@/shared/auth/session', () => ({
+  authenticateSession: async (mutation: (signal: AbortSignal) => Promise<unknown>) => {
+    await mutation(new AbortController().signal);
+    const user = await mocks.loadProfile();
+    mocks.setAuth(user);
+    return user;
+  },
+}));
 vi.mock('@/store', () => ({
   useStore: (select: (state: { setAuth: typeof mocks.setAuth }) => unknown) =>
     select({ setAuth: mocks.setAuth }),
@@ -35,9 +42,12 @@ describe('useSignIn', () => {
     const { result } = renderHook(() => useSignIn());
     await act(() => result.current.signIn(credentials));
 
-    expect(mocks.login).toHaveBeenCalledWith(credentials);
-    expect(mocks.loadProfile).toHaveBeenCalledWith('access');
-    expect(mocks.setAuth).toHaveBeenCalledWith(profile, 'access');
+    expect(mocks.login).toHaveBeenCalledWith(
+      credentials,
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+    expect(mocks.loadProfile).toHaveBeenCalledWith();
+    expect(mocks.setAuth).toHaveBeenCalledWith(profile);
     expect(mocks.success).toHaveBeenCalledWith('Welcome back, alice!');
     expect(mocks.push).toHaveBeenCalledWith('/');
     expect(result.current.serverError).toBeNull();

@@ -6,8 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface AuthResponse {
-  accessToken: string;
-  expiresIn: number;
-  tokenType: string;
+export interface CsrfResponse {
+  headerName: string;
+  token: string;
 }

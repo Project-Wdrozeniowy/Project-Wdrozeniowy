@@ -1,15 +1,15 @@
 import type { StateCreator } from 'zustand';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
-import { tokenMemory } from '@/shared/auth/tokenMemory';
 
+export type SessionStatus = 'checking' | 'authenticated' | 'guest' | 'error';
 export interface AuthSlice {
   user: UserProfile | null;
   isAuthenticated: boolean;
-  /** False until the first session-restore attempt (refresh cookie) has finished. */
   isInitialized: boolean;
-  setAuth: (user: UserProfile, accessToken: string) => void;
+  sessionStatus: SessionStatus;
+  setAuth: (user: UserProfile) => void;
   setInitialized: () => void;
-  /** Replaces the signed-in user's data, e.g. after a profile edit. Ignored for guests. */
+  setSessionStatus: (status: SessionStatus) => void;
   updateUser: (user: UserProfile) => void;
   logout: () => void;
 }
@@ -18,18 +18,22 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
   user: null,
   isAuthenticated: false,
   isInitialized: false,
-
-  setAuth: (user, accessToken) => {
-    tokenMemory.set(accessToken);
-    set({ user, isAuthenticated: true, isInitialized: true });
-  },
-
-  setInitialized: () => set({ isInitialized: true }),
-
+  sessionStatus: 'checking',
+  setAuth: (user) =>
+    set({ user, isAuthenticated: true, isInitialized: true, sessionStatus: 'authenticated' }),
+  setInitialized: () =>
+    set((state) => ({
+      isInitialized: true,
+      sessionStatus: state.isAuthenticated ? 'authenticated' : 'guest',
+    })),
+  setSessionStatus: (status) =>
+    set({
+      user: null,
+      isAuthenticated: false,
+      isInitialized: status !== 'checking',
+      sessionStatus: status,
+    }),
   updateUser: (user) => set((state) => (state.isAuthenticated ? { user } : state)),
-
-  logout: () => {
-    tokenMemory.set(null);
-    set({ user: null, isAuthenticated: false });
-  },
+  logout: () =>
+    set({ user: null, isAuthenticated: false, isInitialized: true, sessionStatus: 'guest' }),
 });

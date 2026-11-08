@@ -6,7 +6,7 @@ import ProfileSkeleton from './ProfileSkeleton';
 
 /**
  * The signed-in user's profile, loaded from `GET /users/me`, with the edit form.
- * An expired session never shows up here: the API client refreshes it or sends the user to /login.
+ * An expired session never shows up here: the session coordinator handles confirmed expiry.
  */
 export default function ProfileView() {
   const { data, isPending, isLoadingError, isFetching, refetch } = useMyProfile();

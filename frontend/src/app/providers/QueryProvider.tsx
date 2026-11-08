@@ -23,7 +23,8 @@ export default function QueryProvider({ children }: QueryProviderProps) {
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000,
-            retry: (failureCount, error) => apiErrorStatus(error) !== 401 && failureCount < 1,
+            retry: (failureCount, error) =>
+              ![401, 403].includes(apiErrorStatus(error) ?? 0) && failureCount < 1,
           },
         },
       })
@@ -49,6 +50,7 @@ export default function QueryProvider({ children }: QueryProviderProps) {
         const signedOut = !state.isAuthenticated;
         const anotherUser = state.user?.id !== previous.user?.id;
         if (signedOut || anotherUser) {
+          void queryClient.cancelQueries();
           queryClient.clear();
         }
       }),

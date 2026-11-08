@@ -1,7 +1,6 @@
 import { createStore } from 'zustand';
 import { createAuthSlice, type AuthSlice } from '../authSlice';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
-import { tokenMemory } from '@/shared/auth/tokenMemory';
 
 const mockUser: UserProfile = {
   id: 1,
@@ -20,9 +19,7 @@ function makeStore() {
   return createStore<AuthSlice>()(createAuthSlice);
 }
 
-beforeEach(() => {
-  tokenMemory.set(null);
-});
+beforeEach(() => {});
 
 describe('authSlice >-65 initial state', () => {
   it('starts as a not-yet-initialised guest', () => {
@@ -36,7 +33,7 @@ describe('authSlice >-65 initial state', () => {
 describe('authSlice >-65 setAuth', () => {
   it('stores the user, marks the session authenticated and initialised', () => {
     const store = makeStore();
-    store.getState().setAuth(mockUser, 'access-token');
+    store.getState().setAuth(mockUser);
     const { user, isAuthenticated, isInitialized } = store.getState();
     expect(user).toEqual(mockUser);
     expect(isAuthenticated).toBe(true);
@@ -45,8 +42,7 @@ describe('authSlice >-65 setAuth', () => {
 
   it('keeps the access token in memory only, never in storage', () => {
     const store = makeStore();
-    store.getState().setAuth(mockUser, 'access-token');
-    expect(tokenMemory.get()).toBe('access-token');
+    store.getState().setAuth(mockUser);
     expect(localStorage.getItem('accessToken')).toBeNull();
     expect(localStorage.getItem('refreshToken')).toBeNull();
   });
@@ -64,20 +60,19 @@ describe('authSlice >-65 setInitialized', () => {
 describe('authSlice >-65 logout', () => {
   it('clears the user and the in-memory token but stays initialised', () => {
     const store = makeStore();
-    store.getState().setAuth(mockUser, 'access-token');
+    store.getState().setAuth(mockUser);
     store.getState().logout();
     const { user, isAuthenticated, isInitialized } = store.getState();
     expect(user).toBeNull();
     expect(isAuthenticated).toBe(false);
     expect(isInitialized).toBe(true);
-    expect(tokenMemory.get()).toBeNull();
   });
 });
 
 describe('authSlice >-65 updateUser', () => {
   it('replaces the user of a signed-in session and keeps the token', () => {
     const store = makeStore();
-    store.getState().setAuth(mockUser, 'access-token');
+    store.getState().setAuth(mockUser);
     store.getState().updateUser({ ...mockUser, displayName: 'New name' });
 
     expect(store.getState().user?.displayName).toBe('New name');

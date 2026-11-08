@@ -18,7 +18,7 @@ import { useChangePassword } from '@/shared/api/generated/orbita.api';
 import { cn } from '@/shared/lib/cn';
 import { toast } from '@/shared/lib/toast';
 import FormField from '@/shared/ui/FormField';
-import { useStore } from '@/store';
+import { sessionRevoked } from '@/shared/auth/session';
 
 const SUBMIT_CLASS =
   'bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
@@ -35,7 +35,6 @@ const EMPTY_VALUES: ChangePasswordFormData = {
  */
 export default function ChangePasswordForm() {
   const navigate = useNavigate();
-  const logout = useStore((state) => state.logout);
   const { mutateAsync, isPending } = useChangePassword({ request: { skipErrorToast: true } });
   // The values that passed validation, kept while the user confirms: that is what is sent.
   const [validated, setValidated] = useState<ChangePasswordFormData | null>(null);
@@ -73,9 +72,9 @@ export default function ChangePasswordForm() {
       setFormError(form ?? null);
       return;
     }
-    // The server has revoked every refresh token, this device's included, so there is nothing left
+    // The server has revoked every server session, this device's included, so there is nothing left
     // to log out of there. End the session here; this also clears the cached profile.
-    logout();
+    sessionRevoked();
     toast.success(PASSWORD_CHANGED_MESSAGE);
     navigate('/login', { replace: true });
   }

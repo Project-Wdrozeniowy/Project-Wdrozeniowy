@@ -14,7 +14,14 @@ vi.mock('react-router', async () =>
   (await import('@/test/routerMock')).routerMock({ useNavigate: () => mocks.push })
 );
 vi.mock('@/shared/api/generated/orbita.api', () => ({ register: mocks.register }));
-vi.mock('@/shared/auth/loadProfile', () => ({ loadProfile: mocks.loadProfile }));
+vi.mock('@/shared/auth/session', () => ({
+  authenticateSession: async (mutation: (signal: AbortSignal) => Promise<unknown>) => {
+    await mutation(new AbortController().signal);
+    const user = await mocks.loadProfile();
+    mocks.setAuth(user);
+    return user;
+  },
+}));
 vi.mock('@/store', () => ({
   useStore: (select: (state: { setAuth: typeof mocks.setAuth }) => unknown) =>
     select({ setAuth: mocks.setAuth }),
@@ -43,14 +50,17 @@ describe('useSignUp', () => {
     const { result } = renderHook(() => useSignUp(onRejected));
     await act(() => result.current.signUp(form));
 
-    expect(mocks.register).toHaveBeenCalledWith({
-      username: 'alice',
-      email: 'alice@example.com',
-      password: 'Password123',
-      displayName: 'Alice',
-    });
-    expect(mocks.loadProfile).toHaveBeenCalledWith('access');
-    expect(mocks.setAuth).toHaveBeenCalledWith(profile, 'access');
+    expect(mocks.register).toHaveBeenCalledWith(
+      {
+        username: 'alice',
+        email: 'alice@example.com',
+        password: 'Password123',
+        displayName: 'Alice',
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+    expect(mocks.loadProfile).toHaveBeenCalledWith();
+    expect(mocks.setAuth).toHaveBeenCalledWith(profile);
     expect(mocks.success).toHaveBeenCalledWith('Your account has been created.');
     expect(mocks.push).toHaveBeenCalledWith('/');
     expect(onRejected).not.toHaveBeenCalled();

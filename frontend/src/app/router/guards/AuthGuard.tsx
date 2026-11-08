@@ -12,13 +12,14 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const navigate = useNavigate();
   const isInitialized = useStore((s) => s.isInitialized);
   const isAuthenticated = useStore((s) => s.isAuthenticated);
+  const status = useStore((s) => s.sessionStatus);
 
   useEffect(() => {
-    // Until AuthProvider has tried the refresh cookie, a guest and a signed-in user look the same.
-    if (isInitialized && !isAuthenticated) {
+    // Until AuthProvider has checked the server session, a guest and a signed-in user look the same.
+    if (isInitialized && !isAuthenticated && status !== 'error') {
       navigate('/login', { replace: true });
     }
-  }, [isInitialized, isAuthenticated, navigate]);
+  }, [isInitialized, isAuthenticated, status, navigate]);
 
   if (!isInitialized) return <SessionLoader />;
   if (!isAuthenticated) return null;

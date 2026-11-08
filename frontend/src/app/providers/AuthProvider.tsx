@@ -1,40 +1,34 @@
 import { useEffect } from 'react';
-import { apiClient } from '@/shared/api/client/api';
-import { loadProfile } from '@/shared/auth/loadProfile';
+import { observeSessionChanges, reconcileSession } from '@/shared/auth/session';
 import { useStore } from '@/store';
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-/**
- * Restores the session on page load. The access token only lives in memory, so after a
- * reload it is re-issued from the httpOnly refresh cookie. No cookie means a guest.
- */
 export default function AuthProvider({ children }: AuthProviderProps) {
-  const setAuth = useStore((s) => s.setAuth);
-  const setInitialized = useStore((s) => s.setInitialized);
-
+  const status = useStore((state) => state.sessionStatus);
   useEffect(() => {
-    let cancelled = false;
-
-    async function restoreSession() {
-      try {
-        const accessToken = await apiClient.refreshAccessToken();
-        const user = await loadProfile(accessToken);
-        if (!cancelled) setAuth(user, accessToken);
-      } catch {
-        // No valid session: stay a guest.
-      } finally {
-        if (!cancelled) setInitialized();
-      }
-    }
-
-    restoreSession();
-    return () => {
-      cancelled = true;
-    };
-  }, [setAuth, setInitialized]);
-
-  return <>{children}</>;
+    const stop = observeSessionChanges();
+    void reconcileSession();
+    return stop;
+  }, []);
+  return (
+    <>
+      {status === 'error' && (
+        <div role="alert">
+          Unable to verify your session. Your last action was not repeated.{' '}
+          <button
+            type="button"
+            onClick={() => {
+              void reconcileSession();
+            }}
+          >
+            Retry session check
+          </button>
+        </div>
+      )}
+      {children}
+    </>
+  );
 }

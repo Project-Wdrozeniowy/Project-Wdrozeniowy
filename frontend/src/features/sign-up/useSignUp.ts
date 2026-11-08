@@ -4,9 +4,8 @@ import { getRegisterError, toRegisterRequest } from '@/features/sign-up/register
 import type { RegisterError } from '@/features/sign-up/register';
 import type { RegisterFormData } from '@/features/sign-up/register.schema';
 import { register } from '@/shared/api/generated/orbita.api';
-import { loadProfile } from '@/shared/auth/loadProfile';
+import { authenticateSession } from '@/shared/auth/session';
 import { toast } from '@/shared/lib/toast';
-import { useStore } from '@/store';
 
 /**
  * Creating an account: the request, the profile that goes with the new token, the shared session
@@ -15,15 +14,15 @@ import { useStore } from '@/store';
  */
 export function useSignUp(onRejectedFields: (fields: RegisterError['fields']) => void) {
   const navigate = useNavigate();
-  const setAuth = useStore((state) => state.setAuth);
   const [serverError, setServerError] = useState<string | null>(null);
 
   async function signUp(data: RegisterFormData) {
     setServerError(null);
     try {
-      const { accessToken } = await register(toRegisterRequest(data));
-      const user = await loadProfile(accessToken);
-      setAuth(user, accessToken);
+      const user = await authenticateSession((signal) =>
+        register(toRegisterRequest(data), { signal, skipErrorToast: true })
+      );
+      if (!user) return;
       toast.success('Your account has been created.');
       navigate('/');
     } catch (err: unknown) {
