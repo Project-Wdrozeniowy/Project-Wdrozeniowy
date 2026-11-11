@@ -1,5 +1,60 @@
 # PWDRZ-99 execution
 
+## Acceptance rework, 11 November 2026
+
+[Jira review](https://project-wdrz.atlassian.net/browse/PWDRZ-99?focusedCommentId=10193)
+returned the delivered SPA to Ready after manual review of `017e867`. The
+rework started from develop `76ae520`. Commit `9f97fed` corrects the form
+and session outcomes. Commit `a55642c` extends managed Chromium acceptance.
+The sections below this rework record describe earlier verification stages.
+
+| Review case                        | Observed result                                                                                                                                                                             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wrong password, unknown username   | Real login returned 401 with the same form message. The guest could edit the retained input without a session error or Retry button.                                                        |
+| Occupied username with fresh email | Real registration returned 409. The form marked the username, retained the email, password confirmation and consent, and showed no session banner.                                          |
+| Corrected login and another tab    | The second tab reconciled as guest after rejection. Correcting just the password authenticated both tabs as the same user. Two explicit submissions produced two POSTs.                     |
+| CSRF or profile read fails         | Adapter-backed form/provider tests distinguish failure before the POST from failure after a successful POST, including a profile 401. Neither is reported as wrong credentials.             |
+| Network failure and retry          | An ambiguous POST or 502 leaves identity unknown. Retry reads the profile. A 200 restores the user, 401 confirms guest, and 503 preserves the actionable banner. Each attempt had one POST. |
+| Existing or superseded identity    | A rejection with a previously authenticated identity rechecks the current cookie. A late rejection or late reconciliation cannot overwrite a newer login.                                   |
+
+The first integrated frontend run on the unmodified implementation failed
+three assertions: guest state after each rejection and credential wording
+after an accepted login followed by a profile 401. The corrected tests pass
+with the actual forms, provider, Zustand, generated operations and Axios.
+HTTP fault responses in these tests come from the adapter.
+
+### Completion checks
+
+| Original Jira criteria | Verification on the rework                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1, 7, 8                | Real registration, login, reload, logout, protected navigation and two-tab reconciliation in Chromium. Frontend coverage includes stale responses, cache isolation, ambiguous outcomes and single submission.                                                                                                                                                                                                                     |
+| 2, 3                   | Chromium accepted the host-only Secure/HttpOnly/Strict session cookie, Path=/, with no persistence attributes, on a local HTTPS origin. A JVM restart retained the same persisted security context and user. An isolated PostgreSQL fixture accepted an idle session two seconds before its one-hour deadline and rejected it at/after the deadline. SessionValidityFilterTest and AuthCookieFlowTest cover the 12-hour deadline. |
+| 4                      | AuthCookieFlowTest, JdbcSessionConcurrencyTest and the password-change browser flow passed. In a supplemental HTTPS run, a simultaneous password change and independent sign-in both completed; subsequent profile reads by both browsers were rejected. Concurrent login and logout from one authenticated browser ended as guest. These are observed application interleavings.                                                 |
+| 5, 6                   | Migrated-schema authentication/CSRF tests, Spring authorization and ownership suites, private reads and browser guards passed.                                                                                                                                                                                                                                                                                                    |
+| 9, 10                  | Gateway forwarding, quotas, size/deadline, error and log suites passed. Managed browser and HTTP tests exercised real forwarding and SPA fallback.                                                                                                                                                                                                                                                                                |
+| 11, 12                 | Maven verify passed on a disposable PostgreSQL database with fresh and upgrade migration tests, session persistence and WS compatibility. The scheduled cleanup removed an expired anonymous session and preserved the live session and account. OpenAPI drift and deterministic codegen checks passed for all 80 generated files.                                                                                                |
+
+Local commands: `npm run check -- --skip-nx-cache`, frontend and gateway
+`test:coverage` and `build`, `npm run api:check`, frontend `test:codegen`,
+`node tools/workspace/backendTest.mjs` (Maven verify, 320 tests) and
+`npm test --workspace orbita-e2e` (18 passed, one worker, zero retries).
+The first Docker build exposed a TypeScript mismatch in the updated
+pending-login fixture. After correction the full managed run passed,
+including stack cleanup (run `1794415621330-9159751b`).
+
+The separate HTTPS smoke used the built Express app, Spring JAR, a
+self-signed test certificate and a disposable PostgreSQL instance, all
+on loopback. Chromium trusted the certificate for this test context only.
+No deployment infrastructure or shared accounts were used.
+[CI runs for the rework branch](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions?query=branch%3APWDRZ-99-auth-rejection).
+
+The targeted marker check retained PWDRZ-154 registration interests,
+PWDRZ-104 WS delivery, PWDRZ-150 profile consolidation and PWDRZ-161
+Remember Me under their existing owners. Stale token wording and token
+fixtures in the touched form paths now match the session contract.
+
+## Original implementation
+
 Base: `4c8f082807a264d5b3fbe377c1f98a4c99aff540`, verified equal to fetched
 `origin/develop` on 2026-11-08. Branch: `PWDRZ-99-session-http-boundary`.
 The initial implementation used authorized local commits; branch publication was later explicitly authorized.

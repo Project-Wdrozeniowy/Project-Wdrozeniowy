@@ -4,7 +4,7 @@ Spring owns authentication, persisted sessions and resource authorization. Expre
 serves the SPA and proxies `/api` to a fixed backend origin. The browser uses the
 single generated-operation transport with cookies; REST Bearer/refresh credentials
 are retired. See [execution evidence](../agent-task-backlog/pwdrz-99-execution.md)
-for checks actually run and the real-stack checks deferred by the user.
+for the PostgreSQL, browser and service verification results.
 
 ## Cookie, deadlines and revocation
 
@@ -50,6 +50,11 @@ before verifying credentials.
    Spring fixation protection invalidates the old row and creates a new one;
    the context is explicitly saved. Renew CSRF after authentication, then load
    `/users/me`. A failed profile read never repeats the credential mutation.
+   For a confirmed guest, a 401 from the login POST or a 409 from the registration
+   POST keeps the form mounted in guest state and displays its credential or field
+   error. When the prior identity is uncertain or authenticated, read the profile
+   to reconcile the cookie. A network failure or failed post-login CSRF/profile
+   read shows the session recovery action. Retry reads only `/users/me`.
 5. Logout returns 204 and clears the cookie. To log out again as a guest, obtain
    a new CSRF token first. Cookie deletion may use Max-Age=0/expired Expires.
 
@@ -112,7 +117,7 @@ the old session from missing a concurrently committed replacement. Normal
 requests are not serialized; no extra lifecycle table, token registry or custom
 session repository exists. A request whose old session was already removed fails
 with 403 and must explicitly bootstrap again. PostgreSQL lock/transaction
-acceptance remains deferred; in-memory characterization is not proof of it.
+verification results are recorded in the [execution notes](../agent-task-backlog/pwdrz-99-execution.md).
 
 ## One-release cutover
 
