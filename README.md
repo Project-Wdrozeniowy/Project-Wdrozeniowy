@@ -281,6 +281,7 @@ backend/src/main/resources/db/migration/
   V7__add_audit_timestamps.sql
   V8__create_server_sessions.sql
   V9__retire_http_refresh_tokens.sql
+  V10__count_intentional_post_openings.sql
 ```
 
 Start with the [developer guides](docs/guides/README.md) for architecture,
