@@ -47,6 +47,7 @@ const mockPostSummary: PostSummary = {
   viewCount: 0,
   voteScore: 0,
   myVote: null,
+  tags: [],
   commentCount: 0,
   category: mockCategory,
   author: mockAuthor,

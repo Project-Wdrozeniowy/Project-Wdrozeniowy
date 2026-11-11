@@ -8,6 +8,7 @@
 import type { CategoryDto } from './categoryDto.dto';
 import type { MyVoteDto } from './myVoteDto.dto';
 import type { PostSummaryDtoStatus } from './postSummaryDtoStatus.dto';
+import type { TagDto } from './tagDto.dto';
 import type { UserSummaryDto } from './userSummaryDto.dto';
 
 /**
@@ -40,4 +41,6 @@ export interface PostSummaryDto {
   viewCount: number;
   /** Cumulative vote score */
   voteScore: number;
+  /** @maxItems 5 */
+  tags: TagDto[];
 }

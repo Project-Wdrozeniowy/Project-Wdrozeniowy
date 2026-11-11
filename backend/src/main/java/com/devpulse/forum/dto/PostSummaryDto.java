@@ -2,6 +2,7 @@ package com.devpulse.forum.dto;
 
 import com.devpulse.forum.entity.Post;
 import com.devpulse.user.dto.UserSummaryDto;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Getter
 @SuperBuilder
@@ -47,6 +49,11 @@ public class PostSummaryDto {
     @Schema(description = "Post author")
     private UserSummaryDto author;
 
+    @ArraySchema(arraySchema = @Schema(description = "Tags attached to this post, sorted by slug; empty when it "
+            + "has none. A post carries at most " + CreatePostRequest.MAX_TAGS + " tags."),
+            maxItems = CreatePostRequest.MAX_TAGS)
+    private List<TagDto> tags;
+
     @Schema(description = "Timestamp of the last activity (new comment, edit, etc.)")
     private OffsetDateTime lastActivityAt;
 
@@ -57,9 +64,12 @@ public class PostSummaryDto {
             nullable = true)
     private MyVoteDto myVote;
 
-    /** Builds the listing representation of {@code post} with the caller's vote on it, if any. */
-    public static PostSummaryDto from(Post post, MyVoteDto myVote) {
-        return fill(PostSummaryDto.builder(), post, myVote).build();
+    /**
+     * Builds the listing representation of {@code post} with the caller's vote
+     * on it, if any, and its {@code tags}, loaded for the whole page at once.
+     */
+    public static PostSummaryDto from(Post post, MyVoteDto myVote, List<TagDto> tags) {
+        return fill(PostSummaryDto.builder(), post, myVote).tags(tags).build();
     }
 
     /** Copies the summary fields of {@code post} and the caller's vote into {@code builder}. */

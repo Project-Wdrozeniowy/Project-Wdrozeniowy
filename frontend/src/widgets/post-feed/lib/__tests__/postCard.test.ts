@@ -13,6 +13,7 @@ const summary: PostSummary = {
   viewCount: 5,
   voteScore: 7,
   myVote: null,
+  tags: [],
   commentCount: 3,
   category: {
     id: 1,
@@ -128,6 +129,7 @@ const REAL_API_ITEM: PostSummary = {
   pinned: false,
   slug: 'gaming-post-3',
   status: 'PUBLISHED',
+  tags: [],
   title: 'Gaming post 3',
   viewCount: 0,
   voteScore: 0,
