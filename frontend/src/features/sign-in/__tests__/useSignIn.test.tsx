@@ -33,12 +33,12 @@ const profile = { id: 1, username: 'alice', displayName: null };
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.login.mockResolvedValue({ accessToken: 'access' });
+  mocks.login.mockResolvedValue(undefined);
   mocks.loadProfile.mockResolvedValue(profile);
 });
 
 describe('useSignIn', () => {
-  it('logs in, loads the profile of the new token, then sets the shared session and leaves', async () => {
+  it('logs in, loads the profile of the new session, then sets the shared session and leaves', async () => {
     const { result } = renderHook(() => useSignIn());
     await act(() => result.current.signIn(credentials));
 
@@ -65,7 +65,11 @@ describe('useSignIn', () => {
   });
 
   it('reports wrong credentials (401) in our words and does not set a session', async () => {
-    mocks.login.mockRejectedValue({ isAxiosError: true, response: { status: 401 } });
+    mocks.login.mockRejectedValue({
+      isAxiosError: true,
+      config: { method: 'post', url: '/auth/login' },
+      response: { status: 401 },
+    });
     const { result } = renderHook(() => useSignIn());
     await act(() => result.current.signIn(credentials));
 

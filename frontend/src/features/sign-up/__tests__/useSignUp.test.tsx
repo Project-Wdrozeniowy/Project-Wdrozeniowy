@@ -40,7 +40,7 @@ const profile = { id: 1, username: 'alice', displayName: 'Alice' };
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.register.mockResolvedValue({ accessToken: 'access' });
+  mocks.register.mockResolvedValue(undefined);
   mocks.loadProfile.mockResolvedValue(profile);
 });
 
@@ -70,6 +70,7 @@ describe('useSignUp', () => {
   it('hands the fields the server rejected to the form and shows no form message', async () => {
     mocks.register.mockRejectedValue({
       isAxiosError: true,
+      config: { method: 'post', url: '/auth/register' },
       response: { status: 409, data: { detail: 'Username already taken' } },
     });
     const onRejected = vi.fn();

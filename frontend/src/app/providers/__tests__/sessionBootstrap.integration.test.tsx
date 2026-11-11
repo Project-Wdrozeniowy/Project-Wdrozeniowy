@@ -70,6 +70,53 @@ it('profile failure after successful authentication preserves the original error
   expect(useStore.getState().sessionStatus).toBe('error');
 });
 
+const rejectedLogin = {
+  isAxiosError: true,
+  config: { method: 'post', url: '/auth/login' },
+  response: { status: 401 },
+};
+
+it('checks the existing cookie after rejected credentials from an authenticated tab', async () => {
+  useStore.getState().setAuth(alice);
+  vi.mocked(currentProfile).mockResolvedValue(bob);
+  await expect(authenticateSession(vi.fn().mockRejectedValue(rejectedLogin))).rejects.toBe(
+    rejectedLogin
+  );
+  expect(useStore.getState()).toMatchObject({ sessionStatus: 'authenticated', user: bob });
+});
+
+it('ignores an older rejection when a newer login completes', async () => {
+  let reject!: (reason: unknown) => void;
+  const first = authenticateSession(
+    () =>
+      new Promise((_, fail) => {
+        reject = fail;
+      })
+  );
+  vi.mocked(currentProfile).mockResolvedValue(bob);
+  await authenticateSession(vi.fn().mockResolvedValue(undefined));
+  reject(rejectedLogin);
+  expect(await first).toBeUndefined();
+  expect(useStore.getState()).toMatchObject({ sessionStatus: 'authenticated', user: bob });
+});
+
+it('ignores an older rejection if the identity changes during its profile check', async () => {
+  useStore.getState().setSessionStatus('error');
+  let finish!: (user: typeof alice) => void;
+  vi.mocked(currentProfile).mockReturnValueOnce(
+    new Promise((resolve) => {
+      finish = resolve;
+    })
+  );
+  const first = authenticateSession(vi.fn().mockRejectedValue(rejectedLogin));
+  await vi.waitFor(() => expect(currentProfile).toHaveBeenCalled());
+  vi.mocked(currentProfile).mockResolvedValue(bob);
+  await authenticateSession(vi.fn().mockResolvedValue(undefined));
+  finish(alice);
+  expect(await first).toBeUndefined();
+  expect(useStore.getState()).toMatchObject({ sessionStatus: 'authenticated', user: bob });
+});
+
 it('does not claim logout succeeded after an ambiguous network result', async () => {
   useStore.getState().setAuth(alice);
   vi.mocked(logout).mockRejectedValue(new Error('network'));
