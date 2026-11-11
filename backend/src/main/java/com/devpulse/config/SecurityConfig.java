@@ -52,7 +52,8 @@ public class SecurityConfig {
     private static final String[] PUBLIC_READS = {
             "/auth/csrf", "/forum/categories", "/forum/categories/*",
             "/forum/posts", "/forum/posts/*", "/forum/posts/*/comments", "/forum/tags",
-            "/search", "/analytics/trending-posts", "/recommendations/posts", "/recommendations/tags"
+            "/search", "/analytics/trending-posts", "/analytics/public/activity",
+            "/recommendations/posts", "/recommendations/tags"
     };
 
     /** Account state is checked before session authentication is used. */

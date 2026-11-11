@@ -176,6 +176,94 @@ class AnalyticsControllerApiTest {
         mockMvc.perform(get("/analytics/trending-posts").param("period", "90d")).andExpect(status().isBadRequest());
     }
 
+    @Test
+    void guestsGetDailyPublicActivityWithOnlyEligibleRecords() throws Exception {
+        hideAllContent();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        Post published = postCreatedOn("published", PostStatus.PUBLISHED, today.minusDays(1));
+        Post locked = postCreatedOn("locked", PostStatus.LOCKED, today.minusDays(6));
+        Post draft = postCreatedOn("draft", PostStatus.DRAFT, today.minusDays(1));
+        Post deleted = postCreatedOn("deleted", PostStatus.DELETED, today.minusDays(1));
+        postCreatedOn("too-old", PostStatus.PUBLISHED, today.minusDays(7));
+        commentCreatedOn(published, "VISIBLE", today);
+        commentCreatedOn(locked, "VISIBLE", today.minusDays(1));
+        commentCreatedOn(published, "HIDDEN", today);
+        commentCreatedOn(published, "DELETED", today);
+        commentCreatedOn(draft, "VISIBLE", today);
+        commentCreatedOn(deleted, "VISIBLE", today);
+
+        mockMvc.perform(get("/analytics/public/activity"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("7d"))
+                .andExpect(jsonPath("$.windowStart").value(today.minusDays(6) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.windowEnd").value(today.plusDays(1) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.generatedAt").isNotEmpty())
+                .andExpect(jsonPath("$.totalPosts").value(2))
+                .andExpect(jsonPath("$.totalComments").value(2))
+                .andExpect(jsonPath("$.days.length()").value(7))
+                .andExpect(jsonPath("$.days[0].date").value(today.minusDays(6).toString()))
+                .andExpect(jsonPath("$.days[0].posts").value(1))
+                .andExpect(jsonPath("$.days[0].comments").value(0))
+                .andExpect(jsonPath("$.days[1].posts").value(0))
+                .andExpect(jsonPath("$.days[5].date").value(today.minusDays(1).toString()))
+                .andExpect(jsonPath("$.days[5].posts").value(1))
+                .andExpect(jsonPath("$.days[5].comments").value(1))
+                .andExpect(jsonPath("$.days[6].date").value(today.toString()))
+                .andExpect(jsonPath("$.days[6].posts").value(0))
+                .andExpect(jsonPath("$.days[6].comments").value(1));
+    }
+
+    @Test
+    void publicActivityOffersThirtyDaysAndAnEmptyPlatformGivesZeroRows() throws Exception {
+        hideAllContent();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+
+        mockMvc.perform(get("/analytics/public/activity").param("period", "30d").with(as(reader)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("30d"))
+                .andExpect(jsonPath("$.windowStart").value(today.minusDays(29) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.totalPosts").value(0))
+                .andExpect(jsonPath("$.totalComments").value(0))
+                .andExpect(jsonPath("$.days.length()").value(30));
+    }
+
+    @Test
+    void publicActivityRejectsAnyOtherPeriod() throws Exception {
+        for (String period : List.of("24h", "90d", "1d", "abc")) {
+            mockMvc.perform(get("/analytics/public/activity").param("period", period))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.detail").value("period must be one of [30d, 7d]"));
+        }
+    }
+
+    @Test
+    void publicActivityLeavesTheStaffOperationsProtected() throws Exception {
+        mockMvc.perform(get("/analytics/trends")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/analytics/trends").with(as(reader))).andExpect(status().isForbidden());
+        mockMvc.perform(get("/analytics/summary")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/analytics/summary").with(as(reader))).andExpect(status().isForbidden());
+        mockMvc.perform(get("/analytics/summary").with(as(admin))).andExpect(status().isOk());
+    }
+
+    /** Takes every existing post out of the public figures, inside the rolled-back transaction. */
+    private void hideAllContent() {
+        jdbc.update("UPDATE posts SET status = 'DELETED'");
+    }
+
+    private Post postCreatedOn(String name, PostStatus postStatus, LocalDate day) {
+        Post post = savePost(name, postStatus);
+        postRepository.flush();
+        jdbc.update("UPDATE posts SET created_at = ? WHERE id = ?",
+                day.atTime(12, 0).atOffset(ZoneOffset.UTC), post.getId());
+        return post;
+    }
+
+    private void commentCreatedOn(Post post, String commentStatus, LocalDate day) {
+        long id = saveComment(post, author, commentStatus);
+        jdbc.update("UPDATE comments SET created_at = ? WHERE id = ?",
+                day.atTime(12, 0).atOffset(ZoneOffset.UTC), id);
+    }
+
     private Post savePost(String name, PostStatus postStatus) {
         return postRepository.save(Post.builder()
                 .author(author)
