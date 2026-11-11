@@ -40,8 +40,8 @@ const profile = { id: 1, username: 'alice', displayName: 'Alice' };
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.login.mockResolvedValue({ accessToken: 'access' });
-  mocks.register.mockResolvedValue({ accessToken: 'access' });
+  mocks.login.mockResolvedValue(undefined);
+  mocks.register.mockResolvedValue(undefined);
   mocks.loadProfile.mockResolvedValue(profile);
 });
 
@@ -73,7 +73,11 @@ it('loads the authenticated profile before setting auth and navigating', async (
 });
 
 it('shows the credential error for 401 without establishing a session', async () => {
-  mocks.login.mockRejectedValue({ isAxiosError: true, response: { status: 401 } });
+  mocks.login.mockRejectedValue({
+    isAxiosError: true,
+    config: { method: 'post', url: '/auth/login' },
+    response: { status: 401 },
+  });
   render(<LoginPage />);
   const user = await fillLogin();
   await user.click(screen.getByRole('button', { name: 'Sign In' }));
@@ -84,8 +88,10 @@ it('shows the credential error for 401 without establishing a session', async ()
 });
 
 it('keeps submission disabled while authentication is pending', async () => {
-  let resolveLogin!: (value: { accessToken: string }) => void;
-  mocks.login.mockImplementationOnce(() => new Promise((resolve) => (resolveLogin = resolve)));
+  let resolveLogin!: () => void;
+  mocks.login.mockImplementationOnce(
+    () => new Promise<void>((resolve) => (resolveLogin = resolve))
+  );
   render(<LoginPage />);
   const user = await fillLogin();
   await user.click(screen.getByRole('button', { name: 'Sign In' }));
@@ -93,7 +99,7 @@ it('keeps submission disabled while authentication is pending', async () => {
   expect(pendingButton).toBeDisabled();
   await user.click(pendingButton);
   expect(mocks.login).toHaveBeenCalledTimes(1);
-  resolveLogin({ accessToken: 'access' });
+  resolveLogin();
   await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/'));
 });
 
@@ -191,6 +197,7 @@ describe('registration display name', () => {
   it('marks the fields the server rejects and keeps what was typed', async () => {
     mocks.register.mockRejectedValue({
       isAxiosError: true,
+      config: { method: 'post', url: '/auth/register' },
       response: {
         status: 400,
         data: {
@@ -218,6 +225,7 @@ describe('registration display name', () => {
   it('says the username is taken under the username field, not with server text', async () => {
     mocks.register.mockRejectedValue({
       isAxiosError: true,
+      config: { method: 'post', url: '/auth/register' },
       response: { status: 409, data: { status: 409, detail: 'Username already taken' } },
     });
     await submitWithDisplayName('Alice');

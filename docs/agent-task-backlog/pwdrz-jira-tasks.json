@@ -17395,10 +17395,10 @@
       },
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-99",
       "localTracking": {
-        "status": "in_progress",
-        "updatedAt": "2026-11-08T15:25:43.710Z",
+        "status": "done",
+        "updatedAt": "2026-11-11T16:56:02.263Z",
         "owner": "Codex / PWDRZ-99",
-        "notes": "PR79 review against origin/develop and current Jira: corrected stale codegen/session/schema fixtures identified by CI; guest bootstrap/search and post-response account-isolation races; explicit private SockJS HTTP boundary verified with a negative control; active auth guidance updated. Local checks recorded in pwdrz-99-execution.md. PostgreSQL/full verify/E2E/HTTPS and new remote CI remain pending under the user's development-time constraint. Review changes are uncommitted; no push/Jira mutation or CI dispatch."
+        "notes": "Acceptance rework implemented on 76ae520. Guest rejections, profile/CSRF ambiguity, retry, retained input and two-tab recovery verified. Full service gates, managed Chromium and local HTTPS lifecycle checks passed. See pwdrz-99-execution.md for AC mapping and linked branch CI. Jira acceptance remains with the reviewer."
       }
     },
     {

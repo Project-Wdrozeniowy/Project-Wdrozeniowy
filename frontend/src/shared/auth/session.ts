@@ -1,6 +1,6 @@
 import { currentProfile, logout } from '@/shared/api/generated/orbita.api';
 import { apiClient } from '@/shared/api/client/api';
-import { apiErrorStatus } from '@/shared/api/client/apiError';
+import { apiErrorStatus, authPostStatus } from '@/shared/api/client/apiError';
 import { sessionEvents } from './sessionEvents';
 import { useStore } from '@/store';
 
@@ -32,6 +32,10 @@ export async function reconcileSession(background = false) {
   if (background && pendingAuthMutations > 0) return;
   // A focus check must not unmount the current account's form while its session is still valid.
   const generation = background ? sessionEvents.current() : begin();
+  await readSession(generation, background);
+}
+
+async function readSession(generation: number, background: boolean) {
   const { controller, release } = sessionEvents.controller();
   try {
     const user = await currentProfile({
@@ -55,6 +59,7 @@ export async function reconcileSession(background = false) {
 
 /** Executes one explicit auth mutation; a failed profile read never repeats the mutation. */
 export async function authenticateSession(mutation: (signal: AbortSignal) => Promise<unknown>) {
+  const wasGuest = useStore.getState().sessionStatus === 'guest';
   const generation = begin();
   publish('changing');
   const { controller, release } = sessionEvents.controller();
@@ -73,7 +78,17 @@ export async function authenticateSession(mutation: (signal: AbortSignal) => Pro
     return user;
   } catch (error) {
     if (generation !== sessionEvents.current()) return undefined;
-    useStore.getState().setSessionStatus('error');
+    const rejected =
+      authPostStatus(error, 'login') === 401 || authPostStatus(error, 'register') === 409;
+    if (!rejected) {
+      useStore.getState().setSessionStatus('error');
+    } else if (wasGuest) {
+      useStore.getState().setSessionStatus('guest');
+    } else {
+      // Rejecting new credentials does not establish the identity of the existing cookie.
+      await readSession(generation, false);
+      if (generation !== sessionEvents.current()) return undefined;
+    }
     throw error;
   } finally {
     pendingAuthMutations -= 1;

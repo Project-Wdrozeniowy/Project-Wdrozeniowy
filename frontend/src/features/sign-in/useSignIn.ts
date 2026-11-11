@@ -7,13 +7,9 @@ import {
 import type { LoginFormData } from '@/features/sign-in/login.schema';
 import { login } from '@/shared/api/generated/orbita.api';
 import { authenticateSession } from '@/shared/auth/session';
-import { apiErrorMessage, apiErrorStatus } from '@/shared/api/client/apiError';
+import { apiErrorMessage, authPostStatus } from '@/shared/api/client/apiError';
 import { toast } from '@/shared/lib/toast';
 
-/**
- * Signing in: the request, the profile that goes with the new token, the shared session state,
- * the greeting and the way on to the home page. The form only shows what this reports.
- */
 export function useSignIn() {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -28,11 +24,10 @@ export function useSignIn() {
       toast.success(`Welcome back, ${user.displayName ?? user.username}!`);
       navigate('/');
     } catch (err: unknown) {
-      setServerError(
-        apiErrorStatus(err) === 401
-          ? INVALID_CREDENTIALS_MESSAGE
-          : apiErrorMessage(err, SIGN_IN_FAILED_MESSAGE)
-      );
+      const status = authPostStatus(err, 'login');
+      if (status === 401) setServerError(INVALID_CREDENTIALS_MESSAGE);
+      else if (status !== undefined) setServerError(apiErrorMessage(err, SIGN_IN_FAILED_MESSAGE));
+      else setServerError(SIGN_IN_FAILED_MESSAGE);
     }
   }
 

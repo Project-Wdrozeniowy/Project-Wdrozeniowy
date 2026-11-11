@@ -62,7 +62,7 @@ are not copied into snapshots or loaded by Compose.
 | DB password / JWT secret | Generated per run; the Base64 legacy WS key is supplied only to backend                                  |
 | CORS                     | Exact frontend origin                                                                                    |
 | Cookies                  | `COOKIE_SECURE=false` on this HTTP-only local stack; HttpOnly/SameSite/path behavior stays real          |
-| Migrations               | Normal Flyway V1–V7 and Hibernate validate; no create-drop profile                                       |
+| Migrations               | Flyway applies the full migration history, including V8/V9 for sessions, with Hibernate validation       |
 | Rate limiting            | Test-only max 1000 avoids fixture/readiness exhaustion; rate limiting itself is tested in gateway suites |
 
 To resolve a port conflict, set `E2E_GATEWAY_PORT` and/or
@@ -96,7 +96,10 @@ never use real account credentials. CI artifact retention is seven days.
 
 1. Browser registration → HTTP 201/profile 200 → authenticated UI.
 2. Browser login → reload with actual server-session bootstrap → logout 204 → reload remains guest.
-3. Invalid credentials → actual 401 and visible error, no authenticated UI.
+3. Wrong password or unknown username returns 401 and keeps the guest form visible.
+   Correcting the password signs in both tabs after one more submission. An occupied
+   username returns 409 and preserves the registration input. These rejections show
+   the form error without the session recovery banner.
 4. Browser post creation → protected gateway POST 201 → persisted post visible
    in the feed after reload; an additional real API read confirms stored content.
    PWDRZ-130 also checks cast 201, switch 200, personal vote after reload and
@@ -114,7 +117,7 @@ and never sent. Post details remain a placeholder,
 so the forum scenario does not fake a completed detail screen. Comments
 (PWDRZ-142/67), notifications/STOMP (PWDRZ-104), full session expiry/concurrency matrices,
 cross-browser expansion and performance are not part of this initial gate.
-Logout rejects subsequent HTTP reuse of the revoked session. See [PWDRZ-99 evidence](../docs/agent-task-backlog/pwdrz-99-execution.md) for unrun lifecycle acceptance.
+Logout rejects subsequent HTTP reuse of the revoked session. See [PWDRZ-99 evidence](../docs/agent-task-backlog/pwdrz-99-execution.md) for lifecycle acceptance results.
 
 ## Controlled failure and CI
 
