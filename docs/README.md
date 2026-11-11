@@ -62,6 +62,12 @@ pair together; no automated diagram-generation path is configured in this
 repository. The [Flyway migrations](../backend/src/main/resources/db/migration/),
 not the diagrams, define the actual database schema.
 
+## Synthetic demo data
+
+[`tools/demo-data`](../tools/demo-data/README.md) loads a labelled synthetic forum history into an
+owned `*_demo` database for exploring the analytics screens and for the defence. It documents the
+exact commands, the reset, the demo accounts and the expected figures, and includes a check script.
+
 ## AI agents and tooling
 
 These files are instructions or machine context, not extra developer guides:
