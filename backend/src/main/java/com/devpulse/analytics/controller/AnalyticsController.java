@@ -3,6 +3,7 @@ package com.devpulse.analytics.controller;
 import com.devpulse.analytics.dto.ActivityTrendDto;
 import com.devpulse.analytics.dto.PostAnalyticsDto;
 import com.devpulse.analytics.dto.PlatformSummaryDto;
+import com.devpulse.analytics.dto.PublicActivityDto;
 import com.devpulse.analytics.dto.UserActivitySummaryDto;
 import com.devpulse.analytics.service.AnalyticsService;
 import com.devpulse.forum.dto.PostSummaryDto;
@@ -20,19 +21,18 @@ import java.util.List;
 
 /**
  * REST controller for activity and engagement analytics; how each figure is
- * counted is documented on {@link AnalyticsService}. Trending posts are
- * public, everything else needs authentication.
+ * counted is documented on {@link AnalyticsService}. Trending posts and the
+ * public activity are open to guests, everything else needs authentication.
  */
 @Tag(name = "Analytics", description = "Activity and engagement analytics")
 @RestController
 @RequestMapping("/analytics")
-@SecurityRequirement(name = "sessionAuth")
 @RequiredArgsConstructor
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
 
-    @Operation(summary = "Get own activity summary")
+    @Operation(summary = "Get own activity summary", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Summary returned"),
         @ApiResponse(responseCode = "401", description = "Not authenticated")
@@ -42,7 +42,7 @@ public class AnalyticsController {
         return analyticsService.myActivity();
     }
 
-    @Operation(summary = "Get analytics for a specific post")
+    @Operation(summary = "Get analytics for a specific post", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Post analytics returned"),
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
@@ -56,7 +56,7 @@ public class AnalyticsController {
         return analyticsService.postAnalytics(id);
     }
 
-    @Operation(summary = "Get platform-wide summary")
+    @Operation(summary = "Get platform-wide summary", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Summary returned"),
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
@@ -70,7 +70,8 @@ public class AnalyticsController {
 
     @Operation(summary = "Get activity trend for a metric over a period",
             description = "Daily counts (UTC) of the rows created for the chosen metric within the period; "
-                    + "days without rows count 0.")
+                    + "days without rows count 0.",
+            security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Trend data returned"),
         @ApiResponse(responseCode = "400", description = "Invalid metric or period"),
@@ -91,13 +92,11 @@ public class AnalyticsController {
 
     @Operation(summary = "Get trending posts for a time window",
             description = "Public. The most active published or locked posts within the window, ranked by "
-                    + "views + 2 x votes + 3 x comments in the window; posts without activity are left out.",
-            security = {})
+                    + "views + 2 x votes + 3 x comments in the window; posts without activity are left out.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Trending posts returned"),
         @ApiResponse(responseCode = "400", description = "Invalid period or limit")
     })
-    @io.swagger.v3.oas.annotations.security.SecurityRequirements
     @GetMapping("/trending-posts")
     public List<PostSummaryDto> getTrendingPosts(
             @Parameter(description = "Time window", example = "24h",
@@ -106,5 +105,21 @@ public class AnalyticsController {
             @Parameter(description = "Maximum number of results (1–50)", example = "10")
             @RequestParam(defaultValue = "10") int limit) {
         return analyticsService.trendingPosts(period, limit);
+    }
+
+    @Operation(summary = "Get daily public platform activity",
+            description = "Public. Published or locked posts and visible comments on them, per UTC day, for the "
+                    + "last 7 or 30 UTC days ending with the current, still partial day. Quiet days are returned "
+                    + "with 0. Figures count the records that are public now and were created in the window.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Activity returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid period")
+    })
+    @GetMapping("/public/activity")
+    public PublicActivityDto getPublicActivity(
+            @Parameter(description = "Number of UTC days", example = "7d",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"7d", "30d"}))
+            @RequestParam(defaultValue = "7d") String period) {
+        return analyticsService.publicActivity(period);
     }
 }

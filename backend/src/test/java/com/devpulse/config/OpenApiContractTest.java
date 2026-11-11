@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -111,6 +112,20 @@ class OpenApiContractTest {
                 .containsEntry("name", "SESSION")
                 .containsEntry("in", "cookie")
                 .doesNotContainKeys("scheme", "bearerFormat");
+    }
+
+    @Test
+    void publicAnalyticsNeedNoSessionAndTheOtherAnalyticsDo() throws Exception {
+        String document = generatedDocument();
+
+        for (String open : List.of("/analytics/public/activity", "/analytics/trending-posts")) {
+            Map<String, Object> operation = JsonPath.read(document, "$.paths['" + open + "'].get");
+            assertThat(operation).as(open).doesNotContainKey("security");
+        }
+        for (String closed : List.of("/analytics/me", "/analytics/posts/{id}", "/analytics/summary", "/analytics/trends")) {
+            List<Map<String, Object>> security = JsonPath.read(document, "$.paths['" + closed + "'].get.security");
+            assertThat(security).as(closed).containsExactly(Map.of("sessionAuth", List.of()));
+        }
     }
 
     @Test

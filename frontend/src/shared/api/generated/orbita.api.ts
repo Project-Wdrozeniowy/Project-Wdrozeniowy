@@ -42,6 +42,8 @@ import type { CsrfResponse } from './models/csrfResponse.dto';
 
 import type { GetActivityTrendParams } from './models/getActivityTrendParams.dto';
 
+import type { GetPublicActivityParams } from './models/getPublicActivityParams.dto';
+
 import type { GetRecommendedPostsParams } from './models/getRecommendedPostsParams.dto';
 
 import type { GetRecommendedTagsParams } from './models/getRecommendedTagsParams.dto';
@@ -77,6 +79,8 @@ import type { PostDto } from './models/postDto.dto';
 import type { PostSummaryDto } from './models/postSummaryDto.dto';
 
 import type { ProblemDetail } from './models/problemDetail.dto';
+
+import type { PublicActivityDto } from './models/publicActivityDto.dto';
 
 import type { RecommendedPostDto } from './models/recommendedPostDto.dto';
 
@@ -4597,6 +4601,140 @@ export const invalidatePublicProfile = async (
   options?: InvalidateOptions
 ): Promise<QueryClient> => {
   await queryClient.invalidateQueries({ queryKey: getPublicProfileQueryKey(username) }, options);
+
+  return queryClient;
+};
+
+/**
+ * Public. Published or locked posts and visible comments on them, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Quiet days are returned with 0. Figures count the records that are public now and were created in the window.
+ * @summary Get daily public platform activity
+ */
+export const getPublicActivity = (
+  params?: GetPublicActivityParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PublicActivityDto>(
+    { url: `/analytics/public/activity`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getGetPublicActivityQueryKey = (params?: GetPublicActivityParams) => {
+  return [`/analytics/public/activity`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetPublicActivityQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicActivity>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicActivityQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicActivity>>> = ({ signal }) =>
+    getPublicActivity(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicActivity>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPublicActivityQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicActivity>>
+>;
+export type GetPublicActivityQueryError = ErrorType<ProblemDetail>;
+
+export function useGetPublicActivity<
+  TData = Awaited<ReturnType<typeof getPublicActivity>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | GetPublicActivityParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicActivity>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicActivity>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicActivity<
+  TData = Awaited<ReturnType<typeof getPublicActivity>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicActivity>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicActivity>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicActivity<
+  TData = Awaited<ReturnType<typeof getPublicActivity>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get daily public platform activity
+ */
+
+export function useGetPublicActivity<
+  TData = Awaited<ReturnType<typeof getPublicActivity>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPublicActivityQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetPublicActivity} query
+ */
+export const invalidateGetPublicActivity = async (
+  queryClient: QueryClient,
+  params?: GetPublicActivityParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getGetPublicActivityQueryKey(params) }, options);
 
   return queryClient;
 };

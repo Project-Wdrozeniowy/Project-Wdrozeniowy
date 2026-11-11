@@ -3,6 +3,8 @@ package com.devpulse.analytics.service;
 import com.devpulse.analytics.dto.ActivityTrendDto;
 import com.devpulse.analytics.dto.PlatformSummaryDto;
 import com.devpulse.analytics.dto.PostAnalyticsDto;
+import com.devpulse.analytics.dto.PublicActivityDayDto;
+import com.devpulse.analytics.dto.PublicActivityDto;
 import com.devpulse.analytics.dto.TrendDataPointDto;
 import com.devpulse.analytics.dto.UserActivitySummaryDto;
 import com.devpulse.analytics.repository.AnalyticsRepository;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Comparator;
@@ -41,6 +44,12 @@ import java.util.stream.Collectors;
  *       quiet days; the first day only counts from the window start.</li>
  *   <li>Trending posts rank public posts by views + 2 × votes + 3 × comments
  *       within the window (see {@link AnalyticsRepository#trendingPostIds}).</li>
+ *   <li>Public activity covers whole UTC days: the window starts at 00:00 UTC
+ *       of the first day (inclusive) and ends at 00:00 UTC after the last
+ *       (exclusive). The last day is the current one, so it is partial, and
+ *       every day gets a row, 0 when quiet. It counts records that are public
+ *       now and were created in the window: public posts, and visible comments
+ *       on public posts.</li>
  * </ul>
  */
 @Service
@@ -59,6 +68,11 @@ public class AnalyticsService {
     /** Windows offered for trending posts. */
     static final Map<String, Duration> TRENDING_PERIODS = Map.of(
             "24h", Duration.ofHours(24),
+            "7d", Duration.ofDays(7),
+            "30d", Duration.ofDays(30));
+
+    /** Windows offered for the public activity; each is a number of whole UTC days. */
+    static final Map<String, Duration> PUBLIC_ACTIVITY_PERIODS = Map.of(
             "7d", Duration.ofDays(7),
             "30d", Duration.ofDays(30));
 
@@ -163,6 +177,31 @@ public class AnalyticsService {
                 .sorted(Comparator.comparing(post -> rank.get(post.getId())))
                 .toList();
         return postService.summaries(new PageImpl<>(posts)).getContent();
+    }
+
+    /**
+     * Daily public posts and comments over the last {@code period} UTC days.
+     *
+     * @throws AppException HTTP 400 for an unknown period
+     */
+    @Transactional(readOnly = true)
+    public PublicActivityDto publicActivity(String period) {
+        long days = window(PUBLIC_ACTIVITY_PERIODS, period).toDays();
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        LocalDate lastDay = now.toLocalDate();
+        LocalDate firstDay = lastDay.minusDays(days - 1);
+        List<PublicActivityDayDto> rows = analyticsRepository.publicDailyActivity(firstDay, lastDay).stream()
+                .map(day -> new PublicActivityDayDto(day.date(), day.posts(), day.comments()))
+                .toList();
+        return PublicActivityDto.builder()
+                .period(period)
+                .windowStart(AnalyticsRepository.startOfUtcDay(firstDay))
+                .windowEnd(AnalyticsRepository.startOfUtcDay(lastDay.plusDays(1)))
+                .generatedAt(now)
+                .totalPosts(rows.stream().mapToLong(PublicActivityDayDto::getPosts).sum())
+                .totalComments(rows.stream().mapToLong(PublicActivityDayDto::getComments).sum())
+                .days(rows)
+                .build();
     }
 
     private static Duration window(Map<String, Duration> periods, String period) {

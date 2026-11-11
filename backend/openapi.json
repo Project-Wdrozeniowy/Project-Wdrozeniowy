@@ -363,10 +363,7 @@
               }
             }
           }
-        },
-        "security" : [ {
-          "sessionAuth" : [ ]
-        } ]
+        }
       }
     },
     "/analytics/trends" : {
@@ -2588,6 +2585,47 @@
           }
         }
       }
+    },
+    "/analytics/public/activity" : {
+      "get" : {
+        "description" : "Public. Published or locked posts and visible comments on them, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Quiet days are returned with 0. Figures count the records that are public now and were created in the window.",
+        "operationId" : "getPublicActivity",
+        "parameters" : [ {
+          "description" : "Number of UTC days",
+          "example" : "7d",
+          "in" : "query",
+          "name" : "period",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "7d", "30d" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicActivityDto"
+                }
+              }
+            },
+            "description" : "Activity returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid period"
+          }
+        },
+        "summary" : "Get daily public platform activity",
+        "tags" : [ "Analytics" ]
+      }
     }
   },
   "components" : {
@@ -4089,6 +4127,81 @@
           }
         },
         "required" : [ "entityId", "entityType", "voteType" ]
+      },
+      "PublicActivityDayDto" : {
+        "type" : "object",
+        "description" : "Public posts and comments created on one UTC day; 0 means none, not missing data",
+        "properties" : {
+          "comments" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Visible comments on public posts created on this day",
+            "example" : 12
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "UTC day",
+            "example" : "2026-11-05"
+          },
+          "posts" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Public posts created on this day",
+            "example" : 4
+          }
+        },
+        "required" : [ "comments", "date", "posts" ]
+      },
+      "PublicActivityDto" : {
+        "type" : "object",
+        "description" : "Daily public platform activity. Figures count the records that are public now and were created in the window, so hiding a post later lowers past days.",
+        "properties" : {
+          "days" : {
+            "type" : "array",
+            "description" : "One row per UTC day, oldest first and ending with the current day; as many rows as the window has days",
+            "items" : {
+              "$ref" : "#/components/schemas/PublicActivityDayDto"
+            }
+          },
+          "generatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When these figures were read; the current UTC day counts up to this moment",
+            "example" : "2026-11-11T14:30:00Z"
+          },
+          "period" : {
+            "type" : "string",
+            "description" : "Requested window",
+            "enum" : [ "7d", "30d" ],
+            "example" : "7d"
+          },
+          "totalComments" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Visible comments on public posts created in the window",
+            "example" : 87
+          },
+          "totalPosts" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Public posts created in the window",
+            "example" : 31
+          },
+          "windowEnd" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the UTC day after the last one, exclusive",
+            "example" : "2026-11-12T00:00:00Z"
+          },
+          "windowStart" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the first UTC day, inclusive",
+            "example" : "2026-11-05T00:00:00Z"
+          }
+        },
+        "required" : [ "days", "generatedAt", "period", "totalComments", "totalPosts", "windowEnd", "windowStart" ]
       }
     },
     "securitySchemes" : {

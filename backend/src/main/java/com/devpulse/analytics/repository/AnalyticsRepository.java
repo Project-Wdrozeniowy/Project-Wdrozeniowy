@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +53,15 @@ public class AnalyticsRepository {
     /** Platform-wide totals. */
     public record PlatformTotals(long users, long activeUsers, long posts, long comments,
                                  long votes, long categories, long tags) {
+    }
+
+    /** Public posts and visible comments on them created on one UTC day. */
+    public record PublicDay(LocalDate date, long posts, long comments) {
+    }
+
+    /** The instant at which {@code day} starts in UTC. */
+    public static OffsetDateTime startOfUtcDay(LocalDate day) {
+        return day.atStartOfDay().atOffset(ZoneOffset.UTC);
     }
 
     public UserActivity userActivity(long userId) {
@@ -136,6 +147,38 @@ public class AnalyticsRepository {
                 },
                 Timestamp.from(from.toInstant()), Timestamp.from(to.toInstant()), Timestamp.from(from.toInstant()));
         return counts;
+    }
+
+    /**
+     * One row per UTC day from {@code firstDay} to {@code lastDay}, both
+     * included, oldest first; days without records count 0. Counts the posts
+     * that are public now and the visible comments on them, by creation time.
+     */
+    public List<PublicDay> publicDailyActivity(LocalDate firstDay, LocalDate lastDay) {
+        Timestamp start = Timestamp.from(startOfUtcDay(firstDay).toInstant());
+        Timestamp end = Timestamp.from(startOfUtcDay(lastDay.plusDays(1)).toInstant());
+        return jdbc.query("""
+                WITH post_days AS (
+                  SELECT (created_at AT TIME ZONE 'UTC')::date AS day, count(*) AS n
+                  FROM posts
+                  WHERE %1$s AND created_at >= ? AND created_at < ?
+                  GROUP BY 1
+                ), comment_days AS (
+                  SELECT (c.created_at AT TIME ZONE 'UTC')::date AS day, count(*) AS n
+                  FROM comments c
+                  JOIN posts p ON p.id = c.post_id
+                  WHERE c.status = 'VISIBLE' AND p.%1$s AND c.created_at >= ? AND c.created_at < ?
+                  GROUP BY 1
+                )
+                SELECT d.day::date AS day, coalesce(p.n, 0) AS posts, coalesce(c.n, 0) AS comments
+                FROM generate_series(?::date, ?::date, interval '1 day') AS d(day)
+                LEFT JOIN post_days p ON p.day = d.day::date
+                LEFT JOIN comment_days c ON c.day = d.day::date
+                ORDER BY d.day
+                """.formatted(PUBLIC_POST),
+                (rs, row) -> new PublicDay(rs.getObject("day", LocalDate.class),
+                        rs.getLong("posts"), rs.getLong("comments")),
+                start, end, start, end, Date.valueOf(firstDay), Date.valueOf(lastDay));
     }
 
     /**
