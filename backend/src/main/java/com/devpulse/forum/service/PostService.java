@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.devpulse.forum.security.ForumAuthorities.isAdmin;
@@ -143,18 +144,31 @@ public class PostService {
     }
 
     /**
-     * Returns the post with the given slug and records the read as a
-     * {@code POST_VIEWED} event for analytics (anonymous reads without a user).
+     * Returns the post with the given slug. Reading it counts nothing; see
+     * {@link #recordOpening}.
      *
      * @throws AppException HTTP 404 if it does not exist, is deleted, or is a
      *                      draft the caller may not see
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public PostDto getBySlug(String slug) {
+        return full(loadReadable(slug));
+    }
+
+    /**
+     * Counts one opening of a post the caller can read, attributed to the
+     * caller when signed in. Delivering the same {@code openingId} again
+     * counts nothing.
+     *
+     * @throws AppException HTTP 404 if the post does not exist, is deleted, or
+     *                      is a draft the caller may not see
+     */
+    @Transactional
+    public void recordOpening(String slug, String openingId) {
         Post post = loadReadable(slug);
         Authentication auth = auth();
-        analyticsRepository.recordPostView(post.getId(), isAuthenticated(auth) ? auth.getName() : null);
-        return full(post);
+        analyticsRepository.recordPostOpening(post.getId(), isAuthenticated(auth) ? auth.getName() : null,
+                UUID.fromString(openingId));
     }
 
     /**

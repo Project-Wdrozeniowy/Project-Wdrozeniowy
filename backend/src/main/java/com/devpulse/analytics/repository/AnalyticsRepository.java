@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Aggregate queries for analytics, written in SQL because they count across
@@ -20,13 +21,15 @@ import java.util.Optional;
  *
  * <p>Posts count when they are public ({@code PUBLISHED} or {@code LOCKED}) and
  * comments when they are {@code VISIBLE}, the same rules the forum uses.
- * Post views are the {@code POST_VIEWED} rows of {@code activity_events} (V4).
+ * A post's total views are {@code posts.view_count}, the figure the forum shows;
+ * the {@code POST_VIEWED} rows of {@code activity_events} are the individual
+ * openings behind it, used for time windows and signed-in readers (V10).
  */
 @Repository
 @RequiredArgsConstructor
 public class AnalyticsRepository {
 
-    /** {@code event_type} of a recorded post view. */
+    /** {@code event_type} of a recorded post opening. */
     public static final String POST_VIEWED = "POST_VIEWED";
 
     private static final String PUBLIC_POST = "status IN ('PUBLISHED', 'LOCKED')";
@@ -91,9 +94,7 @@ public class AnalyticsRepository {
     /** Engagement of the post, or empty if it does not exist. */
     public Optional<PostEngagement> postEngagement(long postId) {
         return jdbc.query("""
-                SELECT p.title, p.vote_score,
-                  (SELECT count(*) FROM activity_events
-                   WHERE event_type = ? AND entity_type = 'POST' AND entity_id = p.id) AS views,
+                SELECT p.title, p.vote_score, p.view_count AS views,
                   (SELECT count(DISTINCT user_id) FROM activity_events
                    WHERE event_type = ? AND entity_type = 'POST' AND entity_id = p.id) AS unique_viewers,
                   (SELECT count(*) FROM comments WHERE post_id = p.id AND status = 'VISIBLE') AS comments,
@@ -104,7 +105,7 @@ public class AnalyticsRepository {
                 """, (rs, row) -> new PostEngagement(rs.getString("title"), rs.getLong("views"),
                         rs.getLong("unique_viewers"), rs.getLong("comments"), rs.getInt("vote_score"),
                         rs.getLong("upvotes"), rs.getLong("downvotes"), rs.getLong("subscriptions")),
-                POST_VIEWED, POST_VIEWED, postId).stream().findFirst();
+                POST_VIEWED, postId).stream().findFirst();
     }
 
     public PlatformTotals platformTotals() {
@@ -206,11 +207,21 @@ public class AnalyticsRepository {
                 """.formatted(PUBLIC_POST), Long.class, POST_VIEWED, since, since, since, limit);
     }
 
-    /** Records that a post was read, by the user with {@code username} or anonymously when it is {@code null}. */
-    public void recordPostView(long postId, String username) {
+    /**
+     * Records an opening of a post by the user with {@code username}, or by a
+     * guest when it is {@code null}, and adds it to {@code posts.view_count},
+     * in one statement. An {@code openingId} already recorded changes nothing,
+     * also when delivered concurrently.
+     */
+    public void recordPostOpening(long postId, String username, UUID openingId) {
         jdbc.update("""
-                INSERT INTO activity_events (user_id, event_type, entity_type, entity_id)
-                VALUES ((SELECT id FROM users WHERE username = ?), ?, 'POST', ?)
-                """, username, POST_VIEWED, postId);
+                WITH opening AS (
+                  INSERT INTO activity_events (user_id, event_type, entity_type, entity_id, opening_id)
+                  VALUES ((SELECT id FROM users WHERE username = ?), ?, 'POST', ?, ?)
+                  ON CONFLICT (opening_id) WHERE opening_id IS NOT NULL DO NOTHING
+                  RETURNING entity_id
+                )
+                UPDATE posts SET view_count = view_count + 1 WHERE id IN (SELECT entity_id FROM opening)
+                """, username, POST_VIEWED, postId, openingId);
     }
 }

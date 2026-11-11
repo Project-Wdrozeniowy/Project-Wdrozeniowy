@@ -102,6 +102,8 @@ public class SecurityConfig {
                         // Auth operations are public but always require CSRF;
                         // logout invalidates only the current browser context
                         .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register", "/auth/logout").permitAll()
+                        // Guests open posts too; the CSRF check still applies.
+                        .requestMatchers(HttpMethod.POST, "/forum/posts/*/openings").permitAll()
                         // Private /me takes precedence over the public username route.
                         .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/users/me").authenticated()

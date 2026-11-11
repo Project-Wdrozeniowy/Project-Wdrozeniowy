@@ -37,9 +37,10 @@ import java.util.stream.Collectors;
  * <ul>
  *   <li>Posts count while public (published or locked), comments while visible.</li>
  *   <li>Votes received are the votes on the user's posts and comments.</li>
- *   <li>Views are recorded when a post is read ({@code POST_VIEWED} events);
- *       unique viewers count signed-in readers only, since anonymous views
- *       cannot be told apart.</li>
+ *   <li>Views are intentional openings reported by the client, the same
+ *       figure the forum shows; reading a post through the API counts nothing.
+ *       Openings are collected from migration V10 on. Unique viewers count
+ *       signed-in readers only, since guests cannot be told apart.</li>
  *   <li>Trends count the rows created in the window per UTC day, with 0 for
  *       quiet days; the first day only counts from the window start.</li>
  *   <li>Trending posts rank public posts by views + 2 × votes + 3 × comments
