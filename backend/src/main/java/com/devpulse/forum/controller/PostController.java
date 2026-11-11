@@ -5,6 +5,7 @@ import com.devpulse.exception.AppException;
 import com.devpulse.forum.dto.CreatePostRequest;
 import com.devpulse.forum.dto.PostDto;
 import com.devpulse.forum.dto.PostSummaryDto;
+import com.devpulse.forum.dto.RecordPostOpeningRequest;
 import com.devpulse.forum.dto.UpdatePostRequest;
 import com.devpulse.forum.entity.PostStatus;
 import com.devpulse.forum.service.PostFilter;
@@ -125,6 +126,27 @@ public class PostController {
             @Parameter(description = "Post slug", example = "how-to-use-spring-boot-with-postgresql")
             @PathVariable String slug) {
         return postService.getBySlug(slug);
+    }
+
+    /** Counts one intentional opening of a post. */
+    @Operation(summary = "Record that a reader opened a post",
+            description = "Public, for guests and members. Call it after the post was actually shown to the reader, "
+                    + "not for prefetches or background refreshes; reading a post counts nothing by itself. "
+                    + "Create a new openingId for each opening and reuse it only to retry that opening: the same "
+                    + "openingId is counted once and is safe to retry for at least 24 hours. Answers 204 whether "
+                    + "or not this delivery was the one counted.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Opening counted, or already counted"),
+        @ApiResponse(responseCode = "400", description = "openingId is missing or not a UUID"),
+        @ApiResponse(responseCode = "404", description = "Not found, deleted, or a draft the caller may not see")
+    })
+    @PostMapping("/{slug}/openings")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void recordOpening(
+            @Parameter(description = "Post slug", example = "how-to-use-spring-boot-with-postgresql")
+            @PathVariable String slug,
+            @Valid @RequestBody RecordPostOpeningRequest request) {
+        postService.recordOpening(slug, request.getOpeningId());
     }
 
     /** Updates an existing post (author or staff). Only non-null fields are applied. */

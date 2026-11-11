@@ -2626,6 +2626,72 @@
         "summary" : "Get daily public platform activity",
         "tags" : [ "Analytics" ]
       }
+    },
+    "/forum/posts/{slug}/openings" : {
+      "post" : {
+        "description" : "Public, for guests and members. Call it after the post was actually shown to the reader, not for prefetches or background refreshes; reading a post counts nothing by itself. Create a new openingId for each opening and reuse it only to retry that opening: the same openingId is counted once and is safe to retry for at least 24 hours. Answers 204 whether or not this delivery was the one counted.",
+        "operationId" : "recordOpening",
+        "parameters" : [ {
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RecordPostOpeningRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Opening counted, or already counted"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "openingId is missing or not a UUID"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found, deleted, or a draft the caller may not see"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ]
+        } ],
+        "summary" : "Record that a reader opened a post",
+        "tags" : [ "Forum – Posts" ]
+      }
     }
   },
   "components" : {
@@ -4202,6 +4268,20 @@
           }
         },
         "required" : [ "days", "generatedAt", "period", "totalComments", "totalPosts", "windowEnd", "windowStart" ]
+      },
+      "RecordPostOpeningRequest" : {
+        "type" : "object",
+        "description" : "One intentional opening of a post",
+        "properties" : {
+          "openingId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "Random id the client creates for this opening and reuses only when retrying it; it must not identify the reader or be kept between openings",
+            "example" : "3f0a7c52-9d1e-4b6a-8a43-2f6c1e7b9d10",
+            "pattern" : "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
+          }
+        },
+        "required" : [ "openingId" ]
       }
     },
     "securitySchemes" : {

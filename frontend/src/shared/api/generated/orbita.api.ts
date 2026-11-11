@@ -84,6 +84,8 @@ import type { PublicActivityDto } from './models/publicActivityDto.dto';
 
 import type { RecommendedPostDto } from './models/recommendedPostDto.dto';
 
+import type { RecordPostOpeningRequest } from './models/recordPostOpeningRequest.dto';
+
 import type { RegisterRequest } from './models/registerRequest.dto';
 
 import type { SearchParams } from './models/searchParams.dto';
@@ -4737,4 +4739,95 @@ export const invalidateGetPublicActivity = async (
   await queryClient.invalidateQueries({ queryKey: getGetPublicActivityQueryKey(params) }, options);
 
   return queryClient;
+};
+
+/**
+ * Public, for guests and members. Call it after the post was actually shown to the reader, not for prefetches or background refreshes; reading a post counts nothing by itself. Create a new openingId for each opening and reuse it only to retry that opening: the same openingId is counted once and is safe to retry for at least 24 hours. Answers 204 whether or not this delivery was the one counted.
+ * @summary Record that a reader opened a post
+ */
+export const recordOpening = (
+  slug: string,
+  recordPostOpeningRequest: BodyType<RecordPostOpeningRequest>,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    {
+      url: `/forum/posts/${encodeURIComponent(String(slug))}/openings`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: recordPostOpeningRequest,
+      signal,
+    },
+    options
+  );
+};
+
+export const getRecordOpeningMutationKey = () => ['recordOpening'] as const;
+
+export const getRecordOpeningMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recordOpening>>,
+    TError,
+    RecordOpeningMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof recordOpening>>,
+  TError,
+  RecordOpeningMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRecordOpeningMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof recordOpening>>,
+    RecordOpeningMutationVariables
+  > = (props) => {
+    const { slug, data } = props ?? {};
+
+    return recordOpening(slug, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RecordOpeningMutationResult = NonNullable<Awaited<ReturnType<typeof recordOpening>>>;
+export type RecordOpeningMutationBody = BodyType<RecordPostOpeningRequest>;
+export type RecordOpeningMutationError = ErrorType<ProblemDetail>;
+export type RecordOpeningMutationVariables = {
+  slug: string;
+  data: BodyType<RecordPostOpeningRequest>;
+};
+
+/**
+ * @summary Record that a reader opened a post
+ */
+export const useRecordOpening = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof recordOpening>>,
+      TError,
+      RecordOpeningMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof recordOpening>>,
+  TError,
+  RecordOpeningMutationVariables,
+  TContext
+> => {
+  return useMutation(getRecordOpeningMutationOptions(options), queryClient);
 };

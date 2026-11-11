@@ -92,9 +92,9 @@ class AnalyticsControllerApiTest {
     @Test
     void postAnalyticsCountRecordedViewsForStaffOnly() throws Exception {
         Post post = savePost("viewed", PostStatus.PUBLISHED);
-        mockMvc.perform(get("/forum/posts/{slug}", post.getSlug())).andExpect(status().isOk());
-        mockMvc.perform(get("/forum/posts/{slug}", post.getSlug()).with(as(reader))).andExpect(status().isOk());
-        mockMvc.perform(get("/forum/posts/{slug}", post.getSlug()).with(as(reader))).andExpect(status().isOk());
+        opening(post, null);
+        opening(post, reader);
+        opening(post, reader);
         saveComment(post, reader, "VISIBLE");
         vote(reader, post.getId(), null, "UP");
         jdbc.update("UPDATE posts SET vote_score = 1 WHERE id = ?", post.getId());
@@ -262,6 +262,15 @@ class AnalyticsControllerApiTest {
         long id = saveComment(post, author, commentStatus);
         jdbc.update("UPDATE comments SET created_at = ? WHERE id = ?",
                 day.atTime(12, 0).atOffset(ZoneOffset.UTC), id);
+    }
+
+    /** One recorded opening, by {@code by} or by a guest when it is {@code null}. */
+    private void opening(Post post, User by) {
+        jdbc.update("""
+                INSERT INTO activity_events (user_id, event_type, entity_type, entity_id, opening_id)
+                VALUES (?, 'POST_VIEWED', 'POST', ?, ?)
+                """, by == null ? null : by.getId(), post.getId(), UUID.randomUUID());
+        jdbc.update("UPDATE posts SET view_count = view_count + 1 WHERE id = ?", post.getId());
     }
 
     private Post savePost(String name, PostStatus postStatus) {
