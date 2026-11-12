@@ -53,6 +53,7 @@ public class SecurityConfig {
             "/auth/csrf", "/forum/categories", "/forum/categories/*",
             "/forum/posts", "/forum/posts/*", "/forum/posts/*/comments", "/forum/tags",
             "/search", "/analytics/trending-posts", "/analytics/public/activity", "/analytics/public/categories",
+            "/analytics/public/comparison",
             "/recommendations/posts", "/recommendations/tags"
     };
 

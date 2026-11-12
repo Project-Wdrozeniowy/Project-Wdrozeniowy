@@ -69,6 +69,10 @@ public class AnalyticsRepository {
     public record CategoryPosts(Long categoryId, String slug, String name, boolean visible, long posts) {
     }
 
+    /** Public posts and visible comments on them created in a window. */
+    public record PublicTotals(long posts, long comments) {
+    }
+
     /** The instant at which {@code day} starts in UTC. */
     public static OffsetDateTime startOfUtcDay(LocalDate day) {
         return day.atStartOfDay().atOffset(ZoneOffset.UTC);
@@ -187,6 +191,34 @@ public class AnalyticsRepository {
                 (rs, row) -> new PublicDay(rs.getObject("day", LocalDate.class),
                         rs.getLong("posts"), rs.getLong("comments")),
                 start, end, start, end, Date.valueOf(firstDay), Date.valueOf(lastDay));
+    }
+
+    /**
+     * Public posts and the visible comments on them created in each of two
+     * adjacent windows, {@code [previousStart, start)} and {@code [start, end)},
+     * read in one statement so both see the same data.
+     *
+     * @return the previous window's totals, then the current one's
+     */
+    public List<PublicTotals> publicTotals(OffsetDateTime previousStart, OffsetDateTime start, OffsetDateTime end) {
+        Timestamp from = Timestamp.from(previousStart.toInstant());
+        Timestamp middle = Timestamp.from(start.toInstant());
+        Timestamp to = Timestamp.from(end.toInstant());
+        return jdbc.queryForObject("""
+                SELECT
+                  (SELECT count(*) FROM posts
+                   WHERE %1$s AND created_at >= ? AND created_at < ?) AS previous_posts,
+                  (SELECT count(*) FROM comments c JOIN posts p ON p.id = c.post_id
+                   WHERE c.status = 'VISIBLE' AND p.%1$s AND c.created_at >= ? AND c.created_at < ?) AS previous_comments,
+                  (SELECT count(*) FROM posts
+                   WHERE %1$s AND created_at >= ? AND created_at < ?) AS current_posts,
+                  (SELECT count(*) FROM comments c JOIN posts p ON p.id = c.post_id
+                   WHERE c.status = 'VISIBLE' AND p.%1$s AND c.created_at >= ? AND c.created_at < ?) AS current_comments
+                """.formatted(PUBLIC_POST),
+                (rs, row) -> List.of(
+                        new PublicTotals(rs.getLong("previous_posts"), rs.getLong("previous_comments")),
+                        new PublicTotals(rs.getLong("current_posts"), rs.getLong("current_comments"))),
+                from, middle, from, middle, middle, to, middle, to);
     }
 
     /**

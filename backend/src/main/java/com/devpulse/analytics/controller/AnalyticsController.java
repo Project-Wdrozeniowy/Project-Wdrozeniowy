@@ -3,6 +3,7 @@ package com.devpulse.analytics.controller;
 import com.devpulse.analytics.dto.ActivityTrendDto;
 import com.devpulse.analytics.dto.PostAnalyticsDto;
 import com.devpulse.analytics.dto.PlatformSummaryDto;
+import com.devpulse.analytics.dto.PublicActivityComparisonDto;
 import com.devpulse.analytics.dto.PublicActivityDto;
 import com.devpulse.analytics.dto.PublicCategoryDistributionDto;
 import com.devpulse.analytics.dto.UserActivitySummaryDto;
@@ -138,5 +139,22 @@ public class AnalyticsController {
                     schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"7d", "30d"}))
             @RequestParam(defaultValue = "7d") String period) {
         return analyticsService.publicCategoryDistribution(period);
+    }
+
+    @Operation(summary = "Compare public activity with the previous window",
+            description = "Public. Published or locked posts and visible comments on them in the window of the "
+                    + "public activity up to now, against the window of the same length that ends where it starts. "
+                    + "Gives counts, absolute changes and percentages; the percentage is null when the previous "
+                    + "value is 0.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Comparison returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid period")
+    })
+    @GetMapping("/public/comparison")
+    public PublicActivityComparisonDto getPublicActivityComparison(
+            @Parameter(description = "Number of UTC days in the current window", example = "7d",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"7d", "30d"}))
+            @RequestParam(defaultValue = "7d") String period) {
+        return analyticsService.publicActivityComparison(period);
     }
 }
