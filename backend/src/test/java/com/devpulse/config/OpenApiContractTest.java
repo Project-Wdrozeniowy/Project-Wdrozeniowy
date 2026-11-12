@@ -118,7 +118,8 @@ class OpenApiContractTest {
     void publicAnalyticsNeedNoSessionAndTheOtherAnalyticsDo() throws Exception {
         String document = generatedDocument();
 
-        for (String open : List.of("/analytics/public/activity", "/analytics/trending-posts")) {
+        for (String open : List.of("/analytics/public/activity", "/analytics/public/categories",
+                "/analytics/trending-posts")) {
             Map<String, Object> operation = JsonPath.read(document, "$.paths['" + open + "'].get");
             assertThat(operation).as(open).doesNotContainKey("security");
         }

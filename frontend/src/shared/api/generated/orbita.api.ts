@@ -44,6 +44,8 @@ import type { GetActivityTrendParams } from './models/getActivityTrendParams.dto
 
 import type { GetPublicActivityParams } from './models/getPublicActivityParams.dto';
 
+import type { GetPublicCategoryDistributionParams } from './models/getPublicCategoryDistributionParams.dto';
+
 import type { GetRecommendedPostsParams } from './models/getRecommendedPostsParams.dto';
 
 import type { GetRecommendedTagsParams } from './models/getRecommendedTagsParams.dto';
@@ -81,6 +83,8 @@ import type { PostSummaryDto } from './models/postSummaryDto.dto';
 import type { ProblemDetail } from './models/problemDetail.dto';
 
 import type { PublicActivityDto } from './models/publicActivityDto.dto';
+
+import type { PublicCategoryDistributionDto } from './models/publicCategoryDistributionDto.dto';
 
 import type { RecommendedPostDto } from './models/recommendedPostDto.dto';
 
@@ -4830,4 +4834,154 @@ export const useRecordOpening = <TError = ErrorType<ProblemDetail>, TContext = u
   TContext
 > => {
   return useMutation(getRecordOpeningMutationOptions(options), queryClient);
+};
+
+/**
+ * Public. The published or locked posts created in the window of the public activity, by their current category, with each category's share. Rows add up to totalPosts; posts without a category, also those whose category was deleted, are the last row.
+ * @summary Get public posts by category
+ */
+export const getPublicCategoryDistribution = (
+  params?: GetPublicCategoryDistributionParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PublicCategoryDistributionDto>(
+    { url: `/analytics/public/categories`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getGetPublicCategoryDistributionQueryKey = (
+  params?: GetPublicCategoryDistributionParams
+) => {
+  return [`/analytics/public/categories`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetPublicCategoryDistributionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicCategoryDistributionParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicCategoryDistributionQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicCategoryDistribution>>> = ({
+    signal,
+  }) => getPublicCategoryDistribution(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPublicCategoryDistributionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicCategoryDistribution>>
+>;
+export type GetPublicCategoryDistributionQueryError = ErrorType<ProblemDetail>;
+
+export function useGetPublicCategoryDistribution<
+  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | GetPublicCategoryDistributionParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicCategoryDistribution>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicCategoryDistribution<
+  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicCategoryDistributionParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicCategoryDistribution>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicCategoryDistribution<
+  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicCategoryDistributionParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get public posts by category
+ */
+
+export function useGetPublicCategoryDistribution<
+  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicCategoryDistributionParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPublicCategoryDistributionQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetPublicCategoryDistribution} query
+ */
+export const invalidateGetPublicCategoryDistribution = async (
+  queryClient: QueryClient,
+  params?: GetPublicCategoryDistributionParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries(
+    { queryKey: getGetPublicCategoryDistributionQueryKey(params) },
+    options
+  );
+
+  return queryClient;
 };

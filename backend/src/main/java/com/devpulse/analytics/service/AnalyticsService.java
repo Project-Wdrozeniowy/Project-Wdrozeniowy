@@ -5,6 +5,9 @@ import com.devpulse.analytics.dto.PlatformSummaryDto;
 import com.devpulse.analytics.dto.PostAnalyticsDto;
 import com.devpulse.analytics.dto.PublicActivityDayDto;
 import com.devpulse.analytics.dto.PublicActivityDto;
+import com.devpulse.analytics.dto.PublicCategoryDistributionDto;
+import com.devpulse.analytics.dto.PublicCategoryDto;
+import com.devpulse.analytics.dto.PublicCategoryShareDto;
 import com.devpulse.analytics.dto.TrendDataPointDto;
 import com.devpulse.analytics.dto.UserActivitySummaryDto;
 import com.devpulse.analytics.repository.AnalyticsRepository;
@@ -21,6 +24,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -51,6 +56,10 @@ import java.util.stream.Collectors;
  *       every day gets a row, 0 when quiet. It counts records that are public
  *       now and were created in the window: public posts, and visible comments
  *       on public posts.</li>
+ *   <li>The public category distribution splits the public posts of the same
+ *       window by their current category, so its rows add up to the public
+ *       activity's posts. Posts without a category, also those whose category
+ *       was deleted, form the last row; shares are null for an empty window.</li>
  * </ul>
  */
 @Service
@@ -187,22 +196,78 @@ public class AnalyticsService {
      */
     @Transactional(readOnly = true)
     public PublicActivityDto publicActivity(String period) {
-        long days = window(PUBLIC_ACTIVITY_PERIODS, period).toDays();
-        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
-        LocalDate lastDay = now.toLocalDate();
-        LocalDate firstDay = lastDay.minusDays(days - 1);
-        List<PublicActivityDayDto> rows = analyticsRepository.publicDailyActivity(firstDay, lastDay).stream()
+        PublicWindow window = publicWindow(period);
+        List<PublicActivityDayDto> rows = analyticsRepository.publicDailyActivity(window.firstDay(), window.lastDay())
+                .stream()
                 .map(day -> new PublicActivityDayDto(day.date(), day.posts(), day.comments()))
                 .toList();
         return PublicActivityDto.builder()
                 .period(period)
-                .windowStart(AnalyticsRepository.startOfUtcDay(firstDay))
-                .windowEnd(AnalyticsRepository.startOfUtcDay(lastDay.plusDays(1)))
-                .generatedAt(now)
+                .windowStart(window.start())
+                .windowEnd(window.end())
+                .generatedAt(window.now())
                 .totalPosts(rows.stream().mapToLong(PublicActivityDayDto::getPosts).sum())
                 .totalComments(rows.stream().mapToLong(PublicActivityDayDto::getComments).sum())
                 .days(rows)
                 .build();
+    }
+
+    /**
+     * Public posts created over the last {@code period} UTC days by category,
+     * with each category's share of them.
+     *
+     * @throws AppException HTTP 400 for an unknown period
+     */
+    @Transactional(readOnly = true)
+    public PublicCategoryDistributionDto publicCategoryDistribution(String period) {
+        PublicWindow window = publicWindow(period);
+        List<AnalyticsRepository.CategoryPosts> rows =
+                analyticsRepository.publicPostsByCategory(window.firstDay(), window.lastDay());
+        long total = rows.stream().mapToLong(AnalyticsRepository.CategoryPosts::posts).sum();
+        return PublicCategoryDistributionDto.builder()
+                .period(period)
+                .windowStart(window.start())
+                .windowEnd(window.end())
+                .generatedAt(window.now())
+                .totalPosts(total)
+                .categories(rows.stream().map(row -> PublicCategoryShareDto.builder()
+                        .category(row.categoryId() == null ? null : PublicCategoryDto.builder()
+                                .id(row.categoryId())
+                                .slug(row.slug())
+                                .name(row.name())
+                                .visible(row.visible())
+                                .build())
+                        .posts(row.posts())
+                        .share(share(row.posts(), total))
+                        .build()).toList())
+                .build();
+    }
+
+    /** {@code part / total} rounded half up to 4 decimals, or null when {@code total} is 0. */
+    static BigDecimal share(long part, long total) {
+        return total == 0 ? null : BigDecimal.valueOf(part).divide(BigDecimal.valueOf(total), 4, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * The public window of {@code period}: whole UTC days from
+     * {@code firstDay} to {@code lastDay}, the current one, read at {@code now}.
+     */
+    private record PublicWindow(LocalDate firstDay, LocalDate lastDay, OffsetDateTime now) {
+
+        OffsetDateTime start() {
+            return AnalyticsRepository.startOfUtcDay(firstDay);
+        }
+
+        OffsetDateTime end() {
+            return AnalyticsRepository.startOfUtcDay(lastDay.plusDays(1));
+        }
+    }
+
+    private static PublicWindow publicWindow(String period) {
+        long days = window(PUBLIC_ACTIVITY_PERIODS, period).toDays();
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        LocalDate lastDay = now.toLocalDate();
+        return new PublicWindow(lastDay.minusDays(days - 1), lastDay, now);
     }
 
     private static Duration window(Map<String, Duration> periods, String period) {

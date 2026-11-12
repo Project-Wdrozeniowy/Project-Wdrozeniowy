@@ -52,7 +52,7 @@ public class SecurityConfig {
     private static final String[] PUBLIC_READS = {
             "/auth/csrf", "/forum/categories", "/forum/categories/*",
             "/forum/posts", "/forum/posts/*", "/forum/posts/*/comments", "/forum/tags",
-            "/search", "/analytics/trending-posts", "/analytics/public/activity",
+            "/search", "/analytics/trending-posts", "/analytics/public/activity", "/analytics/public/categories",
             "/recommendations/posts", "/recommendations/tags"
     };
 

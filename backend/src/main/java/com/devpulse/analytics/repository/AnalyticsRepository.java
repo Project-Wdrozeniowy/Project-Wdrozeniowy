@@ -62,6 +62,13 @@ public class AnalyticsRepository {
     public record PublicDay(LocalDate date, long posts, long comments) {
     }
 
+    /**
+     * Public posts of one category created in a window; {@code categoryId},
+     * {@code slug} and {@code name} are null for the posts without a category.
+     */
+    public record CategoryPosts(Long categoryId, String slug, String name, boolean visible, long posts) {
+    }
+
     /** The instant at which {@code day} starts in UTC. */
     public static OffsetDateTime startOfUtcDay(LocalDate day) {
         return day.atStartOfDay().atOffset(ZoneOffset.UTC);
@@ -180,6 +187,39 @@ public class AnalyticsRepository {
                 (rs, row) -> new PublicDay(rs.getObject("day", LocalDate.class),
                         rs.getLong("posts"), rs.getLong("comments")),
                 start, end, start, end, Date.valueOf(firstDay), Date.valueOf(lastDay));
+    }
+
+    /**
+     * Public posts created from the start of {@code firstDay} to the end of
+     * {@code lastDay} (UTC) by category: every visible category in display
+     * order, then by name, with 0 when it has none; a hidden category only
+     * when it has some; and last, always, the posts without a category.
+     */
+    public List<CategoryPosts> publicPostsByCategory(LocalDate firstDay, LocalDate lastDay) {
+        Timestamp start = Timestamp.from(startOfUtcDay(firstDay).toInstant());
+        Timestamp end = Timestamp.from(startOfUtcDay(lastDay.plusDays(1)).toInstant());
+        return jdbc.query("""
+                WITH counted AS (
+                  SELECT category_id, count(*) AS n
+                  FROM posts
+                  WHERE %s AND created_at >= ? AND created_at < ?
+                  GROUP BY category_id
+                )
+                SELECT id, slug, name, visible, posts FROM (
+                  SELECT c.id, c.slug, c.name, c.is_visible AS visible, coalesce(n.n, 0) AS posts,
+                         0 AS grp, c.display_order AS ord
+                  FROM categories c
+                  LEFT JOIN counted n ON n.category_id = c.id
+                  WHERE c.is_visible OR n.n > 0
+                  UNION ALL
+                  SELECT NULL::bigint, NULL::varchar, NULL::varchar, true,
+                         coalesce((SELECT n FROM counted WHERE category_id IS NULL), 0), 1, 0
+                ) AS rows
+                ORDER BY grp, ord, name
+                """.formatted(PUBLIC_POST),
+                (rs, row) -> new CategoryPosts(rs.getObject("id", Long.class), rs.getString("slug"),
+                        rs.getString("name"), rs.getBoolean("visible"), rs.getLong("posts")),
+                start, end);
     }
 
     /**
