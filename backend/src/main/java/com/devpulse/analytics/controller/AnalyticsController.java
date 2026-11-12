@@ -4,6 +4,7 @@ import com.devpulse.analytics.dto.ActivityTrendDto;
 import com.devpulse.analytics.dto.PostAnalyticsDto;
 import com.devpulse.analytics.dto.PlatformSummaryDto;
 import com.devpulse.analytics.dto.PublicActivityDto;
+import com.devpulse.analytics.dto.PublicCategoryDistributionDto;
 import com.devpulse.analytics.dto.UserActivitySummaryDto;
 import com.devpulse.analytics.service.AnalyticsService;
 import com.devpulse.forum.dto.PostSummaryDto;
@@ -22,7 +23,7 @@ import java.util.List;
 /**
  * REST controller for activity and engagement analytics; how each figure is
  * counted is documented on {@link AnalyticsService}. Trending posts and the
- * public activity are open to guests, everything else needs authentication.
+ * public figures are open to guests, everything else needs authentication.
  */
 @Tag(name = "Analytics", description = "Activity and engagement analytics")
 @RestController
@@ -121,5 +122,21 @@ public class AnalyticsController {
                     schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"7d", "30d"}))
             @RequestParam(defaultValue = "7d") String period) {
         return analyticsService.publicActivity(period);
+    }
+
+    @Operation(summary = "Get public posts by category",
+            description = "Public. The published or locked posts created in the window of the public activity, by "
+                    + "their current category, with each category's share. Rows add up to totalPosts; posts "
+                    + "without a category, also those whose category was deleted, are the last row.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Distribution returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid period")
+    })
+    @GetMapping("/public/categories")
+    public PublicCategoryDistributionDto getPublicCategoryDistribution(
+            @Parameter(description = "Number of UTC days", example = "7d",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"7d", "30d"}))
+            @RequestParam(defaultValue = "7d") String period) {
+        return analyticsService.publicCategoryDistribution(period);
     }
 }

@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -243,6 +246,76 @@ class AnalyticsControllerApiTest {
         mockMvc.perform(get("/analytics/summary")).andExpect(status().isUnauthorized());
         mockMvc.perform(get("/analytics/summary").with(as(reader))).andExpect(status().isForbidden());
         mockMvc.perform(get("/analytics/summary").with(as(admin))).andExpect(status().isOk());
+    }
+
+    @Test
+    void publicCategoriesAreOpenToGuestsAndAddUpToThePublicActivity() throws Exception {
+        hideAllContent();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        long category = jdbc.queryForObject("""
+                INSERT INTO categories (name, slug, display_order) VALUES (?, ?, 900) RETURNING id
+                """, Long.class, "Shares " + run, "shares-" + run);
+        for (String name : List.of("first", "second")) {
+            Post post = postCreatedOn(name, PostStatus.PUBLISHED, today);
+            jdbc.update("UPDATE posts SET category_id = ? WHERE id = ?", category, post.getId());
+        }
+        Post draft = postCreatedOn("draft", PostStatus.DRAFT, today);
+        jdbc.update("UPDATE posts SET category_id = ? WHERE id = ?", category, draft.getId());
+        postCreatedOn("loose", PostStatus.LOCKED, today.minusDays(6));
+        postCreatedOn("old", PostStatus.PUBLISHED, today.minusDays(7));
+
+        String activity = mockMvc.perform(get("/analytics/public/activity"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String body = mockMvc.perform(get("/analytics/public/categories"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("7d"))
+                .andExpect(jsonPath("$.windowStart").value(today.minusDays(6) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.windowEnd").value(today.plusDays(1) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.generatedAt").isNotEmpty())
+                .andExpect(jsonPath("$.totalPosts").value(3))
+                .andExpect(jsonPath("$.categories[0].category.slug").value("ai"))
+                .andExpect(jsonPath("$.categories[0].posts").value(0))
+                .andExpect(jsonPath("$.categories[0].share").value(0.0))
+                .andExpect(jsonPath("$.categories[-2].category.id").value(category))
+                .andExpect(jsonPath("$.categories[-2].category.slug").value("shares-" + run))
+                .andExpect(jsonPath("$.categories[-2].category.name").value("Shares " + run))
+                .andExpect(jsonPath("$.categories[-2].category.visible").value(true))
+                .andExpect(jsonPath("$.categories[-2].posts").value(2))
+                .andExpect(jsonPath("$.categories[-2].share").value(0.6667))
+                .andExpect(jsonPath("$.categories[-1].category").value((Object) null))
+                .andExpect(jsonPath("$.categories[-1].posts").value(1))
+                .andExpect(jsonPath("$.categories[-1].share").value(0.3333))
+                .andReturn().getResponse().getContentAsString();
+
+        List<Integer> posts = JsonPath.read(body, "$.categories[*].posts");
+        assertThat(posts.stream().mapToLong(Integer::longValue).sum())
+                .isEqualTo(number(body, "$.totalPosts"))
+                .isEqualTo(number(activity, "$.totalPosts"));
+    }
+
+    @Test
+    void publicCategoriesOfAnEmptyWindowHaveNoShares() throws Exception {
+        hideAllContent();
+
+        mockMvc.perform(get("/analytics/public/categories").param("period", "30d").with(as(reader)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("30d"))
+                .andExpect(jsonPath("$.windowStart")
+                        .value(LocalDate.now(ZoneOffset.UTC).minusDays(29) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.totalPosts").value(0))
+                .andExpect(jsonPath("$.categories[-1].category").value((Object) null))
+                .andExpect(jsonPath("$.categories[*].posts", everyItem(is(0))))
+                .andExpect(jsonPath("$.categories[*].share", everyItem(nullValue())));
+    }
+
+    @Test
+    void publicCategoriesRejectAnyOtherPeriod() throws Exception {
+        for (String period : List.of("24h", "90d", "abc")) {
+            mockMvc.perform(get("/analytics/public/categories").param("period", period))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.detail").value("period must be one of [30d, 7d]"));
+        }
     }
 
     /** Takes every existing post out of the public figures, inside the rolled-back transaction. */
