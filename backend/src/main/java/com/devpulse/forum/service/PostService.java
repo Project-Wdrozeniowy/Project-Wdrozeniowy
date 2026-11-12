@@ -9,6 +9,7 @@ import com.devpulse.forum.dto.CreatePostRequest;
 import com.devpulse.forum.dto.MyVoteDto;
 import com.devpulse.forum.dto.PostDto;
 import com.devpulse.forum.dto.PostSummaryDto;
+import com.devpulse.forum.dto.TagDto;
 import com.devpulse.forum.dto.UpdatePostRequest;
 import com.devpulse.forum.entity.Category;
 import com.devpulse.forum.entity.Post;
@@ -18,6 +19,7 @@ import com.devpulse.forum.entity.Vote;
 import com.devpulse.forum.repository.CategoryRepository;
 import com.devpulse.forum.repository.PostRepository;
 import com.devpulse.forum.repository.PostSubscriptionRepository;
+import com.devpulse.forum.repository.PostTagRow;
 import com.devpulse.forum.repository.TagRepository;
 import com.devpulse.forum.repository.VoteRepository;
 import com.devpulse.forum.util.SlugUtil;
@@ -283,10 +285,28 @@ public class PostService {
         return summaries(postRepository.findAll(Specification.allOf(specs), pageable));
     }
 
-    /** Maps a page of posts to their listing representation with the caller's votes. */
+    /**
+     * Maps a page of posts to their listing representation with the caller's
+     * votes and the posts' tags, each loaded for the whole page in one query.
+     * Listing counts no opening.
+     */
     public Page<PostSummaryDto> summaries(Page<Post> posts) {
-        Map<Long, MyVoteDto> myVotes = myVotes(posts.map(Post::getId).getContent());
-        return posts.map(post -> PostSummaryDto.from(post, myVotes.get(post.getId())));
+        List<Long> ids = posts.map(Post::getId).getContent();
+        Map<Long, MyVoteDto> myVotes = myVotes(ids);
+        Map<Long, List<TagDto>> tags = tagsOf(ids);
+        return posts.map(post -> PostSummaryDto.from(post, myVotes.get(post.getId()),
+                tags.getOrDefault(post.getId(), List.of())));
+    }
+
+    /** Tags of each of the posts, sorted by slug; posts without tags are absent. */
+    private Map<Long, List<TagDto>> tagsOf(List<Long> postIds) {
+        if (postIds.isEmpty()) {
+            return Map.of();
+        }
+        return tagRepository.findByPostIds(postIds).stream()
+                .collect(Collectors.groupingBy(PostTagRow::postId,
+                        Collectors.collectingAndThen(Collectors.mapping(PostTagRow::tag, Collectors.toList()),
+                                TagDto::sorted)));
     }
 
     /**

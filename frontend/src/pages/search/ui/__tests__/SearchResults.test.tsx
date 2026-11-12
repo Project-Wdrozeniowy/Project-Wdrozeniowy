@@ -48,6 +48,7 @@ function post(id: number) {
     viewCount: 0,
     voteScore: 0,
     myVote: null,
+    tags: [],
     commentCount: 1,
     category: null,
     author: { id: 1, username: 'alice', displayName: null, avatarUrl: null, role: 'USER' as const },

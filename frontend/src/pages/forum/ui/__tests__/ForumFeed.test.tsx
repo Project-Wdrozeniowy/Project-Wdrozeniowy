@@ -49,6 +49,7 @@ function makePost(id: number, overrides: Partial<PostSummary> = {}): PostSummary
     viewCount: 0,
     voteScore: 3,
     myVote: null,
+    tags: [],
     commentCount: 2,
     category: {
       id: 1,

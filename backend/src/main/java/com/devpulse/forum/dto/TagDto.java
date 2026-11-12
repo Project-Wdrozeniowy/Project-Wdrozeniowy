@@ -7,6 +7,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -25,6 +29,14 @@ public class TagDto {
 
     @Schema(description = "Number of posts using this tag", example = "42")
     private int postCount;
+
+    /** The DTOs of {@code tags}, sorted by slug. */
+    public static List<TagDto> sorted(Collection<Tag> tags) {
+        return tags.stream()
+                .map(TagDto::from)
+                .sorted(Comparator.comparing(TagDto::getSlug))
+                .toList();
+    }
 
     /** Builds the DTO of {@code tag}. */
     public static TagDto from(Tag tag) {

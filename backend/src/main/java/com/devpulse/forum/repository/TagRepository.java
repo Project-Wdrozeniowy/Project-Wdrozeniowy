@@ -18,6 +18,11 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 
     List<Tag> findBySlugIn(Collection<String> slugs);
 
+    /** The tags of all the given posts in one query, for listing a page of posts. */
+    @Query("SELECT new com.devpulse.forum.repository.PostTagRow(p.id, t) FROM Post p JOIN p.tags t "
+            + "WHERE p.id IN :postIds")
+    List<PostTagRow> findByPostIds(@Param("postIds") Collection<Long> postIds);
+
     /**
      * Tags on at least one public post, most used first. Tag names are
      * unique, so ordering ties by name gives every call the same order.

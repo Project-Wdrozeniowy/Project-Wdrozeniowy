@@ -40,6 +40,7 @@ function makePost(id: number): PostSummary {
     viewCount: 0,
     voteScore: 3,
     myVote: null,
+    tags: [],
     commentCount: 2,
     category: null,
     author: { id: 1, username: 'alice', displayName: null, avatarUrl: null, role: 'USER' },

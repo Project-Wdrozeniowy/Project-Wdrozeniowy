@@ -12,7 +12,7 @@ import type { TagDto } from './tagDto.dto';
 import type { UserSummaryDto } from './userSummaryDto.dto';
 
 /**
- * Full post details — extends PostSummaryDto with content, tags and updatedAt
+ * Full post details — extends PostSummaryDto with content, updatedAt and the subscription
  */
 export interface PostDto {
   /** Post author */
@@ -39,7 +39,7 @@ export interface PostDto {
   status: PostDtoStatus;
   /** Whether the caller is subscribed to new comments on this post; false for anonymous callers */
   subscribed: boolean;
-  /** Tags attached to this post */
+  /** @maxItems 5 */
   tags: TagDto[];
   /** Post title */
   title: string;

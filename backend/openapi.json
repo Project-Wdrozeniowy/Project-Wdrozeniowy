@@ -3434,7 +3434,7 @@
       },
       "PostDto" : {
         "type" : "object",
-        "description" : "Full post details — extends PostSummaryDto with content, tags and updatedAt",
+        "description" : "Full post details — extends PostSummaryDto with content, updatedAt and the subscription",
         "properties" : {
           "author" : {
             "$ref" : "#/components/schemas/UserSummaryDto",
@@ -3502,10 +3502,10 @@
           },
           "tags" : {
             "type" : "array",
-            "description" : "Tags attached to this post",
             "items" : {
               "$ref" : "#/components/schemas/TagDto"
-            }
+            },
+            "maxItems" : 5
           },
           "title" : {
             "type" : "string",
@@ -3604,9 +3604,16 @@
             "type" : "integer",
             "format" : "int32",
             "description" : "Cumulative vote score"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TagDto"
+            },
+            "maxItems" : 5
           }
         },
-        "required" : [ "author", "category", "commentCount", "createdAt", "id", "lastActivityAt", "myVote", "pinned", "slug", "status", "title", "viewCount", "voteScore" ]
+        "required" : [ "author", "category", "commentCount", "createdAt", "id", "lastActivityAt", "myVote", "pinned", "slug", "status", "tags", "title", "viewCount", "voteScore" ]
       },
       "ProblemDetail" : {
         "type" : "object",
