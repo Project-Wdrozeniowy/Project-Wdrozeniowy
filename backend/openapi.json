@@ -2693,6 +2693,80 @@
         "tags" : [ "Forum – Posts" ]
       }
     },
+    "/analytics/me/posts/{id}/openings" : {
+      "get" : {
+        "description" : "Intentional openings of a post the caller wrote, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Days that ended before openings were collected have measured false and openings null; a measured day without openings has 0. Only the author gets the series: anyone else, staff included, gets 404.",
+        "operationId" : "getMyPostOpenings",
+        "parameters" : [ {
+          "description" : "Post ID",
+          "example" : 101,
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "description" : "Number of UTC days",
+          "example" : "7d",
+          "in" : "query",
+          "name" : "period",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "7d", "30d" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PostOpeningTrendDto"
+                }
+              }
+            },
+            "description" : "Openings returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid period"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No post of the caller with this ID"
+          }
+        },
+        "security" : [ {
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Get daily openings of one of my posts",
+        "tags" : [ "Analytics" ]
+      }
+    },
     "/analytics/public/categories" : {
       "get" : {
         "description" : "Public. The published or locked posts created in the window of the public activity, by their current category, with each category's share. Rows add up to totalPosts; posts without a category, also those whose category was deleted, are the last row.",
@@ -4401,6 +4475,85 @@
           }
         },
         "required" : [ "change", "changePercent", "current", "previous" ]
+      },
+      "PostOpeningDayDto" : {
+        "type" : "object",
+        "description" : "Openings of the post on one UTC day. A measured day with no openings has openings 0; a day that ended before openings were collected is not measured and has openings null.",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "UTC day",
+            "example" : "2026-11-05"
+          },
+          "measured" : {
+            "type" : "boolean",
+            "description" : "Whether openings were being collected on this day; the day collection started counts from collectedFrom"
+          },
+          "openings" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64",
+            "description" : "Intentional openings on this day; null when the day is not measured",
+            "example" : 4
+          }
+        },
+        "required" : [ "date", "measured", "openings" ]
+      },
+      "PostOpeningTrendDto" : {
+        "type" : "object",
+        "description" : "Daily intentional openings of one of the caller's posts, over the window of the public activity. Counts openings only: no reader, visitor or demographic data.",
+        "properties" : {
+          "collectedFrom" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Openings are collected from this instant on; days that ended before it are not measured",
+            "example" : "2026-11-08T10:15:00Z"
+          },
+          "days" : {
+            "type" : "array",
+            "description" : "One row per UTC day, oldest first and ending with the current day; as many rows as the window has days",
+            "items" : {
+              "$ref" : "#/components/schemas/PostOpeningDayDto"
+            }
+          },
+          "generatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When these figures were read; the current UTC day counts up to this moment",
+            "example" : "2026-11-11T14:30:00Z"
+          },
+          "period" : {
+            "type" : "string",
+            "description" : "Requested window",
+            "enum" : [ "7d", "30d" ],
+            "example" : "7d"
+          },
+          "postId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Post ID",
+            "example" : 101
+          },
+          "totalOpenings" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Openings on the measured days of the window",
+            "example" : 27
+          },
+          "windowEnd" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the UTC day after the last one, exclusive",
+            "example" : "2026-11-12T00:00:00Z"
+          },
+          "windowStart" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the first UTC day, inclusive",
+            "example" : "2026-11-05T00:00:00Z"
+          }
+        },
+        "required" : [ "collectedFrom", "days", "generatedAt", "period", "postId", "totalOpenings", "windowEnd", "windowStart" ]
       },
       "PublicActivityComparisonDto" : {
         "type" : "object",

@@ -3,6 +3,7 @@ package com.devpulse.analytics.controller;
 import com.devpulse.analytics.dto.ActivityTrendDto;
 import com.devpulse.analytics.dto.PostAnalyticsDto;
 import com.devpulse.analytics.dto.PlatformSummaryDto;
+import com.devpulse.analytics.dto.PostOpeningTrendDto;
 import com.devpulse.analytics.dto.PublicActivityComparisonDto;
 import com.devpulse.analytics.dto.PublicActivityDto;
 import com.devpulse.analytics.dto.PublicCategoryDistributionDto;
@@ -42,6 +43,27 @@ public class AnalyticsController {
     @GetMapping("/me")
     public UserActivitySummaryDto getMyActivitySummary() {
         return analyticsService.myActivity();
+    }
+
+    @Operation(summary = "Get daily openings of one of my posts",
+            description = "Intentional openings of a post the caller wrote, per UTC day, for the last 7 or 30 UTC "
+                    + "days ending with the current, still partial day. Days that ended before openings were "
+                    + "collected have measured false and openings null; a measured day without openings has 0. "
+                    + "Only the author gets the series: anyone else, staff included, gets 404.",
+            security = @SecurityRequirement(name = "sessionAuth"))
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Openings returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid period"),
+        @ApiResponse(responseCode = "401", description = "Not authenticated"),
+        @ApiResponse(responseCode = "404", description = "No post of the caller with this ID")
+    })
+    @GetMapping("/me/posts/{id}/openings")
+    public PostOpeningTrendDto getMyPostOpenings(
+            @Parameter(description = "Post ID", example = "101") @PathVariable Long id,
+            @Parameter(description = "Number of UTC days", example = "7d",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"7d", "30d"}))
+            @RequestParam(defaultValue = "7d") String period) {
+        return analyticsService.myPostOpenings(id, period);
     }
 
     @Operation(summary = "Get analytics for a specific post", security = @SecurityRequirement(name = "sessionAuth"))

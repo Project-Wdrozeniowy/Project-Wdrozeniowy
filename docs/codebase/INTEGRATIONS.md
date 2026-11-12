@@ -46,6 +46,7 @@ Seven Flyway migrations define the current schema:
 | V6 — default categories | Seven `categories` rows whose slugs the frontend topic filter uses | [V6__seed_default_categories.sql](../../backend/src/main/resources/db/migration/V6__seed_default_categories.sql) |
 | V7 — audit timestamps | `created_at` and `updated_at` on every table; the `set_updated_at()` trigger moves `updated_at` on updates that do not set it | [V7__add_audit_timestamps.sql](../../backend/src/main/resources/db/migration/V7__add_audit_timestamps.sql) |
 | V10 — intentional post openings | `activity_events.opening_id` (unique); earlier GET-based `POST_VIEWED` rows become `POST_READ_LEGACY` and `posts.view_count` restarts at 0; recording an opening does not move `posts.updated_at` | [V10__count_intentional_post_openings.sql](../../backend/src/main/resources/db/migration/V10__count_intentional_post_openings.sql) |
+| V11 — analytics collection starts | `analytics_collection_starts` records from when each event type is collected; openings start at the first recorded opening, or at the migration on a database without any, so earlier days are reported as not measured instead of 0 | [V11__record_analytics_collection_starts.sql](../../backend/src/main/resources/db/migration/V11__record_analytics_collection_starts.sql) |
 
 ER diagrams available: [docs/db-schema.mmd](../../docs/db-schema.mmd), [docs/db-schema-auth.mmd](../../docs/db-schema-auth.mmd), [docs/db-schema-forum.mmd](../../docs/db-schema-forum.mmd), [docs/db-schema-social.mmd](../../docs/db-schema-social.mmd).
 

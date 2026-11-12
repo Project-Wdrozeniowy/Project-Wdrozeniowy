@@ -3,6 +3,8 @@ package com.devpulse.analytics.service;
 import com.devpulse.analytics.dto.ActivityChangeDto;
 import com.devpulse.analytics.dto.ActivityTrendDto;
 import com.devpulse.analytics.dto.PlatformSummaryDto;
+import com.devpulse.analytics.dto.PostOpeningDayDto;
+import com.devpulse.analytics.dto.PostOpeningTrendDto;
 import com.devpulse.analytics.dto.PostAnalyticsDto;
 import com.devpulse.analytics.dto.PublicActivityComparisonDto;
 import com.devpulse.analytics.dto.PublicActivityDayDto;
@@ -19,6 +21,7 @@ import com.devpulse.auth.util.AuthenticatedUserResolver;
 import com.devpulse.exception.AppException;
 import com.devpulse.forum.dto.PostSummaryDto;
 import com.devpulse.forum.entity.Post;
+import com.devpulse.forum.entity.PostStatus;
 import com.devpulse.forum.repository.PostRepository;
 import com.devpulse.forum.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -69,6 +72,10 @@ import java.util.stream.Collectors;
  *       no gap, no overlap, and the partial current day is matched by an
  *       equal span. Both count the records that are public now, so hiding a
  *       post lowers past figures too. A change from 0 has no percentage.</li>
+ *   <li>A post's daily openings are for its author only, over the window of
+ *       the public activity. Days that ended before openings were collected
+ *       ({@code analytics_collection_starts}) are not measured and have no
+ *       figure, unlike a measured day without openings, which counts 0.</li>
  * </ul>
  */
 @Service
@@ -274,6 +281,46 @@ public class AnalyticsService {
                 .previous(new PublicActivityWindowDto(previousStart, start, previous.posts(), previous.comments()))
                 .posts(change(current.posts(), previous.posts()))
                 .comments(change(current.comments(), previous.comments()))
+                .build();
+    }
+
+    /**
+     * Daily openings over the last {@code period} UTC days of a post the
+     * caller wrote. Days that ended before openings were collected are not
+     * measured.
+     *
+     * @throws AppException HTTP 400 for an unknown period; HTTP 404 if the post
+     *                      does not exist, is deleted, or was written by
+     *                      someone else, staff included
+     */
+    @Transactional(readOnly = true)
+    public PostOpeningTrendDto myPostOpenings(Long postId, String period) {
+        PublicWindow window = publicWindow(period);
+        User caller = currentUser.currentUser();
+        Post post = postRepository.findById(postId)
+                .filter(found -> found.getStatus() != PostStatus.DELETED)
+                .filter(found -> found.getAuthor().getId().equals(caller.getId()))
+                .orElseThrow(() -> new AppException("Post not found", HttpStatus.NOT_FOUND));
+        OffsetDateTime collectedFrom = analyticsRepository.collectedFrom(AnalyticsRepository.POST_VIEWED);
+        List<PostOpeningDayDto> days = analyticsRepository
+                .dailyPostOpenings(post.getId(), window.firstDay(), window.lastDay())
+                .entrySet().stream()
+                .map(day -> {
+                    boolean measured = AnalyticsRepository.startOfUtcDay(day.getKey().plusDays(1))
+                            .isAfter(collectedFrom);
+                    return new PostOpeningDayDto(day.getKey(), measured, measured ? day.getValue() : null);
+                })
+                .toList();
+        return PostOpeningTrendDto.builder()
+                .postId(post.getId())
+                .period(period)
+                .windowStart(window.start())
+                .windowEnd(window.end())
+                .generatedAt(window.now())
+                .collectedFrom(collectedFrom)
+                .totalOpenings(days.stream().filter(PostOpeningDayDto::isMeasured)
+                        .mapToLong(PostOpeningDayDto::getOpenings).sum())
+                .days(days)
                 .build();
     }
 

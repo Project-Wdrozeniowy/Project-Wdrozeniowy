@@ -282,6 +282,7 @@ backend/src/main/resources/db/migration/
   V8__create_server_sessions.sql
   V9__retire_http_refresh_tokens.sql
   V10__count_intentional_post_openings.sql
+  V11__record_analytics_collection_starts.sql
 ```
 
 Start with the [developer guides](docs/guides/README.md) for architecture,
