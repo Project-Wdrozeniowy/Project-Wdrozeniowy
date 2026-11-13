@@ -17,7 +17,9 @@ import java.util.UUID;
 
 /**
  * Aggregate queries for analytics, written in SQL because they count across
- * several tables at once.
+ * several tables at once. {@code analytics_collection_starts} (V11) records
+ * when each event type started to be collected, so that days before it can
+ * be told apart from days without events.
  *
  * <p>Posts count when they are public ({@code PUBLISHED} or {@code LOCKED}) and
  * comments when they are {@code VISIBLE}, the same rules the forum uses.
@@ -252,6 +254,41 @@ public class AnalyticsRepository {
                 (rs, row) -> new CategoryPosts(rs.getObject("id", Long.class), rs.getString("slug"),
                         rs.getString("name"), rs.getBoolean("visible"), rs.getLong("posts")),
                 start, end);
+    }
+
+    /** The instant from which events of {@code eventType} are collected (V11). */
+    public OffsetDateTime collectedFrom(String eventType) {
+        return jdbc.queryForObject("SELECT collected_from FROM analytics_collection_starts WHERE event_type = ?",
+                OffsetDateTime.class, eventType);
+    }
+
+    /**
+     * Openings of the post per UTC day from {@code firstDay} to
+     * {@code lastDay}, both included, oldest first; days without openings
+     * count 0.
+     */
+    public Map<LocalDate, Long> dailyPostOpenings(long postId, LocalDate firstDay, LocalDate lastDay) {
+        Timestamp start = Timestamp.from(startOfUtcDay(firstDay).toInstant());
+        Timestamp end = Timestamp.from(startOfUtcDay(lastDay.plusDays(1)).toInstant());
+        Map<LocalDate, Long> openings = new LinkedHashMap<>();
+        jdbc.query("""
+                WITH opened AS (
+                  SELECT (created_at AT TIME ZONE 'UTC')::date AS day, count(*) AS n
+                  FROM activity_events
+                  WHERE event_type = ? AND entity_type = 'POST' AND entity_id = ?
+                    AND created_at >= ? AND created_at < ?
+                  GROUP BY 1
+                )
+                SELECT d.day::date AS day, coalesce(o.n, 0) AS n
+                FROM generate_series(?::date, ?::date, interval '1 day') AS d(day)
+                LEFT JOIN opened o ON o.day = d.day::date
+                ORDER BY d.day
+                """,
+                rs -> {
+                    openings.put(rs.getObject("day", LocalDate.class), rs.getLong("n"));
+                },
+                POST_VIEWED, postId, start, end, Date.valueOf(firstDay), Date.valueOf(lastDay));
+        return openings;
     }
 
     /**

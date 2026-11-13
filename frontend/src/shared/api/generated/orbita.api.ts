@@ -42,6 +42,8 @@ import type { CsrfResponse } from './models/csrfResponse.dto';
 
 import type { GetActivityTrendParams } from './models/getActivityTrendParams.dto';
 
+import type { GetMyPostOpeningsParams } from './models/getMyPostOpeningsParams.dto';
+
 import type { GetPublicActivityComparisonParams } from './models/getPublicActivityComparisonParams.dto';
 
 import type { GetPublicActivityParams } from './models/getPublicActivityParams.dto';
@@ -79,6 +81,8 @@ import type { PlatformSummaryDto } from './models/platformSummaryDto.dto';
 import type { PostAnalyticsDto } from './models/postAnalyticsDto.dto';
 
 import type { PostDto } from './models/postDto.dto';
+
+import type { PostOpeningTrendDto } from './models/postOpeningTrendDto.dto';
 
 import type { PostSummaryDto } from './models/postSummaryDto.dto';
 
@@ -4838,6 +4842,158 @@ export const useRecordOpening = <TError = ErrorType<ProblemDetail>, TContext = u
   TContext
 > => {
   return useMutation(getRecordOpeningMutationOptions(options), queryClient);
+};
+
+/**
+ * Intentional openings of a post the caller wrote, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Days that ended before openings were collected have measured false and openings null; a measured day without openings has 0. Only the author gets the series: anyone else, staff included, gets 404.
+ * @summary Get daily openings of one of my posts
+ */
+export const getMyPostOpenings = (
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PostOpeningTrendDto>(
+    {
+      url: `/analytics/me/posts/${encodeURIComponent(String(id))}/openings`,
+      method: 'GET',
+      params,
+      signal,
+    },
+    options
+  );
+};
+
+export const getGetMyPostOpeningsQueryKey = (id: number, params?: GetMyPostOpeningsParams) => {
+  return [`/analytics/me/posts/${id}/openings`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMyPostOpeningsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyPostOpeningsQueryKey(id, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyPostOpenings>>> = ({ signal }) =>
+    getMyPostOpenings(id, params, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetMyPostOpeningsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyPostOpenings>>
+>;
+export type GetMyPostOpeningsQueryError = ErrorType<ProblemDetail>;
+
+export function useGetMyPostOpenings<
+  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  params: undefined | GetMyPostOpeningsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyPostOpenings>>,
+          TError,
+          Awaited<ReturnType<typeof getMyPostOpenings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyPostOpenings<
+  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyPostOpenings>>,
+          TError,
+          Awaited<ReturnType<typeof getMyPostOpenings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyPostOpenings<
+  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get daily openings of one of my posts
+ */
+
+export function useGetMyPostOpenings<
+  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMyPostOpeningsQueryOptions(id, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetMyPostOpenings} query
+ */
+export const invalidateGetMyPostOpenings = async (
+  queryClient: QueryClient,
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries(
+    { queryKey: getGetMyPostOpeningsQueryKey(id, params) },
+    options
+  );
+
+  return queryClient;
 };
 
 /**

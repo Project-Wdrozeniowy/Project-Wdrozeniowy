@@ -8,7 +8,7 @@
 --   psql -d orbita_demo -v confirm=orbita_demo [-v anchor=YYYY-MM-DD] -f tools/demo-data/load-demo-data.sql
 --
 -- The database must be named *_demo, be named again in "confirm", be migrated
--- to Flyway V10 or later, and hold no account outside demo.orbita.invalid.
+-- to Flyway V11 or later, and hold no account outside demo.orbita.invalid.
 -- Otherwise the script stops before changing anything. Each run replaces the
 -- whole forum content of the database, so loading twice gives the same data.
 --
@@ -52,8 +52,8 @@ BEGIN
         RAISE EXCEPTION 'Refusing: % has no Flyway history; start the backend on it once first', current_database();
     END IF;
     SELECT max(version::int) INTO schema_level FROM flyway_schema_history WHERE success AND version IS NOT NULL;
-    IF schema_level IS NULL OR schema_level < 10 THEN
-        RAISE EXCEPTION 'Refusing: % is at schema V%, the dataset needs V10 or later', current_database(), schema_level;
+    IF schema_level IS NULL OR schema_level < 11 THEN
+        RAISE EXCEPTION 'Refusing: % is at schema V%, the dataset needs V11 or later', current_database(), schema_level;
     END IF;
     SELECT count(*) INTO foreign_accounts FROM users WHERE email NOT LIKE '%@demo.orbita.invalid';
     IF foreign_accounts > 0 THEN
@@ -208,6 +208,12 @@ CROSS JOIN LATERAL (SELECT ((s.anchor - (p.k - t % 3))::timestamp AT TIME ZONE '
                                + t * interval '1 minute' AS created_at) o
 LEFT JOIN demo_user_ids r ON t % 3 = 0 AND r.member = 1 + (p.k + t) % 10
 WHERE p.public AND p.k - t % 3 >= 1;
+
+-- Openings are measured over the whole synthetic history, from its first day.
+UPDATE analytics_collection_starts
+SET collected_from = (s.anchor - 69)::timestamp AT TIME ZONE 'UTC'
+FROM demo_settings s
+WHERE event_type = 'POST_VIEWED';
 
 -- Counters as the application keeps them; updated_at as of creation.
 UPDATE posts x

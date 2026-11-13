@@ -90,6 +90,17 @@ class MigrationSchemaTest {
         assertThat(flyway.info().applied()).isNotEmpty();
     }
 
+    /** V11 records when the collection of openings started. */
+    @Test
+    void theStartOfOpeningCollectionIsRecorded() {
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM analytics_collection_starts WHERE event_type = 'POST_VIEWED'", Long.class))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                "SELECT collected_from FROM analytics_collection_starts WHERE event_type = 'POST_VIEWED'",
+                OffsetDateTime.class)).isBeforeOrEqualTo(OffsetDateTime.now());
+    }
+
     /**
      * {@code users.role} is the native {@code user_role} enum, not a varchar,
      * and every Java constant exists in it.
@@ -242,7 +253,8 @@ class MigrationSchemaTest {
                 """, String.class);
 
         assertThat(tables).containsExactlyInAnyOrder("users", "posts", "categories", "post_tags", "comments",
-                "tags", "votes", "notifications", "post_subscriptions", "activity_events");
+                "tags", "votes", "notifications", "post_subscriptions", "activity_events",
+                "analytics_collection_starts");
         assertThat(missingColumns).isEmpty();
         assertThat(triggered).containsExactlyInAnyOrderElementsOf(tables);
         assertThat(jdbc.queryForList("""

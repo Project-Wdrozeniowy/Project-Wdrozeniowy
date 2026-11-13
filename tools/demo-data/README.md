@@ -42,7 +42,7 @@ The loader changes nothing and exits with an error unless all of these hold:
 
 1. The database name ends with `_demo`.
 2. The same name is passed as `-v confirm=<name>`.
-3. Flyway has migrated the database to V10 or later.
+3. Flyway has migrated the database to V11 or later.
 4. Every account in it has an `@demo.orbita.invalid` address.
 
 Because of the last rule, the loader never deletes a real account. If someone registered during a
@@ -161,3 +161,7 @@ are those of the public activity: published and locked posts, visible comments o
 | `demo-3-0`        |                     40 |
 | `demo-34-0`       |                     25 |
 | `demo-3-1`        |                      5 |
+
+Openings are measured from 00:00 UTC of the first synthetic day: the loader sets the collection start
+in `analytics_collection_starts`, so an author's daily openings (`GET /api/analytics/me/posts/{id}/openings`)
+show measured days, with 0 on quiet ones, across the whole history.

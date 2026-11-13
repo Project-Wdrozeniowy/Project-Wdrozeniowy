@@ -390,6 +390,84 @@ class AnalyticsControllerApiTest {
         }
     }
 
+    @Test
+    void anAuthorGetsDailyOpeningsWithUnmeasuredDaysApartFromQuietOnes() throws Exception {
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        OffsetDateTime collectedFrom = today.minusDays(3).atTime(10, 15).atOffset(ZoneOffset.UTC);
+        jdbc.update("UPDATE analytics_collection_starts SET collected_from = ? WHERE event_type = 'POST_VIEWED'",
+                collectedFrom);
+        Post post = savePost("opened", PostStatus.PUBLISHED);
+        Post other = savePost("other", PostStatus.PUBLISHED);
+        openedOn(post, today.minusDays(3), 12);
+        openedOn(post, today.minusDays(3), 23);
+        openedOn(post, today.minusDays(1), 0);
+        openedOn(other, today.minusDays(1), 12);
+
+        mockMvc.perform(get("/analytics/me/posts/{id}/openings", post.getId()).with(as(author)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.postId").value(post.getId()))
+                .andExpect(jsonPath("$.period").value("7d"))
+                .andExpect(jsonPath("$.windowStart").value(today.minusDays(6) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.windowEnd").value(today.plusDays(1) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.generatedAt").isNotEmpty())
+                .andExpect(jsonPath("$.collectedFrom").value(today.minusDays(3) + "T10:15:00Z"))
+                .andExpect(jsonPath("$.totalOpenings").value(3))
+                .andExpect(jsonPath("$.days.length()").value(7))
+                .andExpect(jsonPath("$.days[0].date").value(today.minusDays(6).toString()))
+                .andExpect(jsonPath("$.days[0].measured").value(false))
+                .andExpect(jsonPath("$.days[0].openings").value((Object) null))
+                .andExpect(jsonPath("$.days[2].measured").value(false))
+                .andExpect(jsonPath("$.days[2].openings").value((Object) null))
+                .andExpect(jsonPath("$.days[3].date").value(today.minusDays(3).toString()))
+                .andExpect(jsonPath("$.days[3].measured").value(true))
+                .andExpect(jsonPath("$.days[3].openings").value(2))
+                .andExpect(jsonPath("$.days[4].measured").value(true))
+                .andExpect(jsonPath("$.days[4].openings").value(0))
+                .andExpect(jsonPath("$.days[5].openings").value(1))
+                .andExpect(jsonPath("$.days[6].date").value(today.toString()))
+                .andExpect(jsonPath("$.days[6].measured").value(true))
+                .andExpect(jsonPath("$.days[6].openings").value(0));
+    }
+
+    @Test
+    void anAuthorGetsThirtyDaysAlsoForADraftAndAnyOtherPeriodIsRejected() throws Exception {
+        jdbc.update("UPDATE analytics_collection_starts SET collected_from = '2020-01-01T00:00:00Z' "
+                + "WHERE event_type = 'POST_VIEWED'");
+        Post draft = savePost("draft-opened", PostStatus.DRAFT);
+
+        mockMvc.perform(get("/analytics/me/posts/{id}/openings", draft.getId()).param("period", "30d").with(as(author)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.days.length()").value(30))
+                .andExpect(jsonPath("$.totalOpenings").value(0))
+                .andExpect(jsonPath("$.days[*].measured", everyItem(is(true))))
+                .andExpect(jsonPath("$.days[*].openings", everyItem(is(0))));
+        for (String period : List.of("24h", "90d", "abc")) {
+            mockMvc.perform(get("/analytics/me/posts/{id}/openings", draft.getId()).param("period", period)
+                            .with(as(author)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.detail").value("period must be one of [30d, 7d]"));
+        }
+    }
+
+    @Test
+    void onlyTheAuthorGetsTheOpeningsOfAPost() throws Exception {
+        Post post = savePost("private-series", PostStatus.PUBLISHED);
+        openedOn(post, LocalDate.now(ZoneOffset.UTC).minusDays(1), 12);
+        Post deleted = savePost("deleted-series", PostStatus.DELETED);
+        long missing = count("SELECT coalesce(max(id), 0) + 1000 FROM posts");
+        String path = "/analytics/me/posts/{id}/openings";
+
+        mockMvc.perform(get(path, post.getId())).andExpect(status().isUnauthorized());
+        for (User other : List.of(reader, moderator, admin)) {
+            mockMvc.perform(get(path, post.getId()).with(as(other)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.days").doesNotExist());
+        }
+        mockMvc.perform(get(path, deleted.getId()).with(as(author))).andExpect(status().isNotFound());
+        mockMvc.perform(get(path, missing).with(as(author))).andExpect(status().isNotFound());
+        mockMvc.perform(get(path, post.getId()).with(as(author))).andExpect(status().isOk());
+    }
+
     /** Takes every existing post out of the public figures, inside the rolled-back transaction. */
     private void hideAllContent() {
         jdbc.update("UPDATE posts SET status = 'DELETED'");
@@ -407,6 +485,14 @@ class AnalyticsControllerApiTest {
         long id = saveComment(post, author, commentStatus);
         jdbc.update("UPDATE comments SET created_at = ? WHERE id = ?",
                 day.atTime(12, 0).atOffset(ZoneOffset.UTC), id);
+    }
+
+    /** One guest opening of {@code post} at {@code hour}:00 UTC on {@code day}. */
+    private void openedOn(Post post, LocalDate day, int hour) {
+        jdbc.update("""
+                INSERT INTO activity_events (event_type, entity_type, entity_id, opening_id, created_at)
+                VALUES ('POST_VIEWED', 'POST', ?, ?, ?)
+                """, post.getId(), UUID.randomUUID(), day.atTime(hour, 0).atOffset(ZoneOffset.UTC));
     }
 
     /** One recorded opening, by {@code by} or by a guest when it is {@code null}. */
