@@ -42,6 +42,8 @@ import type { CsrfResponse } from './models/csrfResponse.dto';
 
 import type { GetActivityTrendParams } from './models/getActivityTrendParams.dto';
 
+import type { GetPublicActivityComparisonParams } from './models/getPublicActivityComparisonParams.dto';
+
 import type { GetPublicActivityParams } from './models/getPublicActivityParams.dto';
 
 import type { GetPublicCategoryDistributionParams } from './models/getPublicCategoryDistributionParams.dto';
@@ -81,6 +83,8 @@ import type { PostDto } from './models/postDto.dto';
 import type { PostSummaryDto } from './models/postSummaryDto.dto';
 
 import type { ProblemDetail } from './models/problemDetail.dto';
+
+import type { PublicActivityComparisonDto } from './models/publicActivityComparisonDto.dto';
 
 import type { PublicActivityDto } from './models/publicActivityDto.dto';
 
@@ -4980,6 +4984,156 @@ export const invalidateGetPublicCategoryDistribution = async (
 ): Promise<QueryClient> => {
   await queryClient.invalidateQueries(
     { queryKey: getGetPublicCategoryDistributionQueryKey(params) },
+    options
+  );
+
+  return queryClient;
+};
+
+/**
+ * Public. Published or locked posts and visible comments on them in the window of the public activity up to now, against the window of the same length that ends where it starts. Gives counts, absolute changes and percentages; the percentage is null when the previous value is 0.
+ * @summary Compare public activity with the previous window
+ */
+export const getPublicActivityComparison = (
+  params?: GetPublicActivityComparisonParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PublicActivityComparisonDto>(
+    { url: `/analytics/public/comparison`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getGetPublicActivityComparisonQueryKey = (
+  params?: GetPublicActivityComparisonParams
+) => {
+  return [`/analytics/public/comparison`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetPublicActivityComparisonQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityComparisonParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicActivityComparisonQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicActivityComparison>>> = ({
+    signal,
+  }) => getPublicActivityComparison(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicActivityComparison>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPublicActivityComparisonQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicActivityComparison>>
+>;
+export type GetPublicActivityComparisonQueryError = ErrorType<ProblemDetail>;
+
+export function useGetPublicActivityComparison<
+  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | GetPublicActivityComparisonParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicActivityComparison>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicActivityComparison>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicActivityComparison<
+  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityComparisonParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicActivityComparison>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicActivityComparison>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicActivityComparison<
+  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityComparisonParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Compare public activity with the previous window
+ */
+
+export function useGetPublicActivityComparison<
+  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityComparisonParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPublicActivityComparisonQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetPublicActivityComparison} query
+ */
+export const invalidateGetPublicActivityComparison = async (
+  queryClient: QueryClient,
+  params?: GetPublicActivityComparisonParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries(
+    { queryKey: getGetPublicActivityComparisonQueryKey(params) },
     options
   );
 

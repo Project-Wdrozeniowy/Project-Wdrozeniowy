@@ -1,10 +1,13 @@
 package com.devpulse.analytics.service;
 
+import com.devpulse.analytics.dto.ActivityChangeDto;
 import com.devpulse.analytics.dto.ActivityTrendDto;
 import com.devpulse.analytics.dto.PlatformSummaryDto;
 import com.devpulse.analytics.dto.PostAnalyticsDto;
+import com.devpulse.analytics.dto.PublicActivityComparisonDto;
 import com.devpulse.analytics.dto.PublicActivityDayDto;
 import com.devpulse.analytics.dto.PublicActivityDto;
+import com.devpulse.analytics.dto.PublicActivityWindowDto;
 import com.devpulse.analytics.dto.PublicCategoryDistributionDto;
 import com.devpulse.analytics.dto.PublicCategoryDto;
 import com.devpulse.analytics.dto.PublicCategoryShareDto;
@@ -30,6 +33,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +64,11 @@ import java.util.stream.Collectors;
  *       window by their current category, so its rows add up to the public
  *       activity's posts. Posts without a category, also those whose category
  *       was deleted, form the last row; shares are null for an empty window.</li>
+ *   <li>The public comparison sets the public activity window, up to now,
+ *       against the window of the same length that ends where it starts:
+ *       no gap, no overlap, and the partial current day is matched by an
+ *       equal span. Both count the records that are public now, so hiding a
+ *       post lowers past figures too. A change from 0 has no percentage.</li>
  * </ul>
  */
 @Service
@@ -243,6 +252,43 @@ public class AnalyticsService {
                 .build();
     }
 
+    /**
+     * Public posts and comments of the current {@code period} window, up to
+     * now, against the equally long window right before it.
+     *
+     * @throws AppException HTTP 400 for an unknown period
+     */
+    @Transactional(readOnly = true)
+    public PublicActivityComparisonDto publicActivityComparison(String period) {
+        PublicWindow window = publicWindow(period);
+        OffsetDateTime start = window.start();
+        OffsetDateTime previousStart = start.minus(Duration.between(start, window.now()));
+        List<AnalyticsRepository.PublicTotals> totals =
+                analyticsRepository.publicTotals(previousStart, start, window.now());
+        AnalyticsRepository.PublicTotals previous = totals.get(0);
+        AnalyticsRepository.PublicTotals current = totals.get(1);
+        return PublicActivityComparisonDto.builder()
+                .period(period)
+                .generatedAt(window.now())
+                .current(new PublicActivityWindowDto(start, window.now(), current.posts(), current.comments()))
+                .previous(new PublicActivityWindowDto(previousStart, start, previous.posts(), previous.comments()))
+                .posts(change(current.posts(), previous.posts()))
+                .comments(change(current.comments(), previous.comments()))
+                .build();
+    }
+
+    /** {@code current} against {@code previous}; the percentage is null when {@code previous} is 0. */
+    static ActivityChangeDto change(long current, long previous) {
+        long change = current - previous;
+        return ActivityChangeDto.builder()
+                .current(current)
+                .previous(previous)
+                .change(change)
+                .changePercent(previous == 0 ? null : BigDecimal.valueOf(change * 100)
+                        .divide(BigDecimal.valueOf(previous), 1, RoundingMode.HALF_UP))
+                .build();
+    }
+
     /** {@code part / total} rounded half up to 4 decimals, or null when {@code total} is 0. */
     static BigDecimal share(long part, long total) {
         return total == 0 ? null : BigDecimal.valueOf(part).divide(BigDecimal.valueOf(total), 4, RoundingMode.HALF_UP);
@@ -263,9 +309,14 @@ public class AnalyticsService {
         }
     }
 
+    /**
+     * The window of {@code period} read now. Now is cut to whole milliseconds,
+     * the precision clients parse, so window lengths derived from it are exact
+     * for them too.
+     */
     private static PublicWindow publicWindow(String period) {
         long days = window(PUBLIC_ACTIVITY_PERIODS, period).toDays();
-        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS);
         LocalDate lastDay = now.toLocalDate();
         return new PublicWindow(lastDay.minusDays(days - 1), lastDay, now);
     }

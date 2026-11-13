@@ -318,6 +318,78 @@ class AnalyticsControllerApiTest {
         }
     }
 
+    @Test
+    void publicComparisonSetsTheActivityWindowAgainstTheEquallyLongOneBeforeIt() throws Exception {
+        hideAllContent();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        Post current = postCreatedOn("current", PostStatus.PUBLISHED, today.minusDays(6));
+        postCreatedOn("current-locked", PostStatus.LOCKED, today.minusDays(3));
+        postCreatedOn("current-draft", PostStatus.DRAFT, today.minusDays(3));
+        commentCreatedOn(current, "VISIBLE", today.minusDays(5));
+        commentCreatedOn(current, "HIDDEN", today.minusDays(5));
+        Post previous = postCreatedOn("previous", PostStatus.PUBLISHED, today.minusDays(7));
+        commentCreatedOn(previous, "VISIBLE", today.minusDays(8));
+        commentCreatedOn(previous, "VISIBLE", today.minusDays(7));
+        commentCreatedOn(previous, "VISIBLE", today.minusDays(2));
+
+        String activity = mockMvc.perform(get("/analytics/public/activity"))
+                .andReturn().getResponse().getContentAsString();
+        String body = mockMvc.perform(get("/analytics/public/comparison"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("7d"))
+                .andExpect(jsonPath("$.current.start").value(today.minusDays(6) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.previous.end").value(today.minusDays(6) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.current.posts").value(2))
+                .andExpect(jsonPath("$.current.comments").value(2))
+                .andExpect(jsonPath("$.previous.posts").value(1))
+                .andExpect(jsonPath("$.previous.comments").value(2))
+                .andExpect(jsonPath("$.posts.current").value(2))
+                .andExpect(jsonPath("$.posts.previous").value(1))
+                .andExpect(jsonPath("$.posts.change").value(1))
+                .andExpect(jsonPath("$.posts.changePercent").value(100.0))
+                .andExpect(jsonPath("$.comments.change").value(0))
+                .andExpect(jsonPath("$.comments.changePercent").value(0.0))
+                .andReturn().getResponse().getContentAsString();
+
+        OffsetDateTime generatedAt = OffsetDateTime.parse(JsonPath.read(body, "$.generatedAt"));
+        OffsetDateTime start = OffsetDateTime.parse(JsonPath.read(body, "$.current.start"));
+        OffsetDateTime previousStart = OffsetDateTime.parse(JsonPath.read(body, "$.previous.start"));
+        assertThat(OffsetDateTime.parse(JsonPath.<String>read(body, "$.current.end"))).isEqualTo(generatedAt);
+        assertThat(generatedAt.getNano() % 1_000_000).as("whole milliseconds").isZero();
+        assertThat(java.time.Duration.between(previousStart, start))
+                .isEqualTo(java.time.Duration.between(start, generatedAt));
+        assertThat(number(body, "$.current.posts")).isEqualTo(number(activity, "$.totalPosts"));
+        assertThat(number(body, "$.current.comments")).isEqualTo(number(activity, "$.totalComments"));
+    }
+
+    @Test
+    void publicComparisonFromAnEmptyPreviousWindowHasNoPercentage() throws Exception {
+        hideAllContent();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        postCreatedOn("fresh", PostStatus.PUBLISHED, today.minusDays(20));
+
+        mockMvc.perform(get("/analytics/public/comparison").param("period", "30d").with(as(reader)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("30d"))
+                .andExpect(jsonPath("$.current.start").value(today.minusDays(29) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.posts.current").value(1))
+                .andExpect(jsonPath("$.posts.previous").value(0))
+                .andExpect(jsonPath("$.posts.change").value(1))
+                .andExpect(jsonPath("$.posts.changePercent").value((Object) null))
+                .andExpect(jsonPath("$.comments.current").value(0))
+                .andExpect(jsonPath("$.comments.change").value(0))
+                .andExpect(jsonPath("$.comments.changePercent").value((Object) null));
+    }
+
+    @Test
+    void publicComparisonRejectsAnyOtherPeriod() throws Exception {
+        for (String period : List.of("24h", "90d", "abc")) {
+            mockMvc.perform(get("/analytics/public/comparison").param("period", period))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.detail").value("period must be one of [30d, 7d]"));
+        }
+    }
+
     /** Takes every existing post out of the public figures, inside the rolled-back transaction. */
     private void hideAllContent() {
         jdbc.update("UPDATE posts SET status = 'DELETED'");

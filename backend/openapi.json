@@ -2733,6 +2733,47 @@
         "summary" : "Get public posts by category",
         "tags" : [ "Analytics" ]
       }
+    },
+    "/analytics/public/comparison" : {
+      "get" : {
+        "description" : "Public. Published or locked posts and visible comments on them in the window of the public activity up to now, against the window of the same length that ends where it starts. Gives counts, absolute changes and percentages; the percentage is null when the previous value is 0.",
+        "operationId" : "getPublicActivityComparison",
+        "parameters" : [ {
+          "description" : "Number of UTC days in the current window",
+          "example" : "7d",
+          "in" : "query",
+          "name" : "period",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "7d", "30d" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicActivityComparisonDto"
+                }
+              }
+            },
+            "description" : "Comparison returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid period"
+          }
+        },
+        "summary" : "Compare public activity with the previous window",
+        "tags" : [ "Analytics" ]
+      }
     }
   },
   "components" : {
@@ -4330,6 +4371,102 @@
           }
         },
         "required" : [ "openingId" ]
+      },
+      "ActivityChangeDto" : {
+        "type" : "object",
+        "description" : "One figure in the current window against the previous one",
+        "properties" : {
+          "change" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "current - previous; negative for a decrease",
+            "example" : 7
+          },
+          "changePercent" : {
+            "type" : [ "number", "null" ],
+            "description" : "change / previous × 100, rounded half up to 1 decimal; null when previous is 0, since growth from nothing has no percentage",
+            "example" : 29.2
+          },
+          "current" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Value in the current window",
+            "example" : 31
+          },
+          "previous" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Value in the previous window",
+            "example" : 24
+          }
+        },
+        "required" : [ "change", "changePercent", "current", "previous" ]
+      },
+      "PublicActivityComparisonDto" : {
+        "type" : "object",
+        "description" : "Public activity of the current window against the window of the same length right before it. The current window is that of the public activity up to generatedAt, so its figures equal the activity totals; the previous one ends where it starts, with no gap or overlap, and lasts exactly as long, so the partial current day is matched by an equal span. Figures count the records that are public now, so hiding a post later lowers both windows.",
+        "properties" : {
+          "comments" : {
+            "$ref" : "#/components/schemas/ActivityChangeDto",
+            "description" : "Visible comments on public posts: current against previous"
+          },
+          "current" : {
+            "$ref" : "#/components/schemas/PublicActivityWindowDto",
+            "description" : "From 00:00 UTC of the first of the period's days, the current one being the last, to generatedAt"
+          },
+          "generatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When these figures were read; the end of the current window",
+            "example" : "2026-11-11T14:30:00Z"
+          },
+          "period" : {
+            "type" : "string",
+            "description" : "Requested window",
+            "enum" : [ "7d", "30d" ],
+            "example" : "7d"
+          },
+          "posts" : {
+            "$ref" : "#/components/schemas/ActivityChangeDto",
+            "description" : "Public posts: current against previous"
+          },
+          "previous" : {
+            "$ref" : "#/components/schemas/PublicActivityWindowDto",
+            "description" : "The equally long window ending at current.start"
+          }
+        },
+        "required" : [ "comments", "current", "generatedAt", "period", "posts", "previous" ]
+      },
+      "PublicActivityWindowDto" : {
+        "type" : "object",
+        "description" : "Public posts and comments created from start (inclusive) to end (exclusive)",
+        "properties" : {
+          "comments" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Visible comments on public posts created in the window",
+            "example" : 87
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "End of the window, exclusive",
+            "example" : "2026-11-11T14:30:00Z"
+          },
+          "posts" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Public posts created in the window",
+            "example" : 31
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the window, inclusive",
+            "example" : "2026-11-05T00:00:00Z"
+          }
+        },
+        "required" : [ "comments", "end", "posts", "start" ]
       },
       "PublicCategoryDistributionDto" : {
         "type" : "object",
