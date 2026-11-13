@@ -2013,7 +2013,7 @@ export const useUpdateComment = <TError = ErrorType<ProblemDetail>, TContext = u
 };
 
 /**
- * Public. Without a status filter only published and locked posts are listed. A bearer token is optional and only widens what the status filter may return.
+ * Public. Without a status filter only published and locked posts are listed. A bearer token is optional and only widens what the status filter may return. createdFrom (inclusive) and createdTo (exclusive) bound the creation time and, with categoryId or uncategorized=true, list the posts behind a public analytics figure: for the activity row of 2026-11-05 pass createdFrom=2026-11-05T00:00:00Z and createdTo=2026-11-06T00:00:00Z; for a category row of a window pass its windowStart, windowEnd and category.id, or uncategorized=true for the row without a category.
  * @summary List posts with optional filtering and pagination
  */
 export const listPosts = (
