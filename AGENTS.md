@@ -9,7 +9,17 @@
 
 ## Project Overview
 
-**Orbita** is a full-stack community forum platform. Users can register, post articles, comment, vote, and receive real-time notifications.
+**Orbita** is a full-stack social platform combining a Reddit-like forum/social
+network with open, interactive analytics. Its core principles are transparency,
+user control, and predictability.
+
+Read the [product vision and priorities](docs/project-vision.md) when making
+product, scope, or architecture decisions. It defines the intended experience,
+academic context, and privacy/accessibility constraints, not implemented feature
+status. The intended MVP combines a functional social core with interactive
+analytics as its main differentiator; exact scope follows the current project
+plan and Jira. An AI assistant is a possible future feature, not a current MVP
+requirement.
 
 The repository is an **Nx monorepo** containing three services, an E2E project,
 and a shared Docker Compose stack. npm workspaces uses the root lockfile;
@@ -30,6 +40,41 @@ No separate frontend server is needed.
 
 Database schema is managed by Flyway (V1–V11: users, forum, notifications, analytics, refresh-token rotation, the default forum categories, audit timestamps, JDBC sessions, HTTP refresh retirement, intentional post openings and analytics collection starts).
 ER diagrams live in `docs/db-schema*.mmd`.
+
+### Working principles
+
+- Prioritize valuable, complete, end-to-end functionality that the team can
+  demonstrate. Avoid unnecessary complexity, speculative abstractions, excessive
+  refactoring, duplicated work, and unrelated changes.
+- Use relevant available skills and specialized tools; read their instructions
+  before using them. Consult repository instructions, developer guides, and
+  architectural conventions for technical decisions, and reuse established
+  project patterns and solutions where appropriate.
+- Use Jira for task requirements, acceptance criteria, dependencies, and history.
+  For returned tasks, inspect review comments and reasons for rejection. Local
+  backlog exports are context and execution records, not a substitute for live
+  requirements.
+- Use Figma for existing designs and UI context; do not assume every design is
+  final or fully implemented.
+- Verify implementation against requirements. Neither Jira status nor
+  documentation alone proves that functionality works. Distinguish verified
+  facts, assumptions, and recommendations, and challenge questionable
+  requirements or decisions with reasons.
+- Apply the [product constraints](docs/project-vision.md#product-constraints):
+  GDPR, applicable EU/Polish requirements, privacy by design, data minimization,
+  and WCAG 2.2 AA as an engineering target. Transparency must preserve users'
+  control over personal information.
+- Follow the [EU and Polish regulatory compliance guidance](docs/project-vision.md#eu-and-polish-regulatory-compliance)
+  for relevant features and deployments, including cookies/tracking,
+  user-generated content, accessibility, and AI where applicable. Verify current
+  applicability, distinguish obligations from recommendations and future-only
+  requirements, and raise significant legal or product decisions for
+  clarification. Do not claim compliance without verification.
+- Keep work and responses practical and proportional to the task. Modify Jira,
+  Figma, or code only when the user's request authorizes those actions.
+
+The goal is a coherent, technically sound product that demonstrates Orbita's
+vision, not merely completed Jira tickets.
 
 ---
 

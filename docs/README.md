@@ -7,6 +7,10 @@ authoritative for actual behaviour.
 
 ## What should I read?
 
+For Orbita's purpose, intended MVP, academic context, and product constraints,
+read the [product vision and priorities](project-vision.md). It describes intended
+direction; the current project plan and Jira determine exact delivery scope.
+
 | Reader or task                                   | Start here                                                                     | Then, if relevant                                                                                                                                                                                                      |
 | ------------------------------------------------ | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | New developer                                    | [Root README](../README.md), then [developer guides](guides/README.md)         | [Architecture and extension guide](guides/architecture.md), the [frontend architecture](guides/frontend/README.md) for FSD work, then the [frontend](../frontend/README.md) or [gateway](../gateway/README.md) runbook |
@@ -99,3 +103,4 @@ is a development convention.
 | Which checks run?                       | Package/Maven configuration and `.github/workflows/`                                                                    |
 | What are the team contribution rules?   | [Developer guides](guides/README.md); GitHub rulesets determine technical enforcement, which must be checked separately |
 | What work is planned or complete?       | Live Jira; treat the local backlog export and dated snapshots as context                                                |
+| What is Orbita's product direction?     | [Product vision and priorities](project-vision.md); use the current project plan and Jira for exact scope                 |
