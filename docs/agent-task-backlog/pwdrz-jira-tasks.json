@@ -22648,12 +22648,13 @@
         }
       },
       "localTracking": {
-        "status": "in_progress",
+        "status": "done",
         "owner": "Ruslan 82179",
-        "updatedAt": "2026-11-14T21:51:20.828Z",
+        "updatedAt": "2026-11-14T22:10:29.382Z",
         "notes": [
           "Awaiting verification of backend prerequisite PWDRZ-194; implementation of new summaries not started.",
-          "Backend prerequisite 194 verified; proceeding to new summary APIs."
+          "Backend prerequisite 194 verified; proceeding to new summary APIs.",
+          "Public and author summaries verified: 376 backend tests and JaCoCo gates; 26 managed HTTP/browser cases, root checks/build, JS coverage, contract/codegen and infrastructure checks passed. See pwdrz-167-execution.md. Jira status unchanged."
         ]
       }
     }

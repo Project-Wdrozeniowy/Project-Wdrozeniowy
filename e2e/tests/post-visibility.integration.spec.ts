@@ -72,7 +72,10 @@ test('integration: unpublishing removes public activity and preserves private hi
     expect(await hidden.json()).toMatchObject({
       id: post.id,
       slug: post.slug,
+      title: post.title,
       content,
+      category: { id: categories[0].id },
+      tags: [{ slug: tag }],
       status: 'DRAFT',
     });
     expect((await guest.get(path)).status()).toBe(404);
@@ -107,7 +110,12 @@ test('integration: unpublishing removes public activity and preserves private hi
     const published = await request.patch(path, { headers, data: { status: 'PUBLISHED' } });
     expect(published.status()).toBe(200);
     expect(await (await guest.get(path)).json()).toMatchObject({
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
       content,
+      category: { id: categories[0].id },
+      tags: [{ slug: tag }],
       viewCount: 1,
       voteScore: 1,
     });
