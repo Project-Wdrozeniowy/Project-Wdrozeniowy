@@ -3289,9 +3289,17 @@
             "description" : "Notification type",
             "enum" : [ "COMMENT_ON_POST", "REPLY_TO_COMMENT", "VOTE_ON_POST", "VOTE_ON_COMMENT", "MENTION", "POST_LOCKED", "SYSTEM" ],
             "example" : "COMMENT_ON_POST"
+          },
+          "destination" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/NotificationDestinationDto"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Where COMMENT_ON_POST and REPLY_TO_COMMENT notifications lead, checked when read; null for other types"
           }
         },
-        "required" : [ "createdAt", "entityId", "entityType", "id", "message", "read", "senderUsername", "type" ]
+        "required" : [ "createdAt", "destination", "entityId", "entityType", "id", "message", "read", "senderUsername", "type" ]
       },
       "PagedResponseCommentDto" : {
         "type" : "object",
@@ -4746,6 +4754,33 @@
           }
         },
         "required" : [ "category", "posts", "share" ]
+      },
+      "NotificationDestinationDto" : {
+        "type" : "object",
+        "description" : "The discussion a comment notification leads to, as its recipient may read it now. When it is not available, postSlug and commentId are null and unavailableReason says why.",
+        "properties" : {
+          "available" : {
+            "type" : "boolean",
+            "description" : "Whether the recipient can open the discussion now"
+          },
+          "commentId" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64",
+            "description" : "ID of the comment to scroll to on that post; null when unavailable",
+            "example" : 55
+          },
+          "postSlug" : {
+            "type" : [ "string", "null" ],
+            "description" : "Slug of the post to open, GET /forum/posts/{slug}; null when unavailable",
+            "example" : "how-to-use-spring-boot"
+          },
+          "unavailableReason" : {
+            "type" : [ "string", "null" ],
+            "description" : "Why the destination is unavailable; null when available",
+            "enum" : [ "POST_UNAVAILABLE", "COMMENT_UNAVAILABLE", null ]
+          }
+        },
+        "required" : [ "available", "commentId", "postSlug", "unavailableReason" ]
       }
     },
     "securitySchemes" : {
