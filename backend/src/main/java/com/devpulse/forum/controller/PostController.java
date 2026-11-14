@@ -21,10 +21,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -62,10 +64,16 @@ public class PostController {
      */
     @Operation(summary = "List posts with optional filtering and pagination",
             description = "Public. Without a status filter only published and locked posts are listed. "
-                    + "A bearer token is optional and only widens what the status filter may return.")
+                    + "A bearer token is optional and only widens what the status filter may return. "
+                    + "createdFrom (inclusive) and createdTo (exclusive) bound the creation time and, with "
+                    + "categoryId or uncategorized=true, list the posts behind a public analytics figure: "
+                    + "for the activity row of 2026-11-05 pass createdFrom=2026-11-05T00:00:00Z and "
+                    + "createdTo=2026-11-06T00:00:00Z; for a category row of a window pass its windowStart, "
+                    + "windowEnd and category.id, or uncategorized=true for the row without a category.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Posts returned"),
-        @ApiResponse(responseCode = "400", description = "Invalid pagination or unsupported sort field")
+        @ApiResponse(responseCode = "400", description = "Invalid pagination, unsupported sort field, an invalid "
+                + "or empty creation range, or uncategorized combined with a category filter")
     })
     @GetMapping
     public PagedResponse<PostSummaryDto> listPosts(
@@ -81,13 +89,31 @@ public class PostController {
                     + "a status the caller may not see is ignored")
                 @RequestParam(required = false) PostStatus status,
             @Parameter(description = "Sort field", schema = @Schema(type = "string", allowableValues = {"createdAt", "voteScore", "lastActivityAt"}, defaultValue = "lastActivityAt"))
-                @RequestParam(defaultValue = "lastActivityAt") String sort) {
+                @RequestParam(defaultValue = "lastActivityAt") String sort,
+            @Parameter(description = "Only posts created at or after this instant (ISO-8601, e.g. "
+                    + "2026-11-05T00:00:00Z); inclusive", example = "2026-11-05T00:00:00Z")
+                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                OffsetDateTime createdFrom,
+            @Parameter(description = "Only posts created before this instant (ISO-8601); exclusive, and after "
+                    + "createdFrom when both are given", example = "2026-11-06T00:00:00Z")
+                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                OffsetDateTime createdTo,
+            @Parameter(description = "true lists only posts without a category, including those whose category "
+                    + "was deleted; cannot be combined with categoryId or categorySlug")
+                @RequestParam(defaultValue = "false") boolean uncategorized) {
         if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
             throw new AppException("page must be >= 0 and size between 1 and " + MAX_PAGE_SIZE,
                     HttpStatus.BAD_REQUEST);
         }
         if (!SORT_FIELDS.contains(sort)) {
             throw new AppException("Unsupported sort field: " + sort, HttpStatus.BAD_REQUEST);
+        }
+        if (createdFrom != null && createdTo != null && !createdFrom.isBefore(createdTo)) {
+            throw new AppException("createdFrom must be before createdTo", HttpStatus.BAD_REQUEST);
+        }
+        if (uncategorized && (categoryId != null || StringUtils.hasText(categorySlug))) {
+            throw new AppException("uncategorized cannot be combined with categoryId or categorySlug",
+                    HttpStatus.BAD_REQUEST);
         }
         List<Sort.Order> orders = new ArrayList<>();
         if (!StringUtils.hasText(q)) {
@@ -97,7 +123,8 @@ public class PostController {
         // Tie-breaker, so pages don't overlap or skip posts with equal sort values.
         orders.add(Sort.Order.desc("id"));
 
-        PostFilter filter = new PostFilter(q, categoryId, categorySlug, tag, author, status);
+        PostFilter filter = new PostFilter(q, categoryId, categorySlug, tag, author, status,
+                createdFrom, createdTo, uncategorized);
         return PagedResponse.from(postService.search(filter, PageRequest.of(page, size, Sort.by(orders))));
     }
 

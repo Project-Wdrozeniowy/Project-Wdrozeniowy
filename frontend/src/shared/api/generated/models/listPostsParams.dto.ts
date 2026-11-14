@@ -27,4 +27,10 @@ export type ListPostsParams = {
   status?: ListPostsStatus;
   /** Sort field */
   sort?: ListPostsSort;
+  /** Only posts created at or after this instant (ISO-8601, e.g. 2026-11-05T00:00:00Z); inclusive */
+  createdFrom?: string;
+  /** Only posts created before this instant (ISO-8601); exclusive, and after createdFrom when both are given */
+  createdTo?: string;
+  /** true lists only posts without a category, including those whose category was deleted; cannot be combined with categoryId or categorySlug */
+  uncategorized?: boolean;
 };

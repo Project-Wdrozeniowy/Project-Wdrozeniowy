@@ -272,6 +272,15 @@ public class PostService {
         if (StringUtils.hasText(filter.categorySlug())) {
             specs.add(PostSpecifications.byCategorySlug(filter.categorySlug()));
         }
+        if (filter.uncategorized()) {
+            specs.add(PostSpecifications.withoutCategory());
+        }
+        if (filter.createdFrom() != null) {
+            specs.add(PostSpecifications.createdFrom(filter.createdFrom()));
+        }
+        if (filter.createdTo() != null) {
+            specs.add(PostSpecifications.createdBefore(filter.createdTo()));
+        }
         if (StringUtils.hasText(filter.tag())) {
             specs.add(PostSpecifications.byTagSlug(filter.tag()));
         }

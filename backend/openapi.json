@@ -1038,7 +1038,7 @@
       "get" : {
         "tags" : [ "Forum – Posts" ],
         "summary" : "List posts with optional filtering and pagination",
-        "description" : "Public. Without a status filter only published and locked posts are listed. A bearer token is optional and only widens what the status filter may return.",
+        "description" : "Public. Without a status filter only published and locked posts are listed. A bearer token is optional and only widens what the status filter may return. createdFrom (inclusive) and createdTo (exclusive) bound the creation time and, with categoryId or uncategorized=true, list the posts behind a public analytics figure: for the activity row of 2026-11-05 pass createdFrom=2026-11-05T00:00:00Z and createdTo=2026-11-06T00:00:00Z; for a category row of a window pass its windowStart, windowEnd and category.id, or uncategorized=true for the row without a category.",
         "operationId" : "listPosts",
         "parameters" : [ {
           "description" : "Page number (0-based)",
@@ -1122,6 +1122,35 @@
             "default" : "lastActivityAt",
             "enum" : [ "createdAt", "voteScore", "lastActivityAt" ]
           }
+        }, {
+          "description" : "Only posts created at or after this instant (ISO-8601, e.g. 2026-11-05T00:00:00Z); inclusive",
+          "example" : "2026-11-05T00:00:00Z",
+          "in" : "query",
+          "name" : "createdFrom",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "description" : "Only posts created before this instant (ISO-8601); exclusive, and after createdFrom when both are given",
+          "example" : "2026-11-06T00:00:00Z",
+          "in" : "query",
+          "name" : "createdTo",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "description" : "true lists only posts without a category, including those whose category was deleted; cannot be combined with categoryId or categorySlug",
+          "in" : "query",
+          "name" : "uncategorized",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
         } ],
         "responses" : {
           "200" : {
@@ -1135,7 +1164,7 @@
             }
           },
           "400" : {
-            "description" : "Invalid pagination or unsupported sort field",
+            "description" : "Invalid pagination, unsupported sort field, an invalid or empty creation range, or uncategorized combined with a category filter",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
