@@ -1,6 +1,6 @@
 # Monorepo workflows
 
-> **PWDRZ-160 experiment:** use [the spike runbook](../spikes/pwdrz-160-vite-spa/README.md) for this branch. Its explicit SPA routes, Vite build, relative `/api` and Express static hosting supersede Next-specific runtime/setup examples below. Other ownership, security, testing and Git rules remain applicable. This is an isolated experiment, not a team-wide architecture decision.
+> **Current topology:** adopted Vite/React Router SPA, Express static hosting and relative `/api`; Spring owns SESSION/CSRF. Start at the root README. Historical spike records are not current operating instructions.
 
 > [Русская версия / Russian translation ↓](#ru) — temporary reading aid;
 > the English text is canonical.
@@ -31,8 +31,7 @@ npm run bootstrap
 This includes the locked install and Java/Compose checks. If prerequisites are
 already checked, use `npm ci` as the install-only alternative rather than running both.
 
-Configure `.env`, `gateway/.env`, `frontend/.env` using their templates. The backend-only JWT_SECRET remains for provisional WS; Gateway has no REST signing key. Root dev expects frontend 3001, gateway 3000, backend 8080 and frontend
-API URL `http://localhost:3000/api`.
+Configure root `.env` and `gateway/.env`; frontend `.env` is optional. The backend-only JWT_SECRET remains for provisional WS; Gateway has no REST signing key. Root dev expects frontend 3001, gateway 3000, backend 8080 with Vite forwarding relative `/api` to Express.
 
 Exported environment variables take precedence over `.env`, as in the service
 launchers. For example, PowerShell `$env:PORT = '3000'` overrides a different
@@ -69,10 +68,7 @@ files and do not require the backend source. See [API bindings](api-bindings.md)
 | `npm run validate`     | Service build/check/coverage requirements, tooling tests and isolated E2E     |
 | `npm run graph`        | Nx project graph                                                              |
 
-**Production frontend builds and root validation require explicit `NEXT_PUBLIC_API_URL`.**
-PowerShell: `$env:NEXT_PUBLIC_API_URL = 'http://localhost:3000/api'`;
-POSIX: `export NEXT_PUBLIC_API_URL=http://localhost:3000/api`.
-These are local examples; deployment supplies its actual gateway URL.
+Frontend builds use relative `/api`; no public API URL or frontend env file is required.
 
 Root backend coverage requires local Java 17 and Docker. It creates a randomly
 named PostgreSQL 16 container, generated test credentials, tmpfs storage and an
@@ -95,8 +91,7 @@ isolation, scenario boundaries and the intentionally failing probe.
 **Coverage, DB/browser tests and lifecycle tasks are not cached.** Build/static
 tasks use local Nx cache with project source/config, root lock/config/tool scripts
 and Node version/platform inputs. Backend build also accounts for Java/options,
-caching only JAR outputs rather than reports. Frontend build includes its API URL
-and excludes `.next/dev` and `.next/cache` outputs. Add `--skip-nx-cache` to an Nx
+caching only JAR outputs rather than reports. Frontend build emits `frontend/dist`; build outputs are excluded from source inputs. Add `--skip-nx-cache` to an Nx
 command to rerun a static/build task. Remote caching is not configured.
 Workspace analytics are disabled, so first-run development does not ask an
 interactive telemetry question.
@@ -118,7 +113,7 @@ cd backend
 ./mvnw verify
 ```
 
-Direct frontend builds need the API URL; Maven tests need a disposable DB.
+Direct frontend builds need no API URL; Maven tests need a disposable DB.
 **Install Node dependencies at root; do not recreate service lockfiles.**
 Gateway images use repository context: `docker build -f gateway/Dockerfile .`.
 E2E copies workspace manifests/lockfile to its owned snapshot and installs the
@@ -157,8 +152,7 @@ npm run bootstrap
 Это locked install и проверки Java/Compose. Если prerequisites уже проверены,
 используйте `npm ci` как альтернативу только для установки; обе команды подряд не нужны.
 
-Настройте `.env`, `gateway/.env`, `frontend/.env` по шаблонам. JWT_SECRET нужен только backend для временного WS verifier; Gateway не требует REST signing key. Root dev ожидает frontend 3001, gateway 3000, backend 8080 и frontend
-API URL `http://localhost:3000/api`.
+Настройте `.env` и `gateway/.env`; frontend `.env` необязателен. JWT_SECRET нужен только backend для временного WS verifier; Gateway не требует REST signing key. Root dev ожидает frontend 3001, gateway 3000, backend 8080 ; Vite проксирует относительный `/api` в Express.
 
 Экспортированные переменные окружения имеют приоритет над `.env`, как и при
 прямом запуске сервисов. Например, PowerShell `$env:PORT = '3000'` переопределяет
@@ -188,10 +182,7 @@ npm run dev
 | `npm run validate`     | Сервисные build/check/coverage, tooling tests и изолированный E2E   |
 | `npm run graph`        | Граф проектов Nx                                                    |
 
-**Production frontend build и root validate требуют явного `NEXT_PUBLIC_API_URL`.**
-PowerShell: `$env:NEXT_PUBLIC_API_URL = 'http://localhost:3000/api'`;
-POSIX: `export NEXT_PUBLIC_API_URL=http://localhost:3000/api`.
-Это локальные примеры; deployment задаёт свой gateway URL.
+Frontend build использует относительный `/api`; public API URL и frontend env file не требуются.
 
 Backend coverage из корня требует локальную Java 17 и Docker. Создаются случайно
 названный PostgreSQL 16 container, тестовые credentials, tmpfs и временный loopback
@@ -214,7 +205,7 @@ probe описаны в [E2E runbook](../../e2e/README.md).
 **Coverage, DB/browser tests и lifecycle не кешируются.** Локальный Nx cache сборок
 и static checks учитывает source/config проекта, root lock/config/scripts, версию
 и платформу Node. Backend build учитывает Java/options, сохраняя только JAR, не
-reports. Frontend build учитывает API URL и исключает `.next/dev`/`.next/cache` outputs.
+reports. Frontend build создаёт `frontend/dist`; build outputs исключены из source inputs.
 Для повторного выполнения static/build добавьте `--skip-nx-cache` к Nx-команде.
 Remote caching не настроен.
 Workspace analytics отключена: первый запуск не требует интерактивного ответа
@@ -237,7 +228,7 @@ cd backend
 ./mvnw verify
 ```
 
-Прямая frontend-сборка требует API URL, Maven tests — одноразовую БД.
+Прямая frontend-сборка не требует API URL, Maven tests — одноразовую БД.
 **Node-зависимости устанавливайте из корня; service lockfiles не создавайте.**
 Gateway image использует repository context: `docker build -f gateway/Dockerfile .`.
 E2E копирует workspace manifests/lockfile в собственный snapshot и устанавливает

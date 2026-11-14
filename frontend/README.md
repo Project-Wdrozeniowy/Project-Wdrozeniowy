@@ -1,6 +1,6 @@
 # Orbita frontend
 
-PWDRZ-160 experimental React 19 + Vite 7 + React Router 7 SPA, served on port `3001` in local development. It communicates with the gateway, not directly with Spring Boot.
+Adopted React 19 + Vite 7 + React Router 7 SPA, served on port `3001` in local development. It communicates with the gateway, not directly with Spring Boot.
 
 Production files are served by Express on port 3000. In development Vite forwards `/api` and `/ws` to Express. See the [spike runbook](../docs/spikes/pwdrz-160-vite-spa/README.md) for comparison commands.
 

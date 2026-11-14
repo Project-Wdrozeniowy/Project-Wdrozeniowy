@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> **PWDRZ-160 experiment:** use [the spike runbook](docs/spikes/pwdrz-160-vite-spa/README.md) for this branch. Its explicit SPA routes, Vite build, relative `/api` and Express static hosting supersede Next-specific runtime/setup examples below. The [experimental frontend guide](docs/guides/frontend/README.md) describes the current app/router, app/layouts and pages structure; Next-shaped trees below are baseline references. Other ownership, security, testing and Git rules remain applicable. This is an isolated experiment, not a team-wide architecture decision.
+> **Current topology:** adopted Vite/React Router SPA, Express static hosting and relative `/api`; Spring owns SESSION/CSRF. Start at the root README. Historical spike records are not current operating instructions.
 
 > Agent/tooling entry point. Developers should start with [README.md](README.md)
 > and the [documentation map](docs/README.md); team contribution rules live in
@@ -16,11 +16,14 @@ and a shared Docker Compose stack. npm workspaces uses the root lockfile;
 Java remains Maven-owned. See the [monorepo runbook](docs/guides/monorepo.md).
 
 ```
-Frontend (Next.js 16)  →  Gateway (Express 5)  →  Backend (Spring Boot 4)  →  PostgreSQL 16
+Development: Vite SPA  →  Gateway (Express 5)  →  Backend (Spring Boot 4)  →  PostgreSQL 16
          port 3001             port 3000                  port 8080
 ```
 
-- **Frontend** (`frontend/`) — Next.js 16 App Router, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod, React Hook Form
+Built topology: browser → Express :3000 (HTML/assets and `/api`) → Spring :8080.
+No separate frontend server is needed.
+
+- **Frontend** (`frontend/`) — Vite 7 / React Router 7, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod, React Hook Form
 - **Gateway** (`gateway/`) — Node.js, Express 5, TypeScript 6; performs rate limiting, CORS and bounded HTTP forwarding, and reverse-proxies all `/api/*` traffic to the backend
 - **Backend** (`backend/`) — Java 17, Spring Boot 4, Spring Security, Spring Data JPA, PostgreSQL, Flyway migrations, Spring Session JDBC; jjwt is WS-only compatibility
 - **Infra** — PostgreSQL 16 + Redis 7 (via Docker Compose); Redis is provisioned but not yet wired in application code
@@ -87,8 +90,7 @@ remain declared by each consuming workspace.
 through Compose, waits for backend HTTP readiness and launches frontend/gateway
 through Nx. Ctrl+C stops those source processes; Compose data/services remain.
 `npm run check`, `npm run build`, `npm test`, `npm run test:e2e` and
-`npm run validate` are root workflows. Production builds require explicit
-`NEXT_PUBLIC_API_URL`. Root backend coverage uses a temporary owned PostgreSQL
+`npm run validate` are root workflows. Production frontend builds use relative `/api` without a public API URL. Root backend coverage uses a temporary owned PostgreSQL
 with local Java 17; `backend:coverage:ci` explicitly uses the disposable CI DB.
 Coverage/E2E/lifecycle tasks are never cached. The runbook owns details and
 direct-command escape paths. Do not change existing service gates or enable
@@ -103,10 +105,10 @@ and from source on the same port.
 
 ```bash
 cd frontend
-# Copy the template to frontend/.env if needed; set NEXT_PUBLIC_API_URL to the gateway.
+# frontend/.env is optional; browser requests use relative /api.
 # The root setup section creates this file.
 
-npm run dev -- -p 3001  # Next.js dev server with hot reload on port 3001
+npm run dev -- --port 3001  # Vite HMR; /api proxies through Express
 ```
 
 ### Gateway (port 3000 by default)
@@ -483,9 +485,9 @@ is not a passed gate. Selective CI and wider branch-rule changes remain PWDRZ-13
 
 ## Common Gotchas
 
-- **`NEXT_PUBLIC_API_URL` not set** → the API client falls back to `http://localhost:3000/api` during development; production builds require an explicit value. Set it in `frontend/.env`.
+- **API unavailable** → start Express :3000 and Spring :8080; Vite proxies `/api`. No public API URL is required.
 - **Protected API 401** → missing, expired or revoked server session; sign in again. JWT_SECRET is backend-only WS compatibility, not an HTTP authentication setting.
 - **Flyway migration failure** → inspect the migration error and database state first. `docker compose down -v` deletes local PostgreSQL data; use it only when that data is disposable and a reset is intended.
 - **`@/*` alias not resolving in tests** → Vitest resolves aliases via `resolve.alias` in `vitest.config.ts`. Do not use `tsconfig.json` paths alone — they must be mirrored in the vitest config.
-- **Port conflicts** → Next.js defaults to port 3000, so run it with `-p 3001` while the gateway owns 3000. `NEXT_PUBLIC_API_URL` controls the API target, not the frontend listening port.
+- **Port conflicts** → Vite owns 3001, Express owns 3000. Do not run source and Compose Gateway together.
 - **Coverage reports** → `coverage/` is already ignored at the repository root, and no frontend/gateway coverage files are currently tracked. Do not add generated reports to Git.

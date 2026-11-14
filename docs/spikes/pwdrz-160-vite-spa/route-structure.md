@@ -1,5 +1,9 @@
 # PWDRZ-160 route structure follow-up
 
+> Historical record for the revisions named below. Adoption and REST authentication
+> changed afterward. Use the [current handoff](README.md) for operating guidance.
+> Original measurements and results below are preserved.
+
 Status: implemented and locally verified. User explicitly requested FSD / React Router organization
 inside the existing experimental branch after the runnable migration spike.
 Reference revision before this follow-up: `d0d230399357284eb4ab32fee7227d29a4eff989`.

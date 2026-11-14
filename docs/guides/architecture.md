@@ -1,6 +1,6 @@
 # Architecture and extension guide
 
-> **PWDRZ-160 experiment:** use [the spike runbook](../spikes/pwdrz-160-vite-spa/README.md) for this branch. Its explicit SPA routes, Vite build, relative `/api` and Express static hosting supersede Next-specific runtime/setup examples below. Other ownership, security, testing and Git rules remain applicable. This is an isolated experiment, not a team-wide architecture decision.
+> **Current topology:** adopted Vite/React Router SPA, Express static hosting and relative `/api`; Spring owns SESSION/CSRF. Start at the root README. Historical spike records are not current operating instructions.
 
 > [Русская версия / Russian translation ↓](#ru) — temporary reading aid; the
 > English text is canonical.
@@ -17,7 +17,7 @@ today.**
 Orbita currently has three independently built services in one repository:
 
 ```text
-Browser → Next.js frontend (:3001) → Express gateway (:3000)
+Browser → Express SPA host + /api proxy (:3000)
         → Spring Boot backend (:8080, /api) → PostgreSQL
 ```
 
@@ -61,22 +61,12 @@ see the [testing guide](testing.md).
 
 ## Frontend: thin routes, shared transport and state
 
-The current frontend is **not a full Feature-Sliced Design implementation**.
-The [PWDRZ-149 frontend architecture target](frontend/README.md) defines the
-approved FSD/Next.js destination. The paths below describe **current ownership
-before migration**, not new placement rules:
-
-- `src/app/` contains Next.js route files and route composition. Move form
-  submission, data-fetch orchestration, and other feature behaviour into
-  components or hooks rather than growing route files.
-- `src/services/` currently holds HTTP requests and the shared `ApiClient`.
-  The target moves these responsibilities under `shared/api/`; routes and UI
-  must not create a second client or bypass session/CSRF handling.
-- `src/store/` currently holds shared client/application state. React Query
-  owns server-cache state; the overlapping user profile copies are tracked in
-  [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150).
-- `src/components/` currently contains reusable UI. PWDRZ-149 will distribute
-  it by actual `widgets`, `features`, `shared`, or route-local responsibility.
+The [frontend architecture](frontend/README.md) owns the current route/slice map.
+`app/router` composes routes, `app/layouts` owns frames, `app/providers` owns providers,
+and `pages` owns screens. Widgets hold reusable regions, features own user actions,
+and `shared/api` and `shared/auth` own transport/session infrastructure. Query owns
+server cache; PWDRZ-150 retains profile-state consolidation. Development adds Vite
+:3001 proxying `/api` through Express. Built operation needs no frontend server.
 
 > **Existing gap:** These are architectural responsibilities, not a claim
 > that all files comply. The login and registration routes are thin
@@ -129,7 +119,7 @@ Cross-service evidence is part of the
 **Frontend bindings (PWDRZ-130):** pinned Orval generates committed DTOs,
 operations and TanStack Query v5 bindings from `backend/openapi.json` into
 `frontend/src/shared/api/generated/`. A custom mutator delegates to the existing
-`ApiClient`, preserving token/cookie/401 handling. Root `api:generate` updates output;
+`ApiClient`, preserving cookie/CSRF/error handling. Root `api:generate` updates output;
 `api:check` detects drift without repairing files. Handwritten compositions keep
 application behavior; hidden `501` API contracts remain provisional. See the
 [API bindings workflow](api-bindings.md) for cache policy and remaining exceptions.
@@ -161,7 +151,7 @@ application behavior; hidden `501` API contracts remain provisional. See the
 В одном репозитории Orbita находятся три независимо собираемых сервиса:
 
 ```text
-Браузер → Next.js frontend (:3001) → Express gateway (:3000)
+Браузер → Express SPA host + /api proxy (:3000)
         → Spring Boot backend (:8080, /api) → PostgreSQL
 ```
 
@@ -203,23 +193,12 @@ PostgreSQL enum mapping **обязателен round-trip тест с мигра
 
 ### Frontend: тонкие routes, общий transport и state
 
-Текущий frontend **не является полной реализацией Feature-Sliced Design**.
-[Целевая архитектура PWDRZ-149](frontend/README.md) определяет согласованный
-вариант FSD вместе с Next.js. Пути ниже описывают **нынешних владельцев кода
-до миграции**, а не новые правила размещения:
-
-- `src/app/` содержит файлы маршрутов и их композицию. Submission форм,
-  orchestration загрузки данных и другое feature-поведение выносите в
-  компоненты или hooks, а не наращивайте route files.
-- `src/services/` сейчас содержит HTTP-запросы и общий `ApiClient`. В целевой
-  структуре они переходят в `shared/api/`; routes/UI не должны создавать
-  второй клиент или обходить session/CSRF transport.
-- `src/store/` сейчас содержит общее клиентское/application state. Серверный
-  кеш принадлежит React Query; перекрывающиеся копии профиля вынесены в
-  [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150).
-- `src/components/` сейчас содержит повторно используемый UI. PWDRZ-149
-  распределит его по реальной ответственности `widgets`, `features`, `shared`
-  или локального route UI.
+[Frontend architecture](frontend/README.md) описывает текущие routes и slices.
+`app/router` компонует routes, `app/layouts` — frames, `app/providers` — providers,
+`pages` — экраны. Widgets содержат общие блоки, features — действия пользователя,
+`shared/api` и `shared/auth` — transport и сессии. Query владеет server cache;
+PWDRZ-150 сохраняет profile-state consolidation. В development Vite :3001 проксирует
+`/api` через Express; в production Express раздаёт build без frontend server.
 
 > **Существующее расхождение:** Это правила ответственности, а не заявление,
 > что старый код уже им следует. Login/register routes теперь только
@@ -272,7 +251,7 @@ backend отдаёт тот же документ по `/api/v3/api-docs`.
 **Frontend bindings (PWDRZ-130):** закреплённый Orval генерирует DTO, операции и
 TanStack Query v5 bindings из `backend/openapi.json` в committed-каталог
 `frontend/src/shared/api/generated/`. Custom mutator использует существующий
-`ApiClient` с обработкой token/cookie/401. Корневые `api:generate` и `api:check`
+`ApiClient` с обработкой cookie/CSRF/errors. Корневые `api:generate` и `api:check`
 обновляют output и проверяют drift. Прикладная композиция остаётся ручной;
 контракты скрытых `501` API остаются provisional. Подробности — в
 [API bindings workflow](api-bindings.md).
