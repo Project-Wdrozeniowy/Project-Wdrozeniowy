@@ -1,14 +1,9 @@
-# Frontend architecture in the PWDRZ-160 experiment
+# Frontend architecture
 
-This guide describes the actual React + Vite + React Router SPA on the
-experimental branch. The user authorized this route-organization follow-up
-within PWDRZ-160. The pinned Next.js baseline and other branches retain their
-own structure; this document does not adopt the experiment for the team.
-
-Use the [frontend runbook](../../../frontend/README.md) and
-[spike comparison/run instructions](../../spikes/pwdrz-160-vite-spa/README.md).
-The source-backed [context map](../../spikes/pwdrz-160-vite-spa/route-structure.md)
-records the scope and verification of the restructuring.
+The adopted Vite/React Router SPA uses the ownership map below. Start at the
+[root README](../../../README.md), [frontend runbook](../../../frontend/README.md)
+and [session policy](../sessions.md). The [PWDRZ-160 history](../../spikes/pwdrz-160-vite-spa/README.md)
+preserves the original comparison and route-organization evidence.
 
 ## Ownership
 

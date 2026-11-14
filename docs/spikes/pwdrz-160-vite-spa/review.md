@@ -1,5 +1,9 @@
 # PWDRZ-160 branch review
 
+> Historical record for the revisions named below. Adoption and REST authentication
+> changed afterward. Use the [current handoff](README.md) for operating guidance.
+> Original measurements and results below are preserved.
+
 Review baseline: `2bd7d6c8d0f24a737304fee07174de5a0c03477a`.
 Reviewed branch revision: `9b2a1d3275ce554e0fbdf2dc4a2373a4c5f30b61`.
 Scope: the complete migration and route-organization diff, not just the last

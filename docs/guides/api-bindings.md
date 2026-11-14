@@ -132,7 +132,7 @@ npm run build
 npm run test:e2e
 ```
 
-Production frontend builds need an explicit `NEXT_PUBLIC_API_URL`. Root backend tests
+Production frontend builds use relative `/api` without a public API URL. Root backend tests
 and E2E own disposable PostgreSQL/Compose resources; use a running Docker Engine.
 E2E uses production frontend snapshots containing committed output, not a live generator
 or developer secrets. Root/Nx E2E checks drift before creating the snapshot.

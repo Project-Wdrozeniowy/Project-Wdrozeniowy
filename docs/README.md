@@ -7,13 +7,13 @@ authoritative for actual behaviour.
 
 ## What should I read?
 
-| Reader or task                                   | Start here                                                                     | Then, if relevant                                                                                                                                                                                                             |
-| ------------------------------------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| New developer                                    | [Root README](../README.md), then [developer guides](guides/README.md)         | [Architecture and extension guide](guides/architecture.md), the [frontend architecture target](guides/frontend/README.md) for FSD work, then the [frontend](../frontend/README.md) or [gateway](../gateway/README.md) runbook |
-| Preparing a PR                                   | [Developer guides and Definition of Done](guides/README.md#definition-of-done) | [Git workflow](guides/git-workflow.md), [PR guide](guides/pr-guidelines.md), [testing guide](guides/testing.md), and the [PR template](../.github/pull_request_template.md)                                                   |
-| Investigating architecture or a feature boundary | [Human-facing architecture guide](guides/architecture.md)                      | [Current-state capability map](codebase/ARCHITECTURE.md), [structure map](codebase/STRUCTURE.md), and the service source code                                                                                                 |
-| Investigating the database                       | [Flyway migrations](../backend/src/main/resources/db/migration/)               | [ER diagrams](#database-diagrams) for visual orientation                                                                                                                                                                      |
-| AI agent or tooling maintainer                   | [AGENTS.md](../AGENTS.md)                                                      | [Machine-oriented files](#ai-agents-and-tooling) below                                                                                                                                                                        |
+| Reader or task                                   | Start here                                                                     | Then, if relevant                                                                                                                                                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New developer                                    | [Root README](../README.md), then [developer guides](guides/README.md)         | [Architecture and extension guide](guides/architecture.md), the [frontend architecture](guides/frontend/README.md) for FSD work, then the [frontend](../frontend/README.md) or [gateway](../gateway/README.md) runbook |
+| Preparing a PR                                   | [Developer guides and Definition of Done](guides/README.md#definition-of-done) | [Git workflow](guides/git-workflow.md), [PR guide](guides/pr-guidelines.md), [testing guide](guides/testing.md), and the [PR template](../.github/pull_request_template.md)                                            |
+| Investigating architecture or a feature boundary | [Human-facing architecture guide](guides/architecture.md)                      | [Current-state capability map](codebase/ARCHITECTURE.md), [structure map](codebase/STRUCTURE.md), and the service source code                                                                                          |
+| Investigating the database                       | [Flyway migrations](../backend/src/main/resources/db/migration/)               | [ER diagrams](#database-diagrams) for visual orientation                                                                                                                                                               |
+| AI agent or tooling maintainer                   | [AGENTS.md](../AGENTS.md)                                                      | [Machine-oriented files](#ai-agents-and-tooling) below                                                                                                                                                                 |
 
 ## Guides: team rules
 
@@ -22,12 +22,17 @@ are expected to follow. Its focused companions are the
 [architecture and extension guide](guides/architecture.md),
 [monorepo workflows](guides/monorepo.md),
 [HTTP session policy and endpoint matrix](guides/sessions.md),
-[frontend architecture target](guides/frontend/README.md),
+[frontend architecture](guides/frontend/README.md),
 [naming conventions](guides/naming-conventions.md),
 [Git workflow](guides/git-workflow.md), [PR guide](guides/pr-guidelines.md),
 and [testing](guides/testing.md). These are contribution guidance, not
 automatically generated code maps. A guide may describe a target rule that
 has not yet been applied to old code; the codebase maps describe what exists.
+
+## Migration history
+
+[PWDRZ-160](spikes/pwdrz-160-vite-spa/README.md) separates current operating guidance
+from the pinned experiment and its historical results.
 
 ## Codebase: current-state reference
 

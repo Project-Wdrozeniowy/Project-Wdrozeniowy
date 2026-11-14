@@ -55,8 +55,7 @@ certify those scenarios.
   imported by tests. Exclude `**/*.d.ts`, `src/**/__tests__/**`,
   `src/**/*.test.{ts,tsx}`, `src/**/*.spec.{ts,tsx}` and `src/test/**` because
   declarations and test infrastructure are not production behavior. Existing
-  non-production exclusions `node_modules/**`, `.next/**`, `next.config.*`,
-  `postcss.config.*`, `eslint.config.*`, `tailwind.config.*` and `vitest.config.*`
+  non-production exclusions `node_modules/**`, `postcss.config.*`, `eslint.config.*`, `tailwind.config.*` and `vitest.config.*`
   are outside the explicit `src` include. No production-directory exclusion
   hides executable UI or business logic. PWDRZ-130 additionally excludes exactly
   `src/shared/api/generated/**`: reproducible Orval output is validated by strict
@@ -190,7 +189,7 @@ in English.
 ### Don't test
 
 - Tailwind class strings.
-- Next.js framework internals (routing, image optimisation).
+- Third-party framework internals; test our route composition and guards.
 - Third-party components without a wrapper of our own.
 
 ## Gateway — Jest + ts-jest
@@ -423,7 +422,7 @@ replayingARotatedTokenRevokesTheWholeFamily
 #### Что не тестировать
 
 - Строки Tailwind-классов.
-- Внутреннюю реализацию Next.js (routing, image optimisation).
+- Внутреннюю реализацию сторонних frameworks; наши routes и guards проверяются.
 - Сторонние компоненты без собственной project wrapper.
 
 ### Gateway — Jest + ts-jest

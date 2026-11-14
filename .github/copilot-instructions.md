@@ -18,12 +18,12 @@ or change service coverage gates while editing orchestration.
 Use the versions declared by the owning project; incompatible TypeScript/ESLint
 majors must not be unified incidentally. Shared Nx/Prettier live at root.
 
-| Service  | Runtime      | Key Versions                                                 |
-| -------- | ------------ | ------------------------------------------------------------ |
-| Frontend | Node.js ≥ 24 | Next.js 16, React 19, TypeScript 5, Tailwind CSS 4           |
-| Gateway  | Node.js ≥ 24 | Express 5, TypeScript 6                                      |
-| Backend  | Java 17      | Spring Boot 4, Spring Security, Spring Data JPA, jjwt 0.12.6 |
-| Infra    | Docker       | PostgreSQL 16, Redis 7                                       |
+| Service  | Runtime      | Key Versions                                                    |
+| -------- | ------------ | --------------------------------------------------------------- |
+| Frontend | Node.js ≥ 24 | Vite 7 / React Router 7, React 19, TypeScript 5, Tailwind CSS 4 |
+| Gateway  | Node.js ≥ 24 | Express 5, TypeScript 6                                         |
+| Backend  | Java 17      | Spring Boot 4, Spring Security, Spring Data JPA, jjwt 0.12.6    |
+| Infra    | Docker       | PostgreSQL 16, Redis 7                                          |
 
 Frontend additional libraries: Zustand, React Query, Axios, Zod, React Hook Form.
 
@@ -35,9 +35,8 @@ Never import across service boundaries (`frontend/`, `gateway/`, `backend/` are 
 
 ```
 frontend/src/
-  app/               ← Next.js route files and composition; move feature orchestration out
-    (auth)/          ← unauthenticated pages (login, register)
-    (main)/          ← public feed and protected pages with layout
+  app/               ← router, layouts, providers and composition
+  pages/             ← screen slices
   features/          ← user actions, form schemas and request mapping
   widgets/           ← reusable page regions
   shared/api/        ← existing transport, generated Orval bindings and Query composition
@@ -61,8 +60,8 @@ backend/src/main/java/com/devpulse/
 ```
 
 Tests live in `__tests__/` subdirectories next to the module (frontend/gateway) or mirror the source tree (backend).
-This frontend layout is a hybrid with feature-local UI and centralized
-`services/` and `store/`, **not** a full FSD implementation.
+The current route/slice map is documented in the frontend architecture guide;
+legacy store ownership remains separate work.
 
 ---
 

@@ -9,21 +9,21 @@ before your first PR.
 - The [root README](../../README.md) covers setup and running Orbita.
 - [docs/README.md](../README.md) maps every documentation category.
 
-These guides record team decisions and target conventions. *They do not claim
-that all existing code already follows them.*
+These guides record team decisions and target conventions. _They do not claim
+that all existing code already follows them._
 
 ## What to read
 
-| Situation | Read |
-| --- | --- |
-| Every contributor, before a first PR | This page, [architecture and extension guide](architecture.md), [Git workflow](git-workflow.md), and [testing](testing.md) |
-| Adding a backend domain, frontend feature, gateway middleware, or API operation | [Architecture and extension guide](architecture.md), then [frontend target architecture](frontend/README.md) for frontend work and [naming conventions](naming-conventions.md) |
-| Naming a file, type, function, table, or export | [Naming conventions](naming-conventions.md) |
-| Creating a branch, commit, or PR; resolving review feedback | [Git workflow](git-workflow.md), [PR guide](pr-guidelines.md), and the short [PR template](../../.github/pull_request_template.md) |
-| Adding tests or assessing completion | [Testing guide](testing.md) and the Definition of Done below |
-| Running or debugging one service | The [frontend](../../frontend/README.md) or [gateway](../../gateway/README.md) README, plus the [root setup](../../README.md) |
-| Installing dependencies, Nx tasks, caches or CI | [Monorepo workflows](monorepo.md) |
-| Updating backend contracts or frontend generated API code | [API bindings workflow](api-bindings.md) |
+| Situation                                                                       | Read                                                                                                                                                                    |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Every contributor, before a first PR                                            | This page, [architecture and extension guide](architecture.md), [Git workflow](git-workflow.md), and [testing](testing.md)                                              |
+| Adding a backend domain, frontend feature, gateway middleware, or API operation | [Architecture and extension guide](architecture.md), then [frontend architecture](frontend/README.md) for frontend work and [naming conventions](naming-conventions.md) |
+| Naming a file, type, function, table, or export                                 | [Naming conventions](naming-conventions.md)                                                                                                                             |
+| Creating a branch, commit, or PR; resolving review feedback                     | [Git workflow](git-workflow.md), [PR guide](pr-guidelines.md), and the short [PR template](../../.github/pull_request_template.md)                                      |
+| Adding tests or assessing completion                                            | [Testing guide](testing.md) and the Definition of Done below                                                                                                            |
+| Running or debugging one service                                                | The [frontend](../../frontend/README.md) or [gateway](../../gateway/README.md) README, plus the [root setup](../../README.md)                                           |
+| Installing dependencies, Nx tasks, caches or CI                                 | [Monorepo workflows](monorepo.md)                                                                                                                                       |
+| Updating backend contracts or frontend generated API code                       | [API bindings workflow](api-bindings.md)                                                                                                                                |
 
 The [codebase maps](../codebase/) are dated technical snapshots for agents and
 investigation, **not the primary source of developer rules**. The [agent entry
@@ -107,20 +107,20 @@ descriptive and regenerate them only from verified evidence.
 - [Корневой README](../../README.md) описывает установку и запуск Orbita.
 - [docs/README.md](../README.md) перечисляет категории документации.
 
-Гайды фиксируют решения команды и целевые правила. *Они не утверждают, что
-весь существующий код уже им соответствует.*
+Гайды фиксируют решения команды и целевые правила. _Они не утверждают, что
+весь существующий код уже им соответствует._
 
 ### Что читать
 
-| Ситуация | Документы |
-| --- | --- |
-| Перед первым PR | Эта страница, [архитектура и расширение проекта](architecture.md), [Git workflow](git-workflow.md), [тестирование](testing.md) |
+| Ситуация                                                                   | Документы                                                                                                                                   |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Перед первым PR                                                            | Эта страница, [архитектура и расширение проекта](architecture.md), [Git workflow](git-workflow.md), [тестирование](testing.md)              |
 | Новый backend-домен, frontend-функция, gateway middleware или API-операция | [Архитектура](architecture.md), для frontend — [целевая архитектура](frontend/README.md), затем [правила именования](naming-conventions.md) |
-| Имя файла, типа, функции, таблицы или экспорта | [Правила именования](naming-conventions.md) |
-| Ветка, коммит, PR или ответ на review | [Git workflow](git-workflow.md), [PR guide](pr-guidelines.md), краткий [PR template](../../.github/pull_request_template.md) |
-| Тесты или оценка готовности | [Тестирование](testing.md) и Definition of Done ниже |
-| Запуск или отладка сервиса | [Frontend](../../frontend/README.md) либо [gateway](../../gateway/README.md) README и [корневые инструкции](../../README.md) |
-| Установка зависимостей, Nx tasks, кеш или CI | [Monorepo workflows](monorepo.md#ru) |
+| Имя файла, типа, функции, таблицы или экспорта                             | [Правила именования](naming-conventions.md)                                                                                                 |
+| Ветка, коммит, PR или ответ на review                                      | [Git workflow](git-workflow.md), [PR guide](pr-guidelines.md), краткий [PR template](../../.github/pull_request_template.md)                |
+| Тесты или оценка готовности                                                | [Тестирование](testing.md) и Definition of Done ниже                                                                                        |
+| Запуск или отладка сервиса                                                 | [Frontend](../../frontend/README.md) либо [gateway](../../gateway/README.md) README и [корневые инструкции](../../README.md)                |
+| Установка зависимостей, Nx tasks, кеш или CI                               | [Monorepo workflows](monorepo.md#ru)                                                                                                        |
 
 [Карты кодовой базы](../codebase/) — датированные технические снимки для
 агентов и исследования, **не основной источник правил для разработчиков**.

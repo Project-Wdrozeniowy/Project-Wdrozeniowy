@@ -1,6 +1,6 @@
 # Orbita
 
-> **PWDRZ-160 experimental branch.** [Run, compare and inspect the spike](docs/spikes/pwdrz-160-vite-spa/README.md). This branch does not adopt the migration or change team architecture decisions.
+> **Current architecture:** adopted Vite/React Router SPA served by Express. Start below; [PWDRZ-160 history](docs/spikes/pwdrz-160-vite-spa/README.md) preserves the original experiment.
 
 [![Frontend Build](https://img.shields.io/github/actions/workflow/status/Project-Wdrozeniowy/Project-Wdrozeniowy/frontend-build.yml?style=flat-square&label=Frontend)](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions)
 [![Gateway Build](https://img.shields.io/github/actions/workflow/status/Project-Wdrozeniowy/Project-Wdrozeniowy/gateway-build.yml?style=flat-square&label=Gateway)](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions)
@@ -86,6 +86,9 @@ From the repository root:
 npm run dev
 ```
 
+Open `http://localhost:3001` after readiness. Browser requests use relative `/api`
+through Vite and Express; do not mix `localhost` and `127.0.0.1` for one session.
+
 Root dev starts PostgreSQL/Redis/backend in Compose and frontend/gateway from
 source with hot reload. Configure root and gateway `.env` files first; frontend `.env` is optional. Ctrl+C stops
 frontend/gateway; Compose data and services remain. Stop those explicitly with
@@ -116,8 +119,13 @@ terminals. Choose one backend/gateway workflow so each port has one owner.
 
 ```bash
 # Starts postgres, redis, backend, and gateway.
-docker compose up -d
+docker compose up --build -d
 ```
+
+After rebuild/start, wait for `http://localhost:8080/api/forum/categories` to return
+200; inspect `docker compose logs --tail 100 backend gateway` on failure.
+Stop without deleting data using `docker compose stop`. Re-run with `--build`
+after source changes; this local HTTP stack is not a production deployment.
 
 Open the built frontend at `http://localhost:3000`. No separate frontend server is required. For an optional HMR development frontend at `http://localhost:3001`:
 
@@ -214,7 +222,7 @@ npx vitest run -t "login"
 
 ```bash
 cd gateway
-npx jest src/middleware/__tests__/auth.test.ts
+npx jest src/routes/__tests__/httpBoundary.test.ts
 ```
 
 ```bash
@@ -251,17 +259,17 @@ The CI **Lint** workflow enforces `format:check` and `lint` on every push to `ma
 
 ```
 frontend/src/
-  app/(auth)/          ← login, register (no header/sidebar)
-  app/(main)/          ← home feed, forum, dashboard, profile
+  app/                 ← router, layouts, providers and composition
+  pages/               ← screen slices
   features/            ← user actions, form schemas and request mapping
   widgets/             ← header and sidebar
   shared/api/          ← transport, generated bindings and server-cache composition
-  shared/auth/         ← session/token infrastructure
+  shared/auth/         ← session presentation and CSRF
   shared/ui/           ← reusable UI
   store/slices/        ← Zustand: authSlice, uiSlice
 
 gateway/src/
-  middleware/          ← auth, cors, rateLimiter, logger
+  middleware/          ← boundedBody, cors, rateLimiter, logger
   routes/proxy.ts      ← proxies /api/* to backend
   config/              ← env loading with validation
 
@@ -307,8 +315,8 @@ npm --prefix gateway run typecheck && npm --prefix gateway run lint && npm --pre
 cd backend && ./mvnw verify
 ```
 
-The `frontend/.env` created during setup supplies `NEXT_PUBLIC_API_URL` to
-the local frontend build. CI supplies it as a workflow environment variable.
+Frontend builds use relative `/api` without a public API URL. Vite proxies it
+in development; Express owns the built application origin.
 
 Every applicable CI check must pass before merge. The
 [PR guide](docs/guides/pr-guidelines.md) explains what to include in the
@@ -330,10 +338,9 @@ docker compose down -v && docker compose up -d
 
 **`@/*` import not resolving in tests** — the path alias is defined in both `frontend/tsconfig.json` and `frontend/vitest.config.ts`. Both must be present.
 
-**`NEXT_PUBLIC_API_URL` missing** — browser requests fall back to `/api` on the
-frontend origin, where this project has no proxy rewrite. Set the variable to
-`http://localhost:3000/api` for local development. Server-side development code
-falls back to that URL; production server-side code requires the variable.
+**API unavailable in development** — start Gateway :3000 and Spring :8080.
+Vite :3001 proxies relative `/api`; no public API URL is consumed. Use one
+hostname consistently for cookie sessions.
 
 ## License and ownership
 

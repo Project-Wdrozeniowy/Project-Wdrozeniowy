@@ -1,5 +1,9 @@
 # Experiment results
 
+> Historical record for the revisions named below. Adoption and REST authentication
+> changed afterward. Use the [current handoff](README.md) for operating guidance.
+> Original measurements and results below are preserved.
+
 The complete branch review is recorded in [review.md](review.md). At tested source
 revision `c468fc0afb66fc612ddc93d4051e0c8848137218`, two reproduced SPA-host issues
 are fixed: Accept negotiation and a non-file entry document passing preflight.
