@@ -171,6 +171,7 @@ it('uses the published notification bindings with session cookies, pagination, n
     message: null,
     read: false,
     createdAt: '2026-11-05T10:00:00Z',
+    destination: null,
   } satisfies NotificationDto;
   const page = {
     content: [notification],
