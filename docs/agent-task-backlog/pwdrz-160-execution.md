@@ -42,7 +42,9 @@ Root check passed 10/10 uncached; root build passed 6/6 uncached.
 Gateway coverage passed 83 tests, lines 98.42%, statements 98.45%, branches 88.39%,
 functions 95%; all unchanged gates passed. API drift check matched 98 generated files.
 The initial overlapping verified/validate invocations exhausted Node process memory;
-frontend is being rerun with one worker, without changed assertions or thresholds.
+the single-worker frontend rerun also terminated with V8 heap allocation failure /
+ERR_IPC_CHANNEL_CLOSED. The overlapping run additionally lost a coverage temporary
+file. No assertion, gate, retry or timeout was changed to hide these failures.
 Logs: ignored .workspace-artifacts/pwdrz160-{check,build,verified,validate,frontend-final}.log.
 
 Docker Engine is unavailable: docker info cannot open dockerDesktopLinuxEngine.
@@ -58,3 +60,25 @@ related to this handoff. Historical exports and baseline reports remain referenc
 PWDRZ-74 owns user/release workflows, PWDRZ-22 C4/ADRs, PWDRZ-150 profile state,
 and PWDRZ-104 real-time completion. None is declared unblocked by this correction.
 No UI placeholder, disabled action or reserved Redis/Socket.IO integration changed.
+
+## Final verification boundary
+
+Implementation commit: f779239. All runtime/config/test source is identical to
+base dc8743b; only Markdown and localTracking changed. Workspace/environment unit
+tests passed 9/9. Changed-document local file links resolve (18 files checked),
+git diff --check passed, and the historical runbook is byte-identical to the
+pre-rework README. API drift check matched 98 files. Root check/build results
+above apply to this documentation tree; backend build skips tests.
+
+Full validate exited unsuccessfully: Docker readiness blocked backend/E2E, and
+concurrent Node processes failed allocation. A clean git archive was extracted
+without env/dependencies; its npm ci exited 1 without diagnostics, so a clean
+install is not certified. No fresh dev/HMR, Compose/browser, backend verify,
+negative probe or remote CI success is claimed.
+
+Remaining acceptance: restore Linux Docker Engine and sufficient process memory,
+then rerun root check/build/validate sequentially, clean npm ci, current README
+dev/Compose smoke, and the managed negative probe followed by a fresh positive
+run. Capture new source SHA and artifacts. The documentation defect is corrected,
+but runtime reproduction and full AC/DoD remain open; local tracking stays blocked.
+Jira is unchanged. No PR was created.
