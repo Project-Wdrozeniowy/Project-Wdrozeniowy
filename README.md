@@ -86,7 +86,9 @@ From the repository root:
 npm run dev
 ```
 
-Open `http://localhost:3001` after readiness. Browser requests use relative `/api`
+Wait for `http://localhost:3000/health` and
+`http://localhost:3001/api/forum/categories` to return 200, then open
+`http://localhost:3001`. Vite can become ready before Gateway. Browser requests use relative `/api`
 through Vite and Express; do not mix `localhost` and `127.0.0.1` for one session.
 
 Root dev starts PostgreSQL/Redis/backend in Compose and frontend/gateway from

@@ -31,15 +31,16 @@
         }
       },
       "localTracking": {
-        "status": "blocked",
+        "status": "done",
         "owner": "PWDRZ-160 documentation rework",
-        "updatedAt": "2026-11-14T10:01:37.140Z",
+        "updatedAt": "2026-11-14T10:35:45.608Z",
         "notes": [
           "Execution approved by the user. Isolated branch PWDRZ-160-vite-spa-spike pins origin/develop 2bd7d6c8d0f24a737304fee07174de5a0c03477a. Local commits authorized with subject/body only. No PR, merge or Jira mutation. See docs/spikes/pwdrz-160-vite-spa/ for the parity matrix and verification evidence.",
           "Local spike complete at tested revision 8094945: clean locked install, check/build and 22-target validate; frontend 701, gateway 64, backend 313, production real-stack 16/16. Failure probe, handled SIGINT, dev/HMR and package invalidation verified. Windows forced-terminal cleanup limitation and initial cold-router test failure are retained in the report. Runtime/backend/schema/generated bindings preserved. Commits have subject/body only. Origin branch remains at base; implementation publication and remote CI await separate authorization. No PR, merge or Jira mutation.",
           "User-authorized FSD/React Router organization complete at 4ed8d99443b64fc1b6ae80c60bf19ee2566ddc9b: App router/layouts/providers, ten page slices and reused post-feed widget; URLs and auth/Query behavior preserved. Root check 10/10, build 6/6 and frontend verified 8/8 passed; 705 frontend tests and unchanged coverage gates. E2E/full-stack validate deliberately not rerun at user request; prior real-stack evidence remains historical. No backend, gateway, generated, dependency or Nx/CI change. No push, PR, merge or Jira mutation.",
           "Complete branch review via review-and-refactor at c468fc0afb66fc612ddc93d4051e0c8848137218: fixed reproduced SPA Accept/Vary negotiation and regular-index startup preflight; five regression failures reproduced then fixed. Root check 10/10, frontend 705 tests/build/static/codegen, gateway verified 6/6 with 69 tests and infrastructure unit tests 9/9 passed. Initial parallel-run quota timeout and corrected lint error are recorded; no thresholds, timeouts, assertions or retries relaxed. E2E/full-stack validate explicitly skipped by user. Backend/generated/dependencies/automation unchanged; no push, PR, merge or Jira mutation. See docs/spikes/pwdrz-160-vite-spa/review.md.",
-          "Documentation corrected in f779239; root check/build, Gateway 83-test coverage and tooling 9/9 passed. Full acceptance blocked by missing Docker Linux Engine and V8 allocation failures; see pwdrz-160-execution.md."
+          "Documentation corrected in f779239; root check/build, Gateway 83-test coverage and tooling 9/9 passed. Full acceptance blocked by missing Docker Linux Engine and V8 allocation failures; see pwdrz-160-execution.md.",
+          "Resumed acceptance complete: clean npm ci/build, uncached sequential validate 22/22, frontend 709, Gateway 83, backend 367 tests and all coverage gates; production E2E 24/24; negative probe exit 1 with cleanup followed by fresh positive 24/24; real dev proxy/UI login/reload/HMR and cleanup verified. Current/historical guidance separated and README readiness clarified. Jira unchanged; no PR. See pwdrz-160-execution.md."
         ]
       }
     },
