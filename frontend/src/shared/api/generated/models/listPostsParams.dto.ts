@@ -9,9 +9,16 @@ import type { ListPostsSort } from './listPostsSort.dto';
 import type { ListPostsStatus } from './listPostsStatus.dto';
 
 export type ListPostsParams = {
-  /** Page number (0-based) */
+  /**
+   * Page number (0-based)
+   * @minimum 0
+   */
   page?: number;
-  /** Page size */
+  /**
+   * Page size
+   * @minimum 1
+   * @maximum 100
+   */
   size?: number;
   /** Case-insensitive text search in title and content */
   q?: string;

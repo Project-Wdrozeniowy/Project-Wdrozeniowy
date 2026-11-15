@@ -1344,7 +1344,7 @@
     },
     "/forum/posts" : {
       "get" : {
-        "description" : "Public. Without a status filter only published and locked posts are listed. A bearer token is optional and only widens what the status filter may return. createdFrom (inclusive) and createdTo (exclusive) bound the creation time and, with categoryId or uncategorized=true, list the posts behind a public analytics figure: for the activity row of 2026-11-05 pass createdFrom=2026-11-05T00:00:00Z and createdTo=2026-11-06T00:00:00Z; for a category row of a window pass its windowStart, windowEnd and category.id, or uncategorized=true for the row without a category.",
+        "description" : "Public: no authentication is required. Without a status filter only published and locked posts are listed; a signed-in session is optional and only widens what the status filter may return. Pages are 0-based with 1 to 100 posts each; posts with equal sort values are ordered by id, so consecutive pages neither overlap nor skip posts, and a page past the last one is empty with the same totals. createdFrom (inclusive) and createdTo (exclusive) bound the creation time and, with categoryId or uncategorized=true, list the posts behind a public analytics figure: for the activity row of 2026-11-05 pass createdFrom=2026-11-05T00:00:00Z and createdTo=2026-11-06T00:00:00Z; for a category row of a window pass its windowStart, windowEnd and category.id, or uncategorized=true for the row without a category.",
         "operationId" : "listPosts",
         "parameters" : [ {
           "description" : "Page number (0-based)",
@@ -1355,7 +1355,8 @@
           "schema" : {
             "type" : "integer",
             "format" : "int32",
-            "default" : 0
+            "default" : 0,
+            "minimum" : 0
           }
         }, {
           "description" : "Page size",
@@ -1366,7 +1367,9 @@
           "schema" : {
             "type" : "integer",
             "format" : "int32",
-            "default" : 20
+            "default" : 20,
+            "maximum" : 100,
+            "minimum" : 1
           }
         }, {
           "description" : "Case-insensitive text search in title and content",
@@ -1477,7 +1480,7 @@
                 }
               }
             },
-            "description" : "Invalid pagination, unsupported sort field, an invalid or empty creation range, or uncategorized combined with a category filter"
+            "description" : "A page below 0 or a size outside 1-100, an unsupported sort field, a malformed number, status, boolean or date, an empty creation range, or uncategorized combined with a category filter"
           }
         },
         "summary" : "List posts with optional filtering and pagination",
@@ -1601,7 +1604,7 @@
         "tags" : [ "Forum – Posts" ]
       },
       "get" : {
-        "description" : "Public. A draft is visible only to its author and to admins, who need to send their bearer token.",
+        "description" : "Public: no authentication is required. A draft is visible only to its author and to admins, in their signed-in session.",
         "operationId" : "getPost",
         "parameters" : [ {
           "description" : "Post slug",

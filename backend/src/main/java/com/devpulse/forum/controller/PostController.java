@@ -63,8 +63,11 @@ public class PostController {
      * <p>Pagination defaults: size 20, sorted by {@code lastActivityAt} descending.
      */
     @Operation(summary = "List posts with optional filtering and pagination",
-            description = "Public. Without a status filter only published and locked posts are listed. "
-                    + "A bearer token is optional and only widens what the status filter may return. "
+            description = "Public: no authentication is required. Without a status filter only published and "
+                    + "locked posts are listed; a signed-in session is optional and only widens what the status "
+                    + "filter may return. Pages are 0-based with 1 to 100 posts each; posts with equal sort "
+                    + "values are ordered by id, so consecutive pages neither overlap nor skip posts, and a page "
+                    + "past the last one is empty with the same totals. "
                     + "createdFrom (inclusive) and createdTo (exclusive) bound the creation time and, with "
                     + "categoryId or uncategorized=true, list the posts behind a public analytics figure: "
                     + "for the activity row of 2026-11-05 pass createdFrom=2026-11-05T00:00:00Z and "
@@ -72,13 +75,19 @@ public class PostController {
                     + "windowEnd and category.id, or uncategorized=true for the row without a category.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Posts returned"),
-        @ApiResponse(responseCode = "400", description = "Invalid pagination, unsupported sort field, an invalid "
-                + "or empty creation range, or uncategorized combined with a category filter")
+        @ApiResponse(responseCode = "400", description = "A page below 0 or a size outside 1-100, an unsupported "
+                + "sort field, a malformed number, status, boolean or date, an empty creation range, or "
+                + "uncategorized combined with a category filter")
     })
     @GetMapping
     public PagedResponse<PostSummaryDto> listPosts(
-            @Parameter(description = "Page number (0-based)", example = "0") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size", example = "20") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "Page number (0-based)", example = "0",
+                    schema = @Schema(type = "integer", format = "int32", minimum = "0", defaultValue = "0"))
+                @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "20",
+                    schema = @Schema(type = "integer", format = "int32", minimum = "1", maximum = "100",
+                            defaultValue = "20"))
+                @RequestParam(defaultValue = "20") int size,
             @Parameter(description = "Case-insensitive text search in title and content") @RequestParam(required = false) String q,
             @Parameter(description = "Filter by category id") @RequestParam(required = false) Long categoryId,
             @Parameter(description = "Filter by category slug") @RequestParam(required = false) String categorySlug,
@@ -143,7 +152,8 @@ public class PostController {
 
     /** Returns the post identified by slug. */
     @Operation(summary = "Get a post by slug",
-            description = "Public. A draft is visible only to its author and to admins, who need to send their bearer token.")
+            description = "Public: no authentication is required. A draft is visible only to its author and to "
+                    + "admins, in their signed-in session.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Post found"),
         @ApiResponse(responseCode = "404", description = "Not found, deleted, or a draft the caller may not see")
