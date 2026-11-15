@@ -101,6 +101,15 @@ class MigrationSchemaTest {
                 OffsetDateTime.class)).isBeforeOrEqualTo(OffsetDateTime.now());
     }
 
+    /** V12 indexes the opening rows that still identify a reader, and only those. */
+    @Test
+    void identifiableOpeningsAreIndexedForTheirRetention() {
+        assertThat(jdbc.queryForObject(
+                "SELECT indexdef FROM pg_indexes WHERE schemaname = current_schema() "
+                        + "AND indexname = 'idx_activity_identifiable_openings'", String.class))
+                .contains("(created_at)").contains("user_id IS NOT NULL").contains("POST_READ_LEGACY");
+    }
+
     /**
      * {@code users.role} is the native {@code user_role} enum, not a varchar,
      * and every Java constant exists in it.

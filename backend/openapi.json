@@ -3781,7 +3781,7 @@
           "uniqueViewCount" : {
             "type" : "integer",
             "format" : "int32",
-            "description" : "Unique viewer count"
+            "description" : "Signed-in readers who opened the post since uniqueViewCountSince; guests are not counted. Openings keep their reader only for the retention of opening details, so this is not an all-time figure"
           },
           "upvoteCount" : {
             "type" : "integer",
@@ -3797,9 +3797,15 @@
             "type" : "integer",
             "format" : "int32",
             "description" : "Vote score (upvotes minus downvotes)"
+          },
+          "uniqueViewCountSince" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the period uniqueViewCount covers: the later of the retention cutoff of opening details and the start of opening collection",
+            "example" : "2026-10-16T12:00:00Z"
           }
         },
-        "required" : [ "commentCount", "downvoteCount", "postId", "postTitle", "subscriptionCount", "uniqueViewCount", "upvoteCount", "viewCount", "voteScore" ]
+        "required" : [ "commentCount", "downvoteCount", "postId", "postTitle", "subscriptionCount", "uniqueViewCount", "uniqueViewCountSince", "upvoteCount", "viewCount", "voteScore" ]
       },
       "PostDto" : {
         "type" : "object",

@@ -226,6 +226,7 @@ it('reads own activity, per-post analytics and platform summary through generate
     postTitle: 'Title',
     viewCount: 0,
     uniqueViewCount: 0,
+    uniqueViewCountSince: '2026-10-16T12:00:00Z',
     commentCount: 0,
     voteScore: 0,
     upvoteCount: 0,

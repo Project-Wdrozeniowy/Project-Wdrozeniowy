@@ -293,6 +293,7 @@ backend/src/main/resources/db/migration/
   V9__retire_http_refresh_tokens.sql
   V10__count_intentional_post_openings.sql
   V11__record_analytics_collection_starts.sql
+  V12__index_identifiable_opening_details.sql
 ```
 
 Start with the [developer guides](docs/guides/README.md) for architecture,

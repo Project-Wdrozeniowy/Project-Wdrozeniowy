@@ -20,7 +20,7 @@ export interface PostAnalyticsDto {
   postTitle: string;
   /** Number of active subscriptions to this post */
   subscriptionCount: number;
-  /** Unique viewer count */
+  /** Signed-in readers who opened the post since uniqueViewCountSince; guests are not counted. Openings keep their reader only for the retention of opening details, so this is not an all-time figure */
   uniqueViewCount: number;
   /** Number of upvotes */
   upvoteCount: number;
@@ -28,4 +28,6 @@ export interface PostAnalyticsDto {
   viewCount: number;
   /** Vote score (upvotes minus downvotes) */
   voteScore: number;
+  /** Start of the period uniqueViewCount covers: the later of the retention cutoff of opening details and the start of opening collection */
+  uniqueViewCountSince: string;
 }

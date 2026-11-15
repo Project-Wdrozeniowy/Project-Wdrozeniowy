@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -22,8 +24,14 @@ public class PostAnalyticsDto {
     @Schema(description = "Total view count")
     private int viewCount;
 
-    @Schema(description = "Unique viewer count")
+    @Schema(description = "Signed-in readers who opened the post since uniqueViewCountSince; guests are not "
+            + "counted. Openings keep their reader only for the retention of opening details, so this is not "
+            + "an all-time figure")
     private int uniqueViewCount;
+
+    @Schema(description = "Start of the period uniqueViewCount covers: the later of the retention cutoff of "
+            + "opening details and the start of opening collection", example = "2026-10-16T12:00:00Z")
+    private OffsetDateTime uniqueViewCountSince;
 
     @Schema(description = "Total comment count")
     private int commentCount;
