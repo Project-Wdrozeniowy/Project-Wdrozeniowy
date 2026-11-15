@@ -41,4 +41,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     /** The comment with its author. */
     @EntityGraph(attributePaths = "author")
     Optional<Comment> findWithAuthorById(Long id);
+
+    /** Where each of the comments sits, in one query; comments that do not exist are left out. */
+    @Query("SELECT new com.devpulse.forum.repository.CommentDestinationRow(c.id, c.status, p.slug, p.status, a.username) "
+            + "FROM Comment c JOIN Post p ON p.id = c.postId JOIN p.author a WHERE c.id IN :ids")
+    List<CommentDestinationRow> findDestinations(@Param("ids") Collection<Long> ids);
 }
