@@ -51,6 +51,12 @@ public class UserProfileDto {
         return fill(UserProfileDto.builder(), user).build();
     }
 
+    /** Public counters are computed from currently accessible content, not private totals. */
+    public static UserProfileDto from(User user, int publicPosts, int publicComments) {
+        return fill(UserProfileDto.builder(), user)
+                .postCount(publicPosts).commentCount(publicComments).build();
+    }
+
     /** Copies the public profile fields of {@code user} into {@code builder}. */
     static <B extends UserProfileDtoBuilder<?, ?>> B fill(B builder, User user) {
         builder.id(user.getId())

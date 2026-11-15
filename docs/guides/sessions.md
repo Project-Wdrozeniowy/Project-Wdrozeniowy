@@ -91,6 +91,13 @@ as guests. Existing service ownership checks remain authoritative.
 | GET `/analytics/posts/{id}`                                                                                                               | ADMIN or MODERATOR                                                    |
 | GET `/analytics/summary`, `/analytics/trends`, `/admin/ping`                                                                              | ADMIN                                                                 |
 
+Post engagement boundaries (PWDRZ-167): GET/HEAD `/analytics/public/posts/{id}`
+is public for PUBLISHED/LOCKED posts only (404 for DRAFT/DELETED/missing, even
+to the author). GET `/analytics/me/posts/{id}` is author-only, including their
+draft: guest 401, another member or staff 404, deleted/missing 404. The existing
+staff `/analytics/posts/{id}` policy is unchanged. See [post engagement](post-engagement.md)
+for fields, metric definitions and publication privacy.
+
 Unknown safe API paths return MVC 404, wrong methods return 405, with
 ProblemDetail rather than SPA HTML; unsafe requests still undergo CSRF first.
 Known private paths require authentication even when their particular resource

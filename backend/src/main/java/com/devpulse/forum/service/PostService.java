@@ -98,6 +98,7 @@ public class PostService {
     private final AnalyticsRepository analyticsRepository;
     private final AuthenticatedUserResolver currentUser;
     private final TransactionTemplate transactionTemplate;
+    private final jakarta.persistence.EntityManager entityManager;
 
     /**
      * Creates a post authored by the caller, published or as a draft.
@@ -184,7 +185,7 @@ public class PostService {
     @Transactional
     @PreAuthorize("@postSecurity.canModify(#slug, authentication)")
     public PostDto update(String slug, UpdatePostRequest request) {
-        Post post = loadReadable(slug);
+        Post post = loadForModification(slug);
         requireEditable(post);
 
         PostStatus statusBefore = post.getStatus();
@@ -228,7 +229,7 @@ public class PostService {
     @Transactional
     @PreAuthorize("@postSecurity.canModify(#slug, authentication)")
     public void delete(String slug) {
-        Post post = loadReadable(slug);
+        Post post = loadForModification(slug);
         requireEditable(post);
 
         boolean wasPublic = isPublic(post.getStatus());
@@ -246,7 +247,7 @@ public class PostService {
     @Transactional
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public PostDto togglePin(String slug) {
-        Post post = loadReadable(slug);
+        Post post = loadForModification(slug);
         post.setPinned(!post.isPinned());
         return full(postRepository.save(post));
     }
@@ -393,6 +394,15 @@ public class PostService {
     public Post loadReadable(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(PostService::notFound);
+        requireReadable(post);
+        return post;
+    }
+
+    /** Serialize writes and refresh any entity previously loaded by authorization or OSIV. */
+    private Post loadForModification(String slug) {
+        Long id = postRepository.lockIdBySlug(slug).orElseThrow(PostService::notFound);
+        Post post = postRepository.findById(id).orElseThrow(PostService::notFound);
+        entityManager.refresh(post);
         requireReadable(post);
         return post;
     }
