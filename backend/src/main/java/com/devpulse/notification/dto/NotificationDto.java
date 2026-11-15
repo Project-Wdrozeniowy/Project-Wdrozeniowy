@@ -45,8 +45,12 @@ public class NotificationDto {
     @Schema(description = "Creation timestamp")
     private OffsetDateTime createdAt;
 
-    /** Builds the representation of {@code notification}. */
-    public static NotificationDto from(Notification notification) {
+    @Schema(description = "Where COMMENT_ON_POST and REPLY_TO_COMMENT notifications lead, checked when read; "
+            + "null for other types", nullable = true)
+    private NotificationDestinationDto destination;
+
+    /** Builds the representation of {@code notification} with its {@code destination}, which may be null. */
+    public static NotificationDto from(Notification notification, NotificationDestinationDto destination) {
         return NotificationDto.builder()
                 .id(notification.getId())
                 .senderUsername(notification.getSender() == null ? null : notification.getSender().getUsername())
@@ -56,6 +60,7 @@ public class NotificationDto {
                 .message(notification.getMessage())
                 .read(notification.isRead())
                 .createdAt(notification.getCreatedAt())
+                .destination(destination)
                 .build();
     }
 }

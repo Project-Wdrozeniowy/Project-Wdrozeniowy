@@ -5,6 +5,7 @@
  * REST API of the Orbita forum platform. Lists only implemented operations; planned ones are tracked in Jira.
  * OpenAPI spec version: 1.0.0
  */
+import type { NotificationDestinationDto } from './notificationDestinationDto.dto';
 import type { NotificationDtoEntityType } from './notificationDtoEntityType.dto';
 import type { NotificationDtoType } from './notificationDtoType.dto';
 
@@ -40,4 +41,6 @@ export interface NotificationDto {
   senderUsername: string | null;
   /** Notification type */
   type: NotificationDtoType;
+  /** Where COMMENT_ON_POST and REPLY_TO_COMMENT notifications lead, checked when read; null for other types */
+  destination: NotificationDestinationDto | null;
 }
