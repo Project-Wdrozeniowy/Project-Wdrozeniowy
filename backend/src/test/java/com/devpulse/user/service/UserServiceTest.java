@@ -11,6 +11,7 @@ import com.devpulse.user.dto.ChangePasswordRequest;
 import com.devpulse.user.dto.MyProfileDto;
 import com.devpulse.user.dto.UpdateProfileRequest;
 import com.devpulse.user.dto.UserProfileDto;
+import com.devpulse.user.repository.PublicProfileStatsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +45,7 @@ class UserServiceTest {
     @Mock private jakarta.persistence.EntityManager entityManager;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private AuthenticatedUserResolver currentUser;
+    @Mock private PublicProfileStatsRepository publicStats;
 
     @InjectMocks private UserService userService;
 
@@ -75,6 +77,7 @@ class UserServiceTest {
     @Test
     void publicProfileHidesPrivateFields() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(principal));
+        when(publicStats.counts(1L)).thenReturn(new PublicProfileStatsRepository.Counts(2, 5));
 
         UserProfileDto response = userService.getPublicProfile("alice");
 
@@ -83,6 +86,20 @@ class UserServiceTest {
         assertThat(response.getRole()).isEqualTo("USER");
         // Only the own profile type carries the email address.
         assertThat(response).isNotInstanceOf(MyProfileDto.class);
+    }
+
+    @Test
+    void publicCountsExcludePrivateActivityWithoutChangingOwnTotals() {
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(principal));
+        when(publicStats.counts(1L)).thenReturn(new PublicProfileStatsRepository.Counts(1, 2));
+        when(currentUser.currentUser()).thenReturn(principal);
+
+        UserProfileDto publicProfile = userService.getPublicProfile("alice");
+        assertThat(publicProfile.getPostCount()).isEqualTo(1);
+        assertThat(publicProfile.getCommentCount()).isEqualTo(2);
+        MyProfileDto own = userService.getCurrentProfile();
+        assertThat(own.getPostCount()).isEqualTo(2);
+        assertThat(own.getCommentCount()).isEqualTo(5);
     }
 
     @Test

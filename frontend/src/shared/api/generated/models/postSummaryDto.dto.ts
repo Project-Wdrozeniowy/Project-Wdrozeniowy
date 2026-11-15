@@ -35,12 +35,12 @@ export interface PostSummaryDto {
   slug: string;
   /** Post status */
   status: PostSummaryDtoStatus;
+  /** @maxItems 5 */
+  tags: TagDto[];
   /** Post title */
   title: string;
   /** Number of views */
   viewCount: number;
   /** Cumulative vote score */
   voteScore: number;
-  /** @maxItems 5 */
-  tags: TagDto[];
 }

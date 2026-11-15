@@ -94,6 +94,98 @@ class AnalyticsControllerApiTest {
     }
 
     @Test
+    void engagementSummariesRespectCurrentVisibilityOwnershipAndReachableComments() throws Exception {
+        Post post = savePost("engagement", PostStatus.PUBLISHED);
+        opening(post, null);
+        opening(post, reader);
+        opening(post, reader);
+        saveComment(post, reader, "VISIBLE");
+        long deleted = saveComment(post, author, "DELETED");
+        long visibleReply = saveComment(post, reader, "VISIBLE");
+        jdbc.update("UPDATE comments SET parent_id=?,depth=1 WHERE id=?", deleted, visibleReply);
+        long hidden = saveComment(post, author, "HIDDEN");
+        long hiddenReply = saveComment(post, reader, "VISIBLE");
+        jdbc.update("UPDATE comments SET parent_id=?,depth=1 WHERE id=?", hidden, hiddenReply);
+        vote(author, post.getId(), null, "UP");
+        vote(reader, post.getId(), null, "UP");
+        vote(moderator, post.getId(), null, "UP");
+        vote(admin, post.getId(), null, "DOWN");
+        jdbc.update("UPDATE posts SET vote_score=2 WHERE id=?", post.getId());
+        String publicPath = "/analytics/public/posts/" + post.getId();
+        String ownerPath = "/analytics/me/posts/" + post.getId();
+        long eventsBefore = count("SELECT count(*) FROM activity_events");
+
+        for (String state : List.of("PUBLISHED", "LOCKED")) {
+            jdbc.update("UPDATE posts SET status=CAST(? AS post_status) WHERE id=?", state, post.getId());
+            mockMvc.perform(get(publicPath))
+                    .andExpect(status().isOk())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                            .string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
+                    .andExpect(jsonPath("$", org.hamcrest.Matchers.aMapWithSize(5)))
+                    .andExpect(jsonPath("$.viewCount").value(3))
+                    .andExpect(jsonPath("$.commentCount").value(2))
+                    .andExpect(jsonPath("$.voteScore").value(2))
+                    .andExpect(jsonPath("$.collectedFrom").isNotEmpty());
+            mockMvc.perform(get(publicPath).with(as(author)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", org.hamcrest.Matchers.aMapWithSize(5)));
+            mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head(publicPath))
+                    .andExpect(status().isOk());
+            // MockMvc retains the rendered body; the managed HTTP test checks wire-level HEAD suppression.
+        }
+        mockMvc.perform(get(ownerPath)).andExpect(status().isUnauthorized());
+        for (User other : List.of(reader, moderator, admin)) {
+            mockMvc.perform(get(ownerPath).with(as(other))).andExpect(status().isNotFound());
+        }
+        jdbc.update("UPDATE posts SET status='DRAFT' WHERE id=?", post.getId());
+        mockMvc.perform(get(publicPath)).andExpect(status().isNotFound());
+        mockMvc.perform(get(publicPath).with(as(author))).andExpect(status().isNotFound());
+        mockMvc.perform(get(ownerPath).with(as(author)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.aMapWithSize(7)))
+                .andExpect(jsonPath("$.viewCount").value(3))
+                .andExpect(jsonPath("$.commentCount").value(2))
+                .andExpect(jsonPath("$.upvoteCount").value(3))
+                .andExpect(jsonPath("$.downvoteCount").value(1));
+        jdbc.update("UPDATE posts SET status='DELETED' WHERE id=?", post.getId());
+        mockMvc.perform(get(publicPath)).andExpect(status().isNotFound());
+        mockMvc.perform(get(ownerPath).with(as(author))).andExpect(status().isNotFound());
+        mockMvc.perform(get("/analytics/posts/{id}", post.getId()).with(as(moderator)))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/analytics/public/posts/{id}", Long.MAX_VALUE)).andExpect(status().isNotFound());
+        mockMvc.perform(get("/analytics/me/posts/{id}", Long.MAX_VALUE).with(as(author)))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/analytics/public/posts/invalid")).andExpect(status().isBadRequest());
+        assertThat(count("SELECT count(*) FROM activity_events")).isEqualTo(eventsBefore);
+        assertThat(jdbc.queryForObject("SELECT view_count FROM posts WHERE id=?", Integer.class, post.getId()))
+                .isEqualTo(3);
+    }
+
+    @Test
+    void engagementCountsQuietPostsNegativeScoresAndEveryAccessibleDepth() throws Exception {
+        Post post = savePost("deep-engagement", PostStatus.PUBLISHED);
+        String path = "/analytics/public/posts/" + post.getId();
+        mockMvc.perform(get(path)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.viewCount").value(0))
+                .andExpect(jsonPath("$.commentCount").value(0))
+                .andExpect(jsonPath("$.voteScore").value(0));
+        long parent = saveComment(post, reader, "VISIBLE");
+        for (int depth = 1; depth <= 5; depth++) {
+            long child = saveComment(post, reader, "VISIBLE");
+            jdbc.update("UPDATE comments SET parent_id=?,depth=? WHERE id=?", parent, depth, child);
+            parent = child;
+        }
+        vote(reader, post.getId(), null, "DOWN");
+        Post other = savePost("unrelated-engagement", PostStatus.PUBLISHED);
+        long otherComment = saveComment(other, reader, "VISIBLE");
+        vote(author, null, otherComment, "UP");
+        jdbc.update("UPDATE posts SET vote_score=-1 WHERE id=?", post.getId());
+        mockMvc.perform(get(path)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.commentCount").value(6))
+                .andExpect(jsonPath("$.voteScore").value(-1));
+    }
+
+    @Test
     void postAnalyticsCountRecordedViewsForStaffOnly() throws Exception {
         Post post = savePost("viewed", PostStatus.PUBLISHED);
         jdbc.update("UPDATE analytics_collection_starts SET collected_from = now() - interval '90 days' "
