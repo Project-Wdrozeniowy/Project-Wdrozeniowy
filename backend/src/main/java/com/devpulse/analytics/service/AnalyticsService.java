@@ -52,7 +52,10 @@ import java.util.stream.Collectors;
  *   <li>Views are intentional openings reported by the client, the same
  *       figure the forum shows; reading a post through the API counts nothing.
  *       Openings are collected from migration V10 on. Unique viewers count
- *       signed-in readers only, since guests cannot be told apart.</li>
+ *       signed-in readers only, since guests cannot be told apart, and only
+ *       since {@code uniqueViewCountSince}: openings keep their reader for the
+ *       retention of {@link OpeningDetailRetention}, so there is no all-time
+ *       figure.</li>
  *   <li>Trends count the rows created in the window per UTC day, with 0 for
  *       quiet days; the first day only counts from the window start.</li>
  *   <li>Trending posts rank public posts by views + 2 × votes + 3 × comments
@@ -108,6 +111,7 @@ public class AnalyticsService {
     private final PostRepository postRepository;
     private final PostService postService;
     private final AuthenticatedUserResolver currentUser;
+    private final OpeningDetailRetention openingDetailRetention;
 
     /** The caller's own activity. */
     @Transactional(readOnly = true)
@@ -133,13 +137,17 @@ public class AnalyticsService {
      */
     @Transactional(readOnly = true)
     public PostAnalyticsDto postAnalytics(Long postId) {
-        AnalyticsRepository.PostEngagement engagement = analyticsRepository.postEngagement(postId)
+        OffsetDateTime cutoff = openingDetailRetention.cutoff();
+        OffsetDateTime collectedFrom = analyticsRepository.collectedFrom(AnalyticsRepository.POST_VIEWED);
+        OffsetDateTime readersSince = collectedFrom.isAfter(cutoff) ? collectedFrom : cutoff;
+        AnalyticsRepository.PostEngagement engagement = analyticsRepository.postEngagement(postId, readersSince)
                 .orElseThrow(() -> new AppException("Post not found", HttpStatus.NOT_FOUND));
         return PostAnalyticsDto.builder()
                 .postId(postId)
                 .postTitle(engagement.title())
                 .viewCount(Math.toIntExact(engagement.views()))
                 .uniqueViewCount(Math.toIntExact(engagement.uniqueViewers()))
+                .uniqueViewCountSince(readersSince.withOffsetSameInstant(ZoneOffset.UTC))
                 .commentCount(Math.toIntExact(engagement.comments()))
                 .voteScore(engagement.voteScore())
                 .upvoteCount(Math.toIntExact(engagement.upvotes()))

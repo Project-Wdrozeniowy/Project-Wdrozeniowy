@@ -26,6 +26,9 @@ import java.util.UUID;
  * A post's total views are {@code posts.view_count}, the figure the forum shows;
  * the {@code POST_VIEWED} rows of {@code activity_events} are the individual
  * openings behind it, used for time windows and signed-in readers (V10).
+ * A row keeps its reader only for the retention of opening details; after it
+ * the row stays and still counts, without anyone named in it (V12, see
+ * {@link #anonymizeOpeningDetails}).
  */
 @Repository
 @RequiredArgsConstructor
@@ -35,6 +38,15 @@ public class AnalyticsRepository {
     public static final String POST_VIEWED = "POST_VIEWED";
 
     private static final String PUBLIC_POST = "status IN ('PUBLISHED', 'LOCKED')";
+
+    /**
+     * Opening rows that still identify someone: openings and the GET-based
+     * reads V10 kept, with a reader, an address or metadata. Matches the
+     * predicate of the V12 partial index, which these queries use.
+     */
+    private static final String IDENTIFIABLE_OPENING = """
+            event_type IN ('POST_VIEWED', 'POST_READ_LEGACY')
+            AND (user_id IS NOT NULL OR ip_address IS NOT NULL OR metadata IS NOT NULL)""";
 
     /** Table whose {@code created_at} each trend metric counts. */
     private static final Map<String, String> TREND_TABLES = Map.of(
@@ -104,12 +116,17 @@ public class AnalyticsRepository {
                 userId, userId, userId, userId, userId, userId, userId, userId, userId, userId);
     }
 
-    /** Engagement of the post, or empty if it does not exist. */
-    public Optional<PostEngagement> postEngagement(long postId) {
+    /**
+     * Engagement of the post, or empty if it does not exist. Unique viewers
+     * are the signed-in readers who opened it from {@code readersSince} on;
+     * views are all openings ever counted.
+     */
+    public Optional<PostEngagement> postEngagement(long postId, OffsetDateTime readersSince) {
         return jdbc.query("""
                 SELECT p.title, p.vote_score, p.view_count AS views,
                   (SELECT count(DISTINCT user_id) FROM activity_events
-                   WHERE event_type = ? AND entity_type = 'POST' AND entity_id = p.id) AS unique_viewers,
+                   WHERE event_type = ? AND entity_type = 'POST' AND entity_id = p.id
+                     AND created_at >= ?) AS unique_viewers,
                   (SELECT count(*) FROM comments WHERE post_id = p.id AND status = 'VISIBLE') AS comments,
                   (SELECT count(*) FROM votes WHERE post_id = p.id AND vote_type = 'UP') AS upvotes,
                   (SELECT count(*) FROM votes WHERE post_id = p.id AND vote_type = 'DOWN') AS downvotes,
@@ -118,7 +135,7 @@ public class AnalyticsRepository {
                 """, (rs, row) -> new PostEngagement(rs.getString("title"), rs.getLong("views"),
                         rs.getLong("unique_viewers"), rs.getLong("comments"), rs.getInt("vote_score"),
                         rs.getLong("upvotes"), rs.getLong("downvotes"), rs.getLong("subscriptions")),
-                POST_VIEWED, postId).stream().findFirst();
+                POST_VIEWED, Timestamp.from(readersSince.toInstant()), postId).stream().findFirst();
     }
 
     public PlatformTotals platformTotals() {
@@ -332,5 +349,24 @@ public class AnalyticsRepository {
                 )
                 UPDATE posts SET view_count = view_count + 1 WHERE id IN (SELECT entity_id FROM opening)
                 """, username, POST_VIEWED, postId, openingId);
+    }
+
+    /**
+     * Clears who opened a post, the reader and any address or metadata, on
+     * up to {@code limit} of the oldest opening rows created before
+     * {@code before}, in one statement. The rows stay, with their post, time
+     * and {@code opening_id}, so every count and the idempotency of openings
+     * are unchanged. Rows locked by another transaction are skipped, not
+     * waited for; a later call takes them.
+     *
+     * @return the number of rows cleared, 0 when none is left
+     */
+    public int anonymizeOpeningDetails(OffsetDateTime before, int limit) {
+        return jdbc.update("""
+                UPDATE activity_events SET user_id = NULL, ip_address = NULL, metadata = NULL
+                WHERE id IN (SELECT id FROM activity_events
+                             WHERE %s AND created_at < ?
+                             ORDER BY created_at LIMIT ? FOR UPDATE SKIP LOCKED)
+                """.formatted(IDENTIFIABLE_OPENING), Timestamp.from(before.toInstant()), limit);
     }
 }

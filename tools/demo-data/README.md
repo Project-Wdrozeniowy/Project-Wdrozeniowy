@@ -165,3 +165,8 @@ are those of the public activity: published and locked posts, visible comments o
 Openings are measured from 00:00 UTC of the first synthetic day: the loader sets the collection start
 in `analytics_collection_starts`, so an author's daily openings (`GET /api/analytics/me/posts/{id}/openings`)
 show measured days, with 0 on quiet ones, across the whole history.
+
+The backend keeps who opened a post for 30 days (`app.analytics.opening-detail-retention`). Within an
+hour of starting, it clears the reader of the older synthetic openings and keeps the openings, so every
+figure above stays the same. Only the staff post analytics change: `uniqueViewCount` counts the
+signed-in readers since `uniqueViewCountSince`, at most the last 30 days.

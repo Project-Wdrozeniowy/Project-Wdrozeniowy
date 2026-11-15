@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -95,24 +96,42 @@ class AnalyticsControllerApiTest {
     @Test
     void postAnalyticsCountRecordedViewsForStaffOnly() throws Exception {
         Post post = savePost("viewed", PostStatus.PUBLISHED);
+        jdbc.update("UPDATE analytics_collection_starts SET collected_from = now() - interval '90 days' "
+                + "WHERE event_type = 'POST_VIEWED'");
         opening(post, null);
         opening(post, reader);
         opening(post, reader);
+        openingAt(post, moderator, OffsetDateTime.now(ZoneOffset.UTC).minusDays(31));
         saveComment(post, reader, "VISIBLE");
         vote(reader, post.getId(), null, "UP");
         jdbc.update("UPDATE posts SET vote_score = 1 WHERE id = ?", post.getId());
         jdbc.update("INSERT INTO post_subscriptions (user_id, post_id) VALUES (?, ?)", reader.getId(), post.getId());
 
-        mockMvc.perform(get("/analytics/posts/{id}", post.getId()).with(as(moderator)))
+        OffsetDateTime cutoff = OffsetDateTime.now(ZoneOffset.UTC).minusDays(30);
+        String body = mockMvc.perform(get("/analytics/posts/{id}", post.getId()).with(as(moderator)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.postTitle").value("viewed"))
-                .andExpect(jsonPath("$.viewCount").value(3))
+                .andExpect(jsonPath("$.viewCount").value(4))
                 .andExpect(jsonPath("$.uniqueViewCount").value(1))
                 .andExpect(jsonPath("$.commentCount").value(1))
                 .andExpect(jsonPath("$.voteScore").value(1))
                 .andExpect(jsonPath("$.upvoteCount").value(1))
                 .andExpect(jsonPath("$.downvoteCount").value(0))
-                .andExpect(jsonPath("$.subscriptionCount").value(1));
+                .andExpect(jsonPath("$.subscriptionCount").value(1))
+                .andReturn().getResponse().getContentAsString();
+        OffsetDateTime since = OffsetDateTime.parse(JsonPath.read(body, "$.uniqueViewCountSince"));
+        assertThat(since.getOffset()).isEqualTo(ZoneOffset.UTC);
+        assertThat(Duration.between(cutoff, since).abs()).isLessThan(Duration.ofMinutes(1));
+
+        OffsetDateTime collectedFrom = jdbc.queryForObject("""
+                UPDATE analytics_collection_starts SET collected_from = now() - interval '10 days'
+                WHERE event_type = 'POST_VIEWED' RETURNING collected_from
+                """, OffsetDateTime.class);
+        String later = mockMvc.perform(get("/analytics/posts/{id}", post.getId()).with(as(moderator)))
+                .andExpect(jsonPath("$.uniqueViewCount").value(1))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(OffsetDateTime.parse(JsonPath.read(later, "$.uniqueViewCountSince")).toInstant())
+                .isEqualTo(collectedFrom.toInstant());
         mockMvc.perform(get("/analytics/posts/{id}", post.getId()).with(as(reader))).andExpect(status().isForbidden());
         mockMvc.perform(get("/analytics/posts/{id}", Long.MAX_VALUE).with(as(admin))).andExpect(status().isNotFound());
     }
@@ -501,6 +520,14 @@ class AnalyticsControllerApiTest {
                 INSERT INTO activity_events (user_id, event_type, entity_type, entity_id, opening_id)
                 VALUES (?, 'POST_VIEWED', 'POST', ?, ?)
                 """, by == null ? null : by.getId(), post.getId(), UUID.randomUUID());
+        jdbc.update("UPDATE posts SET view_count = view_count + 1 WHERE id = ?", post.getId());
+    }
+
+    private void openingAt(Post post, User by, OffsetDateTime createdAt) {
+        jdbc.update("""
+                INSERT INTO activity_events (user_id, event_type, entity_type, entity_id, opening_id, created_at)
+                VALUES (?, 'POST_VIEWED', 'POST', ?, ?, ?)
+                """, by.getId(), post.getId(), UUID.randomUUID(), createdAt);
         jdbc.update("UPDATE posts SET view_count = view_count + 1 WHERE id = ?", post.getId());
     }
 
