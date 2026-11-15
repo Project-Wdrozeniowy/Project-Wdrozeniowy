@@ -8,12 +8,7 @@
     "totalCount": 93
   },
   "localTracking": {
-    "statuses": [
-      "pending",
-      "in_progress",
-      "blocked",
-      "done"
-    ],
+    "statuses": ["pending", "in_progress", "blocked", "done"],
     "note": "localTracking.status is managed by agents; Jira status stays authoritative."
   },
   "issues": [
@@ -8593,9 +8588,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "Frontend-prototype"
-        ],
+        "labels": ["Frontend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000gv:",
         "timeestimate": null,
@@ -8820,9 +8813,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "backend-prototype"
-        ],
+        "labels": ["backend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000la:",
         "timeestimate": null,
@@ -9060,9 +9051,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "backend-prototype"
-        ],
+        "labels": ["backend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000l9:",
         "timeestimate": null,
@@ -9300,9 +9289,7 @@
           "name": "Highest",
           "id": "1"
         },
-        "labels": [
-          "Frontend-prototype"
-        ],
+        "labels": ["Frontend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000dn:",
         "timeestimate": null,
@@ -9540,9 +9527,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "backend-prototype"
-        ],
+        "labels": ["backend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000l7:",
         "timeestimate": null,
@@ -9780,9 +9765,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "backend-prototype"
-        ],
+        "labels": ["backend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000la:i",
         "timeestimate": null,
@@ -10020,9 +10003,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "Frontend-prototype"
-        ],
+        "labels": ["Frontend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000dw:",
         "timeestimate": null,
@@ -10260,9 +10241,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "backend-prototype"
-        ],
+        "labels": ["backend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000le:",
         "timeestimate": null,
@@ -10487,9 +10466,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "connection"
-        ],
+        "labels": ["connection"],
         "customfield_10016": null,
         "customfield_10019": "0|i000li:",
         "timeestimate": null,
@@ -10728,9 +10705,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "backend-prototype"
-        ],
+        "labels": ["backend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000dg:",
         "timeestimate": null,
@@ -10968,9 +10943,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "backend-prototype"
-        ],
+        "labels": ["backend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000li:i",
         "timeestimate": null,
@@ -11286,9 +11259,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "Frontend-prototype"
-        ],
+        "labels": ["Frontend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000dt:",
         "timeestimate": null,
@@ -11526,9 +11497,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "backend-prototype"
-        ],
+        "labels": ["backend-prototype"],
         "customfield_10016": null,
         "customfield_10019": "0|i000bg:x",
         "timeestimate": null,
@@ -11772,9 +11741,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "docs"
-        ],
+        "labels": ["docs"],
         "customfield_10016": null,
         "customfield_10019": "0|i000bi:p",
         "timeestimate": null,
@@ -12013,9 +11980,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "docs"
-        ],
+        "labels": ["docs"],
         "customfield_10016": null,
         "customfield_10019": "0|i000jz:",
         "timeestimate": null,
@@ -13665,9 +13630,7 @@
           "id": "3"
         },
         "customfield_10001": null,
-        "labels": [
-          "Frontend-prototype"
-        ],
+        "labels": ["Frontend-prototype"],
         "customfield_10016": null,
         "environment": null,
         "customfield_10019": "0|i000lj:",
@@ -15556,11 +15519,7 @@
           "name": "Highest",
           "id": "1"
         },
-        "labels": [
-          "backend",
-          "connection",
-          "frontend"
-        ],
+        "labels": ["backend", "connection", "frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000nj:",
         "timeestimate": null,
@@ -15775,11 +15734,7 @@
           "name": "Highest",
           "id": "1"
         },
-        "labels": [
-          "backend",
-          "connection",
-          "frontend"
-        ],
+        "labels": ["backend", "connection", "frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000nr:",
         "timeestimate": null,
@@ -15994,11 +15949,7 @@
           "name": "Highest",
           "id": "1"
         },
-        "labels": [
-          "backend",
-          "connection",
-          "frontend"
-        ],
+        "labels": ["backend", "connection", "frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000nz:",
         "timeestimate": null,
@@ -16213,9 +16164,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "backend"
-        ],
+        "labels": ["backend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000o7:",
         "timeestimate": null,
@@ -16430,9 +16379,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "backend"
-        ],
+        "labels": ["backend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000of:",
         "timeestimate": null,
@@ -16647,9 +16594,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "backend"
-        ],
+        "labels": ["backend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000on:",
         "timeestimate": null,
@@ -16864,9 +16809,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "frontend"
-        ],
+        "labels": ["frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000ov:",
         "timeestimate": null,
@@ -17081,9 +17024,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "backend"
-        ],
+        "labels": ["backend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000p3:",
         "timeestimate": null,
@@ -17298,10 +17239,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "full-stack",
-          "gateway"
-        ],
+        "labels": ["full-stack", "gateway"],
         "customfield_10016": null,
         "customfield_10019": "0|i000pb:",
         "timeestimate": null,
@@ -17516,9 +17454,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "design"
-        ],
+        "labels": ["design"],
         "customfield_10016": null,
         "customfield_10019": "0|i000pj:",
         "timeestimate": null,
@@ -17746,9 +17682,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "frontend"
-        ],
+        "labels": ["frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000pr:",
         "timeestimate": null,
@@ -17976,9 +17910,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "design"
-        ],
+        "labels": ["design"],
         "customfield_10016": null,
         "customfield_10019": "0|i000pz:",
         "timeestimate": null,
@@ -18206,9 +18138,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "design"
-        ],
+        "labels": ["design"],
         "customfield_10016": null,
         "customfield_10019": "0|i000q7:",
         "timeestimate": null,
@@ -18436,11 +18366,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "backend",
-          "frontend",
-          "gateway"
-        ],
+        "labels": ["backend", "frontend", "gateway"],
         "customfield_10016": null,
         "customfield_10019": "0|i000qf:",
         "timeestimate": null,
@@ -18655,9 +18581,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "design"
-        ],
+        "labels": ["design"],
         "customfield_10016": null,
         "customfield_10019": "0|i000qn:",
         "timeestimate": null,
@@ -18872,9 +18796,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "frontend"
-        ],
+        "labels": ["frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000qv:",
         "timeestimate": null,
@@ -19089,9 +19011,7 @@
           "name": "Low",
           "id": "4"
         },
-        "labels": [
-          "frontend"
-        ],
+        "labels": ["frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000r3:",
         "timeestimate": null,
@@ -19306,9 +19226,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "frontend"
-        ],
+        "labels": ["frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000rb:",
         "timeestimate": null,
@@ -19523,9 +19441,7 @@
           "name": "Low",
           "id": "4"
         },
-        "labels": [
-          "backend"
-        ],
+        "labels": ["backend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000rj:",
         "timeestimate": null,
@@ -19740,10 +19656,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "backend",
-          "frontend"
-        ],
+        "labels": ["backend", "frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000rr:",
         "timeestimate": null,
@@ -19958,9 +19871,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "frontend"
-        ],
+        "labels": ["frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000rz:",
         "timeestimate": null,
@@ -20175,9 +20086,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "backend"
-        ],
+        "labels": ["backend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000s7:",
         "timeestimate": null,
@@ -20443,9 +20352,7 @@
           "name": "Low",
           "id": "4"
         },
-        "labels": [
-          "gateway"
-        ],
+        "labels": ["gateway"],
         "customfield_10016": null,
         "customfield_10019": "0|i000sf:",
         "timeestimate": null,
@@ -20660,10 +20567,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "connection",
-          "gateway"
-        ],
+        "labels": ["connection", "gateway"],
         "customfield_10016": null,
         "customfield_10019": "0|i000sn:",
         "timeestimate": null,
@@ -20878,9 +20782,7 @@
           "name": "Low",
           "id": "4"
         },
-        "labels": [
-          "devops"
-        ],
+        "labels": ["devops"],
         "customfield_10016": null,
         "customfield_10019": "0|i000sv:",
         "timeestimate": null,
@@ -21095,9 +20997,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "frontend"
-        ],
+        "labels": ["frontend"],
         "customfield_10016": null,
         "customfield_10019": "0|i000t3:",
         "timeestimate": null,
@@ -21593,9 +21493,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "pwdrz-118-follow-up"
-        ],
+        "labels": ["pwdrz-118-follow-up"],
         "versions": [],
         "progress": {
           "progress": 0,
@@ -21783,9 +21681,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "pwdrz-118-follow-up"
-        ],
+        "labels": ["pwdrz-118-follow-up"],
         "versions": [],
         "progress": {
           "progress": 0,
@@ -21973,9 +21869,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "pwdrz-118-follow-up"
-        ],
+        "labels": ["pwdrz-118-follow-up"],
         "versions": [],
         "progress": {
           "progress": 0,
@@ -22163,9 +22057,7 @@
           "name": "Medium",
           "id": "3"
         },
-        "labels": [
-          "pwdrz-118-follow-up"
-        ],
+        "labels": ["pwdrz-118-follow-up"],
         "versions": [],
         "progress": {
           "progress": 0,
@@ -22392,10 +22284,7 @@
           "name": "High",
           "id": "2"
         },
-        "labels": [
-          "monorepo",
-          "platform"
-        ],
+        "labels": ["monorepo", "platform"],
         "timeestimate": 14400,
         "aggregatetimeoriginalestimate": 14400,
         "versions": [],
@@ -22558,11 +22447,7 @@
         },
         "created": "2026-10-11T01:19:25.657+0200",
         "updated": "2026-11-02T11:22:34.071+0100",
-        "labels": [
-          "api-contract",
-          "frontend",
-          "tech-debt"
-        ],
+        "labels": ["api-contract", "frontend", "tech-debt"],
         "parent": {
           "id": "10389",
           "key": "PWDRZ-90",
@@ -22637,6 +22522,139 @@
           "Independent review follow-up: fixed selective E2E CI install (clean npm 11 fixture + actual Nx api-check passed) and publish async onSuccess lifecycle using generated mutation options with a tested cache composition. Frontend 696 tests and all coverage gates, static/codegen checks, production build and real E2E 8/8 passed. An earlier native Windows worker crash and its successful fresh-stack rerun are recorded in pwdrz-130-execution.md. User requested one local fix commit without co-author trailers; no additional push or Jira mutation.",
           "2026-11-05: reproduced GitHub test-merge contract drift after PWDRZ-144/145 added notifications/analytics on develop. User selected local rebase onto 8af67bd; backup ref retained, range-diff confirms all six original commits unchanged in content. Regenerated 61 files for 32 operations; new transport tests, root static checks, frontend coverage (698 tests), production build and real E2E 8/8 passed. New remote CI requires publication of the rebased branch; no push or Jira mutation.",
           "Final independent cleanup against develop 8af67bd: removed unused handwritten notifications/analytics contracts and wrappers after verifying all nine generated replacements; preserved provisional recommendations and their four assertions in their own module. All 32 published operations audited; remaining 12 manual calls belong to hidden separately owned stubs. Codegen reproduces 61 files; static gates, frontend 686/gateway 51/backend 223 tests with coverage, all three builds and real E2E 9/9 passed, including actual recommendation 501 responses and cleanup. Rebased patch-equivalent backend commits using prior user authorization with identical tree verification; remote refs unchanged. Cleanup remains unstaged/uncommitted; no push, PR creation, merge or Jira mutation. Dashboard prototype remains outside bindings scope; stale availability comments corrected."
+        ]
+      }
+    },
+    {
+      "id": "10556",
+      "key": "PWDRZ-194",
+      "fields": {
+        "summary": "Harden post unpublishing and public analytics privacy [BE]",
+        "description": "## Goal\n\nVerify and harden backend post unpublishing and republication so that non-public posts and their engagement do not remain publicly discoverable through existing API reads or public statistics. Deliver this backend prerequisite before implementing the new engagement summaries in parent PWDRZ-167.\n\n## Product rule\n\nPublic access to a post's analytics follows the current public availability of the post. Moving a publication to DRAFT or deleting it removes public access to its previously accumulated statistics and its contribution, including its discussion, to public content/activity figures. Authors retain their own analytics for undeleted posts; existing protected staff analytics retain their current permissions. Category visibility is unrelated.\n\n## Verified starting point\n\nPATCH /api/forum/posts/{slug} already accepts DRAFT and PUBLISHED. PostServiceIntegrationTest includes publishingAndUnpublishingMovesTheCounters. Reuse this mechanism, Spring SESSION/CSRF, existing resource authorization and intentional-opening accounting. Source inspection and existing test definitions do not constitute execution evidence.\n\n## Scope\n\n* Verify and, where necessary, make bounded backend fixes to PUBLISHED -> DRAFT -> PUBLISHED through the existing PATCH. Send/change only the intended fields; preserve slug, title/body, category, tags, comments, votes and accumulated openings.\n* Verify guest/member/author/ADMIN/MODERATOR access through the actual Spring security boundary. Another member cannot unpublish or republish someone else's post. Preserve existing staff rights and LOCKED/DELETED restrictions.\n* Ensure draft/deleted posts are excluded from existing public post reads, feed/search/recommendations, post/activity aggregates, tag counts and related public profile counters. Fix concrete leaks in the affected API paths; preserve private own-profile totals and protected staff analytics.\n* Verify visibility transitions with historical activity: unpublishing removes the current public contribution, republication restores it without deleting or reconstructing recorded engagement.\n* Verify concurrent status changes, votes/comments and moderation locks. Resolve demonstrated lost updates or lock bypasses within the existing backend write path; do not introduce a new generic versioning system.\n* Verify that status mutations and resulting safe API reads add zero intentional-opening events. Guest/member explicit opening delivery remains owned by PWDRZ-165.\n* Update affected backend contract descriptions and regenerate OpenAPI/client bindings only when the executable contract changes. Generated clients are contract artifacts, not frontend feature implementation.\n* Record reproducible synthetic fixtures and real-schema, real-security and gateway HTTP integration evidence.\n\n## Acceptance criteria\n\n1. A real authenticated author can PATCH a persisted PUBLISHED post to DRAFT and back to PUBLISHED. Both transitions preserve identity, content, discussion, votes and accumulated opening count.\n2. While DRAFT, a guest and another member receive 404 for the post and cannot recover it through existing public lists or recommendations. Relevant existing public aggregates and metadata no longer include its contribution; after republication they do again.\n3. Deleted posts remain excluded from public reads/figures. The author retains the existing permitted access to their undeleted draft and private history; existing staff endpoint permissions remain unchanged.\n4. Guest unsafe requests, missing CSRF and unauthorized member requests fail according to the existing security contract and leave state unchanged. Existing LOCKED/DELETED rules are not bypassed, including a controlled concurrent moderation/status case.\n5. Concurrent accepted votes/comments do not lose their counters during a status transition. Tests use controlled interleavings on PostgreSQL where needed.\n6. The status-change cycle and safe read/refetch sequence add zero view_count and zero POST_VIEWED events. Explicit opening POSTs are measured separately.\n7. Migrated PostgreSQL tests and managed gateway HTTP integration prove the behavior without a page, browser controls or mocked planned success. Backend verify and applicable existing quality gates pass; contract drift checks and generated-binding checks pass if affected.\n8. Evidence records input, expected/observed output, actual source revision and check results. Unrun checks are not reported as passed.\n\n## Delivery order and ownership\n\n* Parent: PWDRZ-167. Owner/integration: Ruslan 82179.\n* Implement and verify PWDRZ-194 first; then implement PWDRZ-167's new public and owner summary GETs using the established visibility rule.\n* PWDRZ-194 has no dependency on the parent endpoints it precedes: their access/count tests belong to PWDRZ-167. The parent is complete only when both backend scopes pass.\n* PWDRZ-165 supplies intentional-opening semantics and must be verified in the execution base; its Jira status alone is insufficient.\n* PWDRZ-164 is not a backend prerequisite. The post page and user-facing controls stay on the frontend side, outside this subtask; this correction does not rewrite PWDRZ-164's scope or acceptance criteria.\n* PWDRZ-169 owns insights UI, PWDRZ-190 title/body editing, and PWDRZ-170 the existing author trend. No frontend task must be completed to accept the backend contracts here.\n\n## Out of scope\n\nFrontend components, publish/unpublish buttons, dialogs, React Query cache changes, browser UI acceptance, draft-library screens, friends-only audiences, a new HIDDEN model, category visibility rules, new moderation/notification workflows, deletion UI and retention redesign.\n\n## Execution authorization\n\nThe user authorized backend-first implementation, local branches/commits and publication of the working branch. The current correction request updates this issue and the combined plan only; it does not resume code work while the stop is in effect. Do not create a pull request or close Jira issues without the user's confirmation. Preserve staged changes and use commit messages without service trailers.",
+        "status": {
+          "description": "",
+          "name": "To Do",
+          "id": "10076",
+          "statusCategory": {
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "issuetype": {
+          "id": "10080",
+          "description": "Subtasks track small pieces of work that are part of a larger task.",
+          "name": "Subtask",
+          "subtask": true,
+          "entityId": "591ecc93-9c42-4fcc-8ea2-0c5e26797e26",
+          "hierarchyLevel": -1
+        },
+        "parent": {
+          "id": "10529",
+          "key": "PWDRZ-167",
+          "fields": {
+            "summary": "Expose public and author post engagement summaries [BE]",
+            "status": {
+              "description": "This work item is being actively worked on at the moment by the assignee.",
+              "name": "In Progress",
+              "id": "10077",
+              "statusCategory": {
+                "id": 4,
+                "key": "indeterminate",
+                "colorName": "yellow",
+                "name": "In Progress"
+              }
+            },
+            "priority": {
+              "name": "Highest",
+              "id": "1"
+            },
+            "issuetype": {
+              "id": "10076",
+              "description": "A small, distinct piece of work.",
+              "name": "Task",
+              "subtask": false,
+              "entityId": "2535984a-65c8-4602-a7a7-54815d407a6a",
+              "hierarchyLevel": 0
+            }
+          }
+        }
+      },
+      "localTracking": {
+        "status": "done",
+        "owner": "Ruslan 82179",
+        "updatedAt": "2026-11-14T21:51:20.827Z",
+        "notes": [
+          "Backend-first implementation started. Public profile counter unit regression observed failing (expected 1, actual 2), then 28 profile service/controller tests passed. Migrated-schema and full verify running; not complete.",
+          "Backend acceptance verified: 371 tests and coverage gates; managed real-stack suite exit 0 (1794692985268-b70806ac). Public profile and controlled moderation/counter races fixed. Jira remains open."
+        ]
+      }
+    },
+    {
+      "id": "10529",
+      "key": "PWDRZ-167",
+      "fields": {
+        "summary": "Expose public and author post engagement summaries [BE]",
+        "description": "## Goal\n\nGive readers basic public metrics and authors a protected extended summary.\n\n## Context\n\nApproved Sprint 8 implementation plan, closed synthetic demonstration. Current application is a Vite/React Router SPA served by Express with relative /api, Spring JDBC sessions/CSRF and PostgreSQL. Reuse published contracts and existing feature code.\n\n## Owner\n\nRuslan 82179.\n\n## Scope\n\nPublic readable posts expose lifetime openings, visible comments and vote score. Authors additionally receive upvote/downvote counts. Reuse existing staff analytics with their current permissions. Author-only checks run in Spring and exclude reader identities, demographics and private reading history.\n\n## Acceptance criteria\n\n* Guest receives only public fields. Author receives extended fields. Another member fails direct author-data requests. Draft/deleted/hidden post details are not leaked to guests. Existing staff permissions still work. Counts match migrated fixtures and statistics GET adds no openings. OpenAPI defines each access boundary.\n* Record concrete input, expected and observed output, tested source revision and affected checks. FE implementation runs typecheck, lint, format checks and relevant tests. BE changes update OpenAPI/generated bindings as applicable and verify real-schema behavior on migrated PostgreSQL. Existing quality gates remain applicable.\n* New controls, states and values are usable by keyboard and assistive technology. Public data excludes private content and reader identities.\n\n## Dependencies / coordination\n\nTechnical acceptance dependencies: PWDRZ-165. Contract examples allow parallel implementation. Feature ownership and dependency links determine integration readiness; no fixed work dates or mandatory serial schedule are introduced.",
+        "status": {
+          "description": "This work item is being actively worked on at the moment by the assignee.",
+          "name": "In Progress",
+          "id": "10077",
+          "statusCategory": {
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+          }
+        },
+        "issuetype": {
+          "id": "10076",
+          "description": "A small, distinct piece of work.",
+          "name": "Task",
+          "subtask": false,
+          "entityId": "2535984a-65c8-4602-a7a7-54815d407a6a",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "10204",
+          "key": "PWDRZ-54",
+          "fields": {
+            "summary": "Forum Core Functionality",
+            "status": {
+              "description": "",
+              "name": "To Do",
+              "id": "10076",
+              "statusCategory": {
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "name": "High",
+              "id": "2"
+            },
+            "issuetype": {
+              "id": "10079",
+              "description": "A collection of related bugs, stories, and tasks.",
+              "name": "Epic",
+              "subtask": false,
+              "entityId": "6a7f778c-6d7c-43a6-900a-cf2d83892a04",
+              "hierarchyLevel": 1
+            }
+          }
+        }
+      },
+      "localTracking": {
+        "status": "done",
+        "owner": "Ruslan 82179",
+        "updatedAt": "2026-11-14T22:10:29.382Z",
+        "notes": [
+          "Awaiting verification of backend prerequisite PWDRZ-194; implementation of new summaries not started.",
+          "Backend prerequisite 194 verified; proceeding to new summary APIs.",
+          "Public and author summaries verified: 376 backend tests and JaCoCo gates; 26 managed HTTP/browser cases, root checks/build, JS coverage, contract/codegen and infrastructure checks passed. See pwdrz-167-execution.md. Jira status unchanged."
         ]
       }
     }

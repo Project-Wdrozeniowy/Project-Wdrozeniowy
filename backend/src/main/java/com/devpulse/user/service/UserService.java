@@ -8,6 +8,7 @@ import com.devpulse.user.dto.ChangePasswordRequest;
 import com.devpulse.user.dto.MyProfileDto;
 import com.devpulse.user.dto.UpdateProfileRequest;
 import com.devpulse.user.dto.UserProfileDto;
+import com.devpulse.user.repository.PublicProfileStatsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticatedUserResolver currentUser;
+    private final PublicProfileStatsRepository publicStats;
     private final jakarta.persistence.EntityManager entityManager;
 
     /**
@@ -58,7 +60,8 @@ public class UserService {
     public UserProfileDto getPublicProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
-        return UserProfileDto.from(user);
+        PublicProfileStatsRepository.Counts counts = publicStats.counts(user.getId());
+        return UserProfileDto.from(user, counts.posts(), counts.comments());
     }
 
     /**

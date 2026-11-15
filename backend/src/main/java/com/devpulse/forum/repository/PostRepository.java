@@ -30,6 +30,10 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     @EntityGraph(attributePaths = {"author", "category", "tags"})
     Optional<Post> findBySlug(String slug);
 
+    /** Lock the post itself without locking nullable joins or its tag collection. */
+    @Query(value = "SELECT id FROM posts WHERE slug = :slug FOR UPDATE", nativeQuery = true)
+    Optional<Long> lockIdBySlug(@Param("slug") String slug);
+
     /** Loads the posts with the given ids together with their author, category and tags, in no particular order. */
     @EntityGraph(attributePaths = {"author", "category", "tags"})
     List<Post> findWithDetailsByIdIn(Collection<Long> ids);

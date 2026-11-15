@@ -119,11 +119,11 @@ class OpenApiContractTest {
         String document = generatedDocument();
 
         for (String open : List.of("/analytics/public/activity", "/analytics/public/categories",
-                "/analytics/public/comparison", "/analytics/trending-posts")) {
+                "/analytics/public/comparison", "/analytics/trending-posts", "/analytics/public/posts/{id}")) {
             Map<String, Object> operation = JsonPath.read(document, "$.paths['" + open + "'].get");
             assertThat(operation).as(open).doesNotContainKey("security");
         }
-        for (String closed : List.of("/analytics/me", "/analytics/me/posts/{id}/openings", "/analytics/posts/{id}",
+        for (String closed : List.of("/analytics/me", "/analytics/me/posts/{id}", "/analytics/me/posts/{id}/openings", "/analytics/posts/{id}",
                 "/analytics/summary", "/analytics/trends")) {
             List<Map<String, Object>> security = JsonPath.read(document, "$.paths['" + closed + "'].get.security");
             assertThat(security).as(closed).containsExactly(Map.of("sessionAuth", List.of()));

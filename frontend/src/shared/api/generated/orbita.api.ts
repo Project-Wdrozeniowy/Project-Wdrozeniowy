@@ -26,6 +26,8 @@ import type { ActivityTrendDto } from './models/activityTrendDto.dto';
 
 import type { AuthRequest } from './models/authRequest.dto';
 
+import type { AuthorPostEngagementDto } from './models/authorPostEngagementDto.dto';
+
 import type { CategoryDto } from './models/categoryDto.dto';
 
 import type { ChangePasswordRequest } from './models/changePasswordRequest.dto';
@@ -93,6 +95,8 @@ import type { PublicActivityComparisonDto } from './models/publicActivityCompari
 import type { PublicActivityDto } from './models/publicActivityDto.dto';
 
 import type { PublicCategoryDistributionDto } from './models/publicCategoryDistributionDto.dto';
+
+import type { PublicPostEngagementDto } from './models/publicPostEngagementDto.dto';
 
 import type { RecommendedPostDto } from './models/recommendedPostDto.dto';
 
@@ -482,6 +486,293 @@ export const invalidateGetMyActivitySummary = async (
 };
 
 /**
+ * Author only, including the author's draft. A different caller, including staff, gets 404. Deleted and missing posts get 404. Includes the UP/DOWN breakdown, never reader identities or visitor rows. Reading this summary never records an opening; staff analytics remain a separate API.
+ * @summary Get engagement of my post
+ */
+export const authorSummary = (
+  id: number,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<AuthorPostEngagementDto>(
+    { url: `/analytics/me/posts/${encodeURIComponent(String(id))}`, method: 'GET', signal },
+    options
+  );
+};
+
+export const getAuthorSummaryQueryKey = (id: number) => {
+  return [`/analytics/me/posts/${id}`] as const;
+};
+
+export const getAuthorSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof authorSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof authorSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAuthorSummaryQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof authorSummary>>> = ({ signal }) =>
+    authorSummary(id, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof authorSummary>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type AuthorSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof authorSummary>>>;
+export type AuthorSummaryQueryError = ErrorType<ProblemDetail>;
+
+export function useAuthorSummary<
+  TData = Awaited<ReturnType<typeof authorSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof authorSummary>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authorSummary>>,
+          TError,
+          Awaited<ReturnType<typeof authorSummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAuthorSummary<
+  TData = Awaited<ReturnType<typeof authorSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof authorSummary>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authorSummary>>,
+          TError,
+          Awaited<ReturnType<typeof authorSummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useAuthorSummary<
+  TData = Awaited<ReturnType<typeof authorSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof authorSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get engagement of my post
+ */
+
+export function useAuthorSummary<
+  TData = Awaited<ReturnType<typeof authorSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof authorSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getAuthorSummaryQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useAuthorSummary} query
+ */
+export const invalidateAuthorSummary = async (
+  queryClient: QueryClient,
+  id: number,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getAuthorSummaryQueryKey(id) }, options);
+
+  return queryClient;
+};
+
+/**
+ * Intentional openings of a post the caller wrote, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Days that ended before openings were collected have measured false and openings null; a measured day without openings has 0. Only the author gets the series: anyone else, staff included, gets 404.
+ * @summary Get daily openings of one of my posts
+ */
+export const getMyPostOpenings = (
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PostOpeningTrendDto>(
+    {
+      url: `/analytics/me/posts/${encodeURIComponent(String(id))}/openings`,
+      method: 'GET',
+      params,
+      signal,
+    },
+    options
+  );
+};
+
+export const getGetMyPostOpeningsQueryKey = (id: number, params?: GetMyPostOpeningsParams) => {
+  return [`/analytics/me/posts/${id}/openings`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMyPostOpeningsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyPostOpeningsQueryKey(id, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyPostOpenings>>> = ({ signal }) =>
+    getMyPostOpenings(id, params, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetMyPostOpeningsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyPostOpenings>>
+>;
+export type GetMyPostOpeningsQueryError = ErrorType<ProblemDetail>;
+
+export function useGetMyPostOpenings<
+  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  params: undefined | GetMyPostOpeningsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyPostOpenings>>,
+          TError,
+          Awaited<ReturnType<typeof getMyPostOpenings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyPostOpenings<
+  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyPostOpenings>>,
+          TError,
+          Awaited<ReturnType<typeof getMyPostOpenings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyPostOpenings<
+  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get daily openings of one of my posts
+ */
+
+export function useGetMyPostOpenings<
+  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMyPostOpeningsQueryOptions(id, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetMyPostOpenings} query
+ */
+export const invalidateGetMyPostOpenings = async (
+  queryClient: QueryClient,
+  id: number,
+  params?: GetMyPostOpeningsParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries(
+    { queryKey: getGetMyPostOpeningsQueryKey(id, params) },
+    options
+  );
+
+  return queryClient;
+};
+
+/**
  * @summary Get analytics for a specific post
  */
 export const getPostAnalytics = (
@@ -611,6 +902,575 @@ export const invalidateGetPostAnalytics = async (
   options?: InvalidateOptions
 ): Promise<QueryClient> => {
   await queryClient.invalidateQueries({ queryKey: getGetPostAnalyticsQueryKey(id) }, options);
+
+  return queryClient;
+};
+
+/**
+ * Public. Published or locked posts and visible comments on them, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Quiet days are returned with 0. Figures count the records that are public now and were created in the window.
+ * @summary Get daily public platform activity
+ */
+export const getPublicActivity = (
+  params?: GetPublicActivityParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PublicActivityDto>(
+    { url: `/analytics/public/activity`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getGetPublicActivityQueryKey = (params?: GetPublicActivityParams) => {
+  return [`/analytics/public/activity`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetPublicActivityQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicActivity>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicActivityQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicActivity>>> = ({ signal }) =>
+    getPublicActivity(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicActivity>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPublicActivityQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicActivity>>
+>;
+export type GetPublicActivityQueryError = ErrorType<ProblemDetail>;
+
+export function useGetPublicActivity<
+  TData = Awaited<ReturnType<typeof getPublicActivity>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | GetPublicActivityParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicActivity>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicActivity>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicActivity<
+  TData = Awaited<ReturnType<typeof getPublicActivity>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicActivity>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicActivity>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicActivity<
+  TData = Awaited<ReturnType<typeof getPublicActivity>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get daily public platform activity
+ */
+
+export function useGetPublicActivity<
+  TData = Awaited<ReturnType<typeof getPublicActivity>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPublicActivityQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetPublicActivity} query
+ */
+export const invalidateGetPublicActivity = async (
+  queryClient: QueryClient,
+  params?: GetPublicActivityParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getGetPublicActivityQueryKey(params) }, options);
+
+  return queryClient;
+};
+
+/**
+ * Public. The published or locked posts created in the window of the public activity, by their current category, with each category's share. Rows add up to totalPosts; posts without a category, also those whose category was deleted, are the last row.
+ * @summary Get public posts by category
+ */
+export const getPublicCategoryDistribution = (
+  params?: GetPublicCategoryDistributionParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PublicCategoryDistributionDto>(
+    { url: `/analytics/public/categories`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getGetPublicCategoryDistributionQueryKey = (
+  params?: GetPublicCategoryDistributionParams
+) => {
+  return [`/analytics/public/categories`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetPublicCategoryDistributionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicCategoryDistributionParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicCategoryDistributionQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicCategoryDistribution>>> = ({
+    signal,
+  }) => getPublicCategoryDistribution(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPublicCategoryDistributionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicCategoryDistribution>>
+>;
+export type GetPublicCategoryDistributionQueryError = ErrorType<ProblemDetail>;
+
+export function useGetPublicCategoryDistribution<
+  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | GetPublicCategoryDistributionParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicCategoryDistribution>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicCategoryDistribution<
+  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicCategoryDistributionParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicCategoryDistribution>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicCategoryDistribution<
+  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicCategoryDistributionParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get public posts by category
+ */
+
+export function useGetPublicCategoryDistribution<
+  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicCategoryDistributionParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPublicCategoryDistributionQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetPublicCategoryDistribution} query
+ */
+export const invalidateGetPublicCategoryDistribution = async (
+  queryClient: QueryClient,
+  params?: GetPublicCategoryDistributionParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries(
+    { queryKey: getGetPublicCategoryDistributionQueryKey(params) },
+    options
+  );
+
+  return queryClient;
+};
+
+/**
+ * Public. Published or locked posts and visible comments on them in the window of the public activity up to now, against the window of the same length that ends where it starts. Gives counts, absolute changes and percentages; the percentage is null when the previous value is 0.
+ * @summary Compare public activity with the previous window
+ */
+export const getPublicActivityComparison = (
+  params?: GetPublicActivityComparisonParams,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PublicActivityComparisonDto>(
+    { url: `/analytics/public/comparison`, method: 'GET', params, signal },
+    options
+  );
+};
+
+export const getGetPublicActivityComparisonQueryKey = (
+  params?: GetPublicActivityComparisonParams
+) => {
+  return [`/analytics/public/comparison`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetPublicActivityComparisonQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityComparisonParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicActivityComparisonQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicActivityComparison>>> = ({
+    signal,
+  }) => getPublicActivityComparison(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicActivityComparison>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPublicActivityComparisonQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicActivityComparison>>
+>;
+export type GetPublicActivityComparisonQueryError = ErrorType<ProblemDetail>;
+
+export function useGetPublicActivityComparison<
+  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params: undefined | GetPublicActivityComparisonParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicActivityComparison>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicActivityComparison>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicActivityComparison<
+  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityComparisonParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicActivityComparison>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicActivityComparison>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPublicActivityComparison<
+  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityComparisonParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Compare public activity with the previous window
+ */
+
+export function useGetPublicActivityComparison<
+  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  params?: GetPublicActivityComparisonParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPublicActivityComparisonQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link useGetPublicActivityComparison} query
+ */
+export const invalidateGetPublicActivityComparison = async (
+  queryClient: QueryClient,
+  params?: GetPublicActivityComparisonParams,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries(
+    { queryKey: getGetPublicActivityComparisonQueryKey(params) },
+    options
+  );
+
+  return queryClient;
+};
+
+/**
+ * Published and locked posts only, even when called by the author. Draft, deleted and missing posts return the same 404. Counts accumulated intentional openings since collection began, reachable visible comments and the vote score. Reading statistics never records an opening.
+ * @summary Get public engagement of a public post
+ */
+export const publicSummary = (
+  id: number,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<PublicPostEngagementDto>(
+    { url: `/analytics/public/posts/${encodeURIComponent(String(id))}`, method: 'GET', signal },
+    options
+  );
+};
+
+export const getPublicSummaryQueryKey = (id: number) => {
+  return [`/analytics/public/posts/${id}`] as const;
+};
+
+export const getPublicSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof publicSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof publicSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPublicSummaryQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof publicSummary>>> = ({ signal }) =>
+    publicSummary(id, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof publicSummary>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type PublicSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof publicSummary>>>;
+export type PublicSummaryQueryError = ErrorType<ProblemDetail>;
+
+export function usePublicSummary<
+  TData = Awaited<ReturnType<typeof publicSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof publicSummary>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicSummary>>,
+          TError,
+          Awaited<ReturnType<typeof publicSummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePublicSummary<
+  TData = Awaited<ReturnType<typeof publicSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof publicSummary>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicSummary>>,
+          TError,
+          Awaited<ReturnType<typeof publicSummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function usePublicSummary<
+  TData = Awaited<ReturnType<typeof publicSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof publicSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get public engagement of a public post
+ */
+
+export function usePublicSummary<
+  TData = Awaited<ReturnType<typeof publicSummary>>,
+  TError = ErrorType<ProblemDetail>,
+>(
+  id: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof publicSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getPublicSummaryQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Invalidates the {@link usePublicSummary} query
+ */
+export const invalidatePublicSummary = async (
+  queryClient: QueryClient,
+  id: number,
+  options?: InvalidateOptions
+): Promise<QueryClient> => {
+  await queryClient.invalidateQueries({ queryKey: getPublicSummaryQueryKey(id) }, options);
 
   return queryClient;
 };
@@ -1538,6 +2398,87 @@ export const useCreateCategory = <TError = ErrorType<ProblemDetail>, TContext = 
 };
 
 /**
+ * Administrators only; works on hidden categories too. The category's posts stay, without a category.
+ * @summary Delete a category by slug
+ */
+export const deleteCategory = (
+  slug: string,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    { url: `/forum/categories/${encodeURIComponent(String(slug))}`, method: 'DELETE', signal },
+    options
+  );
+};
+
+export const getDeleteCategoryMutationKey = () => ['deleteCategory'] as const;
+
+export const getDeleteCategoryMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCategory>>,
+    TError,
+    DeleteCategoryMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteCategory>>,
+  TError,
+  DeleteCategoryMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteCategoryMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteCategory>>,
+    DeleteCategoryMutationVariables
+  > = (props) => {
+    const { slug } = props ?? {};
+
+    return deleteCategory(slug, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCategory>>>;
+
+export type DeleteCategoryMutationError = ErrorType<ProblemDetail>;
+export type DeleteCategoryMutationVariables = { slug: string };
+
+/**
+ * @summary Delete a category by slug
+ */
+export const useDeleteCategory = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteCategory>>,
+      TError,
+      DeleteCategoryMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteCategory>>,
+  TError,
+  DeleteCategoryMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeleteCategoryMutationOptions(options), queryClient);
+};
+
+/**
  * @summary Get a category by slug
  */
 export const getCategory = (
@@ -1669,87 +2610,6 @@ export const invalidateGetCategory = async (
   await queryClient.invalidateQueries({ queryKey: getGetCategoryQueryKey(slug) }, options);
 
   return queryClient;
-};
-
-/**
- * Administrators only; works on hidden categories too. The category's posts stay, without a category.
- * @summary Delete a category by slug
- */
-export const deleteCategory = (
-  slug: string,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<void>(
-    { url: `/forum/categories/${encodeURIComponent(String(slug))}`, method: 'DELETE', signal },
-    options
-  );
-};
-
-export const getDeleteCategoryMutationKey = () => ['deleteCategory'] as const;
-
-export const getDeleteCategoryMutationOptions = <
-  TError = ErrorType<ProblemDetail>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteCategory>>,
-    TError,
-    DeleteCategoryMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof orvalTransport>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteCategory>>,
-  TError,
-  DeleteCategoryMutationVariables,
-  TContext
-> => {
-  const mutationKey = getDeleteCategoryMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteCategory>>,
-    DeleteCategoryMutationVariables
-  > = (props) => {
-    const { slug } = props ?? {};
-
-    return deleteCategory(slug, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCategory>>>;
-
-export type DeleteCategoryMutationError = ErrorType<ProblemDetail>;
-export type DeleteCategoryMutationVariables = { slug: string };
-
-/**
- * @summary Delete a category by slug
- */
-export const useDeleteCategory = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deleteCategory>>,
-      TError,
-      DeleteCategoryMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deleteCategory>>,
-  TError,
-  DeleteCategoryMutationVariables,
-  TContext
-> => {
-  return useMutation(getDeleteCategoryMutationOptions(options), queryClient);
 };
 
 /**
@@ -2231,6 +3091,86 @@ export const useCreatePost = <TError = ErrorType<ProblemDetail>, TContext = unkn
 };
 
 /**
+ * @summary Delete a post by slug
+ */
+export const deletePost = (
+  slug: string,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    { url: `/forum/posts/${encodeURIComponent(String(slug))}`, method: 'DELETE', signal },
+    options
+  );
+};
+
+export const getDeletePostMutationKey = () => ['deletePost'] as const;
+
+export const getDeletePostMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deletePost>>,
+    TError,
+    DeletePostMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deletePost>>,
+  TError,
+  DeletePostMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeletePostMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deletePost>>,
+    DeletePostMutationVariables
+  > = (props) => {
+    const { slug } = props ?? {};
+
+    return deletePost(slug, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeletePostMutationResult = NonNullable<Awaited<ReturnType<typeof deletePost>>>;
+
+export type DeletePostMutationError = ErrorType<ProblemDetail>;
+export type DeletePostMutationVariables = { slug: string };
+
+/**
+ * @summary Delete a post by slug
+ */
+export const useDeletePost = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deletePost>>,
+      TError,
+      DeletePostMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof deletePost>>,
+  TError,
+  DeletePostMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeletePostMutationOptions(options), queryClient);
+};
+
+/**
  * Public. A draft is visible only to its author and to admins, who need to send their bearer token.
  * @summary Get a post by slug
  */
@@ -2363,86 +3303,6 @@ export const invalidateGetPost = async (
   await queryClient.invalidateQueries({ queryKey: getGetPostQueryKey(slug) }, options);
 
   return queryClient;
-};
-
-/**
- * @summary Delete a post by slug
- */
-export const deletePost = (
-  slug: string,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<void>(
-    { url: `/forum/posts/${encodeURIComponent(String(slug))}`, method: 'DELETE', signal },
-    options
-  );
-};
-
-export const getDeletePostMutationKey = () => ['deletePost'] as const;
-
-export const getDeletePostMutationOptions = <
-  TError = ErrorType<ProblemDetail>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deletePost>>,
-    TError,
-    DeletePostMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof orvalTransport>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deletePost>>,
-  TError,
-  DeletePostMutationVariables,
-  TContext
-> => {
-  const mutationKey = getDeletePostMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deletePost>>,
-    DeletePostMutationVariables
-  > = (props) => {
-    const { slug } = props ?? {};
-
-    return deletePost(slug, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type DeletePostMutationResult = NonNullable<Awaited<ReturnType<typeof deletePost>>>;
-
-export type DeletePostMutationError = ErrorType<ProblemDetail>;
-export type DeletePostMutationVariables = { slug: string };
-
-/**
- * @summary Delete a post by slug
- */
-export const useDeletePost = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof deletePost>>,
-      TError,
-      DeletePostMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof deletePost>>,
-  TError,
-  DeletePostMutationVariables,
-  TContext
-> => {
-  return useMutation(getDeletePostMutationOptions(options), queryClient);
 };
 
 /**
@@ -2768,6 +3628,97 @@ export const useCreateComment = <TError = ErrorType<ProblemDetail>, TContext = u
 };
 
 /**
+ * Public, for guests and members. Call it after the post was actually shown to the reader, not for prefetches or background refreshes; reading a post counts nothing by itself. Create a new openingId for each opening and reuse it only to retry that opening: the same openingId is counted once and is safe to retry for at least 24 hours. Answers 204 whether or not this delivery was the one counted.
+ * @summary Record that a reader opened a post
+ */
+export const recordOpening = (
+  slug: string,
+  recordPostOpeningRequest: BodyType<RecordPostOpeningRequest>,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    {
+      url: `/forum/posts/${encodeURIComponent(String(slug))}/openings`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: recordPostOpeningRequest,
+      signal,
+    },
+    options
+  );
+};
+
+export const getRecordOpeningMutationKey = () => ['recordOpening'] as const;
+
+export const getRecordOpeningMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recordOpening>>,
+    TError,
+    RecordOpeningMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof recordOpening>>,
+  TError,
+  RecordOpeningMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRecordOpeningMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof recordOpening>>,
+    RecordOpeningMutationVariables
+  > = (props) => {
+    const { slug, data } = props ?? {};
+
+    return recordOpening(slug, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RecordOpeningMutationResult = NonNullable<Awaited<ReturnType<typeof recordOpening>>>;
+export type RecordOpeningMutationBody = BodyType<RecordPostOpeningRequest>;
+export type RecordOpeningMutationError = ErrorType<ProblemDetail>;
+export type RecordOpeningMutationVariables = {
+  slug: string;
+  data: BodyType<RecordPostOpeningRequest>;
+};
+
+/**
+ * @summary Record that a reader opened a post
+ */
+export const useRecordOpening = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof recordOpening>>,
+      TError,
+      RecordOpeningMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof recordOpening>>,
+  TError,
+  RecordOpeningMutationVariables,
+  TContext
+> => {
+  return useMutation(getRecordOpeningMutationOptions(options), queryClient);
+};
+
+/**
  * @summary Toggle pin status of a post
  */
 export const togglePin = (
@@ -2845,87 +3796,6 @@ export const useTogglePin = <TError = ErrorType<ProblemDetail>, TContext = unkno
   TContext
 > => {
   return useMutation(getTogglePinMutationOptions(options), queryClient);
-};
-
-/**
- * Idempotent: subscribing again changes nothing.
- * @summary Subscribe to a post
- */
-export const subscribe = (
-  slug: string,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<void>(
-    { url: `/forum/posts/${encodeURIComponent(String(slug))}/subscription`, method: 'PUT', signal },
-    options
-  );
-};
-
-export const getSubscribeMutationKey = () => ['subscribe'] as const;
-
-export const getSubscribeMutationOptions = <
-  TError = ErrorType<ProblemDetail>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof subscribe>>,
-    TError,
-    SubscribeMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof orvalTransport>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof subscribe>>,
-  TError,
-  SubscribeMutationVariables,
-  TContext
-> => {
-  const mutationKey = getSubscribeMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof subscribe>>,
-    SubscribeMutationVariables
-  > = (props) => {
-    const { slug } = props ?? {};
-
-    return subscribe(slug, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type SubscribeMutationResult = NonNullable<Awaited<ReturnType<typeof subscribe>>>;
-
-export type SubscribeMutationError = ErrorType<ProblemDetail>;
-export type SubscribeMutationVariables = { slug: string };
-
-/**
- * @summary Subscribe to a post
- */
-export const useSubscribe = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof subscribe>>,
-      TError,
-      SubscribeMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof subscribe>>,
-  TError,
-  SubscribeMutationVariables,
-  TContext
-> => {
-  return useMutation(getSubscribeMutationOptions(options), queryClient);
 };
 
 /**
@@ -3011,6 +3881,87 @@ export const useUnsubscribe = <TError = ErrorType<ProblemDetail>, TContext = unk
   TContext
 > => {
   return useMutation(getUnsubscribeMutationOptions(options), queryClient);
+};
+
+/**
+ * Idempotent: subscribing again changes nothing.
+ * @summary Subscribe to a post
+ */
+export const subscribe = (
+  slug: string,
+  options?: SecondParameter<typeof orvalTransport>,
+  signal?: AbortSignal
+) => {
+  return orvalTransport<void>(
+    { url: `/forum/posts/${encodeURIComponent(String(slug))}/subscription`, method: 'PUT', signal },
+    options
+  );
+};
+
+export const getSubscribeMutationKey = () => ['subscribe'] as const;
+
+export const getSubscribeMutationOptions = <
+  TError = ErrorType<ProblemDetail>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof subscribe>>,
+    TError,
+    SubscribeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof orvalTransport>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof subscribe>>,
+  TError,
+  SubscribeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSubscribeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof subscribe>>,
+    SubscribeMutationVariables
+  > = (props) => {
+    const { slug } = props ?? {};
+
+    return subscribe(slug, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubscribeMutationResult = NonNullable<Awaited<ReturnType<typeof subscribe>>>;
+
+export type SubscribeMutationError = ErrorType<ProblemDetail>;
+export type SubscribeMutationVariables = { slug: string };
+
+/**
+ * @summary Subscribe to a post
+ */
+export const useSubscribe = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof subscribe>>,
+      TError,
+      SubscribeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof orvalTransport>;
+  },
+  queryClient?: QueryClient
+): UseMutationResult<
+  Awaited<ReturnType<typeof subscribe>>,
+  TError,
+  SubscribeMutationVariables,
+  TContext
+> => {
+  return useMutation(getSubscribeMutationOptions(options), queryClient);
 };
 
 /**
@@ -4615,683 +5566,6 @@ export const invalidatePublicProfile = async (
   options?: InvalidateOptions
 ): Promise<QueryClient> => {
   await queryClient.invalidateQueries({ queryKey: getPublicProfileQueryKey(username) }, options);
-
-  return queryClient;
-};
-
-/**
- * Public. Published or locked posts and visible comments on them, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Quiet days are returned with 0. Figures count the records that are public now and were created in the window.
- * @summary Get daily public platform activity
- */
-export const getPublicActivity = (
-  params?: GetPublicActivityParams,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<PublicActivityDto>(
-    { url: `/analytics/public/activity`, method: 'GET', params, signal },
-    options
-  );
-};
-
-export const getGetPublicActivityQueryKey = (params?: GetPublicActivityParams) => {
-  return [`/analytics/public/activity`, ...(params ? [params] : [])] as const;
-};
-
-export const getGetPublicActivityQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPublicActivity>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicActivityParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>>;
-    request?: SecondParameter<typeof orvalTransport>;
-  }
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetPublicActivityQueryKey(params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicActivity>>> = ({ signal }) =>
-    getPublicActivity(params, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPublicActivity>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type GetPublicActivityQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getPublicActivity>>
->;
-export type GetPublicActivityQueryError = ErrorType<ProblemDetail>;
-
-export function useGetPublicActivity<
-  TData = Awaited<ReturnType<typeof getPublicActivity>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params: undefined | GetPublicActivityParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>> &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPublicActivity>>,
-          TError,
-          Awaited<ReturnType<typeof getPublicActivity>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useGetPublicActivity<
-  TData = Awaited<ReturnType<typeof getPublicActivity>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicActivityParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>> &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPublicActivity>>,
-          TError,
-          Awaited<ReturnType<typeof getPublicActivity>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useGetPublicActivity<
-  TData = Awaited<ReturnType<typeof getPublicActivity>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicActivityParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>>;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-/**
- * @summary Get daily public platform activity
- */
-
-export function useGetPublicActivity<
-  TData = Awaited<ReturnType<typeof getPublicActivity>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicActivityParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicActivity>>, TError, TData>>;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetPublicActivityQueryOptions(params, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-/**
- * @summary Invalidates the {@link useGetPublicActivity} query
- */
-export const invalidateGetPublicActivity = async (
-  queryClient: QueryClient,
-  params?: GetPublicActivityParams,
-  options?: InvalidateOptions
-): Promise<QueryClient> => {
-  await queryClient.invalidateQueries({ queryKey: getGetPublicActivityQueryKey(params) }, options);
-
-  return queryClient;
-};
-
-/**
- * Public, for guests and members. Call it after the post was actually shown to the reader, not for prefetches or background refreshes; reading a post counts nothing by itself. Create a new openingId for each opening and reuse it only to retry that opening: the same openingId is counted once and is safe to retry for at least 24 hours. Answers 204 whether or not this delivery was the one counted.
- * @summary Record that a reader opened a post
- */
-export const recordOpening = (
-  slug: string,
-  recordPostOpeningRequest: BodyType<RecordPostOpeningRequest>,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<void>(
-    {
-      url: `/forum/posts/${encodeURIComponent(String(slug))}/openings`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      data: recordPostOpeningRequest,
-      signal,
-    },
-    options
-  );
-};
-
-export const getRecordOpeningMutationKey = () => ['recordOpening'] as const;
-
-export const getRecordOpeningMutationOptions = <
-  TError = ErrorType<ProblemDetail>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof recordOpening>>,
-    TError,
-    RecordOpeningMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof orvalTransport>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof recordOpening>>,
-  TError,
-  RecordOpeningMutationVariables,
-  TContext
-> => {
-  const mutationKey = getRecordOpeningMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof recordOpening>>,
-    RecordOpeningMutationVariables
-  > = (props) => {
-    const { slug, data } = props ?? {};
-
-    return recordOpening(slug, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type RecordOpeningMutationResult = NonNullable<Awaited<ReturnType<typeof recordOpening>>>;
-export type RecordOpeningMutationBody = BodyType<RecordPostOpeningRequest>;
-export type RecordOpeningMutationError = ErrorType<ProblemDetail>;
-export type RecordOpeningMutationVariables = {
-  slug: string;
-  data: BodyType<RecordPostOpeningRequest>;
-};
-
-/**
- * @summary Record that a reader opened a post
- */
-export const useRecordOpening = <TError = ErrorType<ProblemDetail>, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof recordOpening>>,
-      TError,
-      RecordOpeningMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseMutationResult<
-  Awaited<ReturnType<typeof recordOpening>>,
-  TError,
-  RecordOpeningMutationVariables,
-  TContext
-> => {
-  return useMutation(getRecordOpeningMutationOptions(options), queryClient);
-};
-
-/**
- * Intentional openings of a post the caller wrote, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Days that ended before openings were collected have measured false and openings null; a measured day without openings has 0. Only the author gets the series: anyone else, staff included, gets 404.
- * @summary Get daily openings of one of my posts
- */
-export const getMyPostOpenings = (
-  id: number,
-  params?: GetMyPostOpeningsParams,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<PostOpeningTrendDto>(
-    {
-      url: `/analytics/me/posts/${encodeURIComponent(String(id))}/openings`,
-      method: 'GET',
-      params,
-      signal,
-    },
-    options
-  );
-};
-
-export const getGetMyPostOpeningsQueryKey = (id: number, params?: GetMyPostOpeningsParams) => {
-  return [`/analytics/me/posts/${id}/openings`, ...(params ? [params] : [])] as const;
-};
-
-export const getGetMyPostOpeningsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  id: number,
-  params?: GetMyPostOpeningsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>>;
-    request?: SecondParameter<typeof orvalTransport>;
-  }
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetMyPostOpeningsQueryKey(id, params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyPostOpenings>>> = ({ signal }) =>
-    getMyPostOpenings(id, params, requestOptions, signal);
-
-  return {
-    queryKey,
-    queryFn,
-    enabled: id !== null && id !== undefined,
-    ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-};
-
-export type GetMyPostOpeningsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getMyPostOpenings>>
->;
-export type GetMyPostOpeningsQueryError = ErrorType<ProblemDetail>;
-
-export function useGetMyPostOpenings<
-  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  id: number,
-  params: undefined | GetMyPostOpeningsParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>> &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMyPostOpenings>>,
-          TError,
-          Awaited<ReturnType<typeof getMyPostOpenings>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useGetMyPostOpenings<
-  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  id: number,
-  params?: GetMyPostOpeningsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>> &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMyPostOpenings>>,
-          TError,
-          Awaited<ReturnType<typeof getMyPostOpenings>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useGetMyPostOpenings<
-  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  id: number,
-  params?: GetMyPostOpeningsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>>;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-/**
- * @summary Get daily openings of one of my posts
- */
-
-export function useGetMyPostOpenings<
-  TData = Awaited<ReturnType<typeof getMyPostOpenings>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  id: number,
-  params?: GetMyPostOpeningsParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPostOpenings>>, TError, TData>>;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetMyPostOpeningsQueryOptions(id, params, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-/**
- * @summary Invalidates the {@link useGetMyPostOpenings} query
- */
-export const invalidateGetMyPostOpenings = async (
-  queryClient: QueryClient,
-  id: number,
-  params?: GetMyPostOpeningsParams,
-  options?: InvalidateOptions
-): Promise<QueryClient> => {
-  await queryClient.invalidateQueries(
-    { queryKey: getGetMyPostOpeningsQueryKey(id, params) },
-    options
-  );
-
-  return queryClient;
-};
-
-/**
- * Public. The published or locked posts created in the window of the public activity, by their current category, with each category's share. Rows add up to totalPosts; posts without a category, also those whose category was deleted, are the last row.
- * @summary Get public posts by category
- */
-export const getPublicCategoryDistribution = (
-  params?: GetPublicCategoryDistributionParams,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<PublicCategoryDistributionDto>(
-    { url: `/analytics/public/categories`, method: 'GET', params, signal },
-    options
-  );
-};
-
-export const getGetPublicCategoryDistributionQueryKey = (
-  params?: GetPublicCategoryDistributionParams
-) => {
-  return [`/analytics/public/categories`, ...(params ? [params] : [])] as const;
-};
-
-export const getGetPublicCategoryDistributionQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicCategoryDistributionParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  }
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetPublicCategoryDistributionQueryKey(params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicCategoryDistribution>>> = ({
-    signal,
-  }) => getPublicCategoryDistribution(params, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type GetPublicCategoryDistributionQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getPublicCategoryDistribution>>
->;
-export type GetPublicCategoryDistributionQueryError = ErrorType<ProblemDetail>;
-
-export function useGetPublicCategoryDistribution<
-  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params: undefined | GetPublicCategoryDistributionParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
-          TError,
-          Awaited<ReturnType<typeof getPublicCategoryDistribution>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useGetPublicCategoryDistribution<
-  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicCategoryDistributionParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
-          TError,
-          Awaited<ReturnType<typeof getPublicCategoryDistribution>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useGetPublicCategoryDistribution<
-  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicCategoryDistributionParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-/**
- * @summary Get public posts by category
- */
-
-export function useGetPublicCategoryDistribution<
-  TData = Awaited<ReturnType<typeof getPublicCategoryDistribution>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicCategoryDistributionParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getPublicCategoryDistribution>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetPublicCategoryDistributionQueryOptions(params, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-/**
- * @summary Invalidates the {@link useGetPublicCategoryDistribution} query
- */
-export const invalidateGetPublicCategoryDistribution = async (
-  queryClient: QueryClient,
-  params?: GetPublicCategoryDistributionParams,
-  options?: InvalidateOptions
-): Promise<QueryClient> => {
-  await queryClient.invalidateQueries(
-    { queryKey: getGetPublicCategoryDistributionQueryKey(params) },
-    options
-  );
-
-  return queryClient;
-};
-
-/**
- * Public. Published or locked posts and visible comments on them in the window of the public activity up to now, against the window of the same length that ends where it starts. Gives counts, absolute changes and percentages; the percentage is null when the previous value is 0.
- * @summary Compare public activity with the previous window
- */
-export const getPublicActivityComparison = (
-  params?: GetPublicActivityComparisonParams,
-  options?: SecondParameter<typeof orvalTransport>,
-  signal?: AbortSignal
-) => {
-  return orvalTransport<PublicActivityComparisonDto>(
-    { url: `/analytics/public/comparison`, method: 'GET', params, signal },
-    options
-  );
-};
-
-export const getGetPublicActivityComparisonQueryKey = (
-  params?: GetPublicActivityComparisonParams
-) => {
-  return [`/analytics/public/comparison`, ...(params ? [params] : [])] as const;
-};
-
-export const getGetPublicActivityComparisonQueryOptions = <
-  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicActivityComparisonParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  }
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetPublicActivityComparisonQueryKey(params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicActivityComparison>>> = ({
-    signal,
-  }) => getPublicActivityComparison(params, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getPublicActivityComparison>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type GetPublicActivityComparisonQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getPublicActivityComparison>>
->;
-export type GetPublicActivityComparisonQueryError = ErrorType<ProblemDetail>;
-
-export function useGetPublicActivityComparison<
-  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params: undefined | GetPublicActivityComparisonParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPublicActivityComparison>>,
-          TError,
-          Awaited<ReturnType<typeof getPublicActivityComparison>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useGetPublicActivityComparison<
-  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicActivityComparisonParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getPublicActivityComparison>>,
-          TError,
-          Awaited<ReturnType<typeof getPublicActivityComparison>>
-        >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-export function useGetPublicActivityComparison<
-  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicActivityComparisonParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-/**
- * @summary Compare public activity with the previous window
- */
-
-export function useGetPublicActivityComparison<
-  TData = Awaited<ReturnType<typeof getPublicActivityComparison>>,
-  TError = ErrorType<ProblemDetail>,
->(
-  params?: GetPublicActivityComparisonParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getPublicActivityComparison>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof orvalTransport>;
-  },
-  queryClient?: QueryClient
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetPublicActivityComparisonQueryOptions(params, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-/**
- * @summary Invalidates the {@link useGetPublicActivityComparison} query
- */
-export const invalidateGetPublicActivityComparison = async (
-  queryClient: QueryClient,
-  params?: GetPublicActivityComparisonParams,
-  options?: InvalidateOptions
-): Promise<QueryClient> => {
-  await queryClient.invalidateQueries(
-    { queryKey: getGetPublicActivityComparisonQueryKey(params) },
-    options
-  );
 
   return queryClient;
 };

@@ -9,60 +9,57 @@
     "url" : "/api"
   } ],
   "tags" : [ {
-    "name" : "Auth",
-    "description" : "Session authentication and CSRF bootstrap"
+    "description" : "Session authentication and CSRF bootstrap",
+    "name" : "Auth"
   }, {
-    "name" : "Auth",
-    "description" : "Session authentication and CSRF"
+    "description" : "Session authentication and CSRF",
+    "name" : "Auth"
   }, {
-    "name" : "Users",
-    "description" : "User profile endpoints"
+    "description" : "User profile endpoints",
+    "name" : "Users"
   }, {
-    "name" : "Forum – Categories",
-    "description" : "Browse and manage forum categories"
+    "description" : "Browse and manage forum categories",
+    "name" : "Forum – Categories"
   }, {
-    "name" : "Forum – Posts",
-    "description" : "Browse and manage forum posts"
+    "description" : "Browse and manage forum posts",
+    "name" : "Forum – Posts"
   }, {
-    "name" : "Forum – Tags",
-    "description" : "Browse the tags of published posts"
+    "description" : "Browse the tags of published posts",
+    "name" : "Forum – Tags"
   }, {
-    "name" : "Forum – Comments",
-    "description" : "Read and manage comments on forum posts"
+    "description" : "Read and manage comments on forum posts",
+    "name" : "Forum – Comments"
   }, {
-    "name" : "Forum – Votes",
-    "description" : "Cast and retract votes on posts and comments"
+    "description" : "Cast and retract votes on posts and comments",
+    "name" : "Forum – Votes"
   }, {
-    "name" : "Forum – Subscriptions",
-    "description" : "Subscribe to new comments on posts"
+    "description" : "Subscribe to new comments on posts",
+    "name" : "Forum – Subscriptions"
   }, {
-    "name" : "Search",
-    "description" : "Search posts, users and tags"
+    "description" : "Search posts, users and tags",
+    "name" : "Search"
   }, {
-    "name" : "Notifications",
-    "description" : "Manage user notifications"
+    "description" : "Manage user notifications",
+    "name" : "Notifications"
   }, {
-    "name" : "Analytics",
-    "description" : "Activity and engagement analytics"
+    "description" : "Activity and engagement analytics",
+    "name" : "Analytics"
   }, {
-    "name" : "Recommendations",
-    "description" : "Post and tag recommendations from forum activity"
+    "description" : "Post and tag recommendations from forum activity",
+    "name" : "Recommendations"
   }, {
-    "name" : "AI",
-    "description" : "AI-assisted features: tag suggestions"
+    "description" : "AI-assisted features: tag suggestions",
+    "name" : "AI"
   }, {
-    "name" : "Admin",
-    "description" : "Administration endpoints, ADMIN role only"
+    "description" : "Administration endpoints, ADMIN role only",
+    "name" : "Admin"
   } ],
   "paths" : {
     "/admin/ping" : {
       "get" : {
-        "tags" : [ "Admin" ],
-        "summary" : "Check that the caller has admin access",
         "operationId" : "ping",
         "responses" : {
           "200" : {
-            "description" : "Caller is an admin; body is {\"status\": \"ok\", \"scope\": \"admin\"}",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -72,38 +69,39 @@
                   }
                 }
               }
-            }
+            },
+            "description" : "Caller is an admin; body is {\"status\": \"ok\", \"scope\": \"admin\"}"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           },
           "403" : {
-            "description" : "Admin role required",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Admin role required"
           }
         },
         "security" : [ {
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Check that the caller has admin access",
+        "tags" : [ "Admin" ]
       }
     },
     "/ai/suggest-tags" : {
       "post" : {
-        "tags" : [ "AI" ],
-        "summary" : "Suggest tags for post content",
         "description" : "Signed-in users only. When an AI provider is configured, the model chooses up to 5 of the 200 most used tags (aiGenerated: true). Otherwise, or when the provider fails or chooses none, tags come from the words of the title and content (aiGenerated: false): existing tags whose words appear first, then frequent words. Title words count three times.",
         "operationId" : "suggestTags",
         "requestBody" : {
@@ -118,98 +116,234 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Tag suggestions, best first; empty when nothing fits",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/TagSuggestionsDto"
                 }
               }
-            }
+            },
+            "description" : "Tag suggestions, best first; empty when nothing fits"
           },
           "400" : {
-            "description" : "Validation error; errors names the fields",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error; errors names the fields"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           },
           "503" : {
-            "description" : "Neither the AI provider nor the keyword extraction could answer",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Neither the AI provider nor the keyword extraction could answer"
           }
         },
         "security" : [ {
           "csrfToken" : [ ],
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Suggest tags for post content",
+        "tags" : [ "AI" ]
       }
     },
     "/analytics/me" : {
       "get" : {
-        "tags" : [ "Analytics" ],
-        "summary" : "Get own activity summary",
         "operationId" : "getMyActivitySummary",
         "responses" : {
           "200" : {
-            "description" : "Summary returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/UserActivitySummaryDto"
                 }
               }
-            }
+            },
+            "description" : "Summary returned"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           }
         },
         "security" : [ {
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Get own activity summary",
+        "tags" : [ "Analytics" ]
+      }
+    },
+    "/analytics/me/posts/{id}" : {
+      "get" : {
+        "description" : "Author only, including the author's draft. A different caller, including staff, gets 404. Deleted and missing posts get 404. Includes the UP/DOWN breakdown, never reader identities or visitor rows. Reading this summary never records an opening; staff analytics remain a separate API.",
+        "operationId" : "authorSummary",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuthorPostEngagementDto"
+                }
+              }
+            },
+            "description" : "Author engagement returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid post ID"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Undeleted post of this author not found"
+          }
+        },
+        "security" : [ {
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Get engagement of my post",
+        "tags" : [ "Analytics" ]
+      }
+    },
+    "/analytics/me/posts/{id}/openings" : {
+      "get" : {
+        "description" : "Intentional openings of a post the caller wrote, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Days that ended before openings were collected have measured false and openings null; a measured day without openings has 0. Only the author gets the series: anyone else, staff included, gets 404.",
+        "operationId" : "getMyPostOpenings",
+        "parameters" : [ {
+          "description" : "Post ID",
+          "example" : 101,
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "description" : "Number of UTC days",
+          "example" : "7d",
+          "in" : "query",
+          "name" : "period",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "7d", "30d" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PostOpeningTrendDto"
+                }
+              }
+            },
+            "description" : "Openings returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid period"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "No post of the caller with this ID"
+          }
+        },
+        "security" : [ {
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Get daily openings of one of my posts",
+        "tags" : [ "Analytics" ]
       }
     },
     "/analytics/posts/{id}" : {
       "get" : {
-        "tags" : [ "Analytics" ],
-        "summary" : "Get analytics for a specific post",
         "operationId" : "getPostAnalytics",
         "parameters" : [ {
           "description" : "Post ID",
@@ -224,97 +358,269 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Post analytics returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PostAnalyticsDto"
                 }
               }
-            }
+            },
+            "description" : "Post analytics returned"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "Admin or Moderator role required",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Admin or Moderator role required"
           },
           "404" : {
-            "description" : "Post not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Post not found"
           }
         },
         "security" : [ {
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Get analytics for a specific post",
+        "tags" : [ "Analytics" ]
+      }
+    },
+    "/analytics/public/activity" : {
+      "get" : {
+        "description" : "Public. Published or locked posts and visible comments on them, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Quiet days are returned with 0. Figures count the records that are public now and were created in the window.",
+        "operationId" : "getPublicActivity",
+        "parameters" : [ {
+          "description" : "Number of UTC days",
+          "example" : "7d",
+          "in" : "query",
+          "name" : "period",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "7d", "30d" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicActivityDto"
+                }
+              }
+            },
+            "description" : "Activity returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid period"
+          }
+        },
+        "summary" : "Get daily public platform activity",
+        "tags" : [ "Analytics" ]
+      }
+    },
+    "/analytics/public/categories" : {
+      "get" : {
+        "description" : "Public. The published or locked posts created in the window of the public activity, by their current category, with each category's share. Rows add up to totalPosts; posts without a category, also those whose category was deleted, are the last row.",
+        "operationId" : "getPublicCategoryDistribution",
+        "parameters" : [ {
+          "description" : "Number of UTC days",
+          "example" : "7d",
+          "in" : "query",
+          "name" : "period",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "7d", "30d" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicCategoryDistributionDto"
+                }
+              }
+            },
+            "description" : "Distribution returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid period"
+          }
+        },
+        "summary" : "Get public posts by category",
+        "tags" : [ "Analytics" ]
+      }
+    },
+    "/analytics/public/comparison" : {
+      "get" : {
+        "description" : "Public. Published or locked posts and visible comments on them in the window of the public activity up to now, against the window of the same length that ends where it starts. Gives counts, absolute changes and percentages; the percentage is null when the previous value is 0.",
+        "operationId" : "getPublicActivityComparison",
+        "parameters" : [ {
+          "description" : "Number of UTC days in the current window",
+          "example" : "7d",
+          "in" : "query",
+          "name" : "period",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "7d", "30d" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicActivityComparisonDto"
+                }
+              }
+            },
+            "description" : "Comparison returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid period"
+          }
+        },
+        "summary" : "Compare public activity with the previous window",
+        "tags" : [ "Analytics" ]
+      }
+    },
+    "/analytics/public/posts/{id}" : {
+      "get" : {
+        "description" : "Published and locked posts only, even when called by the author. Draft, deleted and missing posts return the same 404. Counts accumulated intentional openings since collection began, reachable visible comments and the vote score. Reading statistics never records an opening.",
+        "operationId" : "publicSummary",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicPostEngagementDto"
+                }
+              }
+            },
+            "description" : "Public engagement returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid post ID"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Public post not found"
+          }
+        },
+        "summary" : "Get public engagement of a public post",
+        "tags" : [ "Analytics" ]
       }
     },
     "/analytics/summary" : {
       "get" : {
-        "tags" : [ "Analytics" ],
-        "summary" : "Get platform-wide summary",
         "operationId" : "getPlatformSummary",
         "responses" : {
           "200" : {
-            "description" : "Summary returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PlatformSummaryDto"
                 }
               }
-            }
+            },
+            "description" : "Summary returned"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "Admin role required",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Admin role required"
           }
         },
         "security" : [ {
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Get platform-wide summary",
+        "tags" : [ "Analytics" ]
       }
     },
     "/analytics/trending-posts" : {
       "get" : {
-        "tags" : [ "Analytics" ],
-        "summary" : "Get trending posts for a time window",
         "description" : "Public. The most active published or locked posts within the window, ranked by views + 2 x votes + 3 x comments in the window; posts without activity are left out.",
         "operationId" : "getTrendingPosts",
         "parameters" : [ {
@@ -341,7 +647,6 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Trending posts returned",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -351,25 +656,26 @@
                   }
                 }
               }
-            }
+            },
+            "description" : "Trending posts returned"
           },
           "400" : {
-            "description" : "Invalid period or limit",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Invalid period or limit"
           }
-        }
+        },
+        "summary" : "Get trending posts for a time window",
+        "tags" : [ "Analytics" ]
       }
     },
     "/analytics/trends" : {
       "get" : {
-        "tags" : [ "Analytics" ],
-        "summary" : "Get activity trend for a metric over a period",
         "description" : "Daily counts (UTC) of the rows created for the chosen metric within the period; days without rows count 0.",
         "operationId" : "getActivityTrend",
         "parameters" : [ {
@@ -395,74 +701,74 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Trend data returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ActivityTrendDto"
                 }
               }
-            }
+            },
+            "description" : "Trend data returned"
           },
           "400" : {
-            "description" : "Invalid metric or period",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Invalid metric or period"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "Admin role required",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Admin role required"
           }
         },
         "security" : [ {
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Get activity trend for a metric over a period",
+        "tags" : [ "Analytics" ]
       }
     },
     "/auth/csrf" : {
       "get" : {
-        "tags" : [ "Auth" ],
-        "summary" : "Obtain the session-backed CSRF token",
         "operationId" : "csrf",
         "responses" : {
           "200" : {
-            "description" : "OK",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CsrfResponse"
                 }
               }
-            }
+            },
+            "description" : "OK"
           }
-        }
+        },
+        "summary" : "Obtain the session-backed CSRF token",
+        "tags" : [ "Auth" ]
       }
     },
     "/auth/login" : {
       "post" : {
-        "tags" : [ "Auth" ],
-        "summary" : "Login and establish an independent server session",
         "operationId" : "login",
         "requestBody" : {
           "content" : {
@@ -485,45 +791,45 @@
             }
           },
           "400" : {
-            "description" : "Validation error",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error"
           },
           "401" : {
-            "description" : "Authentication failed",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Authentication failed"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           }
         },
         "security" : [ {
           "csrfToken" : [ ]
-        } ]
+        } ],
+        "summary" : "Login and establish an independent server session",
+        "tags" : [ "Auth" ]
       }
     },
     "/auth/logout" : {
       "post" : {
-        "tags" : [ "Auth" ],
-        "summary" : "Invalidate the current server session",
         "description" : "Requires CSRF, including for guests",
         "operationId" : "logout",
         "responses" : {
@@ -537,25 +843,25 @@
             }
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           }
         },
         "security" : [ {
           "csrfToken" : [ ]
-        } ]
+        } ],
+        "summary" : "Invalidate the current server session",
+        "tags" : [ "Auth" ]
       }
     },
     "/auth/register" : {
       "post" : {
-        "tags" : [ "Auth" ],
-        "summary" : "Register and establish a server session",
         "operationId" : "register",
         "requestBody" : {
           "content" : {
@@ -578,49 +884,48 @@
             }
           },
           "400" : {
-            "description" : "Validation error",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           },
           "409" : {
-            "description" : "Username or email already registered",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Username or email already registered"
           }
         },
         "security" : [ {
           "csrfToken" : [ ]
-        } ]
+        } ],
+        "summary" : "Register and establish a server session",
+        "tags" : [ "Auth" ]
       }
     },
     "/forum/categories" : {
       "get" : {
-        "tags" : [ "Forum – Categories" ],
-        "summary" : "List the visible categories in display order",
         "operationId" : "listCategories",
         "responses" : {
           "200" : {
-            "description" : "Category list returned",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -630,13 +935,14 @@
                   }
                 }
               }
-            }
+            },
+            "description" : "Category list returned"
           }
-        }
+        },
+        "summary" : "List the visible categories in display order",
+        "tags" : [ "Forum – Categories" ]
       },
       "post" : {
-        "tags" : [ "Forum – Categories" ],
-        "summary" : "Create a category",
         "description" : "Administrators only. The name is unique ignoring case and the slug is unique.",
         "operationId" : "createCategory",
         "requestBody" : {
@@ -651,103 +957,66 @@
         },
         "responses" : {
           "201" : {
-            "description" : "Category created",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CategoryDto"
                 }
               }
-            }
+            },
+            "description" : "Category created"
           },
           "400" : {
-            "description" : "Validation error; errors names the fields",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error; errors names the fields"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           },
           "409" : {
-            "description" : "Name or slug taken; errors.name or errors.slug says which",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Name or slug taken; errors.name or errors.slug says which"
           }
         },
         "security" : [ {
           "csrfToken" : [ ],
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Create a category",
+        "tags" : [ "Forum – Categories" ]
       }
     },
     "/forum/categories/{slug}" : {
-      "get" : {
-        "tags" : [ "Forum – Categories" ],
-        "summary" : "Get a category by slug",
-        "operationId" : "getCategory",
-        "parameters" : [ {
-          "description" : "Category slug",
-          "example" : "ai",
-          "in" : "path",
-          "name" : "slug",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Category found",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/CategoryDto"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Not found or hidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      },
       "delete" : {
-        "tags" : [ "Forum – Categories" ],
-        "summary" : "Delete a category by slug",
         "description" : "Administrators only; works on hidden categories too. The category's posts stay, without a category.",
         "operationId" : "deleteCategory",
         "parameters" : [ {
@@ -765,44 +1034,81 @@
             "description" : "Category deleted"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           },
           "404" : {
-            "description" : "No category has this slug",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "No category has this slug"
           }
         },
         "security" : [ {
           "csrfToken" : [ ],
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Delete a category by slug",
+        "tags" : [ "Forum – Categories" ]
+      },
+      "get" : {
+        "operationId" : "getCategory",
+        "parameters" : [ {
+          "description" : "Category slug",
+          "example" : "ai",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CategoryDto"
+                }
+              }
+            },
+            "description" : "Category found"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found or hidden"
+          }
+        },
+        "summary" : "Get a category by slug",
+        "tags" : [ "Forum – Categories" ]
       },
       "patch" : {
-        "tags" : [ "Forum – Categories" ],
-        "summary" : "Update a category by slug",
         "description" : "Administrators only; works on hidden categories too. Omitted fields stay as they are.",
         "operationId" : "updateCategory",
         "parameters" : [ {
@@ -827,76 +1133,76 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Category updated",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CategoryDto"
                 }
               }
-            }
+            },
+            "description" : "Category updated"
           },
           "400" : {
-            "description" : "Validation error; errors names the fields",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error; errors names the fields"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           },
           "404" : {
-            "description" : "No category has this slug",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "No category has this slug"
           },
           "409" : {
-            "description" : "Name or slug taken; errors.name or errors.slug says which",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Name or slug taken; errors.name or errors.slug says which"
           }
         },
         "security" : [ {
           "csrfToken" : [ ],
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Update a category by slug",
+        "tags" : [ "Forum – Categories" ]
       }
     },
     "/forum/comments/{id}" : {
       "delete" : {
-        "tags" : [ "Forum – Comments" ],
-        "summary" : "Delete a comment",
         "description" : "The author or staff. The comment stays in its thread as a placeholder.",
         "operationId" : "deleteComment",
         "parameters" : [ {
@@ -915,44 +1221,44 @@
             "description" : "Comment deleted"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           },
           "404" : {
-            "description" : "Comment not found or already deleted",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Comment not found or already deleted"
           }
         },
         "security" : [ {
           "csrfToken" : [ ],
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Delete a comment",
+        "tags" : [ "Forum – Comments" ]
       },
       "patch" : {
-        "tags" : [ "Forum – Comments" ],
-        "summary" : "Update a comment",
         "description" : "The author or staff.",
         "operationId" : "updateComment",
         "parameters" : [ {
@@ -978,66 +1284,66 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Comment updated",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CommentDto"
                 }
               }
-            }
+            },
+            "description" : "Comment updated"
           },
           "400" : {
-            "description" : "Validation error",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           },
           "404" : {
-            "description" : "Comment not found or deleted",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Comment not found or deleted"
           }
         },
         "security" : [ {
           "csrfToken" : [ ],
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Update a comment",
+        "tags" : [ "Forum – Comments" ]
       }
     },
     "/forum/posts" : {
       "get" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "List posts with optional filtering and pagination",
         "description" : "Public. Without a status filter only published and locked posts are listed. A bearer token is optional and only widens what the status filter may return. createdFrom (inclusive) and createdTo (exclusive) bound the creation time and, with categoryId or uncategorized=true, list the posts behind a public analytics figure: for the activity row of 2026-11-05 pass createdFrom=2026-11-05T00:00:00Z and createdTo=2026-11-06T00:00:00Z; for a category row of a window pass its windowStart, windowEnd and category.id, or uncategorized=true for the row without a category.",
         "operationId" : "listPosts",
         "parameters" : [ {
@@ -1154,30 +1460,30 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Posts returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PagedResponsePostSummaryDto"
                 }
               }
-            }
+            },
+            "description" : "Posts returned"
           },
           "400" : {
-            "description" : "Invalid pagination, unsupported sort field, an invalid or empty creation range, or uncategorized combined with a category filter",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Invalid pagination, unsupported sort field, an invalid or empty creation range, or uncategorized combined with a category filter"
           }
-        }
+        },
+        "summary" : "List posts with optional filtering and pagination",
+        "tags" : [ "Forum – Posts" ]
       },
       "post" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "Create a new post",
         "operationId" : "createPost",
         "requestBody" : {
           "content" : {
@@ -1191,94 +1497,56 @@
         },
         "responses" : {
           "201" : {
-            "description" : "Post created",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PostDto"
                 }
               }
-            }
+            },
+            "description" : "Post created"
           },
           "400" : {
-            "description" : "Validation error or unknown category",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error or unknown category"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           }
         },
         "security" : [ {
           "csrfToken" : [ ],
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Create a new post",
+        "tags" : [ "Forum – Posts" ]
       }
     },
     "/forum/posts/{slug}" : {
-      "get" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "Get a post by slug",
-        "description" : "Public. A draft is visible only to its author and to admins, who need to send their bearer token.",
-        "operationId" : "getPost",
-        "parameters" : [ {
-          "description" : "Post slug",
-          "example" : "how-to-use-spring-boot-with-postgresql",
-          "in" : "path",
-          "name" : "slug",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Post found",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PostDto"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Not found, deleted, or a draft the caller may not see",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      },
       "delete" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "Delete a post by slug",
         "operationId" : "deletePost",
         "parameters" : [ {
           "description" : "Post slug",
@@ -1295,44 +1563,82 @@
             "description" : "Post deleted"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           },
           "404" : {
-            "description" : "Not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not found"
           }
         },
         "security" : [ {
           "csrfToken" : [ ],
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Delete a post by slug",
+        "tags" : [ "Forum – Posts" ]
+      },
+      "get" : {
+        "description" : "Public. A draft is visible only to its author and to admins, who need to send their bearer token.",
+        "operationId" : "getPost",
+        "parameters" : [ {
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PostDto"
+                }
+              }
+            },
+            "description" : "Post found"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found, deleted, or a draft the caller may not see"
+          }
+        },
+        "summary" : "Get a post by slug",
+        "tags" : [ "Forum – Posts" ]
       },
       "patch" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "Update a post by slug",
         "operationId" : "updatePost",
         "parameters" : [ {
           "description" : "Post slug",
@@ -1356,66 +1662,66 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Post updated",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PostDto"
                 }
               }
-            }
+            },
+            "description" : "Post updated"
           },
           "400" : {
-            "description" : "Validation error or unknown category",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error or unknown category"
           },
           "401" : {
-            "description" : "Unauthorized",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Unauthorized"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           },
           "404" : {
-            "description" : "Not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not found"
           }
         },
         "security" : [ {
           "csrfToken" : [ ],
           "sessionAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Update a post by slug",
+        "tags" : [ "Forum – Posts" ]
       }
     },
     "/forum/posts/{slug}/comments" : {
       "get" : {
-        "tags" : [ "Forum – Comments" ],
-        "summary" : "List comments for a post",
         "description" : "Pages root comments, oldest first; each comes with its replies down to depth 5. Deleted comments are placeholders without content and author.",
         "operationId" : "listComments",
         "parameters" : [ {
@@ -1452,40 +1758,40 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Comments returned",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PagedResponseCommentDto"
                 }
               }
-            }
+            },
+            "description" : "Comments returned"
           },
           "400" : {
-            "description" : "Invalid pagination",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Invalid pagination"
           },
           "404" : {
-            "description" : "Post not found, deleted, or a draft the caller may not see",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Post not found, deleted, or a draft the caller may not see"
           }
-        }
+        },
+        "summary" : "List comments for a post",
+        "tags" : [ "Forum – Comments" ]
       },
       "post" : {
-        "tags" : [ "Forum – Comments" ],
-        "summary" : "Add a comment to a post",
         "description" : "With parentId the comment replies to that comment of the same post.",
         "operationId" : "createComment",
         "parameters" : [ {
@@ -1510,1138 +1816,66 @@
         },
         "responses" : {
           "201" : {
-            "description" : "Comment created",
             "content" : {
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CommentDto"
                 }
               }
-            }
+            },
+            "description" : "Comment created"
           },
           "400" : {
-            "description" : "Validation error",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Validation error"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
           },
           "404" : {
-            "description" : "Post or parent comment not found",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Post or parent comment not found"
           },
           "409" : {
-            "description" : "Post is a draft, or the parent comment was deleted",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Post is a draft, or the parent comment was deleted"
           },
           "422" : {
-            "description" : "Maximum comment nesting depth (5) exceeded",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/forum/posts/{slug}/pin" : {
-      "patch" : {
-        "tags" : [ "Forum – Posts" ],
-        "summary" : "Toggle pin status of a post",
-        "operationId" : "togglePin",
-        "parameters" : [ {
-          "description" : "Post slug",
-          "example" : "how-to-use-spring-boot-with-postgresql",
-          "in" : "path",
-          "name" : "slug",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Pin status toggled",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PostDto"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Unauthorized",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Not found",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/forum/posts/{slug}/subscription" : {
-      "put" : {
-        "tags" : [ "Forum – Subscriptions" ],
-        "summary" : "Subscribe to a post",
-        "description" : "Idempotent: subscribing again changes nothing.",
-        "operationId" : "subscribe",
-        "parameters" : [ {
-          "description" : "Post slug",
-          "example" : "how-to-use-spring-boot-with-postgresql",
-          "in" : "path",
-          "name" : "slug",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "Subscribed"
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Not found, deleted, or a draft the caller may not see",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      },
-      "delete" : {
-        "tags" : [ "Forum – Subscriptions" ],
-        "summary" : "Unsubscribe from a post",
-        "description" : "Idempotent: unsubscribing without a subscription changes nothing.",
-        "operationId" : "unsubscribe",
-        "parameters" : [ {
-          "description" : "Post slug",
-          "example" : "how-to-use-spring-boot-with-postgresql",
-          "in" : "path",
-          "name" : "slug",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "Not subscribed any more"
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Not found, deleted, or a draft the caller may not see",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/forum/tags" : {
-      "get" : {
-        "tags" : [ "Forum – Tags" ],
-        "summary" : "List the tags in use, most used first",
-        "description" : "Tags on at least one published post, ordered by postCount descending, then by name. Tags used only by drafts or deleted posts are left out. List a tag's posts with GET /forum/posts?tag={slug}.",
-        "operationId" : "listTags",
-        "responses" : {
-          "200" : {
-            "description" : "Tag list returned; empty when no published post has a tag",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/TagDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/forum/votes" : {
-      "post" : {
-        "tags" : [ "Forum – Votes" ],
-        "summary" : "Cast a vote on a post or comment",
-        "description" : "The first vote on a target answers 201. Voting again in the same direction changes nothing and switching direction moves the score by two; both answer 200 with the caller's vote. Votes are accepted on published posts and visible comments of published posts.",
-        "operationId" : "castVote",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/VoteRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Existing vote kept or switched",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/VoteDto"
-                }
-              }
-            }
-          },
-          "201" : {
-            "description" : "Vote recorded",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/VoteDto"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Validation error",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Post or comment not found, or not readable by the caller",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "409" : {
-            "description" : "The post is a draft, or the vote is being changed concurrently",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/forum/votes/{id}" : {
-      "delete" : {
-        "tags" : [ "Forum – Votes" ],
-        "summary" : "Retract a vote",
-        "operationId" : "retractVote",
-        "parameters" : [ {
-          "description" : "Vote ID",
-          "example" : 9,
-          "in" : "path",
-          "name" : "id",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "Vote retracted"
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Vote not found",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "409" : {
-            "description" : "The vote is being changed concurrently",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/notifications" : {
-      "get" : {
-        "tags" : [ "Notifications" ],
-        "summary" : "List notifications for the authenticated user",
-        "description" : "Newest first. With unreadOnly=true only unread notifications are listed; totalElements is then the unread count.",
-        "operationId" : "listNotifications",
-        "parameters" : [ {
-          "description" : "Page number (0-based)",
-          "example" : 0,
-          "in" : "query",
-          "name" : "page",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "description" : "Page size, 1 to 50",
-          "example" : 20,
-          "in" : "query",
-          "name" : "size",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 20
-          }
-        }, {
-          "description" : "Only unread notifications",
-          "in" : "query",
-          "name" : "unreadOnly",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean",
-            "default" : false
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Notifications returned",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PagedResponseNotificationDto"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid pagination",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/notifications/read-all" : {
-      "patch" : {
-        "tags" : [ "Notifications" ],
-        "summary" : "Mark all notifications as read",
-        "operationId" : "markAllRead",
-        "responses" : {
-          "204" : {
-            "description" : "All notifications marked as read"
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/notifications/{id}" : {
-      "delete" : {
-        "tags" : [ "Notifications" ],
-        "summary" : "Delete a notification",
-        "operationId" : "deleteNotification",
-        "parameters" : [ {
-          "description" : "Notification ID",
-          "example" : 200,
-          "in" : "path",
-          "name" : "id",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "Notification deleted"
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Not found",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/notifications/{id}/read" : {
-      "patch" : {
-        "tags" : [ "Notifications" ],
-        "summary" : "Mark a notification as read",
-        "description" : "Idempotent.",
-        "operationId" : "markRead",
-        "parameters" : [ {
-          "description" : "Notification ID",
-          "example" : 200,
-          "in" : "path",
-          "name" : "id",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Notification marked as read",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/NotificationDto"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Not found",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/recommendations/posts" : {
-      "get" : {
-        "tags" : [ "Recommendations" ],
-        "summary" : "Recommend public posts",
-        "description" : "Public. Signed-in callers never get posts they wrote, voted on or commented on. Posts are ordered by: (1) posts sharing a tag with the caller's interest posts (the public posts they wrote, upvoted or commented on), then posts in a category of those posts, then the rest; (2) shared tags, most first; (3) activity in the last 7 days, views + 2 x votes + 3 x comments; (4) vote score, newest, highest id. Anonymous callers and callers without activity get order (3)–(4) only.",
-        "operationId" : "getRecommendedPosts",
-        "parameters" : [ {
-          "description" : "Number of recommendations to return (1–100)",
-          "example" : 10,
-          "in" : "query",
-          "name" : "limit",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 10,
-            "maximum" : 100,
-            "minimum" : 1
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Recommended posts, best first; empty when no post is public",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/RecommendedPostDto"
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Limit outside 1–100",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/recommendations/tags" : {
-      "get" : {
-        "tags" : [ "Recommendations" ],
-        "summary" : "Recommend tags",
-        "description" : "Public. Tags of published posts, leaving out the caller's interest tags (the tags of the public posts they wrote, upvoted or commented on). Ordered by: (1) public posts carrying the tag and an interest tag, most first; (2) public posts with the tag created in the last 7 days, most first; (3) postCount, most first, then name.",
-        "operationId" : "getRecommendedTags",
-        "parameters" : [ {
-          "description" : "Number of tags to return (1–100)",
-          "example" : 10,
-          "in" : "query",
-          "name" : "limit",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 10,
-            "maximum" : 100,
-            "minimum" : 1
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Recommended tags, best first; empty when no published post has a tag",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/TagDto"
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Limit outside 1–100",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/search" : {
-      "get" : {
-        "tags" : [ "Search" ],
-        "summary" : "Search posts, users and tags",
-        "description" : "Public. Case-insensitive substring match of the trimmed query. Without a type every kind is searched and paged on its own; with a type only that kind is returned and the others are null. A term that matches nothing returns empty pages.",
-        "operationId" : "search",
-        "parameters" : [ {
-          "description" : "Search term, 2 to 100 characters after trimming",
-          "example" : "spring",
-          "in" : "query",
-          "name" : "q",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "default" : ""
-          }
-        }, {
-          "description" : "Return only this kind of result",
-          "in" : "query",
-          "name" : "type",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "description" : "Kind of search result",
-            "enum" : [ "POST", "USER", "TAG" ]
-          }
-        }, {
-          "description" : "Page number of each kind (0-based)",
-          "example" : 0,
-          "in" : "query",
-          "name" : "page",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "description" : "Page size of each kind, 1 to 50",
-          "example" : 5,
-          "in" : "query",
-          "name" : "size",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 5
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Results returned",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SearchResultsDto"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Query shorter than 2 or longer than 100 characters, unknown type, or invalid pagination",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/users/me" : {
-      "get" : {
-        "tags" : [ "Users" ],
-        "summary" : "Get own profile",
-        "operationId" : "currentProfile",
-        "responses" : {
-          "200" : {
-            "description" : "Profile returned",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MyProfileDto"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Unauthorized",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "sessionAuth" : [ ]
-        } ]
-      },
-      "patch" : {
-        "tags" : [ "Users" ],
-        "summary" : "Update own profile",
-        "operationId" : "updateProfile",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/UpdateProfileRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Profile updated",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MyProfileDto"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Validation error; `errors` has a message for each rejected field",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Unauthorized",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "409" : {
-            "description" : "Email already registered; `errors.email` says so",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/users/me/password" : {
-      "post" : {
-        "tags" : [ "Users" ],
-        "summary" : "Change own password",
-        "operationId" : "changePassword",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ChangePasswordRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "204" : {
-            "description" : "Password changed",
-            "headers" : {
-              "Set-Cookie" : {
-                "description" : "One or more Set-Cookie headers. SESSION is host-only, HttpOnly, Path=/, SameSite=Strict and Secure outside explicit HTTP development. Normal issuance has no Max-Age/Expires; deletion expires the cookie. Legacy refreshToken is cleared.",
-                "schema" : { }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Validation error or wrong current password",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Unauthorized",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "CSRF validation failed or access is forbidden",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "csrfToken" : [ ],
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/users/me/subscriptions" : {
-      "get" : {
-        "tags" : [ "Forum – Subscriptions" ],
-        "summary" : "List my post subscriptions",
-        "description" : "Posts the caller is subscribed to and can still read, most recent subscription first.",
-        "operationId" : "mySubscriptions",
-        "parameters" : [ {
-          "description" : "Page number (0-based)",
-          "example" : 0,
-          "in" : "query",
-          "name" : "page",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "description" : "Page size, 1 to 50",
-          "example" : 20,
-          "in" : "query",
-          "name" : "size",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 20
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Subscriptions returned",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PagedResponsePostSummaryDto"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid pagination",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "sessionAuth" : [ ]
-        } ]
-      }
-    },
-    "/users/{username}" : {
-      "get" : {
-        "tags" : [ "Users" ],
-        "summary" : "Get public profile by username",
-        "operationId" : "publicProfile",
-        "parameters" : [ {
-          "description" : "Username",
-          "example" : "johndoe",
-          "in" : "path",
-          "name" : "username",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Profile found",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserProfileDto"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "User not found",
-            "content" : {
-              "application/problem+json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/analytics/public/activity" : {
-      "get" : {
-        "description" : "Public. Published or locked posts and visible comments on them, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Quiet days are returned with 0. Figures count the records that are public now and were created in the window.",
-        "operationId" : "getPublicActivity",
-        "parameters" : [ {
-          "description" : "Number of UTC days",
-          "example" : "7d",
-          "in" : "query",
-          "name" : "period",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "enum" : [ "7d", "30d" ]
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PublicActivityDto"
-                }
-              }
-            },
-            "description" : "Activity returned"
-          },
-          "400" : {
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -2649,11 +1883,15 @@
                 }
               }
             },
-            "description" : "Invalid period"
+            "description" : "Maximum comment nesting depth (5) exceeded"
           }
         },
-        "summary" : "Get daily public platform activity",
-        "tags" : [ "Analytics" ]
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Add a comment to a post",
+        "tags" : [ "Forum – Comments" ]
       }
     },
     "/forum/posts/{slug}/openings" : {
@@ -2722,29 +1960,17 @@
         "tags" : [ "Forum – Posts" ]
       }
     },
-    "/analytics/me/posts/{id}/openings" : {
-      "get" : {
-        "description" : "Intentional openings of a post the caller wrote, per UTC day, for the last 7 or 30 UTC days ending with the current, still partial day. Days that ended before openings were collected have measured false and openings null; a measured day without openings has 0. Only the author gets the series: anyone else, staff included, gets 404.",
-        "operationId" : "getMyPostOpenings",
+    "/forum/posts/{slug}/pin" : {
+      "patch" : {
+        "operationId" : "togglePin",
         "parameters" : [ {
-          "description" : "Post ID",
-          "example" : 101,
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
           "in" : "path",
-          "name" : "id",
+          "name" : "slug",
           "required" : true,
           "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }, {
-          "description" : "Number of UTC days",
-          "example" : "7d",
-          "in" : "query",
-          "name" : "period",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "enum" : [ "7d", "30d" ]
+            "type" : "string"
           }
         } ],
         "responses" : {
@@ -2752,13 +1978,13 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/PostOpeningTrendDto"
+                  "$ref" : "#/components/schemas/PostDto"
                 }
               }
             },
-            "description" : "Openings returned"
+            "description" : "Pin status toggled"
           },
-          "400" : {
+          "401" : {
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -2766,7 +1992,54 @@
                 }
               }
             },
-            "description" : "Invalid period"
+            "description" : "Unauthorized"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Toggle pin status of a post",
+        "tags" : [ "Forum – Posts" ]
+      }
+    },
+    "/forum/posts/{slug}/subscription" : {
+      "delete" : {
+        "description" : "Idempotent: unsubscribing without a subscription changes nothing.",
+        "operationId" : "unsubscribe",
+        "parameters" : [ {
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Not subscribed any more"
           },
           "401" : {
             "content" : {
@@ -2778,6 +2051,16 @@
             },
             "description" : "Not authenticated"
           },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          },
           "404" : {
             "content" : {
               "application/problem+json" : {
@@ -2786,29 +2069,437 @@
                 }
               }
             },
-            "description" : "No post of the caller with this ID"
+            "description" : "Not found, deleted, or a draft the caller may not see"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Unsubscribe from a post",
+        "tags" : [ "Forum – Subscriptions" ]
+      },
+      "put" : {
+        "description" : "Idempotent: subscribing again changes nothing.",
+        "operationId" : "subscribe",
+        "parameters" : [ {
+          "description" : "Post slug",
+          "example" : "how-to-use-spring-boot-with-postgresql",
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Subscribed"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found, deleted, or a draft the caller may not see"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Subscribe to a post",
+        "tags" : [ "Forum – Subscriptions" ]
+      }
+    },
+    "/forum/tags" : {
+      "get" : {
+        "description" : "Tags on at least one published post, ordered by postCount descending, then by name. Tags used only by drafts or deleted posts are left out. List a tag's posts with GET /forum/posts?tag={slug}.",
+        "operationId" : "listTags",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TagDto"
+                  }
+                }
+              }
+            },
+            "description" : "Tag list returned; empty when no published post has a tag"
+          }
+        },
+        "summary" : "List the tags in use, most used first",
+        "tags" : [ "Forum – Tags" ]
+      }
+    },
+    "/forum/votes" : {
+      "post" : {
+        "description" : "The first vote on a target answers 201. Voting again in the same direction changes nothing and switching direction moves the score by two; both answer 200 with the caller's vote. Votes are accepted on published posts and visible comments of published posts.",
+        "operationId" : "castVote",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VoteRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VoteDto"
+                }
+              }
+            },
+            "description" : "Existing vote kept or switched"
+          },
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VoteDto"
+                }
+              }
+            },
+            "description" : "Vote recorded"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Validation error"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Post or comment not found, or not readable by the caller"
+          },
+          "409" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The post is a draft, or the vote is being changed concurrently"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Cast a vote on a post or comment",
+        "tags" : [ "Forum – Votes" ]
+      }
+    },
+    "/forum/votes/{id}" : {
+      "delete" : {
+        "operationId" : "retractVote",
+        "parameters" : [ {
+          "description" : "Vote ID",
+          "example" : 9,
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Vote retracted"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Vote not found"
+          },
+          "409" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "The vote is being changed concurrently"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Retract a vote",
+        "tags" : [ "Forum – Votes" ]
+      }
+    },
+    "/notifications" : {
+      "get" : {
+        "description" : "Newest first. With unreadOnly=true only unread notifications are listed; totalElements is then the unread count.",
+        "operationId" : "listNotifications",
+        "parameters" : [ {
+          "description" : "Page number (0-based)",
+          "example" : 0,
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "description" : "Page size, 1 to 50",
+          "example" : 20,
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        }, {
+          "description" : "Only unread notifications",
+          "in" : "query",
+          "name" : "unreadOnly",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponseNotificationDto"
+                }
+              }
+            },
+            "description" : "Notifications returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid pagination"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
           }
         },
         "security" : [ {
           "sessionAuth" : [ ]
         } ],
-        "summary" : "Get daily openings of one of my posts",
-        "tags" : [ "Analytics" ]
+        "summary" : "List notifications for the authenticated user",
+        "tags" : [ "Notifications" ]
       }
     },
-    "/analytics/public/categories" : {
-      "get" : {
-        "description" : "Public. The published or locked posts created in the window of the public activity, by their current category, with each category's share. Rows add up to totalPosts; posts without a category, also those whose category was deleted, are the last row.",
-        "operationId" : "getPublicCategoryDistribution",
+    "/notifications/read-all" : {
+      "patch" : {
+        "operationId" : "markAllRead",
+        "responses" : {
+          "204" : {
+            "description" : "All notifications marked as read"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Mark all notifications as read",
+        "tags" : [ "Notifications" ]
+      }
+    },
+    "/notifications/{id}" : {
+      "delete" : {
+        "operationId" : "deleteNotification",
         "parameters" : [ {
-          "description" : "Number of UTC days",
-          "example" : "7d",
-          "in" : "query",
-          "name" : "period",
-          "required" : false,
+          "description" : "Notification ID",
+          "example" : 200,
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
           "schema" : {
-            "type" : "string",
-            "enum" : [ "7d", "30d" ]
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Notification deleted"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Delete a notification",
+        "tags" : [ "Notifications" ]
+      }
+    },
+    "/notifications/{id}/read" : {
+      "patch" : {
+        "description" : "Idempotent.",
+        "operationId" : "markRead",
+        "parameters" : [ {
+          "description" : "Notification ID",
+          "example" : 200,
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         } ],
         "responses" : {
@@ -2816,11 +2507,82 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/PublicCategoryDistributionDto"
+                  "$ref" : "#/components/schemas/NotificationDto"
                 }
               }
             },
-            "description" : "Distribution returned"
+            "description" : "Notification marked as read"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not found"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Mark a notification as read",
+        "tags" : [ "Notifications" ]
+      }
+    },
+    "/recommendations/posts" : {
+      "get" : {
+        "description" : "Public. Signed-in callers never get posts they wrote, voted on or commented on. Posts are ordered by: (1) posts sharing a tag with the caller's interest posts (the public posts they wrote, upvoted or commented on), then posts in a category of those posts, then the rest; (2) shared tags, most first; (3) activity in the last 7 days, views + 2 x votes + 3 x comments; (4) vote score, newest, highest id. Anonymous callers and callers without activity get order (3)–(4) only.",
+        "operationId" : "getRecommendedPosts",
+        "parameters" : [ {
+          "description" : "Number of recommendations to return (1–100)",
+          "example" : 10,
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10,
+            "maximum" : 100,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/RecommendedPostDto"
+                  }
+                }
+              }
+            },
+            "description" : "Recommended posts, best first; empty when no post is public"
           },
           "400" : {
             "content" : {
@@ -2830,26 +2592,29 @@
                 }
               }
             },
-            "description" : "Invalid period"
+            "description" : "Limit outside 1–100"
           }
         },
-        "summary" : "Get public posts by category",
-        "tags" : [ "Analytics" ]
+        "summary" : "Recommend public posts",
+        "tags" : [ "Recommendations" ]
       }
     },
-    "/analytics/public/comparison" : {
+    "/recommendations/tags" : {
       "get" : {
-        "description" : "Public. Published or locked posts and visible comments on them in the window of the public activity up to now, against the window of the same length that ends where it starts. Gives counts, absolute changes and percentages; the percentage is null when the previous value is 0.",
-        "operationId" : "getPublicActivityComparison",
+        "description" : "Public. Tags of published posts, leaving out the caller's interest tags (the tags of the public posts they wrote, upvoted or commented on). Ordered by: (1) public posts carrying the tag and an interest tag, most first; (2) public posts with the tag created in the last 7 days, most first; (3) postCount, most first, then name.",
+        "operationId" : "getRecommendedTags",
         "parameters" : [ {
-          "description" : "Number of UTC days in the current window",
-          "example" : "7d",
+          "description" : "Number of tags to return (1–100)",
+          "example" : 10,
           "in" : "query",
-          "name" : "period",
+          "name" : "limit",
           "required" : false,
           "schema" : {
-            "type" : "string",
-            "enum" : [ "7d", "30d" ]
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10,
+            "maximum" : 100,
+            "minimum" : 1
           }
         } ],
         "responses" : {
@@ -2857,11 +2622,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/PublicActivityComparisonDto"
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TagDto"
+                  }
                 }
               }
             },
-            "description" : "Comparison returned"
+            "description" : "Recommended tags, best first; empty when no published post has a tag"
           },
           "400" : {
             "content" : {
@@ -2871,16 +2639,389 @@
                 }
               }
             },
-            "description" : "Invalid period"
+            "description" : "Limit outside 1–100"
           }
         },
-        "summary" : "Compare public activity with the previous window",
-        "tags" : [ "Analytics" ]
+        "summary" : "Recommend tags",
+        "tags" : [ "Recommendations" ]
+      }
+    },
+    "/search" : {
+      "get" : {
+        "description" : "Public. Case-insensitive substring match of the trimmed query. Without a type every kind is searched and paged on its own; with a type only that kind is returned and the others are null. A term that matches nothing returns empty pages.",
+        "operationId" : "search",
+        "parameters" : [ {
+          "description" : "Search term, 2 to 100 characters after trimming",
+          "example" : "spring",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : ""
+          }
+        }, {
+          "description" : "Return only this kind of result",
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "Kind of search result",
+            "enum" : [ "POST", "USER", "TAG" ]
+          }
+        }, {
+          "description" : "Page number of each kind (0-based)",
+          "example" : 0,
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "description" : "Page size of each kind, 1 to 50",
+          "example" : 5,
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 5
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SearchResultsDto"
+                }
+              }
+            },
+            "description" : "Results returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Query shorter than 2 or longer than 100 characters, unknown type, or invalid pagination"
+          }
+        },
+        "summary" : "Search posts, users and tags",
+        "tags" : [ "Search" ]
+      }
+    },
+    "/users/me" : {
+      "get" : {
+        "operationId" : "currentProfile",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MyProfileDto"
+                }
+              }
+            },
+            "description" : "Profile returned"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          }
+        },
+        "security" : [ {
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Get own profile",
+        "tags" : [ "Users" ]
+      },
+      "patch" : {
+        "operationId" : "updateProfile",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MyProfileDto"
+                }
+              }
+            },
+            "description" : "Profile updated"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Validation error; `errors` has a message for each rejected field"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          },
+          "409" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Email already registered; `errors.email` says so"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Update own profile",
+        "tags" : [ "Users" ]
+      }
+    },
+    "/users/me/password" : {
+      "post" : {
+        "operationId" : "changePassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Password changed",
+            "headers" : {
+              "Set-Cookie" : {
+                "description" : "One or more Set-Cookie headers. SESSION is host-only, HttpOnly, Path=/, SameSite=Strict and Secure outside explicit HTTP development. Normal issuance has no Max-Age/Expires; deletion expires the cookie. Legacy refreshToken is cleared.",
+                "schema" : { }
+              }
+            }
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Validation error or wrong current password"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          },
+          "403" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "CSRF validation failed or access is forbidden"
+          }
+        },
+        "security" : [ {
+          "csrfToken" : [ ],
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "Change own password",
+        "tags" : [ "Users" ]
+      }
+    },
+    "/users/me/subscriptions" : {
+      "get" : {
+        "description" : "Posts the caller is subscribed to and can still read, most recent subscription first.",
+        "operationId" : "mySubscriptions",
+        "parameters" : [ {
+          "description" : "Page number (0-based)",
+          "example" : 0,
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "description" : "Page size, 1 to 50",
+          "example" : 20,
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PagedResponsePostSummaryDto"
+                }
+              }
+            },
+            "description" : "Subscriptions returned"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid pagination"
+          },
+          "401" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          }
+        },
+        "security" : [ {
+          "sessionAuth" : [ ]
+        } ],
+        "summary" : "List my post subscriptions",
+        "tags" : [ "Forum – Subscriptions" ]
+      }
+    },
+    "/users/{username}" : {
+      "get" : {
+        "operationId" : "publicProfile",
+        "parameters" : [ {
+          "description" : "Username",
+          "example" : "johndoe",
+          "in" : "path",
+          "name" : "username",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserProfileDto"
+                }
+              }
+            },
+            "description" : "Profile found"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "User not found"
+          }
+        },
+        "summary" : "Get public profile by username",
+        "tags" : [ "Users" ]
       }
     }
   },
   "components" : {
     "schemas" : {
+      "ActivityChangeDto" : {
+        "type" : "object",
+        "description" : "One figure in the current window against the previous one",
+        "properties" : {
+          "change" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "current - previous; negative for a decrease",
+            "example" : 7
+          },
+          "changePercent" : {
+            "type" : [ "number", "null" ],
+            "description" : "change / previous × 100, rounded half up to 1 decimal; null when previous is 0, since growth from nothing has no percentage",
+            "example" : 29.2
+          },
+          "current" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Value in the current window",
+            "example" : 31
+          },
+          "previous" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Value in the previous window",
+            "example" : 24
+          }
+        },
+        "required" : [ "change", "changePercent", "current", "previous" ]
+      },
       "ActivityTrendDto" : {
         "type" : "object",
         "description" : "Time-series trend for a single activity metric",
@@ -2924,6 +3065,41 @@
           }
         },
         "required" : [ "password", "username" ]
+      },
+      "AuthorPostEngagementDto" : {
+        "type" : "object",
+        "description" : "Owner-only engagement of an undeleted post, including the owner's draft. No visitor data.",
+        "properties" : {
+          "collectedFrom" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "commentCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "downvoteCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "postId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "upvoteCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "viewCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "voteScore" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "collectedFrom", "commentCount", "downvoteCount", "postId", "upvoteCount", "viewCount", "voteScore" ]
       },
       "CategoryDto" : {
         "type" : "object",
@@ -3715,6 +3891,85 @@
         },
         "required" : [ "author", "category", "commentCount", "content", "createdAt", "id", "lastActivityAt", "myVote", "pinned", "slug", "status", "subscribed", "tags", "title", "updatedAt", "viewCount", "voteScore" ]
       },
+      "PostOpeningDayDto" : {
+        "type" : "object",
+        "description" : "Openings of the post on one UTC day. A measured day with no openings has openings 0; a day that ended before openings were collected is not measured and has openings null.",
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "UTC day",
+            "example" : "2026-11-05"
+          },
+          "measured" : {
+            "type" : "boolean",
+            "description" : "Whether openings were being collected on this day; the day collection started counts from collectedFrom"
+          },
+          "openings" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int64",
+            "description" : "Intentional openings on this day; null when the day is not measured",
+            "example" : 4
+          }
+        },
+        "required" : [ "date", "measured", "openings" ]
+      },
+      "PostOpeningTrendDto" : {
+        "type" : "object",
+        "description" : "Daily intentional openings of one of the caller's posts, over the window of the public activity. Counts openings only: no reader, visitor or demographic data.",
+        "properties" : {
+          "collectedFrom" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Openings are collected from this instant on; days that ended before it are not measured",
+            "example" : "2026-11-08T10:15:00Z"
+          },
+          "days" : {
+            "type" : "array",
+            "description" : "One row per UTC day, oldest first and ending with the current day; as many rows as the window has days",
+            "items" : {
+              "$ref" : "#/components/schemas/PostOpeningDayDto"
+            }
+          },
+          "generatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When these figures were read; the current UTC day counts up to this moment",
+            "example" : "2026-11-11T14:30:00Z"
+          },
+          "period" : {
+            "type" : "string",
+            "description" : "Requested window",
+            "enum" : [ "7d", "30d" ],
+            "example" : "7d"
+          },
+          "postId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Post ID",
+            "example" : 101
+          },
+          "totalOpenings" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Openings on the measured days of the window",
+            "example" : 27
+          },
+          "windowEnd" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the UTC day after the last one, exclusive",
+            "example" : "2026-11-12T00:00:00Z"
+          },
+          "windowStart" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the first UTC day, inclusive",
+            "example" : "2026-11-05T00:00:00Z"
+          }
+        },
+        "required" : [ "collectedFrom", "days", "generatedAt", "period", "postId", "totalOpenings", "windowEnd", "windowStart" ]
+      },
       "PostSummaryDto" : {
         "type" : "object",
         "description" : "Compact post representation used in listing endpoints",
@@ -3775,6 +4030,13 @@
             "enum" : [ "PUBLISHED", "DRAFT", "LOCKED", "DELETED" ],
             "example" : "PUBLISHED"
           },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TagDto"
+            },
+            "maxItems" : 5
+          },
           "title" : {
             "type" : "string",
             "description" : "Post title",
@@ -3789,13 +4051,6 @@
             "type" : "integer",
             "format" : "int32",
             "description" : "Cumulative vote score"
-          },
-          "tags" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/TagDto"
-            },
-            "maxItems" : 5
           }
         },
         "required" : [ "author", "category", "commentCount", "createdAt", "id", "lastActivityAt", "myVote", "pinned", "slug", "status", "tags", "title", "viewCount", "voteScore" ]
@@ -3840,6 +4095,275 @@
           }
         },
         "required" : [ "detail", "instance", "status", "title" ]
+      },
+      "PublicActivityComparisonDto" : {
+        "type" : "object",
+        "description" : "Public activity of the current window against the window of the same length right before it. The current window is that of the public activity up to generatedAt, so its figures equal the activity totals; the previous one ends where it starts, with no gap or overlap, and lasts exactly as long, so the partial current day is matched by an equal span. Figures count the records that are public now, so hiding a post later lowers both windows.",
+        "properties" : {
+          "comments" : {
+            "$ref" : "#/components/schemas/ActivityChangeDto",
+            "description" : "Visible comments on public posts: current against previous"
+          },
+          "current" : {
+            "$ref" : "#/components/schemas/PublicActivityWindowDto",
+            "description" : "From 00:00 UTC of the first of the period's days, the current one being the last, to generatedAt"
+          },
+          "generatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When these figures were read; the end of the current window",
+            "example" : "2026-11-11T14:30:00Z"
+          },
+          "period" : {
+            "type" : "string",
+            "description" : "Requested window",
+            "enum" : [ "7d", "30d" ],
+            "example" : "7d"
+          },
+          "posts" : {
+            "$ref" : "#/components/schemas/ActivityChangeDto",
+            "description" : "Public posts: current against previous"
+          },
+          "previous" : {
+            "$ref" : "#/components/schemas/PublicActivityWindowDto",
+            "description" : "The equally long window ending at current.start"
+          }
+        },
+        "required" : [ "comments", "current", "generatedAt", "period", "posts", "previous" ]
+      },
+      "PublicActivityDayDto" : {
+        "type" : "object",
+        "description" : "Public posts and comments created on one UTC day; 0 means none, not missing data",
+        "properties" : {
+          "comments" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Visible comments on public posts created on this day",
+            "example" : 12
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "UTC day",
+            "example" : "2026-11-05"
+          },
+          "posts" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Public posts created on this day",
+            "example" : 4
+          }
+        },
+        "required" : [ "comments", "date", "posts" ]
+      },
+      "PublicActivityDto" : {
+        "type" : "object",
+        "description" : "Daily public platform activity. Figures count the records that are public now and were created in the window, so hiding a post later lowers past days.",
+        "properties" : {
+          "days" : {
+            "type" : "array",
+            "description" : "One row per UTC day, oldest first and ending with the current day; as many rows as the window has days",
+            "items" : {
+              "$ref" : "#/components/schemas/PublicActivityDayDto"
+            }
+          },
+          "generatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When these figures were read; the current UTC day counts up to this moment",
+            "example" : "2026-11-11T14:30:00Z"
+          },
+          "period" : {
+            "type" : "string",
+            "description" : "Requested window",
+            "enum" : [ "7d", "30d" ],
+            "example" : "7d"
+          },
+          "totalComments" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Visible comments on public posts created in the window",
+            "example" : 87
+          },
+          "totalPosts" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Public posts created in the window",
+            "example" : 31
+          },
+          "windowEnd" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the UTC day after the last one, exclusive",
+            "example" : "2026-11-12T00:00:00Z"
+          },
+          "windowStart" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the first UTC day, inclusive",
+            "example" : "2026-11-05T00:00:00Z"
+          }
+        },
+        "required" : [ "days", "generatedAt", "period", "totalComments", "totalPosts", "windowEnd", "windowStart" ]
+      },
+      "PublicActivityWindowDto" : {
+        "type" : "object",
+        "description" : "Public posts and comments created from start (inclusive) to end (exclusive)",
+        "properties" : {
+          "comments" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Visible comments on public posts created in the window",
+            "example" : 87
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "End of the window, exclusive",
+            "example" : "2026-11-11T14:30:00Z"
+          },
+          "posts" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Public posts created in the window",
+            "example" : 31
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the window, inclusive",
+            "example" : "2026-11-05T00:00:00Z"
+          }
+        },
+        "required" : [ "comments", "end", "posts", "start" ]
+      },
+      "PublicCategoryDistributionDto" : {
+        "type" : "object",
+        "description" : "Public posts created in the window by category. The window and the posts counted are those of the public activity, so totalPosts equals its totalPosts and the rows add up to it.",
+        "properties" : {
+          "categories" : {
+            "type" : "array",
+            "description" : "Every listed category in display order, then by name, with 0 when it has no posts in the window; a hidden category only when it has posts in the window. The last row has category null and counts the posts without a category; it is always present.",
+            "items" : {
+              "$ref" : "#/components/schemas/PublicCategoryShareDto"
+            }
+          },
+          "generatedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When these figures were read; the current UTC day counts up to this moment",
+            "example" : "2026-11-11T14:30:00Z"
+          },
+          "period" : {
+            "type" : "string",
+            "description" : "Requested window",
+            "enum" : [ "7d", "30d" ],
+            "example" : "7d"
+          },
+          "totalPosts" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Public posts created in the window; the denominator of every share",
+            "example" : 31
+          },
+          "windowEnd" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the UTC day after the last one, exclusive",
+            "example" : "2026-11-12T00:00:00Z"
+          },
+          "windowStart" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Start of the first UTC day, inclusive",
+            "example" : "2026-11-05T00:00:00Z"
+          }
+        },
+        "required" : [ "categories", "generatedAt", "period", "totalPosts", "windowEnd", "windowStart" ]
+      },
+      "PublicCategoryDto" : {
+        "type" : "object",
+        "description" : "Identity of a category in the public analytics, for drill-down to its posts",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Category ID; the feed filter GET /forum/posts?categoryId= lists its posts",
+            "example" : 2
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Current display name",
+            "example" : "Backend"
+          },
+          "slug" : {
+            "type" : "string",
+            "description" : "URL-friendly identifier",
+            "example" : "backend"
+          },
+          "visible" : {
+            "type" : "boolean",
+            "description" : "Whether the category is listed on the forum; a hidden category has no category page but its public posts still count"
+          }
+        },
+        "required" : [ "id", "name", "slug", "visible" ]
+      },
+      "PublicCategoryShareDto" : {
+        "type" : "object",
+        "description" : "Public posts of one category created in the window",
+        "properties" : {
+          "category" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/PublicCategoryDto"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "The category; null for posts without a category, including posts whose category was deleted"
+          },
+          "posts" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Public posts created in the window",
+            "example" : 12
+          },
+          "share" : {
+            "type" : [ "number", "null" ],
+            "description" : "posts / totalPosts as a fraction from 0 to 1, rounded half up to 4 decimals, so the shares can differ from 1 by rounding; null when the window has no public posts",
+            "example" : 0.3871
+          }
+        },
+        "required" : [ "category", "posts", "share" ]
+      },
+      "PublicPostEngagementDto" : {
+        "type" : "object",
+        "description" : "Public engagement of a currently published or locked post. No reader identities.",
+        "properties" : {
+          "collectedFrom" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Existing collection cutoff for intentional openings"
+          },
+          "commentCount" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Reachable visible comments, excluding hidden branches and deleted placeholders"
+          },
+          "postId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "viewCount" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Accumulated intentional openings since collection began; safe reads add none"
+          },
+          "voteScore" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Upvotes minus downvotes"
+          }
+        },
+        "required" : [ "collectedFrom", "commentCount", "postId", "viewCount", "voteScore" ]
       },
       "RecommendedPostDto" : {
         "type" : "object",
@@ -3905,6 +4429,20 @@
           }
         },
         "required" : [ "author", "category", "commentCount", "createdAt", "excerpt", "id", "reason", "slug", "tags", "title", "voteScore" ]
+      },
+      "RecordPostOpeningRequest" : {
+        "type" : "object",
+        "description" : "One intentional opening of a post",
+        "properties" : {
+          "openingId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "Random id the client creates for this opening and reuses only when retrying it; it must not identify the reader or be kept between openings",
+            "example" : "3f0a7c52-9d1e-4b6a-8a43-2f6c1e7b9d10",
+            "pattern" : "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
+          }
+        },
+        "required" : [ "openingId" ]
       },
       "RegisterRequest" : {
         "type" : "object",
@@ -4385,367 +4923,6 @@
           }
         },
         "required" : [ "entityId", "entityType", "voteType" ]
-      },
-      "PublicActivityDayDto" : {
-        "type" : "object",
-        "description" : "Public posts and comments created on one UTC day; 0 means none, not missing data",
-        "properties" : {
-          "comments" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Visible comments on public posts created on this day",
-            "example" : 12
-          },
-          "date" : {
-            "type" : "string",
-            "format" : "date",
-            "description" : "UTC day",
-            "example" : "2026-11-05"
-          },
-          "posts" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Public posts created on this day",
-            "example" : 4
-          }
-        },
-        "required" : [ "comments", "date", "posts" ]
-      },
-      "PublicActivityDto" : {
-        "type" : "object",
-        "description" : "Daily public platform activity. Figures count the records that are public now and were created in the window, so hiding a post later lowers past days.",
-        "properties" : {
-          "days" : {
-            "type" : "array",
-            "description" : "One row per UTC day, oldest first and ending with the current day; as many rows as the window has days",
-            "items" : {
-              "$ref" : "#/components/schemas/PublicActivityDayDto"
-            }
-          },
-          "generatedAt" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "When these figures were read; the current UTC day counts up to this moment",
-            "example" : "2026-11-11T14:30:00Z"
-          },
-          "period" : {
-            "type" : "string",
-            "description" : "Requested window",
-            "enum" : [ "7d", "30d" ],
-            "example" : "7d"
-          },
-          "totalComments" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Visible comments on public posts created in the window",
-            "example" : 87
-          },
-          "totalPosts" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Public posts created in the window",
-            "example" : 31
-          },
-          "windowEnd" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Start of the UTC day after the last one, exclusive",
-            "example" : "2026-11-12T00:00:00Z"
-          },
-          "windowStart" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Start of the first UTC day, inclusive",
-            "example" : "2026-11-05T00:00:00Z"
-          }
-        },
-        "required" : [ "days", "generatedAt", "period", "totalComments", "totalPosts", "windowEnd", "windowStart" ]
-      },
-      "RecordPostOpeningRequest" : {
-        "type" : "object",
-        "description" : "One intentional opening of a post",
-        "properties" : {
-          "openingId" : {
-            "type" : "string",
-            "format" : "uuid",
-            "description" : "Random id the client creates for this opening and reuses only when retrying it; it must not identify the reader or be kept between openings",
-            "example" : "3f0a7c52-9d1e-4b6a-8a43-2f6c1e7b9d10",
-            "pattern" : "^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"
-          }
-        },
-        "required" : [ "openingId" ]
-      },
-      "ActivityChangeDto" : {
-        "type" : "object",
-        "description" : "One figure in the current window against the previous one",
-        "properties" : {
-          "change" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "current - previous; negative for a decrease",
-            "example" : 7
-          },
-          "changePercent" : {
-            "type" : [ "number", "null" ],
-            "description" : "change / previous × 100, rounded half up to 1 decimal; null when previous is 0, since growth from nothing has no percentage",
-            "example" : 29.2
-          },
-          "current" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Value in the current window",
-            "example" : 31
-          },
-          "previous" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Value in the previous window",
-            "example" : 24
-          }
-        },
-        "required" : [ "change", "changePercent", "current", "previous" ]
-      },
-      "PostOpeningDayDto" : {
-        "type" : "object",
-        "description" : "Openings of the post on one UTC day. A measured day with no openings has openings 0; a day that ended before openings were collected is not measured and has openings null.",
-        "properties" : {
-          "date" : {
-            "type" : "string",
-            "format" : "date",
-            "description" : "UTC day",
-            "example" : "2026-11-05"
-          },
-          "measured" : {
-            "type" : "boolean",
-            "description" : "Whether openings were being collected on this day; the day collection started counts from collectedFrom"
-          },
-          "openings" : {
-            "type" : [ "integer", "null" ],
-            "format" : "int64",
-            "description" : "Intentional openings on this day; null when the day is not measured",
-            "example" : 4
-          }
-        },
-        "required" : [ "date", "measured", "openings" ]
-      },
-      "PostOpeningTrendDto" : {
-        "type" : "object",
-        "description" : "Daily intentional openings of one of the caller's posts, over the window of the public activity. Counts openings only: no reader, visitor or demographic data.",
-        "properties" : {
-          "collectedFrom" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Openings are collected from this instant on; days that ended before it are not measured",
-            "example" : "2026-11-08T10:15:00Z"
-          },
-          "days" : {
-            "type" : "array",
-            "description" : "One row per UTC day, oldest first and ending with the current day; as many rows as the window has days",
-            "items" : {
-              "$ref" : "#/components/schemas/PostOpeningDayDto"
-            }
-          },
-          "generatedAt" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "When these figures were read; the current UTC day counts up to this moment",
-            "example" : "2026-11-11T14:30:00Z"
-          },
-          "period" : {
-            "type" : "string",
-            "description" : "Requested window",
-            "enum" : [ "7d", "30d" ],
-            "example" : "7d"
-          },
-          "postId" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Post ID",
-            "example" : 101
-          },
-          "totalOpenings" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Openings on the measured days of the window",
-            "example" : 27
-          },
-          "windowEnd" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Start of the UTC day after the last one, exclusive",
-            "example" : "2026-11-12T00:00:00Z"
-          },
-          "windowStart" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Start of the first UTC day, inclusive",
-            "example" : "2026-11-05T00:00:00Z"
-          }
-        },
-        "required" : [ "collectedFrom", "days", "generatedAt", "period", "postId", "totalOpenings", "windowEnd", "windowStart" ]
-      },
-      "PublicActivityComparisonDto" : {
-        "type" : "object",
-        "description" : "Public activity of the current window against the window of the same length right before it. The current window is that of the public activity up to generatedAt, so its figures equal the activity totals; the previous one ends where it starts, with no gap or overlap, and lasts exactly as long, so the partial current day is matched by an equal span. Figures count the records that are public now, so hiding a post later lowers both windows.",
-        "properties" : {
-          "comments" : {
-            "$ref" : "#/components/schemas/ActivityChangeDto",
-            "description" : "Visible comments on public posts: current against previous"
-          },
-          "current" : {
-            "$ref" : "#/components/schemas/PublicActivityWindowDto",
-            "description" : "From 00:00 UTC of the first of the period's days, the current one being the last, to generatedAt"
-          },
-          "generatedAt" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "When these figures were read; the end of the current window",
-            "example" : "2026-11-11T14:30:00Z"
-          },
-          "period" : {
-            "type" : "string",
-            "description" : "Requested window",
-            "enum" : [ "7d", "30d" ],
-            "example" : "7d"
-          },
-          "posts" : {
-            "$ref" : "#/components/schemas/ActivityChangeDto",
-            "description" : "Public posts: current against previous"
-          },
-          "previous" : {
-            "$ref" : "#/components/schemas/PublicActivityWindowDto",
-            "description" : "The equally long window ending at current.start"
-          }
-        },
-        "required" : [ "comments", "current", "generatedAt", "period", "posts", "previous" ]
-      },
-      "PublicActivityWindowDto" : {
-        "type" : "object",
-        "description" : "Public posts and comments created from start (inclusive) to end (exclusive)",
-        "properties" : {
-          "comments" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Visible comments on public posts created in the window",
-            "example" : 87
-          },
-          "end" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "End of the window, exclusive",
-            "example" : "2026-11-11T14:30:00Z"
-          },
-          "posts" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Public posts created in the window",
-            "example" : 31
-          },
-          "start" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Start of the window, inclusive",
-            "example" : "2026-11-05T00:00:00Z"
-          }
-        },
-        "required" : [ "comments", "end", "posts", "start" ]
-      },
-      "PublicCategoryDistributionDto" : {
-        "type" : "object",
-        "description" : "Public posts created in the window by category. The window and the posts counted are those of the public activity, so totalPosts equals its totalPosts and the rows add up to it.",
-        "properties" : {
-          "categories" : {
-            "type" : "array",
-            "description" : "Every listed category in display order, then by name, with 0 when it has no posts in the window; a hidden category only when it has posts in the window. The last row has category null and counts the posts without a category; it is always present.",
-            "items" : {
-              "$ref" : "#/components/schemas/PublicCategoryShareDto"
-            }
-          },
-          "generatedAt" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "When these figures were read; the current UTC day counts up to this moment",
-            "example" : "2026-11-11T14:30:00Z"
-          },
-          "period" : {
-            "type" : "string",
-            "description" : "Requested window",
-            "enum" : [ "7d", "30d" ],
-            "example" : "7d"
-          },
-          "totalPosts" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Public posts created in the window; the denominator of every share",
-            "example" : 31
-          },
-          "windowEnd" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Start of the UTC day after the last one, exclusive",
-            "example" : "2026-11-12T00:00:00Z"
-          },
-          "windowStart" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Start of the first UTC day, inclusive",
-            "example" : "2026-11-05T00:00:00Z"
-          }
-        },
-        "required" : [ "categories", "generatedAt", "period", "totalPosts", "windowEnd", "windowStart" ]
-      },
-      "PublicCategoryDto" : {
-        "type" : "object",
-        "description" : "Identity of a category in the public analytics, for drill-down to its posts",
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Category ID; the feed filter GET /forum/posts?categoryId= lists its posts",
-            "example" : 2
-          },
-          "name" : {
-            "type" : "string",
-            "description" : "Current display name",
-            "example" : "Backend"
-          },
-          "slug" : {
-            "type" : "string",
-            "description" : "URL-friendly identifier",
-            "example" : "backend"
-          },
-          "visible" : {
-            "type" : "boolean",
-            "description" : "Whether the category is listed on the forum; a hidden category has no category page but its public posts still count"
-          }
-        },
-        "required" : [ "id", "name", "slug", "visible" ]
-      },
-      "PublicCategoryShareDto" : {
-        "type" : "object",
-        "description" : "Public posts of one category created in the window",
-        "properties" : {
-          "category" : {
-            "anyOf" : [ {
-              "$ref" : "#/components/schemas/PublicCategoryDto"
-            }, {
-              "type" : "null"
-            } ],
-            "description" : "The category; null for posts without a category, including posts whose category was deleted"
-          },
-          "posts" : {
-            "type" : "integer",
-            "format" : "int64",
-            "description" : "Public posts created in the window",
-            "example" : 12
-          },
-          "share" : {
-            "type" : [ "number", "null" ],
-            "description" : "posts / totalPosts as a fraction from 0 to 1, rounded half up to 4 decimals, so the shares can differ from 1 by rounding; null when the window has no public posts",
-            "example" : 0.3871
-          }
-        },
-        "required" : [ "category", "posts", "share" ]
       }
     },
     "securitySchemes" : {
