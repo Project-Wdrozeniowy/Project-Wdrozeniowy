@@ -28,6 +28,7 @@ describe('uiSlice >-65', () => {
 describe('uiSlice theme', () => {
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem('orbita.consent', 'granted');
     document.documentElement.setAttribute('data-theme', 'light');
   });
 

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { THEME_STORAGE_KEY, currentTheme, readStoredTheme, systemTheme } from '@/shared/lib/theme';
+import { currentTheme, readStoredTheme, systemTheme } from '@/shared/lib/theme';
+import { CONSENT_STORAGE_KEY, THEME_STORAGE_KEY } from '@/shared/lib/storageKeys.const';
 import { useStore } from '@/store';
 
 /**
@@ -18,7 +19,8 @@ export default function ThemeProvider() {
       if (readStoredTheme() === null) followTheme(systemTheme());
     };
     const onStorage = (event: StorageEvent) => {
-      if (event.key === THEME_STORAGE_KEY || event.key === null) followTheme(currentTheme());
+      const relevant = [THEME_STORAGE_KEY, CONSENT_STORAGE_KEY];
+      if (event.key === null || relevant.includes(event.key)) followTheme(currentTheme());
     };
     query?.addEventListener('change', onSystemChange);
     window.addEventListener('storage', onStorage);

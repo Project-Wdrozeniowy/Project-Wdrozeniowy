@@ -155,9 +155,36 @@ variant, for example `bg-red-50 dark:bg-red-500/10`. Text on a coloured button s
 The theme is `data-theme` on `<html>`. `public/theme-init.js` sets it before the first paint
 (stored choice, else the system preference; it is an external file because the gateway's CSP
 allows no inline scripts). `ThemeProvider` keeps it in step with the system and with other tabs,
-and the header's `ThemeToggle` switches it. The choice is stored in `localStorage` under
-`orbita.theme` (the word `light` or `dark` only). Add a token, not a hard-coded colour, when a
-new role is needed.
+and the header's `ThemeToggle` switches it. Add a token, not a hard-coded colour, when a new role
+is needed.
+
+## Browser storage and consent
+
+Spring's `SESSION` cookie is the only storage the app needs. Everything else the frontend writes
+is **optional** and exists only after the user accepted it in the banner at the top of the page
+(`widgets/consent-banner`, state in `store/slices/consentSlice.ts`):
+
+| Key (`shared/lib/storageKeys.const.ts`) | Holds                             | Optional                  |
+| --------------------------------------- | --------------------------------- | ------------------------- |
+| `orbita.consent`                        | `granted` or `denied`, the answer | no (remembers the answer) |
+| `orbita.theme`                          | `light` or `dark`                 | yes                       |
+| `orbita.recentSearches`                 | the last five search terms        | yes                       |
+
+Rules for code that stores something in the browser:
+
+- Optional storage is read and written only through helpers that check `hasStorageConsent()`
+  (`shared/lib/storageConsent.ts`). Without a granted answer a theme choice and the search history
+  work for the current visit only and nothing is written. `theme-init.js` follows the same rule.
+- Rejecting or withdrawing deletes every key in `OPTIONAL_STORAGE_KEYS`. A new optional key goes
+  into that list, into the banner's list (`consentBanner.const.ts`) and into this table.
+- Never store credentials, tokens or personal data in browser storage.
+- Accepting and rejecting must look the same, the question must not hide a focused control (it is
+  part of the page flow), and the footer's "Storage settings" button reopens it at any time.
+
+**Unverified assumption.** The banner text and the split into "needed" and "optional" are an
+engineering reading of the ePrivacy storage rules (EDPB Guidelines 2/2023 cover local storage too),
+not a reviewed legal text or a compliance claim. The team should confirm it, and write a privacy
+notice, before any public deployment.
 
 ## Tests and scope
 

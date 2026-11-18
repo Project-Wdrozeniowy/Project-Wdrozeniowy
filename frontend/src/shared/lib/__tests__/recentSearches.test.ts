@@ -8,7 +8,10 @@ import {
 } from '../recentSearches';
 
 describe('recentSearches', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem('orbita.consent', 'granted');
+  });
 
   it('keeps the newest first and drops a repeat regardless of case', () => {
     addRecentSearch('react');
@@ -48,8 +51,35 @@ describe('recentSearches', () => {
 });
 
 describe('recentSearches with edited storage', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem('orbita.consent', 'granted');
+  });
+
   it('drops blanks and repeats', () => {
     localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(['a1', ' a1 ', '', 'b2']));
     expect(readRecentSearches()).toEqual(['a1', 'b2']);
+  });
+});
+
+describe('recentSearches without permission', () => {
+  beforeEach(() => localStorage.clear());
+
+  it.each([
+    ['no answer yet', null],
+    ['rejected', 'denied'],
+  ])('keeps nothing (%s)', (_name, answer) => {
+    if (answer) localStorage.setItem('orbita.consent', answer);
+
+    expect(addRecentSearch('react')).toEqual([]);
+    expect(removeRecentSearch('react')).toEqual([]);
+    expect(localStorage.getItem(RECENT_SEARCHES_KEY)).toBeNull();
+  });
+
+  it('does not show terms that are already stored', () => {
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(['react']));
+    localStorage.setItem('orbita.consent', 'denied');
+
+    expect(readRecentSearches()).toEqual([]);
   });
 });

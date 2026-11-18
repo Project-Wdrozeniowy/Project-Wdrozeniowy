@@ -17,6 +17,7 @@ function prefersDark(matches: boolean) {
 
 beforeEach(() => {
   localStorage.clear();
+  localStorage.setItem('orbita.consent', 'granted');
   document.documentElement.removeAttribute('data-theme');
   prefersDark(false);
 });
@@ -89,5 +90,27 @@ describe('the theme to show', () => {
     applyTheme('light');
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(readAppliedTheme()).toBe('light');
+  });
+});
+
+describe('the theme without permission', () => {
+  beforeEach(() => localStorage.clear());
+
+  it.each([
+    ['no answer yet', null],
+    ['rejected', 'denied'],
+  ])('is never stored (%s)', (_name, answer) => {
+    if (answer) localStorage.setItem('orbita.consent', answer);
+
+    storeTheme('dark');
+
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+  });
+
+  it('ignores a stored theme', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    localStorage.setItem('orbita.consent', 'denied');
+
+    expect(readStoredTheme()).toBeNull();
   });
 });
