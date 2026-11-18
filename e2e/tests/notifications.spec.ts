@@ -10,7 +10,8 @@ type Notification = {
 };
 
 // PWDRZ-152: the notification center against the real notifications API (PWDRZ-144/182).
-// Another member comments on the account's post, so the account has an unread notification. The
+// Another member replies to the account's comment, so the account has an unread notification (a
+// top-level comment would only notify the post's subscribers, and the author is not one). The
 // browser then shows it, leads to the discussion, marks everything read and deletes it, and every
 // request the page makes for notifications goes to the documented /api/notifications endpoints.
 test('shows, reads and deletes a notification through the notification API', async ({
@@ -26,19 +27,25 @@ test('shows, reads and deletes a notification through the notification API', asy
     }
   });
 
-  // Setup through the API: a post of the account and a comment of another member under it.
+  // Setup through the API: a post and a comment of the account, and the reply of another member.
   const headers = await apiSignIn(request, account);
   const categories = await (await request.get(`${gatewayURL}/api/forum/categories`)).json();
   const created = await request.post(`${gatewayURL}/api/forum/posts`, {
     headers,
     data: {
       title: `Notified ${account.username}`,
-      content: 'A post somebody will comment on.',
+      content: 'A post with a discussion.',
       categoryId: categories[0].id,
     },
   });
   expect(created.status()).toBe(201);
   const { slug } = await created.json();
+  const parent = await request.post(`${gatewayURL}/api/forum/posts/${slug}/comments`, {
+    headers,
+    data: { content: 'A comment somebody will answer.' },
+  });
+  expect(parent.status()).toBe(201);
+  const parentId: number = (await parent.json()).id;
 
   const commenter = await apiRequest.newContext();
   try {
@@ -50,11 +57,11 @@ test('shows, reads and deletes a notification through the notification API', asy
     });
     expect(registered.status()).toBe(201);
     const commenterHeaders = await apiSignIn(commenter, identity);
-    const comment = await commenter.post(`${gatewayURL}/api/forum/posts/${slug}/comments`, {
+    const reply = await commenter.post(`${gatewayURL}/api/forum/posts/${slug}/comments`, {
       headers: commenterHeaders,
-      data: { content: 'Nice post.' },
+      data: { content: 'Nice comment.', parentId },
     });
-    expect(comment.status()).toBe(201);
+    expect(reply.status()).toBe(201);
   } finally {
     await commenter.dispose();
   }
