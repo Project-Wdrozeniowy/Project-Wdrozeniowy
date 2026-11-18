@@ -1,5 +1,6 @@
 import { transferableAbortController } from 'node:util';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { vi } from 'vitest';
 import { orvalTransport } from '@/shared/api/client/orvalTransport';
@@ -68,7 +69,7 @@ it('reads the dynamic post slug from the browser route', async () => {
   await open('/forum/a-real-slug');
   expect(await screen.findByText('Post slug: a-real-slug')).toBeVisible();
 });
-it.each(['/profile', '/settings', '/notifications', '/dashboard', '/admin'])(
+it.each(['/profile', '/settings', '/settings/account', '/notifications', '/dashboard', '/admin'])(
   'redirects a guest opening %s directly',
   async (path) => {
     const router = await open(path);
@@ -76,21 +77,87 @@ it.each(['/profile', '/settings', '/notifications', '/dashboard', '/admin'])(
     expect(await screen.findByRole('heading', { name: 'Welcome Back' })).toBeVisible();
   }
 );
-it.each(['/profile', '/settings', '/notifications', '/dashboard', '/admin'])(
-  'renders the implemented protected route %s for its permitted user',
+it.each([
+  '/profile',
+  '/settings/profile',
+  '/settings/account',
+  '/notifications',
+  '/dashboard',
+  '/admin',
+])('renders the implemented protected route %s for its permitted user', async (path) => {
+  useStore.setState({ user: { ...user, role: 'ADMIN' }, isAuthenticated: true });
+  vi.mocked(orvalTransport).mockImplementation(async (config) => {
+    if (config.url === '/users/me') return { ...user, role: 'ADMIN' } as never;
+    throw new Error('Network is isolated in this routing test');
+  });
+  const router = await open(path);
+  await waitFor(() => expect(router.state.initialized).toBe(true));
+  expect(router.state.errors).toBeNull();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible());
+  expect(router.state.location.pathname).toBe(path);
+});
+it.each(['/settings', '/settings/privacy', '/settings/nonsense'])(
+  'sends %s to the profile section of the settings',
   async (path) => {
-    useStore.setState({ user: { ...user, role: 'ADMIN' }, isAuthenticated: true });
+    useStore.setState({ user, isAuthenticated: true });
     vi.mocked(orvalTransport).mockImplementation(async (config) => {
-      if (config.url === '/users/me') return { ...user, role: 'ADMIN' } as never;
+      if (config.url === '/users/me') return user as never;
       throw new Error('Network is isolated in this routing test');
     });
     const router = await open(path);
-    await waitFor(() => expect(router.state.initialized).toBe(true));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/settings/profile'));
     expect(router.state.errors).toBeNull();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible());
-    expect(router.state.location.pathname).toBe(path);
+    expect(await screen.findByRole('form', { name: 'Profile information' })).toBeVisible();
   }
 );
+describe('leaving a settings section with unsaved changes', () => {
+  async function openProfileSection() {
+    useStore.setState({ user, isAuthenticated: true });
+    vi.mocked(orvalTransport).mockImplementation(async (config) => {
+      if (config.url === '/users/me') return user as never;
+      throw new Error('Network is isolated in this routing test');
+    });
+    const router = await open('/settings/profile');
+    await screen.findByRole('form', { name: 'Profile information' });
+    return router;
+  }
+
+  it('asks first, and keeps the edits when the user stays', async () => {
+    const router = await openProfileSection();
+    const person = userEvent.setup();
+    await person.type(screen.getByLabelText('Bio'), 'Unsaved words');
+
+    await person.click(screen.getByRole('link', { name: 'Account' }));
+
+    expect(await screen.findByRole('alertdialog', { name: 'Leave without saving?' })).toBeVisible();
+    expect(router.state.location.pathname).toBe('/settings/profile');
+    await person.click(screen.getByRole('button', { name: 'Keep editing' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/settings/profile');
+    expect(screen.getByLabelText('Bio')).toHaveValue('Unsaved words');
+  });
+
+  it('leaves and drops the edits when the user chooses to', async () => {
+    const router = await openProfileSection();
+    const person = userEvent.setup();
+    await person.type(screen.getByLabelText('Bio'), 'Unsaved words');
+
+    await person.click(screen.getByRole('link', { name: 'Account' }));
+    await person.click(await screen.findByRole('button', { name: 'Leave and discard changes' }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/settings/account'));
+    expect(await screen.findByRole('form', { name: 'Account settings' })).toBeVisible();
+  });
+
+  it('does not ask when nothing was changed', async () => {
+    const router = await openProfileSection();
+
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Account' }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/settings/account'));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+});
 it('rejects the admin page for an ordinary authenticated user', async () => {
   useStore.setState({ user, isAuthenticated: true });
   vi.mocked(orvalTransport).mockImplementation(async (config) => {

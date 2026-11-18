@@ -1,12 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
+import { useBlocker } from 'react-router';
+import UnsavedChangesConfirm from '@/features/edit-profile/UnsavedChangesConfirm';
 import FormField from '@/shared/ui/FormField';
 import {
   BIO_MAX_LENGTH,
   PROFILE_FIELDS,
   PROFILE_SAVED_MESSAGE,
 } from '@/features/edit-profile/profile.const';
+import type { ProfileField } from '@/features/edit-profile/profile.const';
 import { useUpdateProfile } from '@/shared/api/profile/useUpdateProfile';
 import { cn } from '@/shared/lib/cn';
 import {
@@ -15,7 +18,7 @@ import {
   profileToFormValues,
 } from '@/features/edit-profile/profile';
 import { toast } from '@/shared/lib/toast';
-import { profileSchema } from '@/features/edit-profile/profile.schema';
+import { profileSchemaFor } from '@/features/edit-profile/profile.schema';
 import type { ProfileFormData } from '@/features/edit-profile/profile.schema';
 import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
@@ -26,9 +29,18 @@ const DISCARD_CLASS =
 
 interface ProfileFormProps {
   profile: MyProfile;
+  /** The fields this form shows. The others stay as the server has them and are never sent. */
+  fields: readonly ProfileField[];
+  /** Names the form for everyone, including screen readers. */
+  title: string;
 }
 
-export default function ProfileForm({ profile }: ProfileFormProps) {
+/**
+ * Edits some of the profile fields through `PATCH /users/me`. The settings page shows it twice
+ * (profile fields, account email), so both share one validation, one save path and one cache.
+ */
+export default function ProfileForm({ profile, fields, title }: ProfileFormProps) {
+  const shows = (field: ProfileField) => fields.includes(field);
   const { mutateAsync, isPending } = useUpdateProfile();
   const [formError, setFormError] = useState<string | null>(null);
   const alertRef = useRef<HTMLDivElement>(null);
@@ -42,7 +54,8 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     control,
     formState: { errors },
   } = useForm<ProfileFormData>({
-    resolver: zodResolver(profileSchema),
+    // Fields this form does not show are not validated here: the user could not fix them.
+    resolver: zodResolver(profileSchemaFor(fields)),
     // The form follows the server's profile: fields the user has not touched take newer values
     // (for example an edit made on another device), fields being edited keep the user's text.
     // No remount, so focus and unsaved edits survive.
@@ -59,7 +72,18 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     bio: watched.bio ?? '',
   };
   // Saving with nothing changed would only send an empty PATCH.
-  const hasChanges = Object.keys(buildUpdateRequest(values, profile)).length > 0;
+  const hasChanges = Object.keys(buildUpdateRequest(values, profile, fields)).length > 0;
+
+  // Leaving with unsaved edits asks first. While saving, the edits are on their way: no prompt.
+  const dirty = hasChanges && !isPending;
+  const blocker = useBlocker(dirty);
+  // A reload or a closed tab cannot be asked by the app; the browser shows its own warning.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
 
   // Keyboard and screen reader users must land on the problem, not on the page body.
   useEffect(() => {
@@ -68,7 +92,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
   async function onSubmit(formValues: ProfileFormData) {
     if (isPending) return;
-    const request = buildUpdateRequest(formValues, profile);
+    const request = buildUpdateRequest(formValues, profile, fields);
     if (Object.keys(request).length === 0) return;
 
     setFormError(null);
@@ -106,10 +130,14 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      aria-label="Account settings"
+      aria-label={title}
       className="bg-white rounded-xl p-6 flex flex-col gap-5"
     >
-      <h2 className="text-gray-900 font-semibold text-lg">Account settings</h2>
+      <h2 className="text-gray-900 font-semibold text-lg">{title}</h2>
+
+      {blocker.state === 'blocked' && (
+        <UnsavedChangesConfirm onStay={() => blocker.reset()} onLeave={() => blocker.proceed()} />
+      )}
 
       {formError && (
         <div
@@ -122,72 +150,80 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         </div>
       )}
 
-      <FormField label="Email" id="profile-email" error={errors.email?.message}>
-        <input
-          {...register('email')}
-          id="profile-email"
-          type="email"
-          autoComplete="email"
-          readOnly={isPending}
-          aria-invalid={Boolean(errors.email)}
-          aria-describedby={describedBy('profile-email', false, 'email')}
-          className={cn('input', errors.email && 'ring-2 ring-red-500')}
-        />
-      </FormField>
+      {shows('email') && (
+        <FormField label="Email" id="profile-email" error={errors.email?.message}>
+          <input
+            {...register('email')}
+            id="profile-email"
+            type="email"
+            autoComplete="email"
+            readOnly={isPending}
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={describedBy('profile-email', false, 'email')}
+            className={cn('input', errors.email && 'ring-2 ring-red-500')}
+          />
+        </FormField>
+      )}
 
-      <FormField
-        label="Display name"
-        id="profile-displayName"
-        hint="Shown instead of your username. Leave it empty to use your username."
-        error={errors.displayName?.message}
-      >
-        <input
-          {...register('displayName')}
+      {shows('displayName') && (
+        <FormField
+          label="Display name"
           id="profile-displayName"
-          type="text"
-          autoComplete="nickname"
-          readOnly={isPending}
-          aria-invalid={Boolean(errors.displayName)}
-          aria-describedby={describedBy('profile-displayName', true, 'displayName')}
-          className={cn('input', errors.displayName && 'ring-2 ring-red-500')}
-        />
-      </FormField>
+          hint="Shown instead of your username. Leave it empty to use your username."
+          error={errors.displayName?.message}
+        >
+          <input
+            {...register('displayName')}
+            id="profile-displayName"
+            type="text"
+            autoComplete="nickname"
+            readOnly={isPending}
+            aria-invalid={Boolean(errors.displayName)}
+            aria-describedby={describedBy('profile-displayName', true, 'displayName')}
+            className={cn('input', errors.displayName && 'ring-2 ring-red-500')}
+          />
+        </FormField>
+      )}
 
-      <FormField
-        label="Avatar link"
-        id="profile-avatarUrl"
-        hint="A link to an image, starting with http:// or https://."
-        error={errors.avatarUrl?.message}
-      >
-        <input
-          {...register('avatarUrl')}
+      {shows('avatarUrl') && (
+        <FormField
+          label="Avatar link"
           id="profile-avatarUrl"
-          type="url"
-          inputMode="url"
-          autoComplete="off"
-          readOnly={isPending}
-          aria-invalid={Boolean(errors.avatarUrl)}
-          aria-describedby={describedBy('profile-avatarUrl', true, 'avatarUrl')}
-          className={cn('input', errors.avatarUrl && 'ring-2 ring-red-500')}
-        />
-      </FormField>
+          hint="A link to an image, starting with http:// or https://."
+          error={errors.avatarUrl?.message}
+        >
+          <input
+            {...register('avatarUrl')}
+            id="profile-avatarUrl"
+            type="url"
+            inputMode="url"
+            autoComplete="off"
+            readOnly={isPending}
+            aria-invalid={Boolean(errors.avatarUrl)}
+            aria-describedby={describedBy('profile-avatarUrl', true, 'avatarUrl')}
+            className={cn('input', errors.avatarUrl && 'ring-2 ring-red-500')}
+          />
+        </FormField>
+      )}
 
-      <FormField
-        label="Bio"
-        id="profile-bio"
-        hint={`${bioLength}/${BIO_MAX_LENGTH}`}
-        error={errors.bio?.message}
-      >
-        <textarea
-          {...register('bio')}
+      {shows('bio') && (
+        <FormField
+          label="Bio"
           id="profile-bio"
-          rows={4}
-          readOnly={isPending}
-          aria-invalid={Boolean(errors.bio)}
-          aria-describedby={describedBy('profile-bio', true, 'bio')}
-          className={cn('input resize-none', errors.bio && 'ring-2 ring-red-500')}
-        />
-      </FormField>
+          hint={`${bioLength}/${BIO_MAX_LENGTH}`}
+          error={errors.bio?.message}
+        >
+          <textarea
+            {...register('bio')}
+            id="profile-bio"
+            rows={4}
+            readOnly={isPending}
+            aria-invalid={Boolean(errors.bio)}
+            aria-describedby={describedBy('profile-bio', true, 'bio')}
+            className={cn('input resize-none', errors.bio && 'ring-2 ring-red-500')}
+          />
+        </FormField>
+      )}
 
       <div className="flex items-center gap-3">
         <button

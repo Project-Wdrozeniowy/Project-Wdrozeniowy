@@ -52,6 +52,13 @@ describe('buildUpdateRequest', () => {
     expect(buildUpdateRequest(unchanged, profile)).toEqual({});
   });
 
+  it('never includes a field the form does not show, even if its value differs', () => {
+    const drifted = { ...unchanged, bio: 'Changed elsewhere', email: 'new@example.com' };
+
+    expect(buildUpdateRequest(drifted, profile, ['email'])).toEqual({ email: 'new@example.com' });
+    expect(buildUpdateRequest(drifted, profile, ['displayName'])).toEqual({});
+  });
+
   it('sends only the fields that changed', () => {
     expect(buildUpdateRequest({ ...unchanged, displayName: 'Alice A.' }, profile)).toEqual({
       displayName: 'Alice A.',

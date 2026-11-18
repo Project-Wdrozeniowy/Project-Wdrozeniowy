@@ -27,11 +27,13 @@ export function profileToFormValues(profile: MyProfile): ProfileFormData {
  */
 export function buildUpdateRequest(
   values: ProfileFormData,
-  profile: MyProfile
+  profile: MyProfile,
+  /** Only these fields can be part of the request; a form that shows some fields sends only those. */
+  fields: readonly ProfileField[] = PROFILE_FIELDS
 ): UpdateProfileRequest {
   const current = profileToFormValues(profile);
   const request: UpdateProfileRequest = {};
-  for (const field of PROFILE_FIELDS) {
+  for (const field of fields) {
     const next = values[field].trim();
     // The stored text may carry stray whitespace the user never saw as a change: compare trimmed
     // with trimmed, so an untouched form never looks edited.

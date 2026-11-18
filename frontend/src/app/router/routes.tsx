@@ -71,7 +71,8 @@ export const routes: RouteObject[] = [
                 }),
               },
               {
-                path: 'settings',
+                // `/settings` has no section: the page sends it to the default one.
+                path: 'settings/:section?',
                 lazy: async () => ({ Component: (await import('@/pages/settings')).SettingsPage }),
               },
               {

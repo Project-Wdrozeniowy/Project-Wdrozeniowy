@@ -158,7 +158,8 @@ test('SPA: guest and user guards, same-origin session cookies and protected relo
         cookie.expires === -1
     )
   ).toBe(true);
-  for (const path of ['/profile', '/settings', '/dashboard']) {
+  // `/settings` itself redirects to its first section, so the sections are opened directly.
+  for (const path of ['/profile', '/settings/profile', '/settings/account', '/dashboard']) {
     await page.goto(path);
     await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
     await expect(page).toHaveURL(path);
@@ -255,7 +256,7 @@ test('SPA: representative layouts remain usable at desktop and narrow widths', a
     await page.goto(path);
     await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
     if (path === '/settings')
-      await expect(page.getByRole('form', { name: 'Account settings' })).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Profile information' })).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     await testInfo.attach(`${path.split('?')[0].slice(1) || 'home'}-desktop`, {
       body: await page.screenshot(),
@@ -267,7 +268,7 @@ test('SPA: representative layouts remain usable at desktop and narrow widths', a
     await page.goto(path);
     await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
     if (path === '/settings')
-      await expect(page.getByRole('form', { name: 'Account settings' })).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Profile information' })).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
     ).toBe(true);
