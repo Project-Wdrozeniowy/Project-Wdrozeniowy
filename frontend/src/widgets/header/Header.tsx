@@ -31,7 +31,7 @@ export default function Header() {
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <OrbitaLogo size={32} />
-            <span className="text-fg font-semibold text-xl hidden sm:block">Orbita</span>
+            <span className="text-fg font-semibold text-xl">Orbita</span>
           </Link>
           <NavLinks links={NAV_LINKS} pathname={pathname} />
         </div>

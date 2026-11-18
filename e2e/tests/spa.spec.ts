@@ -273,7 +273,13 @@ test('SPA: representative layouts remain usable at desktop and narrow widths', a
   await page.setViewportSize({ width: 390, height: 844 });
   for (const path of ['/forum', '/settings']) {
     await page.goto(path);
+    // On a phone the top bar has no text links: the page links are a bottom bar and the account
+    // links are in a menu.
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeHidden();
+    await page.getByRole('button', { name: 'Account menu' }).click();
     await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
     if (path === '/settings')
       await expect(page.getByRole('form', { name: 'Profile information' })).toBeVisible();
     expect(

@@ -1,6 +1,14 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import UserActions from '../UserActions';
+
+let pathname = '/';
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({
+    useLocation: () => ({ pathname, search: '', hash: '', state: null, key: 'test' }),
+  })
+);
 
 // The bell fetches the unread count and has its own tests; here it is only a marker.
 vi.mock('../NotificationBell', () => ({
@@ -60,5 +68,33 @@ describe('UserActions', () => {
       />
     );
     expect(screen.getByRole('link', { name: 'Notifications' })).toBeInTheDocument();
+  });
+
+  it('always offers the account menu for small screens, next to the text links of large ones', () => {
+    render(<UserActions isAuthenticated={false} user={null} logout={() => {}} />);
+
+    expect(screen.getByRole('button', { name: 'Account menu' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Switch to dark theme' })).toBeInTheDocument();
+  });
+
+  it('closes the account menu when the page changes', async () => {
+    pathname = '/';
+    const { rerender } = render(
+      <UserActions isAuthenticated={false} user={null} logout={() => {}} />
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Account menu' }));
+    expect(screen.getByRole('button', { name: 'Account menu' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
+
+    pathname = '/forum';
+    rerender(<UserActions isAuthenticated={false} user={null} logout={() => {}} />);
+
+    expect(screen.getByRole('button', { name: 'Account menu' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
   });
 });

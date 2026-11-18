@@ -1,11 +1,12 @@
 import { Outlet } from 'react-router';
 import Header from '@/widgets/header/Header';
+import MobileTabBar from '@/widgets/header/ui/MobileTabBar';
 import { StorageSettingsButton } from '@/widgets/consent-banner';
 import Sidebar from '@/widgets/sidebar/Sidebar';
 
 export default function MainLayout() {
   return (
-    <div className="min-h-screen bg-page flex flex-col">
+    <div className="min-h-screen bg-page flex flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
       <Header />
 
       <div className="flex-1 w-full max-w-282.5 mx-auto px-4 lg:px-6 py-6">
@@ -21,6 +22,8 @@ export default function MainLayout() {
           </div>
         </div>
       </div>
+
+      <MobileTabBar />
 
       <footer className="border-t border-line">
         <div className="w-full max-w-282.5 mx-auto px-4 lg:px-6 py-4 flex justify-end">
