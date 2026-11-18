@@ -3,7 +3,9 @@
 (function () {
   var theme = 'light';
   try {
-    var stored = localStorage.getItem('orbita.theme');
+    // A stored theme counts only if the user accepted optional storage (shared/lib/storageConsent.ts).
+    var stored =
+      localStorage.getItem('orbita.consent') === 'granted' ? localStorage.getItem('orbita.theme') : null;
     if (stored === 'light' || stored === 'dark') {
       theme = stored;
     } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {

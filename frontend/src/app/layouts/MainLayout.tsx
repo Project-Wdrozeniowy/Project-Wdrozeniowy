@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router';
 import Header from '@/widgets/header/Header';
+import { StorageSettingsButton } from '@/widgets/consent-banner';
 import Sidebar from '@/widgets/sidebar/Sidebar';
 
 export default function MainLayout() {
@@ -20,6 +21,12 @@ export default function MainLayout() {
           </div>
         </div>
       </div>
+
+      <footer className="border-t border-line">
+        <div className="w-full max-w-282.5 mx-auto px-4 lg:px-6 py-4 flex justify-end">
+          <StorageSettingsButton />
+        </div>
+      </footer>
     </div>
   );
 }

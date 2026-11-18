@@ -5,6 +5,7 @@ import { useStore } from '@/store';
 
 beforeEach(() => {
   localStorage.clear();
+  localStorage.setItem('orbita.consent', 'granted');
   document.documentElement.setAttribute('data-theme', 'light');
   useStore.setState({ theme: 'light' });
 });
@@ -37,5 +38,15 @@ describe('ThemeToggle', () => {
 
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(localStorage.getItem('orbita.theme')).toBe('light');
+  });
+
+  it('still switches the page, but remembers nothing, without the permission to store', async () => {
+    localStorage.removeItem('orbita.consent');
+    render(<ThemeToggle />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Switch to dark theme' }));
+
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(localStorage.getItem('orbita.theme')).toBeNull();
   });
 });

@@ -1,4 +1,7 @@
-export const THEME_STORAGE_KEY = 'orbita.theme';
+import { hasStorageConsent } from '@/shared/lib/storageConsent';
+import { THEME_STORAGE_KEY } from '@/shared/lib/storageKeys.const';
+
+export { THEME_STORAGE_KEY };
 export const THEMES = ['light', 'dark'] as const;
 export type Theme = (typeof THEMES)[number];
 
@@ -8,10 +11,11 @@ function isTheme(value: unknown): value is Theme {
 
 /**
  * The theme the user picked, or `null` when they never did (then the system decides). Only the
- * word "light" or "dark" is stored, never user data. Storage can be missing or blocked, so every
- * access is guarded and fails to "no choice".
+ * word "light" or "dark" is stored, never user data, and only after the user accepted optional
+ * storage. Storage can be missing or blocked, so every access is guarded and fails to "no choice".
  */
 export function readStoredTheme(): Theme | null {
+  if (!hasStorageConsent()) return null;
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
     return isTheme(stored) ? stored : null;
@@ -21,6 +25,7 @@ export function readStoredTheme(): Theme | null {
 }
 
 export function storeTheme(theme: Theme): void {
+  if (!hasStorageConsent()) return;
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {

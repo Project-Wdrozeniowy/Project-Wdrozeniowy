@@ -97,6 +97,7 @@ describe('SearchBar', () => {
     mockPush.mockReset();
     search.mockReset();
     localStorage.clear();
+    localStorage.setItem('orbita.consent', 'granted');
   });
 
   it('asks the API once, after the typing pauses, and shows every kind', async () => {

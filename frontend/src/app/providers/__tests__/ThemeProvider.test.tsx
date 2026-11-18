@@ -28,6 +28,7 @@ beforeEach(() => {
   listeners = [];
   systemDark = false;
   localStorage.clear();
+  localStorage.setItem('orbita.consent', 'granted');
   document.documentElement.removeAttribute('data-theme');
   useStore.setState({ theme: 'light' });
   vi.stubGlobal('matchMedia', vi.fn().mockReturnValue(query));
@@ -110,6 +111,19 @@ describe('ThemeProvider', () => {
     vi.stubGlobal('matchMedia', undefined);
 
     expect(() => render(<ThemeProvider />)).not.toThrow();
+    expect(shown()).toBe('light');
+  });
+
+  it('stops showing the stored theme when the permission is withdrawn in another tab', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    render(<ThemeProvider />);
+    expect(shown()).toBe('dark');
+
+    localStorage.setItem('orbita.consent', 'denied');
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'orbita.consent' }));
+    });
+
     expect(shown()).toBe('light');
   });
 });

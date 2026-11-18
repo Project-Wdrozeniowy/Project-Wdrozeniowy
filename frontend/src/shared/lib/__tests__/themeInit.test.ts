@@ -20,6 +20,7 @@ function prefersDark(matches: boolean) {
 
 beforeEach(() => {
   localStorage.clear();
+  localStorage.setItem('orbita.consent', 'granted');
   prefersDark(false);
 });
 
@@ -56,5 +57,18 @@ describe('theme-init.js', () => {
     vi.stubGlobal('matchMedia', undefined);
 
     expect(runScript()).toBe('light');
+  });
+
+  it.each([
+    ['no answer', null],
+    ['rejected', 'denied'],
+  ])('ignores a stored theme when the user gave no permission (%s)', (_name, answer) => {
+    localStorage.removeItem('orbita.consent');
+    if (answer) localStorage.setItem('orbita.consent', answer);
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    prefersDark(false);
+
+    expect(runScript()).toBe('light');
+    expect(currentTheme()).toBe('light');
   });
 });

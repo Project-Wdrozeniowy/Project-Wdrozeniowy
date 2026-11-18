@@ -42,6 +42,20 @@ export function apiResponse(page: Page, route: string, method: string): Promise<
 }
 
 export const test = base.extend<{ identity: Identity; account: Identity }>({
+  // The storage banner has its own spec (consent.spec.ts). Every other spec runs as a returning
+  // visitor who already answered, so the banner does not sit above the page under test.
+  page: async ({ page }, use) => {
+    await page.addInitScript(() => {
+      try {
+        if (localStorage.getItem('orbita.consent') === null) {
+          localStorage.setItem('orbita.consent', 'denied');
+        }
+      } catch {
+        // Storage blocked: the banner would show, which these specs tolerate.
+      }
+    });
+    await use(page);
+  },
   identity: async ({}, use) => {
     const username = `e2e_${randomBytes(10).toString('hex')}`;
     await use({ username, email: `${username}@example.test`, password: 'E2ePassword123!' });
