@@ -68,7 +68,7 @@ it('reads the dynamic post slug from the browser route', async () => {
   await open('/forum/a-real-slug');
   expect(await screen.findByText('Post slug: a-real-slug')).toBeVisible();
 });
-it.each(['/profile', '/settings', '/dashboard', '/admin'])(
+it.each(['/profile', '/settings', '/notifications', '/dashboard', '/admin'])(
   'redirects a guest opening %s directly',
   async (path) => {
     const router = await open(path);
@@ -76,7 +76,7 @@ it.each(['/profile', '/settings', '/dashboard', '/admin'])(
     expect(await screen.findByRole('heading', { name: 'Welcome Back' })).toBeVisible();
   }
 );
-it.each(['/profile', '/settings', '/dashboard', '/admin'])(
+it.each(['/profile', '/settings', '/notifications', '/dashboard', '/admin'])(
   'renders the implemented protected route %s for its permitted user',
   async (path) => {
     useStore.setState({ user: { ...user, role: 'ADMIN' }, isAuthenticated: true });
