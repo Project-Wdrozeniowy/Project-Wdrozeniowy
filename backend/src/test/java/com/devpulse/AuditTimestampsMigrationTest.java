@@ -22,8 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * starts equal to {@code created_at}, and a tag's {@code created_at} becomes
  * the first time it was attached to a post.
  *
- * <p>Uses its own schema, migrated to V6, filled, then migrated to the latest
- * version.
+ * <p>Uses its own schema, migrated to V6, filled, then checks V7 before
+ * verifying the latest upgrade (which retires HTTP refresh credentials).
  */
 @MigratedSchemaTest
 class AuditTimestampsMigrationTest {
@@ -58,7 +58,7 @@ class AuditTimestampsMigrationTest {
         jdbc.update(qualified("INSERT INTO %s.refresh_tokens (user_id, token, expires_at, created_at) "
                 + "VALUES (?, ?, ?, ?)"), userId, "b".repeat(64), CREATED.plusDays(7), CREATED);
 
-        flyway("latest").migrate();
+        flyway("7").migrate();
 
         assertThat(timestamps("tags WHERE id = " + usedTag))
                 .containsExactly(Map.entry("created_at", ATTACHED), Map.entry("updated_at", ATTACHED));
@@ -69,6 +69,16 @@ class AuditTimestampsMigrationTest {
         assertThat(jdbc.queryForObject(qualified(
                 "SELECT count(*) FROM %s.categories WHERE updated_at IS DISTINCT FROM created_at"), Long.class))
                 .isZero();
+
+        flyway("latest").migrate();
+        assertThat(jdbc.queryForObject("SELECT to_regclass(?) IS NULL", Boolean.class,
+                SCHEMA + ".refresh_tokens")).isTrue();
+        assertThat(jdbc.queryForMap(qualified("SELECT username, password_hash, auth_version FROM %s.users WHERE id = ?"), userId))
+                .containsEntry("username", "audit").containsEntry("password_hash", "hash").containsEntry("auth_version", 0L);
+        assertThat(jdbc.queryForObject(qualified("SELECT content FROM %s.posts WHERE id = ?"), String.class, postId))
+                .isEqualTo("Body");
+        assertThat(timestamps("tags WHERE id = " + usedTag))
+                .containsExactly(Map.entry("created_at", ATTACHED), Map.entry("updated_at", ATTACHED));
     }
 
     private Flyway flyway(String target) {

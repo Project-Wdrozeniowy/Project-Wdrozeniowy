@@ -1,4 +1,4 @@
-import { test, expect, gatewayURL } from '../support/fixtures.js';
+import { test, expect, gatewayURL, csrfHeaders } from '../support/fixtures.js';
 
 test('integration: anonymous protected writes return 401 and do not create a post', async ({
   request,
@@ -6,6 +6,7 @@ test('integration: anonymous protected writes return 401 and do not create a pos
 }) => {
   const title = `Forbidden ${identity.username}`;
   const response = await request.post(`${gatewayURL}/api/forum/posts`, {
+    headers: await csrfHeaders(request),
     data: { title, content: 'An anonymous write must never persist.', categoryId: 1 },
   });
   expect(response.status()).toBe(401);

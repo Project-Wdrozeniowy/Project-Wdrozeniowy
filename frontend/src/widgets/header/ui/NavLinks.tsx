@@ -1,23 +1,18 @@
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { cn } from '@/shared/lib/cn';
+import { isActiveLink } from '@/widgets/header/lib/isActiveLink';
 
 interface NavLink {
   href: string;
   label: string;
 }
 
-/** `/forum/some-post` keeps "Forum" highlighted; `/` only matches the home page exactly. */
-export function isActiveLink(pathname: string, href: string): boolean {
-  return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
-}
-
-export default function NavLinks({
-  links,
-  pathname,
-}: {
+interface NavLinksProps {
   links: readonly NavLink[];
   pathname: string;
-}) {
+}
+
+export default function NavLinks({ links, pathname }: NavLinksProps) {
   return (
     <nav className="hidden md:flex items-center gap-1">
       {links.map(({ href, label }) => {
@@ -25,11 +20,11 @@ export default function NavLinks({
         return (
           <Link
             key={href}
-            href={href}
+            to={href}
             aria-current={active ? 'page' : undefined}
             className={cn(
               'flex items-center gap-2 px-3 py-1.5 rounded text-sm font-semibold transition-colors',
-              active ? 'bg-slate-700 text-gray-50' : 'text-gray-50 hover:bg-slate-700'
+              active ? 'bg-raised text-fg' : 'text-fg hover:bg-raised'
             )}
           >
             {label}

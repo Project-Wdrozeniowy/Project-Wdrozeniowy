@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-//TODO [PWDRZ-131]: Extract authentication form orchestration from route pages, so that the schema can be imported from a single place and used in both the route page and the form component.
-
 export const loginSchema = z.object({
   username: z
     .string()

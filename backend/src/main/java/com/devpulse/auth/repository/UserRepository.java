@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -28,6 +30,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return an {@link Optional} containing the user, or empty if not found
      */
     Optional<User> findByUsername(String username);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u WHERE u.username = :username")
+    Optional<User> lockByUsername(@Param("username") String username);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u WHERE u.id = :id")
+    Optional<User> lockById(@Param("id") Long id);
 
     /**
      * Checks whether a username is already taken.
@@ -58,6 +68,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.postCount = u.postCount + :delta WHERE u.id = :userId")
     int adjustPostCount(@Param("userId") Long userId, @Param("delta") int delta);
+
+    /**
+     * Atomically adds {@code delta} to the user's comment counter, like
+     * {@link #adjustPostCount}.
+     *
+     * @param userId the author
+     * @param delta  {@code +1} or {@code -1}
+     * @return the number of updated rows
+     */
+    @Modifying
+    @Query("UPDATE User u SET u.commentCount = u.commentCount + :delta WHERE u.id = :userId")
+    int adjustCommentCount(@Param("userId") Long userId, @Param("delta") int delta);
 
     /**
      * Users with {@code status} whose username or display name matches

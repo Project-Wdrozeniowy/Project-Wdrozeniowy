@@ -3,7 +3,7 @@ package com.devpulse.user.service;
 import com.devpulse.auth.entity.Role;
 import com.devpulse.auth.entity.User;
 import com.devpulse.auth.entity.UserStatus;
-import com.devpulse.auth.repository.RefreshTokenRepository;
+
 import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.auth.util.AuthenticatedUserResolver;
 import com.devpulse.exception.AppException;
@@ -11,6 +11,7 @@ import com.devpulse.user.dto.ChangePasswordRequest;
 import com.devpulse.user.dto.MyProfileDto;
 import com.devpulse.user.dto.UpdateProfileRequest;
 import com.devpulse.user.dto.UserProfileDto;
+import com.devpulse.user.repository.PublicProfileStatsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -40,9 +42,10 @@ import static org.mockito.Mockito.when;
 class UserServiceTest {
 
     @Mock private UserRepository userRepository;
-    @Mock private RefreshTokenRepository refreshTokenRepository;
+    @Mock private jakarta.persistence.EntityManager entityManager;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private AuthenticatedUserResolver currentUser;
+    @Mock private PublicProfileStatsRepository publicStats;
 
     @InjectMocks private UserService userService;
 
@@ -74,6 +77,7 @@ class UserServiceTest {
     @Test
     void publicProfileHidesPrivateFields() {
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(principal));
+        when(publicStats.counts(1L)).thenReturn(new PublicProfileStatsRepository.Counts(2, 5));
 
         UserProfileDto response = userService.getPublicProfile("alice");
 
@@ -82,6 +86,20 @@ class UserServiceTest {
         assertThat(response.getRole()).isEqualTo("USER");
         // Only the own profile type carries the email address.
         assertThat(response).isNotInstanceOf(MyProfileDto.class);
+    }
+
+    @Test
+    void publicCountsExcludePrivateActivityWithoutChangingOwnTotals() {
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(principal));
+        when(publicStats.counts(1L)).thenReturn(new PublicProfileStatsRepository.Counts(1, 2));
+        when(currentUser.currentUser()).thenReturn(principal);
+
+        UserProfileDto publicProfile = userService.getPublicProfile("alice");
+        assertThat(publicProfile.getPostCount()).isEqualTo(1);
+        assertThat(publicProfile.getCommentCount()).isEqualTo(2);
+        MyProfileDto own = userService.getCurrentProfile();
+        assertThat(own.getPostCount()).isEqualTo(2);
+        assertThat(own.getCommentCount()).isEqualTo(5);
     }
 
     @Test
@@ -143,7 +161,9 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.updateProfile(req))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
-                        .isEqualTo(HttpStatus.CONFLICT));
+                        .isEqualTo(HttpStatus.CONFLICT))
+                .satisfies(e -> assertThat(((AppException) e).getFieldErrors())
+                        .containsExactly(entry("email", UserService.EMAIL_TAKEN_MESSAGE)));
     }
 
     @Test
@@ -157,7 +177,9 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.updateProfile(req))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
-                        .isEqualTo(HttpStatus.CONFLICT));
+                        .isEqualTo(HttpStatus.CONFLICT))
+                .satisfies(e -> assertThat(((AppException) e).getFieldErrors())
+                        .containsExactly(entry("email", UserService.EMAIL_TAKEN_MESSAGE)));
         verify(userRepository, never()).saveAndFlush(any());
     }
 
@@ -178,6 +200,7 @@ class UserServiceTest {
     @Test
     void changePasswordRejectsAWrongCurrentPassword() {
         when(currentUser.currentUser()).thenReturn(principal);
+        when(userRepository.lockById(1L)).thenReturn(Optional.of(principal));
         when(passwordEncoder.matches("nope", "hashed")).thenReturn(false);
 
         ChangePasswordRequest req = new ChangePasswordRequest("nope", "brandNew123");
@@ -187,12 +210,13 @@ class UserServiceTest {
                 .satisfies(e -> assertThat(((AppException) e).getStatus())
                         .isEqualTo(HttpStatus.BAD_REQUEST));
         verify(userRepository, never()).save(any());
-        verify(refreshTokenRepository, never()).revokeAllActiveByUser(any(), any());
+        assertThat(principal.getAuthVersion()).isZero();
     }
 
     @Test
-    void changePasswordHashesAndInvalidatesRefreshTokens() {
+    void changePasswordHashesAndInvalidatesAllPriorSessionVersions() {
         when(currentUser.currentUser()).thenReturn(principal);
+        when(userRepository.lockById(1L)).thenReturn(Optional.of(principal));
         when(passwordEncoder.matches("oldPass", "hashed")).thenReturn(true);
         when(passwordEncoder.encode("brandNew123")).thenReturn("newHash");
 
@@ -202,6 +226,6 @@ class UserServiceTest {
 
         assertThat(principal.getPasswordHash()).isEqualTo("newHash");
         verify(userRepository).save(principal);
-        verify(refreshTokenRepository).revokeAllActiveByUser(eq(principal), any(OffsetDateTime.class));
+        assertThat(principal.getAuthVersion()).isEqualTo(1);
     }
 }

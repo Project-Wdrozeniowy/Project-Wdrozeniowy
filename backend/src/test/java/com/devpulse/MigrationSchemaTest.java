@@ -1,22 +1,26 @@
 package com.devpulse;
 
-import com.devpulse.auth.entity.RefreshToken;
 import com.devpulse.auth.entity.Role;
 import com.devpulse.auth.entity.User;
 import com.devpulse.auth.entity.UserStatus;
-import com.devpulse.auth.repository.RefreshTokenRepository;
 import com.devpulse.auth.repository.UserRepository;
 import com.devpulse.forum.entity.Category;
+import com.devpulse.forum.entity.Comment;
+import com.devpulse.forum.entity.CommentStatus;
 import com.devpulse.forum.entity.Post;
 import com.devpulse.forum.entity.PostStatus;
 import com.devpulse.forum.entity.Tag;
 import com.devpulse.forum.entity.Vote;
 import com.devpulse.forum.enums.VoteType;
 import com.devpulse.forum.repository.CategoryRepository;
+import com.devpulse.forum.repository.CommentRepository;
 import com.devpulse.forum.repository.PostRepository;
 import com.devpulse.forum.repository.PostSubscriptionRepository;
 import com.devpulse.forum.repository.TagRepository;
 import com.devpulse.forum.repository.VoteRepository;
+import com.devpulse.notification.entity.Notification;
+import com.devpulse.notification.entity.NotificationType;
+import com.devpulse.notification.repository.NotificationRepository;
 import com.devpulse.support.MigratedSchemaTest;
 import jakarta.persistence.EntityManager;
 import org.flywaydb.core.Flyway;
@@ -60,14 +64,18 @@ class MigrationSchemaTest {
     @Autowired
     private TagRepository tagRepository;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     private VoteRepository voteRepository;
 
     @Autowired
     private PostSubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Autowired
     private EntityManager entityManager;
@@ -80,6 +88,26 @@ class MigrationSchemaTest {
     void migrationsRunOnStartup() {
         assertThat(flyway.info().pending()).isEmpty();
         assertThat(flyway.info().applied()).isNotEmpty();
+    }
+
+    /** V11 records when the collection of openings started. */
+    @Test
+    void theStartOfOpeningCollectionIsRecorded() {
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM analytics_collection_starts WHERE event_type = 'POST_VIEWED'", Long.class))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                "SELECT collected_from FROM analytics_collection_starts WHERE event_type = 'POST_VIEWED'",
+                OffsetDateTime.class)).isBeforeOrEqualTo(OffsetDateTime.now());
+    }
+
+    /** V12 indexes the opening rows that still identify a reader, and only those. */
+    @Test
+    void identifiableOpeningsAreIndexedForTheirRetention() {
+        assertThat(jdbc.queryForObject(
+                "SELECT indexdef FROM pg_indexes WHERE schemaname = current_schema() "
+                        + "AND indexname = 'idx_activity_identifiable_openings'", String.class))
+                .contains("(created_at)").contains("user_id IS NOT NULL").contains("POST_READ_LEGACY");
     }
 
     /**
@@ -116,6 +144,33 @@ class MigrationSchemaTest {
                 .isEqualTo(status);
     }
 
+    /**
+     * {@code notifications.type} is the native {@code notification_type} enum,
+     * and every Java constant exists in it.
+     */
+    @ParameterizedTest
+    @EnumSource(NotificationType.class)
+    void notificationTypeRoundTripsThroughNativeEnum(NotificationType type) {
+        User sender = userRepository.saveAndFlush(user("notify-" + type.name().toLowerCase(), Role.USER));
+        Long id = notificationRepository.saveAndFlush(Notification.builder()
+                .recipientId(sender.getId())
+                .sender(sender)
+                .type(type)
+                .entityType("POST")
+                .entityId(1L)
+                .message("message")
+                .build()).getId();
+        entityManager.clear();
+
+        assertThat(notificationRepository.findById(id)).get()
+                .satisfies(notification -> {
+                    assertThat(notification.getType()).isEqualTo(type);
+                    assertThat(notification.isRead()).isFalse();
+                    assertThat(notification.getCreatedAt()).isNotNull();
+                    assertThat(notification.getUpdatedAt()).isNotNull();
+                });
+    }
+
     /** {@code posts.status} is the native {@code post_status} enum, and every Java constant exists in it. */
     @ParameterizedTest
     @EnumSource(PostStatus.class)
@@ -137,13 +192,58 @@ class MigrationSchemaTest {
                 .isEqualTo(status);
     }
 
-    /** Every table has non-null {@code created_at} and {@code updated_at} with defaults and the V7 trigger. */
+    /**
+     * {@code comments.status} is the native {@code comment_status} enum, every
+     * Java constant exists in it, and a reply keeps its post, parent, author
+     * and depth; the vote score and timestamps come from the database.
+     */
+    @ParameterizedTest
+    @EnumSource(CommentStatus.class)
+    void commentRoundTripsThroughNativeEnum(CommentStatus status) {
+        String name = "comment-" + status.name().toLowerCase();
+        User author = userRepository.saveAndFlush(user(name, Role.USER));
+        Post post = postRepository.saveAndFlush(Post.builder()
+                .author(author)
+                .title(name)
+                .slug("schema-" + name)
+                .content("content")
+                .build());
+        Long rootId = commentRepository.saveAndFlush(Comment.builder()
+                .postId(post.getId())
+                .author(author)
+                .content("root")
+                .build()).getId();
+        Long id = commentRepository.saveAndFlush(Comment.builder()
+                .postId(post.getId())
+                .author(author)
+                .parentId(rootId)
+                .content("reply")
+                .status(status)
+                .depth((short) 1)
+                .build()).getId();
+        entityManager.clear();
+
+        assertThat(commentRepository.findWithAuthorById(id)).get()
+                .satisfies(comment -> {
+                    assertThat(comment.getStatus()).isEqualTo(status);
+                    assertThat(comment.getPostId()).isEqualTo(post.getId());
+                    assertThat(comment.getParentId()).isEqualTo(rootId);
+                    assertThat(comment.getAuthor().getUsername()).isEqualTo(name);
+                    assertThat(comment.getContent()).isEqualTo("reply");
+                    assertThat(comment.getDepth()).isEqualTo((short) 1);
+                    assertThat(comment.getVoteScore()).isZero();
+                    assertThat(comment.getCreatedAt()).isNotNull();
+                    assertThat(comment.getUpdatedAt()).isNotNull();
+                });
+    }
+
+    /** Domain tables retain V7 auditing; Spring Session uses its own lifecycle/expiry columns. */
     @Test
     void everyTableHasAuditTimestamps() {
         List<String> tables = jdbc.queryForList("""
                 SELECT table_name FROM information_schema.tables
                 WHERE table_schema = current_schema() AND table_type = 'BASE TABLE'
-                  AND table_name <> 'flyway_schema_history'
+                  AND table_name NOT IN ('flyway_schema_history', 'spring_session', 'spring_session_attributes')
                 """, String.class);
         List<String> missingColumns = jdbc.queryForList("""
                 SELECT t.table_name || '.' || wanted.name
@@ -153,16 +253,24 @@ class MigrationSchemaTest {
                        ON c.table_schema = t.table_schema AND c.table_name = t.table_name
                       AND c.column_name = wanted.name AND c.is_nullable = 'NO' AND c.column_default IS NOT NULL
                 WHERE t.table_schema = current_schema() AND t.table_type = 'BASE TABLE'
-                  AND t.table_name <> 'flyway_schema_history' AND c.column_name IS NULL
+                  AND t.table_name NOT IN ('flyway_schema_history', 'spring_session', 'spring_session_attributes')
+                  AND c.column_name IS NULL
                 """, String.class);
         List<String> triggered = jdbc.queryForList("""
                 SELECT event_object_table FROM information_schema.triggers
                 WHERE trigger_schema = current_schema() AND action_statement LIKE '%set_updated_at()%'
                 """, String.class);
 
-        assertThat(tables).hasSize(11);
+        assertThat(tables).containsExactlyInAnyOrder("users", "posts", "categories", "post_tags", "comments",
+                "tags", "votes", "notifications", "post_subscriptions", "activity_events",
+                "analytics_collection_starts");
         assertThat(missingColumns).isEmpty();
         assertThat(triggered).containsExactlyInAnyOrderElementsOf(tables);
+        assertThat(jdbc.queryForList("""
+                SELECT table_name FROM information_schema.tables
+                WHERE table_schema = current_schema() AND table_type = 'BASE TABLE'
+                  AND table_name IN ('refresh_tokens', 'spring_session', 'spring_session_attributes')
+                """, String.class)).containsExactlyInAnyOrder("spring_session", "spring_session_attributes");
     }
 
     /** The timestamp columns added by V7 are mapped and filled on insert. */
@@ -188,21 +296,14 @@ class MigrationSchemaTest {
      * and a value the writer sets itself is kept.
      */
     @Test
-    void updatedAtFollowsUpdatesOutsideTheEntities() {
-        User owner = userRepository.saveAndFlush(user("schema-audit", Role.USER));
-        RefreshToken token = refreshTokenRepository.saveAndFlush(RefreshToken.builder()
-                .user(owner)
-                .token("a".repeat(64))
-                .expiresAt(OffsetDateTime.now().plusDays(1))
-                .build());
-        assertThat(token.getUpdatedAt()).isNotNull();
-        OffsetDateTime past = OffsetDateTime.parse("2026-01-01T00:00:00Z");
-
-        jdbc.update("UPDATE refresh_tokens SET updated_at = ? WHERE id = ?", past, token.getId());
-        assertThat(tokenUpdatedAt(token.getId())).isAtSameInstantAs(past);
-
-        refreshTokenRepository.revokeAllActiveByUser(owner, OffsetDateTime.now());
-        assertThat(tokenUpdatedAt(token.getId())).isAfter(past);
+    void authenticationVersionRoundTripsWithoutChangingCredentials() {
+        User owner = userRepository.saveAndFlush(user("schema-auth-version", Role.USER));
+        String hash = owner.getPasswordHash();
+        jdbc.update("UPDATE users SET auth_version = auth_version + 1 WHERE id = ?", owner.getId());
+        entityManager.clear();
+        User loaded = userRepository.findById(owner.getId()).orElseThrow();
+        assertThat(loaded.getAuthVersion()).isEqualTo(1);
+        assertThat(loaded.getPasswordHash()).isEqualTo(hash);
     }
 
     /** {@code votes.vote_type} is the native {@code vote_type} enum, for votes on posts and on comments. */
@@ -260,9 +361,6 @@ class MigrationSchemaTest {
         assertThat(subscriptionRepository.unsubscribe(owner.getId(), postId)).isOne();
     }
 
-    private OffsetDateTime tokenUpdatedAt(Long id) {
-        return jdbc.queryForObject("SELECT updated_at FROM refresh_tokens WHERE id = ?", OffsetDateTime.class, id);
-    }
 
     private static User user(String username, Role role) {
         return User.builder()

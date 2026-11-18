@@ -1,9 +1,9 @@
 # Shared auth
 
-This directory will own **global client session and token lifecycle**, which multiple routes and widgets need.
+This directory owns **global client session presentation and coordination** used by routes and widgets.
 
-- Put the in-memory access token and cohesive session coordination here. Preserve the HttpOnly refresh-cookie flow through the shared API client.
+- `session.ts` coordinates `/users/me` bootstrap, explicit authentication, logout and tab reconciliation; `sessionEvents.ts` isolates stale work. Cookies/CSRF use the single shared API client.
 - Do not put page-specific login form UI, authorization decisions owned by the backend, or a second independently editable profile cache here.
-- Planned examples from current code: `lib/tokenMemory.ts` and the session portion of `store/slices/authSlice.ts`. Their current files have not been moved.
+- No access/refresh tokens, persistent browser credentials, automatic mutation replay or heartbeat. See [session policy](../../../../docs/guides/sessions.md).
 
 The profile/state consolidation belongs to [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150). See the [frontend architecture target](../../../../docs/guides/frontend/README.md).

@@ -2,63 +2,43 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import Header from '../Header';
-import { authService } from '@/shared/api/auth/authClient';
+import { signOutSession } from '@/shared/auth/session';
 import { toast } from '@/shared/lib/toast';
 import { useStore } from '@/store';
 
-vi.mock('next/navigation', () => ({
-  usePathname: () => '/',
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-}));
-
-vi.mock('@/shared/api/auth/authClient', () => ({
-  authService: { logout: vi.fn() },
-}));
-
+vi.mock('@/shared/auth/session', () => ({ signOutSession: vi.fn() }));
 vi.mock('@/shared/lib/toast', () => ({
   API_ERROR_TOAST_ID: 'api-error',
   toast: { success: vi.fn(), error: vi.fn() },
 }));
-
-const logout = vi.fn();
-
-vi.mock('@/store', () => ({
-  useStore: vi.fn(),
-}));
+vi.mock('../ui/SearchBar', () => ({ default: () => null }));
+// The bell has its own tests and needs a QueryClient that this sign-out test does not.
+vi.mock('../ui/NotificationBell', () => ({ default: () => null }));
 
 beforeEach(() => {
   vi.clearAllMocks();
-  const state = {
+  useStore.setState({
     isAuthenticated: true,
-    user: { id: 1, username: 'alice', displayName: 'Alice', role: 'USER' },
-    logout,
-  };
-  vi.mocked(useStore).mockImplementation(((selector: (s: unknown) => unknown) =>
-    selector(state)) as typeof useStore);
+    user: { id: 1, username: 'alice', displayName: 'Alice', role: 'USER' } as NonNullable<
+      ReturnType<typeof useStore.getState>['user']
+    >,
+  });
 });
 
-describe('Header sign out', () => {
-  it('clears the session after the server revoked the refresh token', async () => {
-    vi.mocked(authService.logout).mockResolvedValue(undefined);
-    render(<Header />);
+it('reports sign-out success only after the shared lifecycle succeeds', async () => {
+  vi.mocked(signOutSession).mockResolvedValue(undefined);
+  render(<Header />);
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Sign out' }));
+  await waitFor(() => expect(toast.success).toHaveBeenCalledWith('You have been signed out.'));
+  expect(signOutSession).toHaveBeenCalledTimes(1);
+});
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Sign out' }));
-
-    await waitFor(() => expect(logout).toHaveBeenCalled());
-    expect(toast.success).toHaveBeenCalledWith('You have been signed out.');
-  });
-
-  it('keeps the session when the logout request fails', async () => {
-    // The refresh cookie is still valid, so clearing only the client state would
-    // sign the user back in on the next page load.
-    vi.mocked(authService.logout).mockRejectedValue(new Error('offline'));
-    render(<Header />);
-
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Sign out' }));
-
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith('Could not sign out. Please try again.', 'api-error')
-    );
-    expect(logout).not.toHaveBeenCalled();
-  });
+it('reports a recoverable sign-out failure without announcing success', async () => {
+  vi.mocked(signOutSession).mockRejectedValue(new Error('offline'));
+  render(<Header />);
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Sign out' }));
+  await waitFor(() =>
+    expect(toast.error).toHaveBeenCalledWith('Could not sign out. Please try again.', 'api-error')
+  );
+  expect(toast.success).not.toHaveBeenCalled();
 });

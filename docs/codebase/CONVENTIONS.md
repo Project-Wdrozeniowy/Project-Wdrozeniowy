@@ -89,9 +89,15 @@ branches, commits, and PRs, follow the [Git workflow](../guides/git-workflow.md)
 
 #### Backend
 - **Error strategy**: `AppException` carries a status and message for handled
-  application failures. `GlobalExceptionHandler` also handles validation and
-  other framework errors and returns RFC 9457 `ProblemDetail` responses.
+  application failures, and optionally messages for the request fields that
+  caused them (for example `email` on the 409 of `PATCH /users/me`).
+  `GlobalExceptionHandler` also handles validation and other framework errors
+  and returns RFC 9457 `ProblemDetail` responses.
 - **Response format**: RFC 9457 ProblemDetail (Spring 6 native) — `type`, `title`, `status`, `detail`, optional `errors` property.
+- **Field errors**: `errors` maps a request field to a message. A field that
+  breaks several constraints gets all their messages, sorted and joined with
+  `; `. Constraints on user-facing forms set a `message` that names the field
+  (`Bio must be at most {max} characters`) instead of the Bean Validation default.
 - **Logging**: Lombok `@Slf4j` on `JwtUtil`; no structured/JSON logging configuration or log aggregator is observed. This snapshot does not prescribe one.
 
 #### Gateway

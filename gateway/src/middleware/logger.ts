@@ -1,7 +1,11 @@
 import morgan from 'morgan';
 import type { Request, Response } from 'express';
 
-const FORMAT = ':method :url :status :res[content-length] bytes - :response-time ms';
+morgan.token(
+  'safe-path',
+  (req) => (('originalUrl' in req ? String(req.originalUrl) : req.url) ?? '/').split('?')[0]
+);
+const FORMAT = ':method :safe-path :status :res[content-length] bytes - :response-time ms';
 
 const accessLogger = morgan(FORMAT, {
   skip: (req: Request) => req.url === '/health',

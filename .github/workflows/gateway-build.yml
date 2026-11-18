@@ -7,6 +7,9 @@ on:
       - develop
     paths:
       - 'gateway/**'
+      - 'frontend/**'
+      - 'backend/openapi.json'
+      - '.dockerignore'
       - 'package.json'
       - 'package-lock.json'
       - 'nx.json'
@@ -15,11 +18,16 @@ on:
   pull_request:
     paths:
       - 'gateway/**'
+      - 'frontend/**'
+      - 'backend/openapi.json'
+      - '.dockerignore'
       - 'package.json'
       - 'package-lock.json'
       - 'nx.json'
       - 'tools/**'
       - '.github/workflows/gateway-build.yml'
+
+  workflow_dispatch:
 
 env:
   NX_DAEMON: 'false'
@@ -49,3 +57,6 @@ jobs:
 
       - name: Type check
         run: npx nx run gateway:typecheck
+
+      - name: Build the gateway image with its frontend
+        run: npx nx run gateway:image

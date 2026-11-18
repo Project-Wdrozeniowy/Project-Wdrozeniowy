@@ -24,3 +24,47 @@ describe('uiSlice >-65', () => {
     expect(store.getState().isLoading).toBe(false);
   });
 });
+
+describe('uiSlice theme', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem('orbita.consent', 'granted');
+    document.documentElement.setAttribute('data-theme', 'light');
+  });
+
+  it('starts with the theme the page shows', () => {
+    document.documentElement.setAttribute('data-theme', 'dark');
+
+    expect(makeStore().getState().theme).toBe('dark');
+  });
+
+  it('setTheme shows the theme and remembers it', () => {
+    const store = makeStore();
+
+    store.getState().setTheme('dark');
+
+    expect(store.getState().theme).toBe('dark');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(localStorage.getItem('orbita.theme')).toBe('dark');
+  });
+
+  it('followTheme shows the theme without remembering it', () => {
+    const store = makeStore();
+
+    store.getState().followTheme('dark');
+
+    expect(store.getState().theme).toBe('dark');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(localStorage.getItem('orbita.theme')).toBeNull();
+  });
+
+  it('toggleTheme switches between light and dark and remembers the choice', () => {
+    const store = makeStore();
+
+    store.getState().toggleTheme();
+    expect(store.getState().theme).toBe('dark');
+    store.getState().toggleTheme();
+    expect(store.getState().theme).toBe('light');
+    expect(localStorage.getItem('orbita.theme')).toBe('light');
+  });
+});

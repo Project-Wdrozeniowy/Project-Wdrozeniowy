@@ -1,0 +1,127 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
+}
+
+/* The dark theme is chosen with data-theme on <html> (set by public/theme-init.js, then by the app). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme inline {
+  --font-sans: var(--font-inter);
+
+  /* Semantic colours: the theme decides the value, components only name the role. */
+  --color-page: var(--page);
+  --color-header: var(--header);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-raised-hover: var(--raised-hover);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-soft: var(--fg-soft);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+
+  /* Category colors */
+  --color-cat-ai: var(--cat-ai);
+  --color-cat-gaming: var(--cat-gaming);
+  --color-cat-politics: var(--cat-politics);
+  --color-cat-science: var(--cat-science);
+  --color-cat-business: var(--cat-business);
+  --color-cat-education: var(--cat-education);
+  --color-cat-news: var(--cat-news);
+}
+
+/* Light is the default, as in the design; it also applies before any script has run. */
+:root,
+:root[data-theme='light'] {
+  --font-inter: 'Inter Variable';
+  color-scheme: light;
+  --page: #f9fafb;
+  --header: #ffffff;
+  --surface: #ffffff;
+  --raised: #f3f4f6;
+  --raised-hover: #e5e7eb;
+  --line: #e5e7eb;
+  --line-strong: #d1d5db;
+  --fg: #111827;
+  --fg-soft: #374151;
+  --fg-muted: #4b5563;
+  --fg-subtle: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --danger: #dc2626;
+  --warning: #b45309;
+  --success: #059669;
+  /* Category text must stay readable on white: the 700 shades; the dark theme uses the 400 ones. */
+  --cat-ai: var(--color-blue-700);
+  --cat-gaming: var(--color-green-700);
+  --cat-politics: var(--color-red-700);
+  --cat-science: var(--color-violet-700);
+  --cat-business: var(--color-amber-700);
+  --cat-education: var(--color-teal-700);
+  --cat-news: var(--color-gray-600);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #0f172a;
+  --header: #1e293b;
+  --surface: #1e293b;
+  --raised: #334155;
+  --raised-hover: #475569;
+  --line: #334155;
+  --line-strong: #475569;
+  --fg: #f9fafb;
+  --fg-soft: #e2e8f0;
+  --fg-muted: #cbd5e1;
+  --fg-subtle: #94a3b8;
+  --accent: #60a5fa;
+  --accent-hover: #93c5fd;
+  --danger: #f87171;
+  --warning: #fcd34d;
+  --success: #34d399;
+  --cat-ai: var(--color-blue-400);
+  --cat-gaming: var(--color-green-400);
+  --cat-politics: var(--color-red-400);
+  --cat-science: var(--color-violet-400);
+  --cat-business: var(--color-amber-400);
+  --cat-education: var(--color-teal-400);
+  --cat-news: var(--color-gray-400);
+}
+
+body {
+  background: var(--page);
+  color: var(--fg);
+  font-family: var(--font-inter), Arial, sans-serif;
+}
+
+.input {
+  width: 100%;
+  background-color: var(--raised);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--fg);
+  border: none;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--fg-subtle);
+}
+
+.input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 0px;
+}

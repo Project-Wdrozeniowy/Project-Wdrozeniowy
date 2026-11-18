@@ -1,4 +1,8 @@
-export default function OrbitaLogo({ size = 85 }: { size?: number }) {
+interface OrbitaLogoProps {
+  size?: number;
+}
+
+export default function OrbitaLogo({ size = 85 }: OrbitaLogoProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 85 85" fill="none" aria-hidden>
       <circle cx="42.5" cy="42.5" r="35" stroke="#6366f1" strokeWidth="1" opacity="0.15" />

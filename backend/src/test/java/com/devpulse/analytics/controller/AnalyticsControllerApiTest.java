@@ -1,0 +1,669 @@
+package com.devpulse.analytics.controller;
+
+import com.devpulse.auth.entity.Role;
+import com.devpulse.auth.entity.User;
+import com.devpulse.auth.repository.UserRepository;
+import com.devpulse.forum.entity.Post;
+import com.devpulse.forum.entity.PostStatus;
+import com.devpulse.forum.repository.PostRepository;
+import com.devpulse.support.MigratedSchemaTest;
+import com.jayway.jsonpath.JsonPath;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.WebApplicationContext;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * The analytics API through the full security filter chain, against the real
+ * schema: the figures are checked against seeded posts, comments, votes and
+ * views, and every operation's role rule is checked.
+ */
+@MigratedSchemaTest
+@Transactional
+class AnalyticsControllerApiTest {
+
+    @Autowired private WebApplicationContext context;
+    @Autowired private UserRepository userRepository;
+    @Autowired private PostRepository postRepository;
+    @Autowired private JdbcTemplate jdbc;
+
+    private final String run = UUID.randomUUID().toString().substring(0, 8);
+
+    private MockMvc mockMvc;
+    private User author;
+    private User reader;
+    private User moderator;
+    private User admin;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(context).defaultRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())).apply(springSecurity()).build();
+        author = saveUser("author", Role.USER);
+        reader = saveUser("reader", Role.USER);
+        moderator = saveUser("mod", Role.MODERATOR);
+        admin = saveUser("admin", Role.ADMIN);
+    }
+
+    @Test
+    void myActivityCountsOwnContentAndTheVotesItReceived() throws Exception {
+        Post published = savePost("published", PostStatus.PUBLISHED);
+        savePost("locked", PostStatus.LOCKED);
+        savePost("draft", PostStatus.DRAFT);
+        long comment = saveComment(published, author, "VISIBLE");
+        saveComment(published, author, "HIDDEN");
+        vote(reader, published.getId(), null, "UP");
+        vote(moderator, published.getId(), null, "DOWN");
+        vote(reader, null, comment, "UP");
+        vote(author, published.getId(), null, "UP");
+
+        mockMvc.perform(get("/analytics/me").with(as(author)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(author.getUsername()))
+                .andExpect(jsonPath("$.totalPosts").value(2))
+                .andExpect(jsonPath("$.totalComments").value(1))
+                .andExpect(jsonPath("$.totalVotesCast").value(1))
+                .andExpect(jsonPath("$.totalUpvotesReceived").value(3))
+                .andExpect(jsonPath("$.totalDownvotesReceived").value(1))
+                .andExpect(jsonPath("$.lastActivityAt").exists());
+        mockMvc.perform(get("/analytics/me").with(as(admin)))
+                .andExpect(jsonPath("$.totalPosts").value(0))
+                .andExpect(jsonPath("$.lastActivityAt").value((Object) null));
+        mockMvc.perform(get("/analytics/me")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void engagementSummariesRespectCurrentVisibilityOwnershipAndReachableComments() throws Exception {
+        Post post = savePost("engagement", PostStatus.PUBLISHED);
+        opening(post, null);
+        opening(post, reader);
+        opening(post, reader);
+        saveComment(post, reader, "VISIBLE");
+        long deleted = saveComment(post, author, "DELETED");
+        long visibleReply = saveComment(post, reader, "VISIBLE");
+        jdbc.update("UPDATE comments SET parent_id=?,depth=1 WHERE id=?", deleted, visibleReply);
+        long hidden = saveComment(post, author, "HIDDEN");
+        long hiddenReply = saveComment(post, reader, "VISIBLE");
+        jdbc.update("UPDATE comments SET parent_id=?,depth=1 WHERE id=?", hidden, hiddenReply);
+        vote(author, post.getId(), null, "UP");
+        vote(reader, post.getId(), null, "UP");
+        vote(moderator, post.getId(), null, "UP");
+        vote(admin, post.getId(), null, "DOWN");
+        jdbc.update("UPDATE posts SET vote_score=2 WHERE id=?", post.getId());
+        String publicPath = "/analytics/public/posts/" + post.getId();
+        String ownerPath = "/analytics/me/posts/" + post.getId();
+        long eventsBefore = count("SELECT count(*) FROM activity_events");
+
+        for (String state : List.of("PUBLISHED", "LOCKED")) {
+            jdbc.update("UPDATE posts SET status=CAST(? AS post_status) WHERE id=?", state, post.getId());
+            mockMvc.perform(get(publicPath))
+                    .andExpect(status().isOk())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                            .string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
+                    .andExpect(jsonPath("$", org.hamcrest.Matchers.aMapWithSize(5)))
+                    .andExpect(jsonPath("$.viewCount").value(3))
+                    .andExpect(jsonPath("$.commentCount").value(2))
+                    .andExpect(jsonPath("$.voteScore").value(2))
+                    .andExpect(jsonPath("$.collectedFrom").isNotEmpty());
+            mockMvc.perform(get(publicPath).with(as(author)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", org.hamcrest.Matchers.aMapWithSize(5)));
+            mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head(publicPath))
+                    .andExpect(status().isOk());
+            // MockMvc retains the rendered body; the managed HTTP test checks wire-level HEAD suppression.
+        }
+        mockMvc.perform(get(ownerPath)).andExpect(status().isUnauthorized());
+        for (User other : List.of(reader, moderator, admin)) {
+            mockMvc.perform(get(ownerPath).with(as(other))).andExpect(status().isNotFound());
+        }
+        jdbc.update("UPDATE posts SET status='DRAFT' WHERE id=?", post.getId());
+        mockMvc.perform(get(publicPath)).andExpect(status().isNotFound());
+        mockMvc.perform(get(publicPath).with(as(author))).andExpect(status().isNotFound());
+        mockMvc.perform(get(ownerPath).with(as(author)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.aMapWithSize(7)))
+                .andExpect(jsonPath("$.viewCount").value(3))
+                .andExpect(jsonPath("$.commentCount").value(2))
+                .andExpect(jsonPath("$.upvoteCount").value(3))
+                .andExpect(jsonPath("$.downvoteCount").value(1));
+        jdbc.update("UPDATE posts SET status='DELETED' WHERE id=?", post.getId());
+        mockMvc.perform(get(publicPath)).andExpect(status().isNotFound());
+        mockMvc.perform(get(ownerPath).with(as(author))).andExpect(status().isNotFound());
+        mockMvc.perform(get("/analytics/posts/{id}", post.getId()).with(as(moderator)))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/analytics/public/posts/{id}", Long.MAX_VALUE)).andExpect(status().isNotFound());
+        mockMvc.perform(get("/analytics/me/posts/{id}", Long.MAX_VALUE).with(as(author)))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/analytics/public/posts/invalid")).andExpect(status().isBadRequest());
+        assertThat(count("SELECT count(*) FROM activity_events")).isEqualTo(eventsBefore);
+        assertThat(jdbc.queryForObject("SELECT view_count FROM posts WHERE id=?", Integer.class, post.getId()))
+                .isEqualTo(3);
+    }
+
+    @Test
+    void engagementCountsQuietPostsNegativeScoresAndEveryAccessibleDepth() throws Exception {
+        Post post = savePost("deep-engagement", PostStatus.PUBLISHED);
+        String path = "/analytics/public/posts/" + post.getId();
+        mockMvc.perform(get(path)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.viewCount").value(0))
+                .andExpect(jsonPath("$.commentCount").value(0))
+                .andExpect(jsonPath("$.voteScore").value(0));
+        long parent = saveComment(post, reader, "VISIBLE");
+        for (int depth = 1; depth <= 5; depth++) {
+            long child = saveComment(post, reader, "VISIBLE");
+            jdbc.update("UPDATE comments SET parent_id=?,depth=? WHERE id=?", parent, depth, child);
+            parent = child;
+        }
+        vote(reader, post.getId(), null, "DOWN");
+        Post other = savePost("unrelated-engagement", PostStatus.PUBLISHED);
+        long otherComment = saveComment(other, reader, "VISIBLE");
+        vote(author, null, otherComment, "UP");
+        jdbc.update("UPDATE posts SET vote_score=-1 WHERE id=?", post.getId());
+        mockMvc.perform(get(path)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.commentCount").value(6))
+                .andExpect(jsonPath("$.voteScore").value(-1));
+    }
+
+    @Test
+    void postAnalyticsCountRecordedViewsForStaffOnly() throws Exception {
+        Post post = savePost("viewed", PostStatus.PUBLISHED);
+        jdbc.update("UPDATE analytics_collection_starts SET collected_from = now() - interval '90 days' "
+                + "WHERE event_type = 'POST_VIEWED'");
+        opening(post, null);
+        opening(post, reader);
+        opening(post, reader);
+        openingAt(post, moderator, OffsetDateTime.now(ZoneOffset.UTC).minusDays(31));
+        saveComment(post, reader, "VISIBLE");
+        vote(reader, post.getId(), null, "UP");
+        jdbc.update("UPDATE posts SET vote_score = 1 WHERE id = ?", post.getId());
+        jdbc.update("INSERT INTO post_subscriptions (user_id, post_id) VALUES (?, ?)", reader.getId(), post.getId());
+
+        OffsetDateTime cutoff = OffsetDateTime.now(ZoneOffset.UTC).minusDays(30);
+        String body = mockMvc.perform(get("/analytics/posts/{id}", post.getId()).with(as(moderator)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.postTitle").value("viewed"))
+                .andExpect(jsonPath("$.viewCount").value(4))
+                .andExpect(jsonPath("$.uniqueViewCount").value(1))
+                .andExpect(jsonPath("$.commentCount").value(1))
+                .andExpect(jsonPath("$.voteScore").value(1))
+                .andExpect(jsonPath("$.upvoteCount").value(1))
+                .andExpect(jsonPath("$.downvoteCount").value(0))
+                .andExpect(jsonPath("$.subscriptionCount").value(1))
+                .andReturn().getResponse().getContentAsString();
+        OffsetDateTime since = OffsetDateTime.parse(JsonPath.read(body, "$.uniqueViewCountSince"));
+        assertThat(since.getOffset()).isEqualTo(ZoneOffset.UTC);
+        assertThat(Duration.between(cutoff, since).abs()).isLessThan(Duration.ofMinutes(1));
+
+        OffsetDateTime collectedFrom = jdbc.queryForObject("""
+                UPDATE analytics_collection_starts SET collected_from = now() - interval '10 days'
+                WHERE event_type = 'POST_VIEWED' RETURNING collected_from
+                """, OffsetDateTime.class);
+        String later = mockMvc.perform(get("/analytics/posts/{id}", post.getId()).with(as(moderator)))
+                .andExpect(jsonPath("$.uniqueViewCount").value(1))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(OffsetDateTime.parse(JsonPath.read(later, "$.uniqueViewCountSince")).toInstant())
+                .isEqualTo(collectedFrom.toInstant());
+        mockMvc.perform(get("/analytics/posts/{id}", post.getId()).with(as(reader))).andExpect(status().isForbidden());
+        mockMvc.perform(get("/analytics/posts/{id}", Long.MAX_VALUE).with(as(admin))).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void thePlatformSummaryMatchesTheDatabaseForAdminsOnly() throws Exception {
+        savePost("summary", PostStatus.PUBLISHED);
+
+        String json = mockMvc.perform(get("/analytics/summary").with(as(admin)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(number(json, "$.totalUsers")).isEqualTo(count("SELECT count(*) FROM users"));
+        assertThat(number(json, "$.activeUsers")).isEqualTo(count("SELECT count(*) FROM users WHERE status = 'ACTIVE'"));
+        assertThat(number(json, "$.totalPosts"))
+                .isEqualTo(count("SELECT count(*) FROM posts WHERE status IN ('PUBLISHED', 'LOCKED')"));
+        assertThat(number(json, "$.totalCategories")).isEqualTo(count("SELECT count(*) FROM categories"));
+        mockMvc.perform(get("/analytics/summary").with(as(moderator))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void trendsCountTodaysRowsPerDay() throws Exception {
+        savePost("trend-1", PostStatus.PUBLISHED);
+        savePost("trend-2", PostStatus.PUBLISHED);
+        long before = count("SELECT count(*) FROM posts WHERE created_at >= now() - interval '7 days'");
+
+        String json = mockMvc.perform(get("/analytics/trends").param("metric", "posts").param("period", "7d")
+                        .with(as(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.metric").value("posts"))
+                .andExpect(jsonPath("$.period").value("7d"))
+                .andReturn().getResponse().getContentAsString();
+
+        List<String> days = JsonPath.read(json, "$.data[*].date");
+        assertThat(days).hasSizeBetween(7, 8).last().isEqualTo(LocalDate.now(ZoneOffset.UTC).toString());
+        assertThat(number(json, "$.total")).isEqualTo(before);
+        mockMvc.perform(get("/analytics/trends").param("metric", "likes").with(as(admin)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/analytics/trends").param("period", "1y").with(as(admin)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/analytics/trends").with(as(moderator))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void trendingPostsRankPublicActivityInTheWindowForAnyone() throws Exception {
+        Post busy = savePost("busy", PostStatus.PUBLISHED);
+        Post quiet = savePost("quiet", PostStatus.PUBLISHED);
+        Post idle = savePost("idle", PostStatus.PUBLISHED);
+        Post draft = savePost("hidden", PostStatus.DRAFT);
+        saveComment(busy, reader, "VISIBLE");
+        vote(reader, busy.getId(), null, "UP");
+        vote(reader, quiet.getId(), null, "UP");
+        vote(reader, draft.getId(), null, "UP");
+
+        String json = mockMvc.perform(get("/analytics/trending-posts").param("period", "24h").param("limit", "50"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        List<String> slugs = JsonPath.read(json, "$[*].slug");
+
+        assertThat(slugs).containsSubsequence(busy.getSlug(), quiet.getSlug())
+                .doesNotContain(idle.getSlug(), draft.getSlug());
+        mockMvc.perform(get("/analytics/trending-posts").param("limit", "0")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/analytics/trending-posts").param("limit", "51")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/analytics/trending-posts").param("period", "90d")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void guestsGetDailyPublicActivityWithOnlyEligibleRecords() throws Exception {
+        hideAllContent();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        Post published = postCreatedOn("published", PostStatus.PUBLISHED, today.minusDays(1));
+        Post locked = postCreatedOn("locked", PostStatus.LOCKED, today.minusDays(6));
+        Post draft = postCreatedOn("draft", PostStatus.DRAFT, today.minusDays(1));
+        Post deleted = postCreatedOn("deleted", PostStatus.DELETED, today.minusDays(1));
+        postCreatedOn("too-old", PostStatus.PUBLISHED, today.minusDays(7));
+        commentCreatedOn(published, "VISIBLE", today);
+        commentCreatedOn(locked, "VISIBLE", today.minusDays(1));
+        commentCreatedOn(published, "HIDDEN", today);
+        commentCreatedOn(published, "DELETED", today);
+        commentCreatedOn(draft, "VISIBLE", today);
+        commentCreatedOn(deleted, "VISIBLE", today);
+
+        mockMvc.perform(get("/analytics/public/activity"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("7d"))
+                .andExpect(jsonPath("$.windowStart").value(today.minusDays(6) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.windowEnd").value(today.plusDays(1) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.generatedAt").isNotEmpty())
+                .andExpect(jsonPath("$.totalPosts").value(2))
+                .andExpect(jsonPath("$.totalComments").value(2))
+                .andExpect(jsonPath("$.days.length()").value(7))
+                .andExpect(jsonPath("$.days[0].date").value(today.minusDays(6).toString()))
+                .andExpect(jsonPath("$.days[0].posts").value(1))
+                .andExpect(jsonPath("$.days[0].comments").value(0))
+                .andExpect(jsonPath("$.days[1].posts").value(0))
+                .andExpect(jsonPath("$.days[5].date").value(today.minusDays(1).toString()))
+                .andExpect(jsonPath("$.days[5].posts").value(1))
+                .andExpect(jsonPath("$.days[5].comments").value(1))
+                .andExpect(jsonPath("$.days[6].date").value(today.toString()))
+                .andExpect(jsonPath("$.days[6].posts").value(0))
+                .andExpect(jsonPath("$.days[6].comments").value(1));
+    }
+
+    @Test
+    void publicActivityOffersThirtyDaysAndAnEmptyPlatformGivesZeroRows() throws Exception {
+        hideAllContent();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+
+        mockMvc.perform(get("/analytics/public/activity").param("period", "30d").with(as(reader)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("30d"))
+                .andExpect(jsonPath("$.windowStart").value(today.minusDays(29) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.totalPosts").value(0))
+                .andExpect(jsonPath("$.totalComments").value(0))
+                .andExpect(jsonPath("$.days.length()").value(30));
+    }
+
+    @Test
+    void publicActivityRejectsAnyOtherPeriod() throws Exception {
+        for (String period : List.of("24h", "90d", "1d", "abc")) {
+            mockMvc.perform(get("/analytics/public/activity").param("period", period))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.detail").value("period must be one of [30d, 7d]"));
+        }
+    }
+
+    @Test
+    void publicActivityLeavesTheStaffOperationsProtected() throws Exception {
+        mockMvc.perform(get("/analytics/trends")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/analytics/trends").with(as(reader))).andExpect(status().isForbidden());
+        mockMvc.perform(get("/analytics/summary")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/analytics/summary").with(as(reader))).andExpect(status().isForbidden());
+        mockMvc.perform(get("/analytics/summary").with(as(admin))).andExpect(status().isOk());
+    }
+
+    @Test
+    void publicCategoriesAreOpenToGuestsAndAddUpToThePublicActivity() throws Exception {
+        hideAllContent();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        long category = jdbc.queryForObject("""
+                INSERT INTO categories (name, slug, display_order) VALUES (?, ?, 900) RETURNING id
+                """, Long.class, "Shares " + run, "shares-" + run);
+        for (String name : List.of("first", "second")) {
+            Post post = postCreatedOn(name, PostStatus.PUBLISHED, today);
+            jdbc.update("UPDATE posts SET category_id = ? WHERE id = ?", category, post.getId());
+        }
+        Post draft = postCreatedOn("draft", PostStatus.DRAFT, today);
+        jdbc.update("UPDATE posts SET category_id = ? WHERE id = ?", category, draft.getId());
+        postCreatedOn("loose", PostStatus.LOCKED, today.minusDays(6));
+        postCreatedOn("old", PostStatus.PUBLISHED, today.minusDays(7));
+
+        String activity = mockMvc.perform(get("/analytics/public/activity"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String body = mockMvc.perform(get("/analytics/public/categories"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("7d"))
+                .andExpect(jsonPath("$.windowStart").value(today.minusDays(6) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.windowEnd").value(today.plusDays(1) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.generatedAt").isNotEmpty())
+                .andExpect(jsonPath("$.totalPosts").value(3))
+                .andExpect(jsonPath("$.categories[0].category.slug").value("ai"))
+                .andExpect(jsonPath("$.categories[0].posts").value(0))
+                .andExpect(jsonPath("$.categories[0].share").value(0.0))
+                .andExpect(jsonPath("$.categories[-2].category.id").value(category))
+                .andExpect(jsonPath("$.categories[-2].category.slug").value("shares-" + run))
+                .andExpect(jsonPath("$.categories[-2].category.name").value("Shares " + run))
+                .andExpect(jsonPath("$.categories[-2].category.visible").value(true))
+                .andExpect(jsonPath("$.categories[-2].posts").value(2))
+                .andExpect(jsonPath("$.categories[-2].share").value(0.6667))
+                .andExpect(jsonPath("$.categories[-1].category").value((Object) null))
+                .andExpect(jsonPath("$.categories[-1].posts").value(1))
+                .andExpect(jsonPath("$.categories[-1].share").value(0.3333))
+                .andReturn().getResponse().getContentAsString();
+
+        List<Integer> posts = JsonPath.read(body, "$.categories[*].posts");
+        assertThat(posts.stream().mapToLong(Integer::longValue).sum())
+                .isEqualTo(number(body, "$.totalPosts"))
+                .isEqualTo(number(activity, "$.totalPosts"));
+    }
+
+    @Test
+    void publicCategoriesOfAnEmptyWindowHaveNoShares() throws Exception {
+        hideAllContent();
+
+        mockMvc.perform(get("/analytics/public/categories").param("period", "30d").with(as(reader)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("30d"))
+                .andExpect(jsonPath("$.windowStart")
+                        .value(LocalDate.now(ZoneOffset.UTC).minusDays(29) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.totalPosts").value(0))
+                .andExpect(jsonPath("$.categories[-1].category").value((Object) null))
+                .andExpect(jsonPath("$.categories[*].posts", everyItem(is(0))))
+                .andExpect(jsonPath("$.categories[*].share", everyItem(nullValue())));
+    }
+
+    @Test
+    void publicCategoriesRejectAnyOtherPeriod() throws Exception {
+        for (String period : List.of("24h", "90d", "abc")) {
+            mockMvc.perform(get("/analytics/public/categories").param("period", period))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.detail").value("period must be one of [30d, 7d]"));
+        }
+    }
+
+    @Test
+    void publicComparisonSetsTheActivityWindowAgainstTheEquallyLongOneBeforeIt() throws Exception {
+        hideAllContent();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        Post current = postCreatedOn("current", PostStatus.PUBLISHED, today.minusDays(6));
+        postCreatedOn("current-locked", PostStatus.LOCKED, today.minusDays(3));
+        postCreatedOn("current-draft", PostStatus.DRAFT, today.minusDays(3));
+        commentCreatedOn(current, "VISIBLE", today.minusDays(5));
+        commentCreatedOn(current, "HIDDEN", today.minusDays(5));
+        Post previous = postCreatedOn("previous", PostStatus.PUBLISHED, today.minusDays(7));
+        commentCreatedOn(previous, "VISIBLE", today.minusDays(8));
+        commentCreatedOn(previous, "VISIBLE", today.minusDays(7));
+        commentCreatedOn(previous, "VISIBLE", today.minusDays(2));
+
+        String activity = mockMvc.perform(get("/analytics/public/activity"))
+                .andReturn().getResponse().getContentAsString();
+        String body = mockMvc.perform(get("/analytics/public/comparison"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("7d"))
+                .andExpect(jsonPath("$.current.start").value(today.minusDays(6) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.previous.end").value(today.minusDays(6) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.current.posts").value(2))
+                .andExpect(jsonPath("$.current.comments").value(2))
+                .andExpect(jsonPath("$.previous.posts").value(1))
+                .andExpect(jsonPath("$.previous.comments").value(2))
+                .andExpect(jsonPath("$.posts.current").value(2))
+                .andExpect(jsonPath("$.posts.previous").value(1))
+                .andExpect(jsonPath("$.posts.change").value(1))
+                .andExpect(jsonPath("$.posts.changePercent").value(100.0))
+                .andExpect(jsonPath("$.comments.change").value(0))
+                .andExpect(jsonPath("$.comments.changePercent").value(0.0))
+                .andReturn().getResponse().getContentAsString();
+
+        OffsetDateTime generatedAt = OffsetDateTime.parse(JsonPath.read(body, "$.generatedAt"));
+        OffsetDateTime start = OffsetDateTime.parse(JsonPath.read(body, "$.current.start"));
+        OffsetDateTime previousStart = OffsetDateTime.parse(JsonPath.read(body, "$.previous.start"));
+        assertThat(OffsetDateTime.parse(JsonPath.<String>read(body, "$.current.end"))).isEqualTo(generatedAt);
+        assertThat(generatedAt.getNano() % 1_000_000).as("whole milliseconds").isZero();
+        assertThat(java.time.Duration.between(previousStart, start))
+                .isEqualTo(java.time.Duration.between(start, generatedAt));
+        assertThat(number(body, "$.current.posts")).isEqualTo(number(activity, "$.totalPosts"));
+        assertThat(number(body, "$.current.comments")).isEqualTo(number(activity, "$.totalComments"));
+    }
+
+    @Test
+    void publicComparisonFromAnEmptyPreviousWindowHasNoPercentage() throws Exception {
+        hideAllContent();
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        postCreatedOn("fresh", PostStatus.PUBLISHED, today.minusDays(20));
+
+        mockMvc.perform(get("/analytics/public/comparison").param("period", "30d").with(as(reader)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.period").value("30d"))
+                .andExpect(jsonPath("$.current.start").value(today.minusDays(29) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.posts.current").value(1))
+                .andExpect(jsonPath("$.posts.previous").value(0))
+                .andExpect(jsonPath("$.posts.change").value(1))
+                .andExpect(jsonPath("$.posts.changePercent").value((Object) null))
+                .andExpect(jsonPath("$.comments.current").value(0))
+                .andExpect(jsonPath("$.comments.change").value(0))
+                .andExpect(jsonPath("$.comments.changePercent").value((Object) null));
+    }
+
+    @Test
+    void publicComparisonRejectsAnyOtherPeriod() throws Exception {
+        for (String period : List.of("24h", "90d", "abc")) {
+            mockMvc.perform(get("/analytics/public/comparison").param("period", period))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.detail").value("period must be one of [30d, 7d]"));
+        }
+    }
+
+    @Test
+    void anAuthorGetsDailyOpeningsWithUnmeasuredDaysApartFromQuietOnes() throws Exception {
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        OffsetDateTime collectedFrom = today.minusDays(3).atTime(10, 15).atOffset(ZoneOffset.UTC);
+        jdbc.update("UPDATE analytics_collection_starts SET collected_from = ? WHERE event_type = 'POST_VIEWED'",
+                collectedFrom);
+        Post post = savePost("opened", PostStatus.PUBLISHED);
+        Post other = savePost("other", PostStatus.PUBLISHED);
+        openedOn(post, today.minusDays(3), 12);
+        openedOn(post, today.minusDays(3), 23);
+        openedOn(post, today.minusDays(1), 0);
+        openedOn(other, today.minusDays(1), 12);
+
+        mockMvc.perform(get("/analytics/me/posts/{id}/openings", post.getId()).with(as(author)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.postId").value(post.getId()))
+                .andExpect(jsonPath("$.period").value("7d"))
+                .andExpect(jsonPath("$.windowStart").value(today.minusDays(6) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.windowEnd").value(today.plusDays(1) + "T00:00:00Z"))
+                .andExpect(jsonPath("$.generatedAt").isNotEmpty())
+                .andExpect(jsonPath("$.collectedFrom").value(today.minusDays(3) + "T10:15:00Z"))
+                .andExpect(jsonPath("$.totalOpenings").value(3))
+                .andExpect(jsonPath("$.days.length()").value(7))
+                .andExpect(jsonPath("$.days[0].date").value(today.minusDays(6).toString()))
+                .andExpect(jsonPath("$.days[0].measured").value(false))
+                .andExpect(jsonPath("$.days[0].openings").value((Object) null))
+                .andExpect(jsonPath("$.days[2].measured").value(false))
+                .andExpect(jsonPath("$.days[2].openings").value((Object) null))
+                .andExpect(jsonPath("$.days[3].date").value(today.minusDays(3).toString()))
+                .andExpect(jsonPath("$.days[3].measured").value(true))
+                .andExpect(jsonPath("$.days[3].openings").value(2))
+                .andExpect(jsonPath("$.days[4].measured").value(true))
+                .andExpect(jsonPath("$.days[4].openings").value(0))
+                .andExpect(jsonPath("$.days[5].openings").value(1))
+                .andExpect(jsonPath("$.days[6].date").value(today.toString()))
+                .andExpect(jsonPath("$.days[6].measured").value(true))
+                .andExpect(jsonPath("$.days[6].openings").value(0));
+    }
+
+    @Test
+    void anAuthorGetsThirtyDaysAlsoForADraftAndAnyOtherPeriodIsRejected() throws Exception {
+        jdbc.update("UPDATE analytics_collection_starts SET collected_from = '2020-01-01T00:00:00Z' "
+                + "WHERE event_type = 'POST_VIEWED'");
+        Post draft = savePost("draft-opened", PostStatus.DRAFT);
+
+        mockMvc.perform(get("/analytics/me/posts/{id}/openings", draft.getId()).param("period", "30d").with(as(author)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.days.length()").value(30))
+                .andExpect(jsonPath("$.totalOpenings").value(0))
+                .andExpect(jsonPath("$.days[*].measured", everyItem(is(true))))
+                .andExpect(jsonPath("$.days[*].openings", everyItem(is(0))));
+        for (String period : List.of("24h", "90d", "abc")) {
+            mockMvc.perform(get("/analytics/me/posts/{id}/openings", draft.getId()).param("period", period)
+                            .with(as(author)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.detail").value("period must be one of [30d, 7d]"));
+        }
+    }
+
+    @Test
+    void onlyTheAuthorGetsTheOpeningsOfAPost() throws Exception {
+        Post post = savePost("private-series", PostStatus.PUBLISHED);
+        openedOn(post, LocalDate.now(ZoneOffset.UTC).minusDays(1), 12);
+        Post deleted = savePost("deleted-series", PostStatus.DELETED);
+        long missing = count("SELECT coalesce(max(id), 0) + 1000 FROM posts");
+        String path = "/analytics/me/posts/{id}/openings";
+
+        mockMvc.perform(get(path, post.getId())).andExpect(status().isUnauthorized());
+        for (User other : List.of(reader, moderator, admin)) {
+            mockMvc.perform(get(path, post.getId()).with(as(other)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.days").doesNotExist());
+        }
+        mockMvc.perform(get(path, deleted.getId()).with(as(author))).andExpect(status().isNotFound());
+        mockMvc.perform(get(path, missing).with(as(author))).andExpect(status().isNotFound());
+        mockMvc.perform(get(path, post.getId()).with(as(author))).andExpect(status().isOk());
+    }
+
+    /** Takes every existing post out of the public figures, inside the rolled-back transaction. */
+    private void hideAllContent() {
+        jdbc.update("UPDATE posts SET status = 'DELETED'");
+    }
+
+    private Post postCreatedOn(String name, PostStatus postStatus, LocalDate day) {
+        Post post = savePost(name, postStatus);
+        postRepository.flush();
+        jdbc.update("UPDATE posts SET created_at = ? WHERE id = ?",
+                day.atTime(12, 0).atOffset(ZoneOffset.UTC), post.getId());
+        return post;
+    }
+
+    private void commentCreatedOn(Post post, String commentStatus, LocalDate day) {
+        long id = saveComment(post, author, commentStatus);
+        jdbc.update("UPDATE comments SET created_at = ? WHERE id = ?",
+                day.atTime(12, 0).atOffset(ZoneOffset.UTC), id);
+    }
+
+    /** One guest opening of {@code post} at {@code hour}:00 UTC on {@code day}. */
+    private void openedOn(Post post, LocalDate day, int hour) {
+        jdbc.update("""
+                INSERT INTO activity_events (event_type, entity_type, entity_id, opening_id, created_at)
+                VALUES ('POST_VIEWED', 'POST', ?, ?, ?)
+                """, post.getId(), UUID.randomUUID(), day.atTime(hour, 0).atOffset(ZoneOffset.UTC));
+    }
+
+    /** One recorded opening, by {@code by} or by a guest when it is {@code null}. */
+    private void opening(Post post, User by) {
+        jdbc.update("""
+                INSERT INTO activity_events (user_id, event_type, entity_type, entity_id, opening_id)
+                VALUES (?, 'POST_VIEWED', 'POST', ?, ?)
+                """, by == null ? null : by.getId(), post.getId(), UUID.randomUUID());
+        jdbc.update("UPDATE posts SET view_count = view_count + 1 WHERE id = ?", post.getId());
+    }
+
+    private void openingAt(Post post, User by, OffsetDateTime createdAt) {
+        jdbc.update("""
+                INSERT INTO activity_events (user_id, event_type, entity_type, entity_id, opening_id, created_at)
+                VALUES (?, 'POST_VIEWED', 'POST', ?, ?, ?)
+                """, by.getId(), post.getId(), UUID.randomUUID(), createdAt);
+        jdbc.update("UPDATE posts SET view_count = view_count + 1 WHERE id = ?", post.getId());
+    }
+
+    private Post savePost(String name, PostStatus postStatus) {
+        return postRepository.save(Post.builder()
+                .author(author)
+                .title(name)
+                .slug(name + "-" + run)
+                .content("Body")
+                .status(postStatus)
+                .lastActivityAt(OffsetDateTime.now())
+                .build());
+    }
+
+    private long saveComment(Post post, User by, String commentStatus) {
+        return jdbc.queryForObject("INSERT INTO comments (post_id, user_id, content, status) "
+                        + "VALUES (?, ?, 'Comment', CAST(? AS comment_status)) RETURNING id",
+                Long.class, post.getId(), by.getId(), commentStatus);
+    }
+
+    private void vote(User by, Long postId, Long commentId, String voteType) {
+        jdbc.update("INSERT INTO votes (user_id, post_id, comment_id, vote_type) VALUES (?, ?, ?, CAST(? AS vote_type))",
+                by.getId(), postId, commentId, voteType);
+    }
+
+    private long count(String sql) {
+        return jdbc.queryForObject(sql, Long.class);
+    }
+
+    private static long number(String json, String path) {
+        return ((Number) JsonPath.read(json, path)).longValue();
+    }
+
+    private User saveUser(String name, Role role) {
+        String username = name + "-" + run;
+        return userRepository.save(User.builder()
+                .username(username)
+                .email(username + "@example.com")
+                .passwordHash("hash")
+                .role(role)
+                .build());
+    }
+
+    private static RequestPostProcessor as(User user) {
+        return user(user.getUsername()).roles(user.getRole().name());
+    }
+}

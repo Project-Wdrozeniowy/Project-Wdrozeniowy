@@ -35,7 +35,7 @@ public class VoteController {
             description = "The first vote on a target answers 201. Voting again in the same direction changes "
                     + "nothing and switching direction moves the score by two; both answer 200 with the "
                     + "caller's vote. Votes are accepted on published posts and visible comments of published posts.",
-            security = @SecurityRequirement(name = "bearerAuth"))
+            security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Vote recorded"),
         @ApiResponse(responseCode = "200", description = "Existing vote kept or switched"),
@@ -52,7 +52,7 @@ public class VoteController {
     }
 
     /** Retracts one of the caller's votes; the target's score moves back. */
-    @Operation(summary = "Retract a vote", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Retract a vote", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Vote retracted"),
         @ApiResponse(responseCode = "401", description = "Not authenticated"),

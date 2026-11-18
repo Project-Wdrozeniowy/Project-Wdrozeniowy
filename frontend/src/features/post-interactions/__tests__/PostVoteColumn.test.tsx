@@ -1,3 +1,5 @@
+import type { ApiRequestOptions } from '@/shared/api/client/orvalTransport';
+import type { AxiosRequestConfig } from 'axios';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -5,26 +7,35 @@ import { AxiosError } from 'axios';
 import { vi } from 'vitest';
 import { PostVoteColumn } from '../PostVoteColumn';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
-import { voteService } from '@/shared/api/forum/forumClient';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 import {
   VOTE_CONFLICT_MESSAGE,
   VOTE_ERROR_MESSAGE,
   VOTE_GONE_MESSAGE,
   VOTE_LOCKED_MESSAGE,
 } from '@/shared/api/forum/vote.const';
-import type { MyVote } from '@/shared/api/forum/vote.dto';
+import type { MyVoteDto as MyVote } from '@/shared/api/generated/models/myVoteDto.dto';
 import { toast } from '@/shared/lib/toast';
 import { useStore } from '@/store';
 
 const push = vi.fn();
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => push })
+);
 vi.mock('@/shared/lib/toast', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
-vi.mock('@/shared/api/forum/forumClient', () => ({
+const fixtureOperations = vi.hoisted(() => ({
   voteService: { cast: vi.fn(), retract: vi.fn() },
 }));
+const { voteService } = fixtureOperations;
+vi.mock('@/shared/api/client/orvalTransport', async () => {
+  const { mockApiOperations } = await import('@/test/mockApiOperations');
+  return {
+    orvalTransport: (config: AxiosRequestConfig, options: ApiRequestOptions) =>
+      mockApiOperations(config, options, fixtureOperations),
+  };
+});
 
-const FEED_KEY = ['forum-posts', { page: 0, categorySlug: undefined }];
+const FEED_KEY = ['/forum/posts', { page: 0, categorySlug: undefined }];
 
 function feed(voteScore: number, myVote: MyVote | null): PagedResponse<PostSummary> {
   return {
@@ -228,7 +239,7 @@ describe('PostVoteColumn – who may vote', () => {
 
   it('highlights the direction of the user’s vote and shows the score', () => {
     setup(1500, { id: 9, voteType: 'UP' });
-    expect(screen.getByRole('button', { name: 'Upvote' })).toHaveClass('text-blue-400');
+    expect(screen.getByRole('button', { name: 'Upvote' })).toHaveClass('text-accent');
     expect(screen.getByText('1.5k')).toBeInTheDocument();
   });
 

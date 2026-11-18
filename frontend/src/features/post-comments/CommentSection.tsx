@@ -1,7 +1,5 @@
-// PROVISIONAL PWDRZ-142/67: the reachable UI awaits the implemented comments API (currently 501).
-'use client';
-
-import Link from 'next/link';
+// PWDRZ-67 owns full comments acceptance; the published API is implemented.
+import { Link } from 'react-router';
 import { useCallback } from 'react';
 import { useComments } from '@/shared/api/forum/useComments';
 import { apiErrorMessage, apiErrorStatus } from '@/shared/api/client/apiError';
@@ -50,7 +48,7 @@ export function CommentSection({ slug }: CommentSectionProps) {
 
   return (
     <section aria-labelledby="comments-heading" className="flex flex-col gap-4">
-      <h2 id="comments-heading" className="text-lg font-semibold text-gray-50">
+      <h2 id="comments-heading" className="text-lg font-semibold text-fg">
         {/* totalElements counts the top-level comments only, replies are not in it. */}
         Comments{data ? ` (${totalRoots} ${totalRoots === 1 ? 'thread' : 'threads'})` : ''}
       </h2>
@@ -59,8 +57,8 @@ export function CommentSection({ slug }: CommentSectionProps) {
         <CommentForm onSubmit={handleAdd} getErrorMessage={getErrorMessage} />
       ) : (
         isInitialized && (
-          <p className="text-sm text-slate-400">
-            <Link href="/login" className="text-blue-400 hover:text-blue-300">
+          <p className="text-sm text-fg-subtle">
+            <Link to="/login" className="text-accent hover:text-accent-hover">
               Sign in
             </Link>{' '}
             to leave a comment.
@@ -68,14 +66,14 @@ export function CommentSection({ slug }: CommentSectionProps) {
         )
       )}
 
-      {isLoading && <p className="text-sm text-slate-400">Loading comments…</p>}
+      {isLoading && <p className="text-sm text-fg-subtle">Loading comments…</p>}
       {isError && (
-        <p role="alert" className="text-sm text-red-400">
+        <p role="alert" className="text-sm text-danger">
           Failed to load comments.
         </p>
       )}
       {!isLoading && !isError && comments.length === 0 && (
-        <p className="text-sm text-slate-500">No comments yet. Be the first!</p>
+        <p className="text-sm text-fg-subtle">No comments yet. Be the first!</p>
       )}
 
       {comments.length > 0 && (
@@ -98,7 +96,7 @@ export function CommentSection({ slug }: CommentSectionProps) {
           type="button"
           onClick={() => fetchNextPage()}
           disabled={isFetchingNextPage}
-          className="self-center text-sm text-blue-400 transition-colors hover:text-blue-300 disabled:opacity-50"
+          className="self-center text-sm text-accent transition-colors hover:text-accent-hover disabled:opacity-50"
         >
           {isFetchingNextPage ? 'Loading…' : 'Load more comments'}
         </button>

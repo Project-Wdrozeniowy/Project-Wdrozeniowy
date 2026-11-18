@@ -9,7 +9,7 @@ interface FieldHintProps {
 /** Helper text for a field. It is announced with the control when the control references its id. */
 export default function FieldHint({ id, children }: FieldHintProps) {
   return (
-    <p id={id} className="text-xs text-gray-500">
+    <p id={id} className="text-xs text-fg-subtle">
       {children}
     </p>
   );

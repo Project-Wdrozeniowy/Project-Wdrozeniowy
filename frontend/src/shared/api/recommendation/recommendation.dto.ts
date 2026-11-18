@@ -1,5 +1,5 @@
-import type { Category } from '@/shared/api/forum/category.dto';
-import type { UserSummary } from '@/shared/api/user/user.dto';
+import type { CategoryDto as Category } from '@/shared/api/generated/models/categoryDto.dto';
+import type { UserSummaryDto as UserSummary } from '@/shared/api/generated/models/userSummaryDto.dto';
 
 export type RecommendationReason = 'trending' | 'similar_tags' | 'same_category' | 'personalized';
 

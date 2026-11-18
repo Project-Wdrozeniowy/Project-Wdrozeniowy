@@ -5,7 +5,9 @@ import {
   DISPLAY_NAME_MAX_LENGTH,
   EMAIL_MAX_LENGTH,
   PROFILE_FIELD_ERRORS,
+  PROFILE_FIELDS,
 } from '@/features/edit-profile/profile.const';
+import type { ProfileField } from '@/features/edit-profile/profile.const';
 import { isHttpUrl } from '@/shared/lib/url';
 
 /** Mirrors the backend rules of `PATCH /users/me`, so most mistakes are caught before the request. */
@@ -32,3 +34,14 @@ export const profileSchema = z.object({
 });
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
+
+/**
+ * The schema for a form that shows only some fields. A field the form does not show keeps its
+ * value but is not checked: stored data can predate the rules, and the user could not fix it here.
+ */
+export function profileSchemaFor(shown: readonly ProfileField[]): typeof profileSchema {
+  const unchecked = Object.fromEntries(
+    PROFILE_FIELDS.filter((field) => !shown.includes(field)).map((field) => [field, z.string()])
+  );
+  return profileSchema.extend(unchecked) as typeof profileSchema;
+}

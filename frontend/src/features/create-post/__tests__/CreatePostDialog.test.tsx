@@ -1,14 +1,23 @@
+import type { ApiRequestOptions } from '@/shared/api/client/orvalTransport';
+import type { AxiosRequestConfig } from 'axios';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { CreatePostDialog } from '../CreatePostDialog';
-import { categoryService, postService } from '@/shared/api/forum/forumClient';
 
-vi.mock('@/shared/api/forum/forumClient', () => ({
+const fixtureOperations = vi.hoisted(() => ({
   categoryService: { list: vi.fn() },
   postService: { create: vi.fn() },
 }));
+const { categoryService, postService } = fixtureOperations;
+vi.mock('@/shared/api/client/orvalTransport', async () => {
+  const { mockApiOperations } = await import('@/test/mockApiOperations');
+  return {
+    orvalTransport: (config: AxiosRequestConfig, options: ApiRequestOptions) =>
+      mockApiOperations(config, options, fixtureOperations),
+  };
+});
 
 beforeEach(() => {
   vi.mocked(categoryService.list).mockReset();

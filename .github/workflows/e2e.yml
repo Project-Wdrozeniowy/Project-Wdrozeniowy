@@ -36,8 +36,8 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
-      - name: Install E2E dependencies
-        run: npm ci --workspace orbita-e2e --include-workspace-root
+      - name: Install E2E and frontend codegen dependencies
+        run: npm ci --workspace orbita-e2e --workspace frontend --include-workspace-root
 
       - name: Check E2E tooling
         run: |

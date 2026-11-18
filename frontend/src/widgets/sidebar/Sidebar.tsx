@@ -1,14 +1,12 @@
-'use client';
-
-import { usePathname } from 'next/navigation';
+import { useLocation } from 'react-router';
 import { useStore } from '@/store';
 import UserCard from './ui/UserCard';
 import GuestCard from './ui/GuestCard';
-import LiveActivity from './ui/LiveActivity';
+import CommunityActivity from './ui/CommunityActivity';
 import TrendingTopics from './ui/TrendingTopics';
 
 export default function Sidebar() {
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
   const { isAuthenticated, user } = useStore();
 
   const initials = user
@@ -27,7 +25,7 @@ export default function Sidebar() {
       ) : (
         <GuestCard />
       )}
-      <LiveActivity />
+      <CommunityActivity />
       <TrendingTopics />
     </aside>
   );

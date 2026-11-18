@@ -77,7 +77,8 @@ public class Post {
     @ToString.Exclude
     private Set<Tag> tags = new LinkedHashSet<>();
 
-    @Column(name = "view_count", nullable = false)
+    /** Moved only by the atomic update that records an opening, so saving a post cannot overwrite it. */
+    @Column(name = "view_count", nullable = false, updatable = false)
     @Builder.Default
     private Integer viewCount = 0;
 

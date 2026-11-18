@@ -1,5 +1,3 @@
-'use client';
-
 import { cn } from '@/shared/lib/cn';
 
 interface VoteButtonProps {
@@ -23,7 +21,7 @@ export default function VoteButton({
   title,
   children,
 }: VoteButtonProps) {
-  const activeColor = direction === 'up' ? 'text-blue-400' : 'text-red-400';
+  const activeColor = direction === 'up' ? 'text-accent' : 'text-danger';
   return (
     <button
       type="button"
@@ -34,9 +32,9 @@ export default function VoteButton({
       aria-label={direction === 'up' ? 'Upvote' : 'Downvote'}
       className={cn(
         'w-8 h-8 flex items-center justify-center rounded transition-colors',
-        'hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent',
+        'hover:bg-raised disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent',
         busy && 'opacity-40 cursor-wait',
-        active ? activeColor : 'text-slate-400 hover:text-white disabled:hover:text-slate-400'
+        active ? activeColor : 'text-fg-subtle hover:text-fg disabled:hover:text-fg-subtle'
       )}
     >
       {children}

@@ -1,5 +1,3 @@
-'use client';
-
 import { useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { addTag, removeTag } from '@/features/create-post/createPost';
@@ -67,8 +65,8 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
     <div className="flex flex-col gap-1.5">
       <FieldLabel htmlFor={id} label="Tags" counter={{ used: tags.length, max: MAX_TAGS }} />
       <FieldHint id={ids.hint}>
-        Press <kbd className="rounded bg-gray-100 px-1 font-mono">Enter</kbd> or{' '}
-        <kbd className="rounded bg-gray-100 px-1 font-mono">,</kbd> to add. Max {MAX_TAGS} tags ·{' '}
+        Press <kbd className="rounded bg-raised px-1 font-mono">Enter</kbd> or{' '}
+        <kbd className="rounded bg-raised px-1 font-mono">,</kbd> to add. Max {MAX_TAGS} tags ·{' '}
         {TAG_MAX_LENGTH} chars each
       </FieldHint>
       <div
@@ -77,7 +75,7 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
         {tags.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-sm text-blue-700"
+            className="inline-flex items-center gap-1 rounded bg-blue-50 dark:bg-blue-500/15 px-2 py-0.5 text-sm text-blue-700 dark:text-blue-300"
           >
             #{tag}
             <button
@@ -90,7 +88,7 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
               }}
               disabled={disabled}
               aria-label={`Remove tag ${tag}`}
-              className="text-blue-400 hover:text-blue-700 disabled:opacity-50"
+              className="text-accent hover:text-accent-hover disabled:opacity-50"
             >
               ×
             </button>
@@ -110,7 +108,7 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
           readOnly={disabled || full}
           placeholder={full ? '' : 'Add tags and press Enter'}
           autoComplete="off"
-          className="min-w-32 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500"
+          className="min-w-32 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-subtle"
         />
       </div>
       <FieldError id={ids.error}>{error}</FieldError>

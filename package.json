@@ -22,7 +22,9 @@
     "test:tooling": "nx run-many -t infra-test --projects=e2e,tooling",
     "validate": "nx run tooling:validate",
     "graph": "nx graph",
-    "format:check": "nx run tooling:format-check"
+    "format:check": "nx run tooling:format-check",
+    "api:generate": "node tools/workspace/npm.mjs run api:generate --workspace frontend",
+    "api:check": "node tools/workspace/npm.mjs run api:check --workspace frontend"
   },
   "devDependencies": {
     "nx": "23.3.0",

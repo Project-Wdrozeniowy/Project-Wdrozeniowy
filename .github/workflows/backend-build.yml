@@ -21,6 +21,8 @@ on:
       - 'tools/**'
       - '.github/workflows/backend-build.yml'
 
+  workflow_dispatch:
+
 env:
   NX_DAEMON: 'false'
   NX_TUI: 'false'

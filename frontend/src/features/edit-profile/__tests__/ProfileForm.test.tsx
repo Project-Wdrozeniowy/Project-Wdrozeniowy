@@ -1,9 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import ProfileForm from '../ProfileForm';
-import { PROFILE_FIELD_ERRORS, PROFILE_FIELD_IDS } from '../profile.const';
-import type { MyProfile } from '@/shared/api/user/user.dto';
+import { PROFILE_FIELDS, PROFILE_FIELD_ERRORS, PROFILE_FIELD_IDS } from '../profile.const';
+import type { ProfileField } from '../profile.const';
+import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
+
+vi.mock('react-router', async () => (await import('@/test/routerMock')).routerMock());
 
 const PROFILE: MyProfile = {
   id: 1,
@@ -19,11 +23,11 @@ const PROFILE: MyProfile = {
   createdAt: '2026-10-01T10:00:00.000Z',
 };
 
-function setup() {
+function setup(fields: readonly ProfileField[] = PROFILE_FIELDS) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <ProfileForm profile={PROFILE} />
+      <ProfileForm profile={PROFILE} fields={fields} title="Account settings" />
     </QueryClientProvider>
   );
   return userEvent.setup();
@@ -32,6 +36,13 @@ function setup() {
 const field = (name: string) => screen.getByLabelText(name);
 
 describe('ProfileForm field presentation', () => {
+  it('shows only the fields it is given, each still labelled and wired', () => {
+    setup(['email']);
+    expect(field('Email')).toHaveAttribute('id', PROFILE_FIELD_IDS.email);
+    expect(screen.queryByLabelText('Display name')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Bio')).not.toBeInTheDocument();
+  });
+
   it('focuses each control from its label', async () => {
     const user = setup();
     for (const name of ['Email', 'Display name', 'Avatar link', 'Bio']) {

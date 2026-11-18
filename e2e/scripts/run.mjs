@@ -28,18 +28,15 @@ const env = {
   ...process.env,
   E2E_PROJECT: project,
   E2E_RUNTIME: runtime.replaceAll('\\', '/'),
-  E2E_FRONTEND_PORT: String(ports.FRONTEND),
   E2E_GATEWAY_PORT: String(ports.GATEWAY),
   E2E_BACKEND_PORT: String(ports.BACKEND),
   E2E_DB_PASSWORD: randomBytes(24).toString('hex'),
   E2E_JWT_SECRET: randomBytes(48).toString('base64'),
   E2E_MANAGED_RUN: '1',
-  E2E_BASE_URL: `http://127.0.0.1:${ports.FRONTEND}`,
+  E2E_BASE_URL: `http://127.0.0.1:${ports.GATEWAY}`,
   E2E_GATEWAY_URL: `http://127.0.0.1:${ports.GATEWAY}`,
   E2E_ARTIFACTS: artifacts,
   E2E_FAILURE_PROBE: probe ? '1' : '0',
-  NEXT_PUBLIC_API_URL: `http://127.0.0.1:${ports.GATEWAY}/api`,
-  NEXT_TELEMETRY_DISABLED: '1',
 };
 fs.mkdirSync(runtime, { recursive: true });
 fs.mkdirSync(artifacts, { recursive: true });
@@ -55,8 +52,6 @@ const composeArgs = [
   project,
 ];
 let activeChild;
-let frontend;
-let frontendExit;
 let composeAttempted = false;
 let interrupted = false;
 const stoppedChildren = new WeakSet();
@@ -86,7 +81,6 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
   process.once(signal, () => {
     interrupted = true;
     stopTree(activeChild);
-    stopTree(frontend);
   });
 }
 
@@ -123,13 +117,15 @@ async function ensureFree(port) {
   });
 }
 
-async function waitFor(url, timeout = 240_000) {
+async function waitFor(url, accept = 'application/json', timeout = 240_000) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     if (interrupted) throw new Error('Run interrupted');
-    if (frontendExit !== undefined) throw new Error(`Frontend exited ${frontendExit}`);
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+      const response = await fetch(url, {
+        headers: { Accept: accept },
+        signal: AbortSignal.timeout(3000),
+      });
       await response.arrayBuffer();
       if (response.status === 200) return;
     } catch {
@@ -172,58 +168,13 @@ try {
       filter: (entry) => includeInSnapshot(path.relative(source, entry)),
     });
   }
-  const frontendDir = path.join(runtime, 'frontend');
   copyWorkspaceManifests(repository, runtime);
-  await command(
-    process.execPath,
-    [
-      npmCli,
-      'ci',
-      '--workspace',
-      'frontend',
-      '--include-workspace-root=false',
-      '--include=dev',
-      '--no-audit',
-      '--no-fund',
-    ],
-    'frontend-install',
-    runtime
-  );
   composeAttempted = true;
   await command('docker', [...composeArgs, 'up', '--build', '--detach'], 'stack-start');
   await waitFor(`http://127.0.0.1:${ports.BACKEND}/api/forum/categories`);
   await waitFor(`${env.E2E_GATEWAY_URL}/health`);
   await waitFor(`${env.E2E_GATEWAY_URL}/api/forum/categories`);
-  await command(process.execPath, [npmCli, 'run', 'build'], 'frontend-build', frontendDir, {
-    NODE_ENV: 'production',
-  });
-  const fd = fs.openSync(path.join(artifacts, 'frontend-server.log'), 'a');
-  frontend = spawn(
-    process.execPath,
-    [
-      createRequire(path.join(frontendDir, 'package.json')).resolve('next/dist/bin/next'),
-      'start',
-      '--hostname',
-      '127.0.0.1',
-      '--port',
-      String(ports.FRONTEND),
-    ],
-    {
-      cwd: frontendDir,
-      env: { ...env, NODE_ENV: 'production' },
-      stdio: ['ignore', fd, fd],
-      detached: process.platform !== 'win32',
-      windowsHide: true,
-    }
-  );
-  frontend.once('error', (error) => {
-    frontendExit = error.message;
-  });
-  frontend.once('close', (code) => {
-    frontendExit = code;
-    fs.closeSync(fd);
-  });
-  await waitFor(`${env.E2E_BASE_URL}/login`);
+  await waitFor(`${env.E2E_BASE_URL}/login`, 'text/html');
   await command(
     process.execPath,
     [require.resolve('@playwright/test/cli'), 'test'],
@@ -233,10 +184,6 @@ try {
   console.error(`[E2E] ${error.message}`);
   exitCode = interrupted ? 130 : 1;
 } finally {
-  stopTree(frontend);
-  if (frontend && frontendExit === undefined) {
-    await Promise.race([new Promise((resolve) => frontend.once('close', resolve)), delay(10_000)]);
-  }
   if (composeAttempted) {
     try {
       await command('docker', [...composeArgs, 'logs', '--no-color'], 'stack-logs');

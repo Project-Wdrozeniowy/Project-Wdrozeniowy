@@ -13,8 +13,7 @@ interface Received {
   cookie?: string;
 }
 
-const BACKEND_SET_COOKIE =
-  'refreshToken=rotated; Path=/api/auth; Max-Age=604800; HttpOnly; SameSite=Strict';
+const BACKEND_SET_COOKIE = 'SESSION=opaque; Path=/; HttpOnly; SameSite=Strict';
 
 let backend: http.Server;
 let received: Received;
@@ -69,15 +68,15 @@ describe('proxy', () => {
     expect(received).toMatchObject({ method: 'GET', url: '/api/forum/posts?page=1' });
   });
 
-  it.each(['/api/auth/refresh', '/api/auth/logout'])(
-    'passes the refresh cookie through %s unchanged in both directions',
+  it.each(['/api/auth/login', '/api/auth/logout'])(
+    'passes the session cookie through %s unchanged in both directions',
     async (path) => {
       const res = await request(app)
         .post(path)
         .set('Origin', 'http://localhost:3001')
-        .set('Cookie', 'refreshToken=current');
+        .set('Cookie', 'SESSION=current');
 
-      expect(received).toMatchObject({ method: 'POST', url: path, cookie: 'refreshToken=current' });
+      expect(received).toMatchObject({ method: 'POST', url: path, cookie: 'SESSION=current' });
       expect(res.headers['set-cookie']).toEqual([BACKEND_SET_COOKIE]);
     }
   );

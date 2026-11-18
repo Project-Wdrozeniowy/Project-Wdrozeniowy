@@ -8,12 +8,12 @@ import { apiClient } from '@/shared/api/client/api';
 import { useStore } from '@/store';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import type { Comment } from '@/shared/api/forum/comment.dto';
-import type { UserProfile } from '@/shared/api/user/user.dto';
+import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 
 /**
  * CommentSection -> useComments -> commentService -> the real ApiClient.
  * Only the network is faked, so planned URLs, bodies and UI behavior are covered.
- * PROVISIONAL: backend comments still return 501 (PWDRZ-142); PWDRZ-67 must
+ * The comments API is published; PWDRZ-67 still owns full acceptance and must
  * reconcile these fixtures with the implemented contract before live acceptance.
  */
 
@@ -82,6 +82,8 @@ function signedIn(user: UserProfile = alice) {
 
 beforeEach(() => {
   mock = new MockAdapter(axiosInstance);
+  apiClient.clearCsrf();
+  mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
   useStore.setState({ user: null, isAuthenticated: false, isInitialized: true });
 });
 
@@ -197,7 +199,7 @@ describe('CommentSection – while the session is being restored', () => {
     renderSection();
     await screen.findByText('Comment 1');
 
-    act(() => useStore.getState().setAuth(alice, 'token'));
+    act(() => useStore.getState().setAuth(alice));
 
     expect(await screen.findByLabelText('Add a comment')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();

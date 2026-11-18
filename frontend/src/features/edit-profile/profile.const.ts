@@ -43,3 +43,8 @@ export const PROFILE_SERVER_FIELD_ERRORS: Record<ProfileField, string> = {
 };
 
 export const EMAIL_TAKEN_MESSAGE = 'This email address is already in use.';
+
+export const UNSAVED_TITLE = 'Leave without saving?';
+export const UNSAVED_TEXT = 'You have changes that are not saved. If you leave now, they are lost.';
+export const UNSAVED_STAY_LABEL = 'Keep editing';
+export const UNSAVED_LEAVE_LABEL = 'Leave and discard changes';
