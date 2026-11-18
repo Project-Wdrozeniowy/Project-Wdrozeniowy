@@ -108,7 +108,10 @@ test('shows, reads and deletes a notification through the notification API', asy
   expect((await markedAll).status()).toBe(204);
   await expect(page.getByText('All caught up')).toBeVisible();
   await expect(item.getByText('Unread', { exact: true })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Notifications', exact: true })).toBeVisible();
+  // The bell of the header has no unread number any more (the sidebar card links the page too).
+  await expect(
+    page.getByRole('banner').getByRole('link', { name: 'Notifications', exact: true })
+  ).toBeVisible();
 
   // It stays read after a reload: the state is the server's.
   await page.reload();
