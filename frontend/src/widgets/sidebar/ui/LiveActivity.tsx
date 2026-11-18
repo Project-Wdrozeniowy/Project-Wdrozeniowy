@@ -2,8 +2,8 @@ import { ACTIVITY_ITEMS } from '@/widgets/sidebar/ui/sidebar.const';
 
 export default function LiveActivity() {
   return (
-    <div className="bg-slate-800 rounded-xl p-4 flex flex-col gap-4">
-      <h2 className="text-gray-50 font-semibold text-xl leading-none">Live Activity</h2>
+    <div className="bg-surface rounded-xl p-4 flex flex-col gap-4 border border-line">
+      <h2 className="text-fg font-semibold text-xl leading-none">Live Activity</h2>
       <div className="flex flex-col gap-2">
         {ACTIVITY_ITEMS.map(({ color, label, value }) => (
           <div key={label} className="flex items-center justify-between">
@@ -13,11 +13,11 @@ export default function LiveActivity() {
               >
                 <span className="w-2 h-2 rounded-full bg-white opacity-80" />
               </div>
-              <span className="text-gray-50 text-sm">{label}</span>
+              <span className="text-fg text-sm">{label}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-gray-50 font-semibold text-base">{value}</span>
+              <span className="text-fg font-semibold text-base">{value}</span>
             </div>
           </div>
         ))}

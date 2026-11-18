@@ -20,7 +20,7 @@ interface SettingsTabsProps {
 export default function SettingsTabs({ active }: SettingsTabsProps) {
   return (
     <nav aria-label={SETTINGS_NAV_LABEL}>
-      <ul className="bg-gray-100 rounded-xl p-1 flex flex-wrap gap-1 list-none m-0">
+      <ul className="bg-raised rounded-xl p-1 flex flex-wrap gap-1 list-none m-0">
         {SETTINGS_SECTIONS.map((section) => (
           <li key={section.id} className="flex-auto">
             {section.available ? (
@@ -31,14 +31,14 @@ export default function SettingsTabs({ active }: SettingsTabsProps) {
                   TAB_CLASS,
                   'block focus-visible:outline-2 focus-visible:outline-blue-500',
                   active === section.id
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'bg-surface text-fg shadow-sm'
+                    : 'text-fg-subtle hover:text-fg'
                 )}
               >
                 {section.label}
               </Link>
             ) : (
-              <span aria-disabled="true" className={cn(TAB_CLASS, 'block text-gray-400')}>
+              <span aria-disabled="true" className={cn(TAB_CLASS, 'block text-fg-subtle')}>
                 {section.label}
                 <span className="sr-only"> ({SETTINGS_UNAVAILABLE_LABEL})</span>
               </span>

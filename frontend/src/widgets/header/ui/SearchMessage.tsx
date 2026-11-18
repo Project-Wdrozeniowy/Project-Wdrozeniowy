@@ -17,8 +17,8 @@ export default function SearchMessage({
 }: SearchMessageProps) {
   return (
     <div role={role} className="flex flex-col items-center gap-2 px-4 py-6 text-center">
-      <p className="text-sm font-semibold text-slate-100">{title}</p>
-      <p className="text-xs text-slate-400">{hint}</p>
+      <p className="text-sm font-semibold text-fg">{title}</p>
+      <p className="text-xs text-fg-subtle">{hint}</p>
       {action}
     </div>
   );

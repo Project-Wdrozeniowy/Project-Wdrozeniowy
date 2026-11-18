@@ -21,14 +21,14 @@ export default function InterestsPicker() {
     <section aria-labelledby={titleId} aria-describedby={textId} className="flex flex-col gap-3">
       <div>
         <div className="flex items-center gap-2">
-          <p id={titleId} className="text-gray-900 font-semibold text-base">
+          <p id={titleId} className="text-fg font-semibold text-base">
             {INTERESTS_TITLE}
           </p>
-          <span className="bg-gray-200 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded">
+          <span className="bg-raised-hover text-fg-soft text-xs font-semibold px-2 py-0.5 rounded">
             {INTERESTS_UNAVAILABLE_BADGE}
           </span>
         </div>
-        <p id={textId} className="text-gray-500 text-xs mt-0.5">
+        <p id={textId} className="text-fg-subtle text-xs mt-0.5">
           {INTERESTS_UNAVAILABLE_TEXT}
         </p>
       </div>
@@ -36,7 +36,7 @@ export default function InterestsPicker() {
       {/* Not buttons and not dimmed: there is nothing to press, and the text stays readable. */}
       <ul aria-label={INTERESTS_LIST_LABEL} className="grid grid-cols-2 gap-2">
         {CATEGORIES.map(({ key, label, color }) => (
-          <li key={key} className="flex items-center gap-3 p-3 rounded-lg bg-gray-100">
+          <li key={key} className="flex items-center gap-3 p-3 rounded-lg bg-raised">
             <div
               aria-hidden="true"
               className={cn(
@@ -46,7 +46,7 @@ export default function InterestsPicker() {
             >
               <span className="text-white font-bold text-lg">{label[0]}</span>
             </div>
-            <span className="text-gray-700 font-semibold text-sm">{label}</span>
+            <span className="text-fg-soft font-semibold text-sm">{label}</span>
           </li>
         ))}
       </ul>

@@ -32,11 +32,14 @@ export default function RegisterForm() {
   const { signUp, serverError } = useSignUp(markRejectedFields);
 
   return (
-    <form onSubmit={handleSubmit(signUp)} className="bg-white rounded-xl p-8 flex flex-col gap-5">
+    <form
+      onSubmit={handleSubmit(signUp)}
+      className="bg-surface rounded-xl p-8 flex flex-col gap-5 border border-line"
+    >
       {serverError && (
         <div
           role="alert"
-          className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded"
+          className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm px-4 py-3 rounded"
         >
           {serverError}
         </div>
@@ -122,7 +125,7 @@ export default function RegisterForm() {
         <label
           className={cn(
             'flex items-center gap-3 rounded-lg px-4 py-3 cursor-pointer',
-            errors.terms ? 'bg-red-50' : 'bg-gray-100'
+            errors.terms ? 'bg-red-50 dark:bg-red-500/10' : 'bg-raised'
           )}
         >
           <input
@@ -130,7 +133,7 @@ export default function RegisterForm() {
             type="checkbox"
             className="w-4 h-4 rounded accent-blue-600"
           />
-          <span className="text-gray-900 font-semibold text-sm">
+          <span className="text-fg font-semibold text-sm">
             I agree to the Terms of Service and Privacy Policy
           </span>
         </label>
@@ -147,9 +150,9 @@ export default function RegisterForm() {
 
       <SocialAuthButtons />
 
-      <p className="text-gray-500 text-sm text-center">
+      <p className="text-fg-subtle text-sm text-center">
         Already have an account?{' '}
-        <Link to="/login" className="text-blue-600 hover:underline font-semibold">
+        <Link to="/login" className="text-accent hover:underline font-semibold">
           Sign In
         </Link>
       </p>

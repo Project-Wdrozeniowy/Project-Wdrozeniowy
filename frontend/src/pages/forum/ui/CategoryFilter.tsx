@@ -19,9 +19,7 @@ export default function CategoryFilter({ active, onSelect }: CategoryFilterProps
           onClick={() => onSelect(label)}
           className={cn(
             'px-3 py-1.5 rounded text-sm font-semibold transition-colors',
-            active === label
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-800 text-gray-50 hover:bg-slate-700'
+            active === label ? 'bg-blue-600 text-white' : 'bg-surface text-fg hover:bg-raised'
           )}
         >
           {label}

@@ -24,7 +24,7 @@ export default function HomeFeed() {
       {/* A failed refresh must not take away what the user is reading, nor look like "no posts". */}
       {isRefetchError && <PostFeedError onRetry={() => refetch()} retrying={isFetching} />}
       {data.content.length === 0 && !isRefetchError && (
-        <p className="text-slate-400 text-sm">{HOME_EMPTY_MESSAGE}</p>
+        <p className="text-fg-subtle text-sm">{HOME_EMPTY_MESSAGE}</p>
       )}
       <div className="flex flex-col gap-3">
         {data.content.map((post) => (
@@ -34,7 +34,7 @@ export default function HomeFeed() {
       {data.totalPages > 1 && (
         <Link
           to="/forum"
-          className="self-start text-blue-400 hover:text-blue-300 text-sm font-semibold"
+          className="self-start text-accent hover:text-accent-hover text-sm font-semibold"
         >
           {HOME_ALL_POSTS_LABEL} →
         </Link>

@@ -17,8 +17,8 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-gray-50 font-bold text-3xl">Analytics Dashboard</h1>
-        <p className="text-slate-400 text-base mt-1">Real-time insights and statistics</p>
+        <h1 className="text-fg font-bold text-3xl">Analytics Dashboard</h1>
+        <p className="text-fg-subtle text-base mt-1">Real-time insights and statistics</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

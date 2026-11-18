@@ -59,7 +59,7 @@ export default function SearchDropdown({
     <div
       // Keeps the focus in the input when a row or button is pressed.
       onMouseDown={(event) => event.preventDefault()}
-      className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-700 bg-slate-800 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden"
+      className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-line bg-surface shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden"
     >
       {view.kind === 'recent' &&
         (view.terms.length > 0 ? (
@@ -69,7 +69,7 @@ export default function SearchDropdown({
         ))}
       {view.kind === 'hint' && <SearchMessage title="Keep typing" hint={SEARCH_HINT_MIN_LENGTH} />}
       {view.kind === 'loading' && (
-        <p role="status" className="px-4 py-6 text-center text-sm text-slate-400">
+        <p role="status" className="px-4 py-6 text-center text-sm text-fg-subtle">
           {SEARCH_LOADING_LABEL}
         </p>
       )}
@@ -82,7 +82,7 @@ export default function SearchDropdown({
             <button
               type="button"
               onClick={onRetry}
-              className="mt-1 rounded border border-red-400/60 px-3 py-1 text-xs font-semibold text-red-300 hover:bg-red-400/10 focus-visible:outline-2 focus-visible:outline-blue-500"
+              className="mt-1 rounded border border-red-400/60 px-3 py-1 text-xs font-semibold text-red-700 dark:text-red-300 hover:bg-red-400/10 focus-visible:outline-2 focus-visible:outline-blue-500"
             >
               {SEARCH_RETRY_LABEL}
             </button>
@@ -155,7 +155,7 @@ function Results({ results, term, activeIndex, optionId, onSelectPost, onNavigat
       <Link
         to={searchPageHref({ q: term })}
         onClick={onNavigate}
-        className="block border-t border-slate-700 px-3 py-2 text-center text-xs font-semibold text-blue-400 hover:bg-slate-700/60 focus-visible:outline-2 focus-visible:outline-blue-500"
+        className="block border-t border-line px-3 py-2 text-center text-xs font-semibold text-accent hover:bg-raised/60 focus-visible:outline-2 focus-visible:outline-blue-500"
       >
         {SEARCH_VIEW_ALL_LABEL}
       </Link>

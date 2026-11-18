@@ -184,7 +184,7 @@ describe('ForumFeed – data flow', () => {
       { skipErrorToast: true }
     );
     expect(await screen.findByText('4')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Upvote' })).toHaveClass('text-blue-400');
+    expect(screen.getByRole('button', { name: 'Upvote' })).toHaveClass('text-accent');
   });
 
   it('shows a post without a category and without an author display name', async () => {

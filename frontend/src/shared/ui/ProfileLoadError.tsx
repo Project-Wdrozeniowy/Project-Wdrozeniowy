@@ -9,8 +9,11 @@ interface ProfileLoadErrorProps {
 /** Recoverable load failure. Never shows server details; the user can retry. */
 export default function ProfileLoadError({ onRetry, retrying = false }: ProfileLoadErrorProps) {
   return (
-    <div role="alert" className="bg-white rounded-xl p-6 flex flex-col items-start gap-3">
-      <p className="text-gray-900 text-sm">{PROFILE_LOAD_ERROR_MESSAGE}</p>
+    <div
+      role="alert"
+      className="bg-surface rounded-xl p-6 flex flex-col items-start gap-3 border border-line"
+    >
+      <p className="text-fg text-sm">{PROFILE_LOAD_ERROR_MESSAGE}</p>
       <button
         type="button"
         onClick={onRetry}

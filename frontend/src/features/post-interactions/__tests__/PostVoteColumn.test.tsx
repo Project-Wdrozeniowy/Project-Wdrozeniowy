@@ -239,7 +239,7 @@ describe('PostVoteColumn – who may vote', () => {
 
   it('highlights the direction of the user’s vote and shows the score', () => {
     setup(1500, { id: 9, voteType: 'UP' });
-    expect(screen.getByRole('button', { name: 'Upvote' })).toHaveClass('text-blue-400');
+    expect(screen.getByRole('button', { name: 'Upvote' })).toHaveClass('text-accent');
     expect(screen.getByText('1.5k')).toBeInTheDocument();
   });
 

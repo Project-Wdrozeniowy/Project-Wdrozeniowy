@@ -54,7 +54,7 @@ export default function NotificationsView() {
     body = <NotificationsSkeleton />;
   } else if (items.length === 0) {
     body = (
-      <p role="status" className="text-slate-400 text-sm">
+      <p role="status" className="text-fg-subtle text-sm">
         {unreadOnly ? NOTIFICATIONS_EMPTY_UNREAD : NOTIFICATIONS_EMPTY_ALL}
       </p>
     );
@@ -79,7 +79,7 @@ export default function NotificationsView() {
               if (!list.isFetchingNextPage) void list.fetchNextPage();
             }}
             aria-disabled={list.isFetchingNextPage}
-            className="self-center rounded border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-700 aria-disabled:opacity-60 aria-disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-blue-500"
+            className="self-center rounded border border-line-strong px-4 py-2 text-sm font-semibold text-fg-soft hover:bg-raised aria-disabled:opacity-60 aria-disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-blue-500"
           >
             {list.isFetchingNextPage ? 'Loading…' : 'Load more'}
           </button>
@@ -96,7 +96,7 @@ export default function NotificationsView() {
       className="flex flex-col gap-4 outline-none"
     >
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p aria-live="polite" className="text-sm text-slate-400">
+        <p aria-live="polite" className="text-sm text-fg-subtle">
           {unreadCount === undefined
             ? ''
             : unreadCount === 0
@@ -110,7 +110,7 @@ export default function NotificationsView() {
           onClick={() => {
             if (!busy && unreadCount !== 0) markAll.mutate();
           }}
-          className="text-sm font-semibold px-3 py-1.5 rounded border border-slate-600 text-slate-200 hover:bg-slate-700 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-blue-500"
+          className="text-sm font-semibold px-3 py-1.5 rounded border border-line-strong text-fg-soft hover:bg-raised aria-disabled:opacity-50 aria-disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-blue-500"
         >
           Mark all as read
         </button>
@@ -118,7 +118,7 @@ export default function NotificationsView() {
       <NotificationFilter unreadOnly={unreadOnly} />
       {/* A failed refresh or a failed "Load more" must show whatever the list holds: even an empty one. */}
       {(list.isRefetchError || list.isFetchNextPageError) && (
-        <p role="alert" className="text-amber-300 text-sm">
+        <p role="alert" className="text-warning text-sm">
           {list.isFetchNextPageError ? NOTIFICATIONS_MORE_ERROR : NOTIFICATIONS_REFRESH_ERROR}
         </p>
       )}

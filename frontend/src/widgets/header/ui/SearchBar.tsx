@@ -109,7 +109,7 @@ export default function SearchBar() {
       <Link
         to="/search"
         aria-label="Search"
-        className="sm:hidden p-2 rounded text-slate-300 hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-blue-500"
+        className="sm:hidden p-2 rounded text-fg-muted hover:bg-raised focus-visible:outline-2 focus-visible:outline-blue-500"
       >
         <SearchIcon />
       </Link>
@@ -139,7 +139,7 @@ export default function SearchBar() {
               setOpen(true);
             }}
             onKeyDown={handleKeyDown}
-            className="bg-slate-700 text-gray-50 placeholder-slate-400 rounded text-sm pl-9 pr-3 py-2 w-56 focus:w-72 transition-[width] focus:outline-none focus:ring-2 focus:ring-blue-600/50 focus:border-blue-600 border border-transparent"
+            className="bg-raised text-fg placeholder-fg-subtle rounded text-sm pl-9 pr-3 py-2 w-56 focus:w-72 transition-[width] focus:outline-none focus:ring-2 focus:ring-blue-600/50 focus:border-blue-600 border border-transparent"
           />
         </form>
         {open && (

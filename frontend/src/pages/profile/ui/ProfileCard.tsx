@@ -30,9 +30,12 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
   const joined = formatJoined(profile.createdAt);
 
   return (
-    <section aria-label="Profile" className="bg-white rounded-xl p-6 flex flex-col gap-4">
+    <section
+      aria-label="Profile"
+      className="bg-surface rounded-xl p-6 flex flex-col gap-4 border border-line"
+    >
       <div className="flex items-center gap-4">
-        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-2xl font-bold shrink-0 overflow-hidden">
+        <div className="w-24 h-24 rounded-full bg-raised flex items-center justify-center text-fg-subtle text-2xl font-bold shrink-0 overflow-hidden">
           {showAvatar ? (
             <img
               src={profile.avatarUrl ?? undefined}
@@ -47,10 +50,10 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
         </div>
 
         <div className="flex flex-col gap-1 min-w-0">
-          <h1 className="text-gray-900 font-bold text-2xl break-words">{name}</h1>
-          <p className="text-gray-500 text-sm break-all">@{profile.username}</p>
-          <div className="flex items-center gap-3 flex-wrap text-gray-500 text-sm mt-1">
-            <span className="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-0.5 rounded">
+          <h1 className="text-fg font-bold text-2xl break-words">{name}</h1>
+          <p className="text-fg-subtle text-sm break-all">@{profile.username}</p>
+          <div className="flex items-center gap-3 flex-wrap text-fg-subtle text-sm mt-1">
+            <span className="bg-raised text-fg-soft text-xs font-semibold px-2 py-0.5 rounded">
               {ROLE_LABELS[profile.role]}
             </span>
             {joined && <span>Joined {joined}</span>}
@@ -61,12 +64,12 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
       </div>
 
       {profile.bio && (
-        <p className="text-gray-700 text-sm whitespace-pre-wrap break-words">{profile.bio}</p>
+        <p className="text-fg-soft text-sm whitespace-pre-wrap break-words">{profile.bio}</p>
       )}
 
       <Link
         to="/settings/profile"
-        className="self-start text-blue-600 hover:text-blue-700 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-blue-500"
+        className="self-start text-accent hover:text-accent-hover text-sm font-semibold focus-visible:outline-2 focus-visible:outline-blue-500"
       >
         Edit profile
       </Link>

@@ -12,9 +12,12 @@ interface NotificationsErrorProps {
 /** A failed load. Never shows server details; the user can retry. */
 export default function NotificationsError({ onRetry, retrying }: NotificationsErrorProps) {
   return (
-    <div role="alert" className="bg-slate-800 rounded-xl p-5 flex flex-col items-start gap-3">
-      <p className="text-slate-100 text-sm font-semibold">{NOTIFICATIONS_LOAD_ERROR_TITLE}</p>
-      <p className="text-slate-400 text-sm">{NOTIFICATIONS_LOAD_ERROR_HINT}</p>
+    <div
+      role="alert"
+      className="bg-surface rounded-xl p-5 flex flex-col items-start gap-3 border border-line"
+    >
+      <p className="text-fg text-sm font-semibold">{NOTIFICATIONS_LOAD_ERROR_TITLE}</p>
+      <p className="text-fg-subtle text-sm">{NOTIFICATIONS_LOAD_ERROR_HINT}</p>
       <button
         type="button"
         onClick={() => {

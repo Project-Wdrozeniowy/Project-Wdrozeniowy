@@ -49,18 +49,18 @@ export function CommentItem({
 
   return (
     <li className="flex flex-col gap-2">
-      <div className="flex flex-col gap-1 rounded-lg bg-slate-800 px-4 py-3">
+      <div className="flex flex-col gap-1 rounded-lg bg-surface px-4 py-3">
         {deleted ? (
-          <p className="text-sm italic text-slate-500">[comment deleted]</p>
+          <p className="text-sm italic text-fg-subtle">[comment deleted]</p>
         ) : (
           <>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-slate-300">{authorName}</span>
-              <time dateTime={comment.createdAt} className="text-xs text-slate-500">
+              <span className="text-xs font-semibold text-fg-muted">{authorName}</span>
+              <time dateTime={comment.createdAt} className="text-xs text-fg-subtle">
                 {new Date(comment.createdAt).toLocaleDateString('en-US')}
               </time>
             </div>
-            <p className="whitespace-pre-wrap break-words text-sm text-slate-200">
+            <p className="whitespace-pre-wrap break-words text-sm text-fg-soft">
               {comment.content}
             </p>
             <div className="mt-1 flex items-center gap-3">
@@ -69,7 +69,7 @@ export function CommentItem({
                   type="button"
                   onClick={() => setShowReplyForm((open) => !open)}
                   aria-expanded={showReplyForm}
-                  className="text-xs text-slate-400 transition-colors hover:text-slate-200"
+                  className="text-xs text-fg-subtle transition-colors hover:text-fg-soft"
                 >
                   Reply
                 </button>
@@ -79,14 +79,14 @@ export function CommentItem({
                   type="button"
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="text-xs text-red-400 transition-colors hover:text-red-300 disabled:opacity-50"
+                  className="text-xs text-danger transition-colors hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50"
                 >
                   {deleting ? 'Deleting…' : 'Delete'}
                 </button>
               )}
             </div>
             {deleteError && (
-              <p role="alert" className="text-xs text-red-400">
+              <p role="alert" className="text-xs text-danger">
                 {deleteError}
               </p>
             )}
@@ -108,7 +108,7 @@ export function CommentItem({
       )}
 
       {comment.replies.length > 0 && (
-        <ul className="ml-6 flex flex-col gap-2 border-l-2 border-slate-700 pl-4">
+        <ul className="ml-6 flex flex-col gap-2 border-l-2 border-line pl-4">
           {comment.replies.map((reply) => (
             <CommentItem
               key={reply.id}

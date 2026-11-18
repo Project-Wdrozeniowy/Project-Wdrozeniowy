@@ -17,7 +17,7 @@ export default function NotificationBell() {
       to="/notifications"
       aria-label={hasUnread ? `Notifications, ${unread} unread` : 'Notifications'}
       aria-current={pathname === '/notifications' ? 'page' : undefined}
-      className="relative p-2 rounded text-gray-50 hover:bg-slate-700 transition-colors focus-visible:outline-2 focus-visible:outline-blue-500"
+      className="relative p-2 rounded text-fg hover:bg-raised transition-colors focus-visible:outline-2 focus-visible:outline-blue-500"
     >
       <BellIcon />
       {hasUnread && (

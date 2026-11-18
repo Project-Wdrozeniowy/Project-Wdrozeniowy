@@ -94,16 +94,16 @@ export default function ChangePasswordForm() {
       onSubmit={handleSubmit((values) => setValidated((current) => current ?? values))}
       noValidate
       aria-label="Change password"
-      className="bg-white rounded-xl p-6 flex flex-col gap-5"
+      className="bg-surface rounded-xl p-6 flex flex-col gap-5 border border-line"
     >
-      <h2 className="text-gray-900 font-semibold text-lg">Change password</h2>
+      <h2 className="text-fg font-semibold text-lg">Change password</h2>
 
       {formError && (
         <div
           ref={alertRef}
           tabIndex={-1}
           role="alert"
-          className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded"
+          className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm px-4 py-3 rounded"
         >
           {formError}
         </div>

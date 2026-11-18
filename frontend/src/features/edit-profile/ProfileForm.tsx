@@ -25,7 +25,7 @@ import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/my
 const SUBMIT_CLASS =
   'bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
 const DISCARD_CLASS =
-  'text-gray-600 hover:text-gray-900 font-semibold text-sm px-3 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
+  'text-fg-muted hover:text-fg font-semibold text-sm px-3 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
 
 interface ProfileFormProps {
   profile: MyProfile;
@@ -131,9 +131,9 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
       onSubmit={handleSubmit(onSubmit)}
       noValidate
       aria-label={title}
-      className="bg-white rounded-xl p-6 flex flex-col gap-5"
+      className="bg-surface rounded-xl p-6 flex flex-col gap-5 border border-line"
     >
-      <h2 className="text-gray-900 font-semibold text-lg">{title}</h2>
+      <h2 className="text-fg font-semibold text-lg">{title}</h2>
 
       {blocker.state === 'blocked' && (
         <UnsavedChangesConfirm onStay={() => blocker.reset()} onLeave={() => blocker.proceed()} />
@@ -144,7 +144,7 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
           ref={alertRef}
           tabIndex={-1}
           role="alert"
-          className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded"
+          className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm px-4 py-3 rounded"
         >
           {formError}
         </div>

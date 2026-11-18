@@ -11,10 +11,10 @@ export default function PostResult({ post }: PostResultProps) {
     <li>
       <Link
         to={postHref(post.slug)}
-        className="flex flex-col gap-0.5 px-4 py-3 hover:bg-slate-700/50 focus-visible:outline-2 focus-visible:outline-blue-500"
+        className="flex flex-col gap-0.5 px-4 py-3 hover:bg-raised/50 focus-visible:outline-2 focus-visible:outline-blue-500"
       >
-        <span className="text-sm font-medium text-slate-100 break-words">{post.title}</span>
-        <span className="text-xs text-slate-400">
+        <span className="text-sm font-medium text-fg break-words">{post.title}</span>
+        <span className="text-xs text-fg-subtle">
           {post.category?.name ?? 'No category'} · @{post.author.username} · {post.commentCount}{' '}
           {post.commentCount === 1 ? 'comment' : 'comments'}
         </span>

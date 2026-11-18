@@ -9,11 +9,15 @@ interface StatCardProps {
 export default function StatCard({ label, value, change }: StatCardProps) {
   const isPositive = change >= 0;
   return (
-    <div className="bg-slate-800 rounded-xl p-5 flex items-start justify-between gap-3">
+    <div className="bg-surface rounded-xl p-5 flex items-start justify-between gap-3 border border-line">
       <div className="flex flex-col gap-1">
-        <span className="text-slate-400 text-sm">{label}</span>
-        <span className="text-gray-50 font-bold text-3xl">{value.toLocaleString()}</span>
-        <span className={isPositive ? 'text-sm text-emerald-400' : 'text-sm text-red-400'}>
+        <span className="text-fg-subtle text-sm">{label}</span>
+        <span className="text-fg font-bold text-3xl">{value.toLocaleString()}</span>
+        <span
+          className={
+            isPositive ? 'text-sm text-emerald-600 dark:text-emerald-400' : 'text-sm text-danger'
+          }
+        >
           {isPositive ? '+' : ''}
           {change}%
         </span>

@@ -12,10 +12,10 @@ export default function SearchNotice({ title, hint, role = 'status', action }: S
   return (
     <div
       role={role}
-      className="bg-slate-800 rounded-xl p-8 flex flex-col items-center gap-2 text-center"
+      className="bg-surface rounded-xl p-8 flex flex-col items-center gap-2 text-center border border-line"
     >
-      {title && <p className="text-base font-semibold text-slate-100">{title}</p>}
-      <p className="text-sm text-slate-400">{hint}</p>
+      {title && <p className="text-base font-semibold text-fg">{title}</p>}
+      <p className="text-sm text-fg-subtle">{hint}</p>
       {action}
     </div>
   );

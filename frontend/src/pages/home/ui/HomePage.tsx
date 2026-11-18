@@ -11,14 +11,14 @@ export default function HomePage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center bg-slate-700 rounded-xl p-1 gap-1">
+        <div className="flex items-center bg-raised rounded-xl p-1 gap-1">
           {SORT_TABS.map((tab, i) => (
             <button
               key={tab}
               onClick={() => setActiveTab(i)}
               className={cn(
                 'px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors',
-                i === activeTab ? 'bg-white text-gray-900' : 'text-gray-50 hover:bg-slate-600'
+                i === activeTab ? 'bg-surface text-fg' : 'text-fg hover:bg-raised-hover'
               )}
             >
               {tab}
