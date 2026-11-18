@@ -190,7 +190,11 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
       >
         <input
           {...register('title')}
-          {...getFieldControlProps({ id: ids.title, hasError: Boolean(errors.title?.message) })}
+          {...getFieldControlProps({
+            id: ids.title,
+            hasError: Boolean(errors.title?.message),
+            required: true,
+          })}
           type="text"
           placeholder="Give your post a clear title"
           readOnly={isPending}
@@ -205,6 +209,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
             id: ids.category,
             hasError: Boolean(categoryProblem),
             invalid: Boolean(errors.categoryId),
+            required: true,
           })}
           disabled={isPending || categories.isPending || categoriesUnavailable}
           className={inputClass(Boolean(errors.categoryId))}
@@ -229,7 +234,11 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
       >
         <textarea
           {...register('content')}
-          {...getFieldControlProps({ id: ids.content, hasError: Boolean(errors.content?.message) })}
+          {...getFieldControlProps({
+            id: ids.content,
+            hasError: Boolean(errors.content?.message),
+            required: true,
+          })}
           rows={8}
           placeholder="Share your thoughts…"
           readOnly={isPending}

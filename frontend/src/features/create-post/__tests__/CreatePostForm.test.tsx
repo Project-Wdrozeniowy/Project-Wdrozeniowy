@@ -292,6 +292,15 @@ describe('CreatePostForm', () => {
       expect(screen.getByText('0/120')).toHaveAttribute('aria-hidden', 'true');
     });
 
+    it('tells assistive technology which fields are required', async () => {
+      setup();
+      await screen.findByRole('option', { name: 'Gaming' });
+      for (const name of [/^Title/, /^Category/, /^Body/]) {
+        expect(screen.getByLabelText(name)).toHaveAttribute('aria-required', 'true');
+      }
+      expect(screen.getByLabelText('Tags')).not.toHaveAttribute('aria-required');
+    });
+
     it('describes an invalid field by its one error and nothing else', async () => {
       const { user } = setup();
       const title = screen.getByLabelText(/^Title/);

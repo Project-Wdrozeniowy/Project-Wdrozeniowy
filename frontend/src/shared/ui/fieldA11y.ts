@@ -12,12 +12,15 @@ interface FieldControlOptions {
   hasError?: boolean;
   /** Overrides `aria-invalid`, for a control that is invalid without that error node. */
   invalid?: boolean;
+  /** The field is required: adds `aria-required`, the counterpart of the visual `*` marker. */
+  required?: boolean;
 }
 
 interface FieldControlProps {
   id: string;
   'aria-invalid': boolean;
   'aria-describedby': string | undefined;
+  'aria-required': true | undefined;
 }
 
 /**
@@ -34,6 +37,7 @@ export function getFieldControlProps({
   hasHint = false,
   hasError = false,
   invalid = hasError,
+  required = false,
 }: FieldControlOptions): FieldControlProps {
   const ids = getFieldIds(id);
   const describedBy = [hasHint && ids.hint, hasError && ids.error].filter(Boolean).join(' ');
@@ -42,5 +46,6 @@ export function getFieldControlProps({
     id,
     'aria-invalid': invalid,
     'aria-describedby': describedBy || undefined,
+    'aria-required': required || undefined,
   };
 }

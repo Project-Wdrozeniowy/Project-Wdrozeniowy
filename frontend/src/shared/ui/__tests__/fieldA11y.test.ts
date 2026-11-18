@@ -12,7 +12,13 @@ describe('getFieldControlProps', () => {
       id: 'name',
       'aria-invalid': false,
       'aria-describedby': undefined,
+      'aria-required': undefined,
     });
+  });
+
+  it('marks the control as required only when asked', () => {
+    expect(getFieldControlProps({ id: 'name', required: true })['aria-required']).toBe(true);
+    expect(getFieldControlProps({ id: 'name', required: false })['aria-required']).toBeUndefined();
   });
 
   it('references only the nodes that are rendered', () => {

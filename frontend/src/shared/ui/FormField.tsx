@@ -12,7 +12,7 @@ interface FormFieldProps {
   id?: string;
   /** The validation error shown under the hint. Nothing is rendered while it is empty. */
   error?: ReactNode;
-  /** Adds the visual required marker. Set `aria-required` or `required` on the control itself. */
+  /** Adds the visual required marker. Pass `required` to `getFieldControlProps` for the control. */
   required?: boolean;
   /** Shows `used/max` next to the label. */
   counter?: { used: number; max: number };
