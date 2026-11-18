@@ -1,5 +1,6 @@
 import {
   applyVoteOutcome,
+  applyVoteOutcomeToPages,
   isPostDetailQuery,
   scoreAfterRetract,
   voteActionFor,
@@ -101,5 +102,23 @@ describe('isPostDetailQuery', () => {
 
   it('does not match data that is not a whole post', () => {
     expect(isPostDetailQuery(query(['/forum/posts/hello'], { id: 5 }), 5)).toBe(false);
+  });
+});
+
+describe('applyVoteOutcomeToPages', () => {
+  it('applies the outcome to the post on whichever loaded page holds it', () => {
+    const data = {
+      pages: [page(post(1, 5), post(2, 1)), page(post(3, 8))],
+      pageParams: [0, 1],
+    };
+
+    const next = applyVoteOutcomeToPages(data, 3, {
+      voteScore: 9,
+      myVote: { id: 4, voteType: 'UP' },
+    });
+
+    expect(next.pages[1].content[0]).toMatchObject({ id: 3, voteScore: 9, myVote: { id: 4 } });
+    expect(next.pages[0].content.map((p) => p.voteScore)).toEqual([5, 1]);
+    expect(next.pageParams).toEqual([0, 1]);
   });
 });

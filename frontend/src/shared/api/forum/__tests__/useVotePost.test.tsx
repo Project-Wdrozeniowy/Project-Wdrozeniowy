@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { vi } from 'vitest';
 import { useVotePost } from '@/shared/api/forum/useVotePost';
 import { apiClient } from '@/shared/api/client/api';
+import { AUTHOR_POSTS_QUERY_KEY } from '@/shared/api/forum/authorPosts.const';
 import { getGetPostQueryKey, getListPostsQueryKey } from '@/shared/api/generated/orbita.api';
 import type { PostDto } from '@/shared/api/generated/models/postDto.dto';
 
@@ -121,5 +122,57 @@ describe('a vote and the post page', () => {
     await waitFor(() =>
       expect(client.getQueryState(getGetPostQueryKey('hello'))?.isInvalidated).toBe(true)
     );
+  });
+
+  it("updates the post in the profile's list of one author, which is loaded page by page", async () => {
+    const key = [...AUTHOR_POSTS_QUERY_KEY, 'alice'];
+    client.setQueryData(key, {
+      pages: [
+        {
+          content: [
+            { id: 5, voteScore: 3, myVote: null },
+            { id: 6, voteScore: 1, myVote: null },
+          ],
+        },
+      ],
+      pageParams: [0],
+    });
+    mock.onPost('/forum/votes').reply(201, {
+      id: 9,
+      entityType: 'POST',
+      entityId: 5,
+      voteType: 'UP',
+      newScore: 4,
+    });
+    const { result } = renderHook(() => useVotePost(5), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({ clicked: 'UP', voteScore: 3, myVote: null });
+    });
+
+    const data = client.getQueryData<{ pages: { content: { id: number; voteScore: number }[] }[] }>(
+      key
+    );
+    expect(data?.pages[0].content.map((p) => p.voteScore)).toEqual([4, 1]);
+  });
+
+  it("has the profile's list confirmed by a reload after a retract", async () => {
+    const key = [...AUTHOR_POSTS_QUERY_KEY, 'alice'];
+    client.setQueryData(key, {
+      pages: [{ content: [{ id: 5, voteScore: 4, myVote: { id: 9, voteType: 'UP' } }] }],
+      pageParams: [0],
+    });
+    mock.onDelete('/forum/votes/9').reply(204);
+    const { result } = renderHook(() => useVotePost(5), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        clicked: 'UP',
+        voteScore: 4,
+        myVote: { id: 9, voteType: 'UP' },
+      });
+    });
+
+    await waitFor(() => expect(client.getQueryState(key)?.isInvalidated).toBe(true));
   });
 });

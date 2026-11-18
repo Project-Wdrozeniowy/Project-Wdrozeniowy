@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router';
 import { cn } from '@/shared/lib/cn';
 import { ChartBarIcon, CommentIcon, HomeIcon, UserIcon } from '@/shared/ui/icons';
 import { useStore } from '@/store';
-import { isActiveLink } from '@/widgets/header/lib/isActiveLink';
+import { isActiveLink } from '@/shared/lib/isActiveLink';
 import { MOBILE_PROFILE_LINK, MOBILE_TABS_LABEL, NAV_LINKS } from './header.const';
 
 /** One icon per page link; the labels and addresses come from NAV_LINKS, so there is one list. */

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import NavLinks from '../NavLinks';
-import { isActiveLink } from '@/widgets/header/lib/isActiveLink';
+import { isActiveLink } from '@/shared/lib/isActiveLink';
 
 describe('isActiveLink', () => {
   it('matches home only exactly', () => {
