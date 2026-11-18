@@ -127,21 +127,27 @@ describe('ForumFeed – data flow', () => {
     expect(postTitles()).toEqual(['Post 30', 'Post 20', 'Post 10']);
   });
 
-  it('does not link titles: the post page is a placeholder until it is implemented', async () => {
+  it('links the title and the comments of each post to its page', async () => {
     list.mockResolvedValue(pageOf([7]));
     renderFeed();
 
     await screen.findByText('Post 7');
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    const card = within(screen.getByRole('article'));
+    const href = card.getByRole('link', { name: 'Post 7' }).getAttribute('href');
+    expect(href).toMatch(/^\/forum\/.+/);
+    expect(card.getByRole('link', { name: '2 Comments' })).toHaveAttribute(
+      'href',
+      `${href}#comments`
+    );
   });
 
-  it('disables sharing, saving and comments on real posts, and says why', async () => {
+  it('disables sharing and saving on real posts, and says why', async () => {
     list.mockResolvedValue(pageOf([7]));
     renderFeed();
     await screen.findByText('Post 7');
     const card = within(screen.getByRole('article'));
 
-    for (const name of ['Share', 'Save', '2 Comments']) {
+    for (const name of ['Share', 'Save']) {
       const button = card.getByRole('button', { name });
       expect(button).toBeDisabled();
       expect(button).toHaveAttribute('title', ACTION_UNAVAILABLE_HINT);

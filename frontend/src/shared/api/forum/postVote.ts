@@ -1,7 +1,24 @@
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
+import type { PostDto as Post } from '@/shared/api/generated/models/postDto.dto';
 import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 import type { MyVoteDto as MyVote } from '@/shared/api/generated/models/myVoteDto.dto';
 import type { VoteRequestVoteType as VoteType } from '@/shared/api/generated/models/voteRequestVoteType.dto';
+
+/**
+ * True for the cached post of the post page (`/forum/posts/{slug}`) with this id: a query whose
+ * data is a whole post. The feed, the comments and other lists never match.
+ */
+export function isPostDetailQuery(
+  query: { queryKey: readonly unknown[]; state: { data: unknown } },
+  postId: number
+): boolean {
+  const [path] = query.queryKey;
+  if (typeof path !== 'string' || !path.startsWith('/forum/posts/') || path.endsWith('/comments')) {
+    return false;
+  }
+  const data = query.state.data as Partial<Post> | undefined;
+  return data?.id === postId && typeof data.slug === 'string' && 'voteScore' in data;
+}
 
 /** How much one vote moves a score. */
 export function voteValue(voteType: VoteType): 1 | -1 {

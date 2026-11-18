@@ -9,6 +9,7 @@ import type { PostCardData } from '@/widgets/post-feed/lib/postCard';
 
 const post: PostCardData = {
   id: '1',
+  slug: 'hello-world',
   username: 'alice',
   userInitial: 'A',
   timeAgo: '2 hours ago',
@@ -41,10 +42,10 @@ function renderCard(data: PostCardData) {
 }
 
 describe('PostCard', () => {
-  it('renders the title as a heading, not a link', () => {
+  it('renders the title as a heading that holds the link to the post', () => {
     renderCard(post);
-    expect(screen.getByRole('heading', { name: 'Hello world' })).toBeInTheDocument();
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    const heading = screen.getByRole('heading', { name: 'Hello world' });
+    expect(within(heading).getByRole('link', { name: 'Hello world' })).toBeInTheDocument();
   });
 
   it('renders no excerpt paragraph when the API provides none', () => {
@@ -118,9 +119,40 @@ describe('PostCard', () => {
     expect(screen.getByText('10')).toBeInTheDocument();
   });
 
-  it('disables comments, share and save with an explanation', () => {
+  it('links the title and the comments to the post page', () => {
     renderCard(post);
-    for (const name of ['3 Comments', 'Share', 'Save']) {
+
+    expect(screen.getByRole('link', { name: 'Hello world' })).toHaveAttribute(
+      'href',
+      '/forum/hello-world'
+    );
+    expect(screen.getByRole('link', { name: '3 Comments' })).toHaveAttribute(
+      'href',
+      '/forum/hello-world#comments'
+    );
+  });
+
+  it('encodes a slug that needs it in the address of the post', () => {
+    renderCard({ ...post, slug: 'a b/c' });
+
+    expect(screen.getByRole('link', { name: 'Hello world' })).toHaveAttribute(
+      'href',
+      '/forum/a%20b%2Fc'
+    );
+  });
+
+  it('encodes a slug with non-ASCII letters', () => {
+    renderCard({ ...post, slug: 'zażółć-gęślą' });
+
+    expect(screen.getByRole('link', { name: 'Hello world' })).toHaveAttribute(
+      'href',
+      `/forum/${encodeURIComponent('zażółć-gęślą')}`
+    );
+  });
+
+  it('disables share and save with an explanation', () => {
+    renderCard(post);
+    for (const name of ['Share', 'Save']) {
       const button = screen.getByRole('button', { name });
       expect(button).toBeDisabled();
       expect(button).toHaveAttribute('title', ACTION_UNAVAILABLE_HINT);

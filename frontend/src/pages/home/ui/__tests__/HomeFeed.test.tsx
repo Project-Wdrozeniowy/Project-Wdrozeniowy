@@ -151,15 +151,28 @@ describe('HomeFeed', () => {
     renderHome();
 
     await screen.findByText('Post 1');
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /See all posts/ })).not.toBeInTheDocument();
   });
 
-  it('keeps share, save and comments disabled on real posts', async () => {
+  it('links the title and the comments of a post to its page', async () => {
     list.mockResolvedValue(pageOf([1]));
     renderHome();
 
     await screen.findByText('Post 1');
-    for (const name of ['2 Comments', 'Share', 'Save']) {
+    const href = screen.getByRole('link', { name: 'Post 1' }).getAttribute('href');
+    expect(href).toMatch(/^\/forum\/.+/);
+    expect(screen.getByRole('link', { name: '2 Comments' })).toHaveAttribute(
+      'href',
+      `${href}#comments`
+    );
+  });
+
+  it('keeps share and save disabled on real posts', async () => {
+    list.mockResolvedValue(pageOf([1]));
+    renderHome();
+
+    await screen.findByText('Post 1');
+    for (const name of ['Share', 'Save']) {
       const button = screen.getByRole('button', { name });
       expect(button).toBeDisabled();
       expect(button).toHaveAttribute('title', ACTION_UNAVAILABLE_HINT);

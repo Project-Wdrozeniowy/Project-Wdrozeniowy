@@ -25,7 +25,9 @@ preserves the original comparison and route-organization evidence.
 | `shared/ui/`                                   | Reusable presentation, including the profile-load error used by profile and settings   |
 
 Page slices are home, forum, post, search, login, register, dashboard, profile,
-settings, notifications and admin. The post body remains a placeholder. The notification
+settings, notifications and admin. The post page shows the real post
+(`GET /forum/posts/{slug}`) with its comments below it, and the feed links to it; opening a post
+records no "opening" (that has its own rules, PWDRZ-186). The notification
 page is reached from the header bell, which shows the unread count of the notification API;
 there is no real-time update until PWDRZ-104. Screen-specific code
 stays in its page; dashboard charts and a page's feed are not promoted to widgets

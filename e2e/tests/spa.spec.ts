@@ -39,9 +39,11 @@ test('SPA: production assets, fallback and API failures retain their boundaries'
   page.on('pageerror', (error) => errors.push(error.message));
   const response = await page.goto('/forum/deep-link');
   expect(response?.status()).toBe(200);
-  await expect(page.getByText('Post slug: deep-link')).toBeVisible();
+  // A deep link reaches the SPA (200), which asks the API for that post: there is none, so the
+  // page says so, and says it again after a reload.
+  await expect(page.getByRole('heading', { name: 'Post not found' })).toBeVisible();
   await page.reload();
-  await expect(page.getByText('Post slug: deep-link')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Post not found' })).toBeVisible();
   expect(response?.headers()['cache-control']).toBe('no-cache');
   expect(response?.headers()['content-security-policy']).toContain("script-src 'self'");
 

@@ -2,11 +2,19 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 // The published comments API is implemented; full integration acceptance remains PWDRZ-67.
 import { commentService } from '@/shared/api/forum/forumClient';
 import { COMMENTS_PAGE_SIZE } from '@/shared/api/forum/commentQuery.const';
+import { FEED_QUERY_KEY } from '@/shared/api/forum/feedQuery.const';
+import { getGetPostQueryKey } from '@/shared/api/generated/orbita.api';
 
 export function useComments(slug: string) {
   const queryClient = useQueryClient();
   const queryKey = ['comments', slug];
-  const refresh = () => queryClient.invalidateQueries({ queryKey });
+  // A comment also changes the count the post page and the feed show for this post.
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey }),
+      queryClient.invalidateQueries({ queryKey: getGetPostQueryKey(slug) }),
+      queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY }),
+    ]);
 
   const query = useInfiniteQuery({
     queryKey,

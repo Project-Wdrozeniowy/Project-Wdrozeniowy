@@ -1,10 +1,12 @@
+import { Link } from 'react-router';
 import { ACTION_UNAVAILABLE_HINT } from '@/widgets/post-feed/config/postCard.const';
-import { getCategoryColor } from '@/shared/lib/categoryColor';
 import type { PostCardData } from '@/widgets/post-feed/lib/postCard';
-import { cn } from '@/shared/lib/cn';
 import { CommentIcon, ShareIcon, SaveIcon } from '@/shared/ui/icons';
 import PostTagLinks from './PostTagLinks';
+import CategoryChip from '@/shared/ui/CategoryChip';
 import ActionButton from '@/features/post-interactions/ActionButton';
+import ActionLink from '@/features/post-interactions/ActionLink';
+import { postHref } from '@/shared/lib/searchUrl';
 import { PostVoteColumn } from '@/features/post-interactions/PostVoteColumn';
 
 interface PostCardProps {
@@ -12,10 +14,6 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const categoryColor = post.category
-    ? getCategoryColor({ name: post.category, slug: post.categorySlug })
-    : '';
-
   return (
     <article className="bg-surface rounded-xl p-5 flex gap-4 hover:bg-raised/50 transition-colors border border-line">
       <PostVoteColumn postId={post.voting.postId} score={post.votes} myVote={post.voting.myVote} />
@@ -35,17 +33,15 @@ export default function PostCard({ post }: PostCardProps) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <h2 className="text-fg font-semibold text-xl leading-snug break-words">{post.title}</h2>
-          {post.category && (
-            <span
-              className={cn(
-                'text-xs font-semibold px-2 py-0.5 rounded border self-start',
-                categoryColor
-              )}
+          <h2 className="text-fg font-semibold text-xl leading-snug break-words">
+            <Link
+              to={postHref(post.slug)}
+              className="hover:text-accent focus-visible:outline-2 focus-visible:outline-blue-500"
             >
-              {post.category}
-            </span>
-          )}
+              {post.title}
+            </Link>
+          </h2>
+          {post.category && <CategoryChip name={post.category} slug={post.categorySlug} />}
           {post.excerpt && (
             <p className="text-fg-subtle text-base leading-relaxed line-clamp-2">{post.excerpt}</p>
           )}
@@ -54,11 +50,10 @@ export default function PostCard({ post }: PostCardProps) {
         <PostTagLinks tags={post.tags} />
 
         <div className="flex items-center gap-2 flex-wrap">
-          <ActionButton
+          <ActionLink
             icon={<CommentIcon />}
             label={`${post.comments} Comments`}
-            disabled
-            title={ACTION_UNAVAILABLE_HINT}
+            to={`${postHref(post.slug)}#comments`}
           />
           <ActionButton
             icon={<ShareIcon />}
