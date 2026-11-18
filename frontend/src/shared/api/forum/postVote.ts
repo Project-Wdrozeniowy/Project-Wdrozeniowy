@@ -1,3 +1,4 @@
+import type { InfiniteData } from '@tanstack/react-query';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import type { PostDto as Post } from '@/shared/api/generated/models/postDto.dto';
 import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
@@ -18,6 +19,15 @@ export function isPostDetailQuery(
   }
   const data = query.state.data as Partial<Post> | undefined;
   return data?.id === postId && typeof data.slug === 'string' && 'voteScore' in data;
+}
+
+/** `applyVoteOutcome` for a list loaded page by page (the profile's posts of one author). */
+export function applyVoteOutcomeToPages(
+  data: InfiniteData<PagedResponse<PostSummary>>,
+  postId: number,
+  outcome: VoteOutcome
+): InfiniteData<PagedResponse<PostSummary>> {
+  return { ...data, pages: data.pages.map((page) => applyVoteOutcome(page, postId, outcome)) };
 }
 
 /** How much one vote moves a score. */

@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { cn } from '@/shared/lib/cn';
-import { isActiveLink } from '@/widgets/header/lib/isActiveLink';
+import { isActiveLink } from '@/shared/lib/isActiveLink';
 
 interface NavLink {
   href: string;

@@ -1,12 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 import { apiErrorStatus } from '@/shared/api/client/apiError';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
+import { AUTHOR_POSTS_QUERY_KEY } from '@/shared/api/forum/authorPosts.const';
 import { FEED_QUERY_KEY } from '@/shared/api/forum/feedQuery.const';
 import { castVote, retractVote } from '@/shared/api/generated/orbita.api';
 import type { PostDto as Post } from '@/shared/api/generated/models/postDto.dto';
 import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 import {
   applyVoteOutcome,
+  applyVoteOutcomeToPages,
   isPostDetailQuery,
   scoreAfterRetract,
   voteActionFor,
@@ -78,6 +81,11 @@ export function useVotePost(postId: number) {
         { queryKey: FEED_QUERY_KEY },
         (page) => (page ? applyVoteOutcome(page, postId, outcome) : page)
       );
+      // The profile's list of one author's posts is loaded page by page and has its own key.
+      queryClient.setQueriesData<InfiniteData<PagedResponse<PostSummary>>>(
+        { queryKey: AUTHOR_POSTS_QUERY_KEY },
+        (data) => (data ? applyVoteOutcomeToPages(data, postId, outcome) : data)
+      );
       queryClient.setQueriesData<Post>({ predicate: isDetail }, (post) =>
         post ? { ...post, ...outcome } : post
       );
@@ -85,6 +93,11 @@ export function useVotePost(postId: number) {
       // written above is computed here and the feed is reloaded to confirm it.
       if (voteActionFor(myVote, clicked).kind === 'retract') {
         void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+        // Only the list on screen is reloaded now; others are marked old and reload when opened.
+        void queryClient.invalidateQueries({
+          queryKey: AUTHOR_POSTS_QUERY_KEY,
+          refetchType: 'active',
+        });
         void queryClient.invalidateQueries({ predicate: isDetail });
       }
     },
@@ -96,6 +109,11 @@ export function useVotePost(postId: number) {
       // The post or the vote changed under us: show the real state.
       if (status === 404 || status === 409 || (retracting && status === 403)) {
         void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+        // Only the list on screen is reloaded now; others are marked old and reload when opened.
+        void queryClient.invalidateQueries({
+          queryKey: AUTHOR_POSTS_QUERY_KEY,
+          refetchType: 'active',
+        });
         void queryClient.invalidateQueries({ predicate: isDetail });
       }
     },

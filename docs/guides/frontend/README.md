@@ -29,7 +29,10 @@ settings, notifications and admin. The post page shows the real post
 (`GET /forum/posts/{slug}`) with its comments below it, and the feed links to it; opening a post
 records no "opening" (that has its own rules, PWDRZ-186). The notification
 page is reached from the header bell, which shows the unread count of the notification API;
-there is no real-time update until PWDRZ-104. Screen-specific code
+there is no real-time update until PWDRZ-104. The profile lists the user's own published posts
+(`GET /forum/posts?author=`, a page at a time); its sections without an API (comments, saved,
+activity) are shown as not available yet, and the sidebar card shows only counts the platform has
+(no followers yet). Screen-specific code
 stays in its page; dashboard charts and a page's feed are not promoted to widgets
 just because they are large. The shared post-feed presentation is genuinely
 consumed by both home and forum.
