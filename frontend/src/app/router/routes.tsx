@@ -65,6 +65,12 @@ export const routes: RouteObject[] = [
                 lazy: async () => ({ Component: (await import('@/pages/profile')).ProfilePage }),
               },
               {
+                path: 'notifications',
+                lazy: async () => ({
+                  Component: (await import('@/pages/notifications')).NotificationsPage,
+                }),
+              },
+              {
                 // `/settings` has no section: the page sends it to the default one.
                 path: 'settings/:section?',
                 lazy: async () => ({ Component: (await import('@/pages/settings')).SettingsPage }),

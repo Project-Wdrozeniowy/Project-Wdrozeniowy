@@ -25,7 +25,9 @@ preserves the original comparison and route-organization evidence.
 | `shared/ui/`                                   | Reusable presentation, including the profile-load error used by profile and settings   |
 
 Page slices are home, forum, post, search, login, register, dashboard, profile,
-settings and admin. The post body remains a placeholder. Screen-specific code
+settings, notifications and admin. The post body remains a placeholder. The notification
+page is reached from the header bell, which shows the unread count of the notification API;
+there is no real-time update until PWDRZ-104. Screen-specific code
 stays in its page; dashboard charts and a page's feed are not promoted to widgets
 just because they are large. The shared post-feed presentation is genuinely
 consumed by both home and forum.

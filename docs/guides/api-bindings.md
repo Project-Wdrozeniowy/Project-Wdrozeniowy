@@ -111,8 +111,8 @@ parameters use backend defaults; generated parameter objects replace the removed
 positional analytics signatures. Notification PATCH operations take no request body, and
 empty 204 results resolve to `undefined` through the shared transport.
 
-The notification center remains PWDRZ-152 UI work; generated bindings do not imply
-that its UI is implemented. Provisional recommendations remain in
+The notification center (PWDRZ-152) uses the generated notification operations through
+`shared/api/notifications/`; real-time delivery stays PWDRZ-104. Provisional recommendations remain in
 `shared/api/recommendation/recommendationClient.ts`, with their own DTO and the
 preserved default/custom-limit tests. Both recommendation endpoints are still hidden
 501 stubs owned by PWDRZ-146. Provisional adapters cannot be certified by mocked

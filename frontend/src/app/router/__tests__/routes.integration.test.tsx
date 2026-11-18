@@ -69,7 +69,7 @@ it('reads the dynamic post slug from the browser route', async () => {
   await open('/forum/a-real-slug');
   expect(await screen.findByText('Post slug: a-real-slug')).toBeVisible();
 });
-it.each(['/profile', '/settings', '/settings/account', '/dashboard', '/admin'])(
+it.each(['/profile', '/settings', '/settings/account', '/notifications', '/dashboard', '/admin'])(
   'redirects a guest opening %s directly',
   async (path) => {
     const router = await open(path);
@@ -77,21 +77,25 @@ it.each(['/profile', '/settings', '/settings/account', '/dashboard', '/admin'])(
     expect(await screen.findByRole('heading', { name: 'Welcome Back' })).toBeVisible();
   }
 );
-it.each(['/profile', '/settings/profile', '/settings/account', '/dashboard', '/admin'])(
-  'renders the implemented protected route %s for its permitted user',
-  async (path) => {
-    useStore.setState({ user: { ...user, role: 'ADMIN' }, isAuthenticated: true });
-    vi.mocked(orvalTransport).mockImplementation(async (config) => {
-      if (config.url === '/users/me') return { ...user, role: 'ADMIN' } as never;
-      throw new Error('Network is isolated in this routing test');
-    });
-    const router = await open(path);
-    await waitFor(() => expect(router.state.initialized).toBe(true));
-    expect(router.state.errors).toBeNull();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible());
-    expect(router.state.location.pathname).toBe(path);
-  }
-);
+it.each([
+  '/profile',
+  '/settings/profile',
+  '/settings/account',
+  '/notifications',
+  '/dashboard',
+  '/admin',
+])('renders the implemented protected route %s for its permitted user', async (path) => {
+  useStore.setState({ user: { ...user, role: 'ADMIN' }, isAuthenticated: true });
+  vi.mocked(orvalTransport).mockImplementation(async (config) => {
+    if (config.url === '/users/me') return { ...user, role: 'ADMIN' } as never;
+    throw new Error('Network is isolated in this routing test');
+  });
+  const router = await open(path);
+  await waitFor(() => expect(router.state.initialized).toBe(true));
+  expect(router.state.errors).toBeNull();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible());
+  expect(router.state.location.pathname).toBe(path);
+});
 it.each(['/settings', '/settings/privacy', '/settings/nonsense'])(
   'sends %s to the profile section of the settings',
   async (path) => {

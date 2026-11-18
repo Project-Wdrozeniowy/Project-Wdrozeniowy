@@ -12,6 +12,8 @@ vi.mock('@/shared/lib/toast', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 vi.mock('../ui/SearchBar', () => ({ default: () => null }));
+// The bell has its own tests and needs a QueryClient that this sign-out test does not.
+vi.mock('../ui/NotificationBell', () => ({ default: () => null }));
 
 beforeEach(() => {
   vi.clearAllMocks();

@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
-import { BellIcon, TrendingIcon } from '@/shared/ui/icons';
+import { TrendingIcon } from '@/shared/ui/icons';
+import NotificationBell from './NotificationBell';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 
 interface UserActionsProps {
@@ -18,14 +19,7 @@ export default function UserActions({ isAuthenticated, user, logout }: UserActio
         <TrendingIcon />
       </button>
 
-      {isAuthenticated && (
-        <button
-          aria-label="Notifications"
-          className="p-2 rounded text-gray-50 hover:bg-slate-700 transition-colors"
-        >
-          <BellIcon />
-        </button>
-      )}
+      {isAuthenticated && <NotificationBell />}
 
       {isAuthenticated ? (
         <div className="flex items-center gap-2">
