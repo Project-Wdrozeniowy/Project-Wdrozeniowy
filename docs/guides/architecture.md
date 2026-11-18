@@ -1,5 +1,7 @@
 # Architecture and extension guide
 
+> **Current topology:** adopted Vite/React Router SPA, Express static hosting and relative `/api`; Spring owns SESSION/CSRF. Start at the root README. Historical spike records are not current operating instructions.
+
 > [Русская версия / Russian translation ↓](#ru) — temporary reading aid; the
 > English text is canonical.
 
@@ -15,7 +17,7 @@ today.**
 Orbita currently has three independently built services in one repository:
 
 ```text
-Browser → Next.js frontend (:3001) → Express gateway (:3000)
+Browser → Express SPA host + /api proxy (:3000)
         → Spring Boot backend (:8080, /api) → PostgreSQL
 ```
 
@@ -23,13 +25,13 @@ Browser → Next.js frontend (:3001) → Express gateway (:3000)
   use its shared `ApiClient` and pass through the gateway, not directly to the
   backend.
 - The gateway owns cross-cutting HTTP concerns such as CORS, rate limiting,
-  access-token verification, and proxying. It must not become a second business
+  bounded HTTP forwarding, and proxying. It must not become a second business
   logic or persistence layer.
 - The backend owns HTTP endpoints, authorization, business rules, and database
   access. Flyway migrations own the schema; existing migrations are immutable.
-- The gateway and backend intentionally verify access tokens independently.
-  Both need the same JWT signing configuration. The frontend keeps access
-  tokens in memory and receives refresh tokens only through an HttpOnly cookie.
+- Spring owns JDBC sessions, CSRF, authentication and current resource authorization.
+  Express has no REST JWT policy or signing key. The SPA restores presentation
+  through `/users/me`; see [session policy and access matrix](sessions.md).
 
 > **Planned, not active:** Redis is provisioned in Compose but has no
 > application consumer. Socket.IO is installed in the gateway but has no
@@ -59,28 +61,18 @@ see the [testing guide](testing.md).
 
 ## Frontend: thin routes, shared transport and state
 
-The current frontend is **not a full Feature-Sliced Design implementation**.
-The [PWDRZ-149 frontend architecture target](frontend/README.md) defines the
-approved FSD/Next.js destination. The paths below describe **current ownership
-before migration**, not new placement rules:
-
-- `src/app/` contains Next.js route files and route composition. Move form
-  submission, data-fetch orchestration, and other feature behaviour into
-  components or hooks rather than growing route files.
-- `src/services/` currently holds HTTP requests and the shared `ApiClient`.
-  The target moves these responsibilities under `shared/api/`; routes and UI
-  must not create a second client or bypass token-refresh behaviour.
-- `src/store/` currently holds shared client/application state. React Query
-  owns server-cache state; the overlapping user profile copies are tracked in
-  [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150).
-- `src/components/` currently contains reusable UI. PWDRZ-149 will distribute
-  it by actual `widgets`, `features`, `shared`, or route-local responsibility.
+The [frontend architecture](frontend/README.md) owns the current route/slice map.
+`app/router` composes routes, `app/layouts` owns frames, `app/providers` owns providers,
+and `pages` owns screens. Widgets hold reusable regions, features own user actions,
+and `shared/api` and `shared/auth` own transport/session infrastructure. Query owns
+server cache; PWDRZ-150 retains profile-state consolidation. Development adds Vite
+:3001 proxying `/api` through Express. Built operation needs no frontend server.
 
 > **Existing gap:** These are architectural responsibilities, not a claim
-> that all files comply. Login and registration routes still contain
-> submission orchestration;
-> [PWDRZ-131](https://project-wdrz.atlassian.net/browse/PWDRZ-131)
-> owns that frontend cleanup.
+> that all files comply. The login and registration routes are thin
+> compositions; their submission orchestration lives in `features/sign-in` and
+> `features/sign-up`
+> ([PWDRZ-131](https://project-wdrz.atlassian.net/browse/PWDRZ-131)).
 
 The [frontend README](../../frontend/README.md) describes running the service.
 
@@ -104,7 +96,9 @@ at `/api/v3/api-docs` when `SWAGGER_ENABLED=true`.
   `@Hidden`, so their annotations remain the design reference. Each such
   controller names the Jira task that implements it.
 - Error responses carry an RFC 9457 `ProblemDetail` body
-  (`application/problem+json`). Every property of a response DTO is present;
+  (`application/problem+json`). Its optional `errors` map names the request
+  fields to blame, on validation errors and on errors such as a taken email
+  (409). Every property of a response DTO is present;
   the ones that can be `null` are marked `@Schema(nullable = true)`.
 - `OpenApiContractTest` fails when a `501` stub is published, when an
   implemented operation is hidden, or when `backend/openapi.json` differs
@@ -122,11 +116,13 @@ the PR:
 Cross-service evidence is part of the
 [Definition of Done](README.md#definition-of-done).
 
-**Technical debt:** Frontend contract types are maintained by hand.
-[PWDRZ-130](https://project-wdrz.atlassian.net/browse/PWDRZ-130) targets
-derived types and endpoint bindings from `backend/openapi.json` by the end of
-Sprint 5, without bypassing `ApiClient`'s token/cookie/401 handling. *The
-generator is not implemented yet.*
+**Frontend bindings (PWDRZ-130):** pinned Orval generates committed DTOs,
+operations and TanStack Query v5 bindings from `backend/openapi.json` into
+`frontend/src/shared/api/generated/`. A custom mutator delegates to the existing
+`ApiClient`, preserving cookie/CSRF/error handling. Root `api:generate` updates output;
+`api:check` detects drift without repairing files. Handwritten compositions keep
+application behavior; hidden `501` API contracts remain provisional. See the
+[API bindings workflow](api-bindings.md) for cache policy and remaining exceptions.
 
 ## Where to look next
 
@@ -155,21 +151,19 @@ generator is not implemented yet.*
 В одном репозитории Orbita находятся три независимо собираемых сервиса:
 
 ```text
-Браузер → Next.js frontend (:3001) → Express gateway (:3000)
+Браузер → Express SPA host + /api proxy (:3000)
         → Spring Boot backend (:8080, /api) → PostgreSQL
 ```
 
 - Frontend отвечает за представление и взаимодействие с пользователем.
   Браузерные API-запросы идут через общий `ApiClient` и gateway, не напрямую
   в backend.
-- Gateway отвечает за сквозные HTTP-задачи: CORS, rate limiting, проверку
-  access token и proxy. Он не должен становиться вторым слоем бизнес-логики
+- Gateway отвечает за сквозные HTTP-задачи: CORS, rate limiting, ограничения HTTP и proxy. Он не должен становиться вторым слоем бизнес-логики
   или хранения данных.
 - Backend отвечает за HTTP endpoints, авторизацию, бизнес-правила и БД.
   Схема принадлежит Flyway; уже применённые миграции неизменяемы.
-- Gateway и backend намеренно проверяют access token независимо и должны
-  использовать одинаковую конфигурацию подписи JWT. Frontend хранит access
-  token только в памяти, а refresh token получает лишь через HttpOnly cookie.
+- Spring владеет JDBC-сессиями, CSRF и авторизацией; Express не проверяет REST JWT.
+  SPA читает `/users/me`. См. [политику сессий и матрицу доступа](sessions.md).
 
 > **Планируется, но не работает сейчас:** Redis есть в Compose, но приложение
 > пока его не использует. Socket.IO установлен в gateway, однако активной
@@ -199,28 +193,18 @@ PostgreSQL enum mapping **обязателен round-trip тест с мигра
 
 ### Frontend: тонкие routes, общий transport и state
 
-Текущий frontend **не является полной реализацией Feature-Sliced Design**.
-[Целевая архитектура PWDRZ-149](frontend/README.md) определяет согласованный
-вариант FSD вместе с Next.js. Пути ниже описывают **нынешних владельцев кода
-до миграции**, а не новые правила размещения:
-
-- `src/app/` содержит файлы маршрутов и их композицию. Submission форм,
-  orchestration загрузки данных и другое feature-поведение выносите в
-  компоненты или hooks, а не наращивайте route files.
-- `src/services/` сейчас содержит HTTP-запросы и общий `ApiClient`. В целевой
-  структуре они переходят в `shared/api/`; routes/UI не должны создавать
-  второй клиент или обходить refresh.
-- `src/store/` сейчас содержит общее клиентское/application state. Серверный
-  кеш принадлежит React Query; перекрывающиеся копии профиля вынесены в
-  [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150).
-- `src/components/` сейчас содержит повторно используемый UI. PWDRZ-149
-  распределит его по реальной ответственности `widgets`, `features`, `shared`
-  или локального route UI.
+[Frontend architecture](frontend/README.md) описывает текущие routes и slices.
+`app/router` компонует routes, `app/layouts` — frames, `app/providers` — providers,
+`pages` — экраны. Widgets содержат общие блоки, features — действия пользователя,
+`shared/api` и `shared/auth` — transport и сессии. Query владеет server cache;
+PWDRZ-150 сохраняет profile-state consolidation. В development Vite :3001 проксирует
+`/api` через Express; в production Express раздаёт build без frontend server.
 
 > **Существующее расхождение:** Это правила ответственности, а не заявление,
-> что старый код уже им следует. Login/register routes пока содержат
-> submission orchestration; frontend cleanup —
-> [PWDRZ-131](https://project-wdrz.atlassian.net/browse/PWDRZ-131).
+> что старый код уже им следует. Login/register routes теперь только
+> компонуют страницу; submission orchestration находится в `features/sign-in` и
+> `features/sign-up`
+> ([PWDRZ-131](https://project-wdrz.atlassian.net/browse/PWDRZ-131)).
 
 Запуск сервиса описан в [frontend README](../../frontend/README.md).
 
@@ -244,7 +228,9 @@ backend отдаёт тот же документ по `/api/v3/api-docs`.
   `@Hidden`, поэтому их аннотации остаются design reference. Каждый такой
   controller называет Jira-задачу, которая его реализует.
 - Ответы с ошибкой содержат RFC 9457 `ProblemDetail`
-  (`application/problem+json`). Все свойства response DTO присутствуют в
+  (`application/problem+json`). Необязательная карта `errors` называет поля
+  запроса, вызвавшие ошибку: при ошибках валидации и, например, при занятом
+  email (409). Все свойства response DTO присутствуют в
   ответе; те, что могут быть `null`, отмечены `@Schema(nullable = true)`.
 - `OpenApiContractTest` падает, если опубликована `501`-заглушка, если
   реализованная операция скрыта или если `backend/openapi.json` отличается
@@ -262,11 +248,13 @@ backend отдаёт тот же документ по `/api/v3/api-docs`.
 Подтверждение межсервисной работы входит в
 [Definition of Done](README.md#definition-of-done).
 
-**Technical debt:** Сейчас frontend contract types поддерживаются вручную.
-[PWDRZ-130](https://project-wdrz.atlassian.net/browse/PWDRZ-130) нацелена к
-концу Sprint 5 на генерацию типов и endpoint bindings из
-`backend/openapi.json` без обхода обработки token/cookie/401 в `ApiClient`.
-*Генератор ещё не реализован.*
+**Frontend bindings (PWDRZ-130):** закреплённый Orval генерирует DTO, операции и
+TanStack Query v5 bindings из `backend/openapi.json` в committed-каталог
+`frontend/src/shared/api/generated/`. Custom mutator использует существующий
+`ApiClient` с обработкой cookie/CSRF/errors. Корневые `api:generate` и `api:check`
+обновляют output и проверяют drift. Прикладная композиция остаётся ручной;
+контракты скрытых `501` API остаются provisional. Подробности — в
+[API bindings workflow](api-bindings.md).
 
 ### Что читать дальше
 

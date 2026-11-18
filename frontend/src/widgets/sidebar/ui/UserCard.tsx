@@ -1,26 +1,26 @@
-import Link from 'next/link';
-import type { UserProfile } from '@/shared/api/user/user.dto';
+import { Link } from 'react-router';
+import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 import { NAV_LINKS, USER_STATS } from '@/widgets/sidebar/ui/sidebar.const';
 import { cn } from '@/shared/lib/cn';
 
-interface Props {
+interface UserCardProps {
   user: UserProfile;
   initials: string;
   pathname: string;
 }
 
-export default function UserCard({ user, initials, pathname }: Props) {
+export default function UserCard({ user, initials, pathname }: UserCardProps) {
   return (
-    <div className="bg-slate-800 rounded-xl p-4 flex flex-col gap-4">
-      <Link href="/profile" className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-900 font-semibold text-base shrink-0">
+    <div className="bg-surface rounded-xl p-4 flex flex-col gap-4 border border-line">
+      <Link to="/profile" className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-raised flex items-center justify-center text-fg font-semibold text-base shrink-0">
           {initials}
         </div>
         <div className="min-w-0">
-          <p className="text-gray-50 font-semibold text-sm truncate">
+          <p className="text-fg font-semibold text-sm truncate">
             {user.displayName || user.username}
           </p>
-          <p className="text-slate-300 text-xs">@{user.username}</p>
+          <p className="text-fg-muted text-xs">@{user.username}</p>
         </div>
       </Link>
 
@@ -30,10 +30,10 @@ export default function UserCard({ user, initials, pathname }: Props) {
           return (
             <Link
               key={href}
-              href={href}
+              to={href}
               className={cn(
                 'flex items-center px-3 py-2.5 rounded text-sm transition-colors',
-                active ? 'bg-slate-700 text-gray-50' : 'text-white hover:bg-slate-700'
+                active ? 'bg-raised text-fg' : 'text-fg hover:bg-raised'
               )}
             >
               {label}
@@ -46,13 +46,13 @@ export default function UserCard({ user, initials, pathname }: Props) {
         {USER_STATS.map(({ label }, i) => (
           <Link
             key={label}
-            href="/profile"
-            className="flex-1 flex flex-col items-center py-3 rounded hover:bg-slate-700 transition-colors"
+            to="/profile"
+            className="flex-1 flex flex-col items-center py-3 rounded hover:bg-raised transition-colors"
           >
-            <span className="text-white font-semibold text-lg leading-none">
+            <span className="text-fg font-semibold text-lg leading-none">
               {i === 0 ? (user.postCount ?? '—') : '—'}
             </span>
-            <span className="text-slate-300 text-xs mt-1">{label}</span>
+            <span className="text-fg-muted text-xs mt-1">{label}</span>
           </Link>
         ))}
       </div>

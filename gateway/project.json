@@ -1,14 +1,19 @@
 {
   "name": "gateway",
   "projectType": "application",
+  "implicitDependencies": ["frontend"],
   "targets": {
     "build": {
       "command": "node tools/workspace/npm.mjs run build --workspace gateway",
       "dependsOn": ["typecheck"],
       "outputs": ["{projectRoot}/dist"]
     },
-    "lint": { "command": "node tools/workspace/npm.mjs run lint --workspace gateway" },
-    "typecheck": { "command": "node tools/workspace/npm.mjs run typecheck --workspace gateway" },
+    "lint": {
+      "command": "node tools/workspace/npm.mjs run lint --workspace gateway"
+    },
+    "typecheck": {
+      "command": "node tools/workspace/npm.mjs run typecheck --workspace gateway"
+    },
     "format-check": {
       "command": "node tools/workspace/npm.mjs run format:check --workspace gateway"
     },
@@ -24,6 +29,22 @@
       "executor": "nx:noop",
       "cache": false,
       "dependsOn": ["build", "lint", "format-check", "coverage"]
+    },
+    "serve": {
+      "command": "node tools/workspace/npm.mjs start --workspace gateway",
+      "cache": false,
+      "dependsOn": [
+        "build",
+        {
+          "projects": ["frontend"],
+          "target": "build"
+        }
+      ]
+    },
+    "image": {
+      "command": "docker build -f gateway/Dockerfile .",
+      "cache": false,
+      "inputs": ["default", "^default", "{workspaceRoot}/backend/openapi.json"]
     }
   }
 }

@@ -7,9 +7,13 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,6 +29,14 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     /** Loads a single post together with everything {@code PostDto} needs. */
     @EntityGraph(attributePaths = {"author", "category", "tags"})
     Optional<Post> findBySlug(String slug);
+
+    /** Lock the post itself without locking nullable joins or its tag collection. */
+    @Query(value = "SELECT id FROM posts WHERE slug = :slug FOR UPDATE", nativeQuery = true)
+    Optional<Long> lockIdBySlug(@Param("slug") String slug);
+
+    /** Loads the posts with the given ids together with their author, category and tags, in no particular order. */
+    @EntityGraph(attributePaths = {"author", "category", "tags"})
+    List<Post> findWithDetailsByIdIn(Collection<Long> ids);
 
     /**
      * Returns {@code base} and every {@code base-*} slug that is already
@@ -48,4 +60,17 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     @Override
     @EntityGraph(attributePaths = {"author", "category"})
     Page<Post> findAll(Specification<Post> spec, Pageable pageable);
+
+    /**
+     * Counts a new comment on the post and makes {@code at} its last activity.
+     * A bulk update, so concurrent comments don't overwrite each other's count.
+     */
+    @Modifying
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount + 1, p.lastActivityAt = :at WHERE p.id = :postId")
+    int commentAdded(@Param("postId") Long postId, @Param("at") OffsetDateTime at);
+
+    /** Stops counting a deleted comment on the post. */
+    @Modifying
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount - 1 WHERE p.id = :postId")
+    int commentRemoved(@Param("postId") Long postId);
 }

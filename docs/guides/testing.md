@@ -22,11 +22,11 @@ Service-specific thresholds were selected from the expanded source baseline
 and the verified risk package. Each listed metric is an independent mandatory
 global gate: a higher result elsewhere cannot compensate for a failure.
 
-| Service | Provider | Lines | Branches | Functions | Statements |
-| --- | --- | --- | --- | --- | --- |
-| Frontend | Istanbul, Vitest/provider 3.2.4 | 85% | 85% | 80% | 85% |
-| Gateway | Jest 29 default Babel/Istanbul coverage | 95% | 85% | 90% | 95% |
-| Backend | JaCoCo 0.8.12 | 95% | 85% | — | — |
+| Service  | Provider                                | Lines | Branches | Functions | Statements |
+| -------- | --------------------------------------- | ----- | -------- | --------- | ---------- |
+| Frontend | Istanbul, Vitest/provider 3.2.4         | 85%   | 85%      | 80%       | 85%        |
+| Gateway  | Jest 29 default Babel/Istanbul coverage | 95%   | 85%      | 90%       | 95%        |
+| Backend  | JaCoCo 0.8.12                           | 95%   | 85%      | —         | —          |
 
 The verified frontend baseline is 87.03/86.66/81.69/87.46% and the gateway
 baseline is 96.99/86.95/92.30/97.03%, in the table's metric order. The selected
@@ -55,10 +55,14 @@ certify those scenarios.
   imported by tests. Exclude `**/*.d.ts`, `src/**/__tests__/**`,
   `src/**/*.test.{ts,tsx}`, `src/**/*.spec.{ts,tsx}` and `src/test/**` because
   declarations and test infrastructure are not production behavior. Existing
-  non-production exclusions `node_modules/**`, `.next/**`, `next.config.*`,
-  `postcss.config.*`, `eslint.config.*`, `tailwind.config.*` and `vitest.config.*`
+  non-production exclusions `node_modules/**`, `postcss.config.*`, `eslint.config.*`, `tailwind.config.*` and `vitest.config.*`
   are outside the explicit `src` include. No production-directory exclusion
-  hides executable UI or business logic.
+  hides executable UI or business logic. PWDRZ-130 additionally excludes exactly
+  `src/shared/api/generated/**`: reproducible Orval output is validated by strict
+  generation, full-file drift checks, compile-time contract cases and integration/E2E
+  tests. Handwritten mutator, transport and compositions remain measured with unchanged
+  thresholds. Node-only codegen tests run separately from jsdom Vitest via
+  `npm run test:codegen --workspace frontend` and the Nx coverage prerequisite.
 - **Gateway:** `src/**/*.ts` in `gateway/jest.config.js`, excluding declarations
   (`src/**/*.d.ts`) and exactly `src/index.ts`, the process bootstrap that starts
   the listener. Jest omits test files and configured setup files from coverage.
@@ -103,15 +107,15 @@ baseline and comparison reports remain dated evidence, not the current policy.
 
 ## Backend — JUnit 5 + Mockito + Spring Boot Test
 
-| Concern               | Choice                                       |
-| --------------------- | -------------------------------------------- |
-| Runner                | JUnit 5 (`org.junit.jupiter`)                |
-| Mocking               | Mockito (`@ExtendWith(MockitoExtension.class)`) |
-| Assertions            | AssertJ (`assertThat`, `assertThatThrownBy`) |
-| Controller testing    | Choose `standaloneSetup` for controller-local behaviour; use a Spring context/security setup when wiring, filters, or authorization are the contract |
-| Real schema           | `@MigratedSchemaTest` (`com.devpulse.support`), see below |
-| Coverage              | JaCoCo, LINE ≥ **95%** and BRANCH ≥ **85%**; METHOD/INSTRUCTION diagnostic; enforced by `./mvnw verify` |
-| Excluded packages     | listed in the `jacoco-maven-plugin` `check` execution in `backend/pom.xml` |
+| Concern            | Choice                                                                                                                                               |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runner             | JUnit 5 (`org.junit.jupiter`)                                                                                                                        |
+| Mocking            | Mockito (`@ExtendWith(MockitoExtension.class)`)                                                                                                      |
+| Assertions         | AssertJ (`assertThat`, `assertThatThrownBy`)                                                                                                         |
+| Controller testing | Choose `standaloneSetup` for controller-local behaviour; use a Spring context/security setup when wiring, filters, or authorization are the contract |
+| Real schema        | `@MigratedSchemaTest` (`com.devpulse.support`), see below                                                                                            |
+| Coverage           | JaCoCo, LINE ≥ **95%** and BRANCH ≥ **85%**; METHOD/INSTRUCTION diagnostic; enforced by `./mvnw verify`                                              |
+| Excluded packages  | listed in the `jacoco-maven-plugin` `check` execution in `backend/pom.xml`                                                                           |
 
 ### Naming
 
@@ -158,14 +162,14 @@ in English.
 
 ## Frontend — Vitest + React Testing Library
 
-| Concern        | Choice                                |
-| -------------- | ------------------------------------- |
-| Runner         | Vitest 3 (`jsdom` environment)        |
-| DOM helpers    | `@testing-library/react`              |
-| Setup file     | `src/test/setup.ts`                   |
-| Coverage       | Istanbul; all four [service-specific gates](#coverage-policy-pwdrz-118) are mandatory (`frontend/vitest.config.ts`) |
-| Typecheck      | `npm run typecheck` (`tsc --noEmit`) runs as a separate step in the frontend build workflow |
-| Naming         | `__tests__/<source-name>.test.ts(x)` in the source file's directory; distinct integration suites may use `<source-name>.integration.test.ts(x)` |
+| Concern     | Choice                                                                                                                                          |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runner      | Vitest 3 (`jsdom` environment)                                                                                                                  |
+| DOM helpers | `@testing-library/react`                                                                                                                        |
+| Setup file  | `src/test/setup.ts`                                                                                                                             |
+| Coverage    | Istanbul; all four [service-specific gates](#coverage-policy-pwdrz-118) are mandatory (`frontend/vitest.config.ts`)                             |
+| Typecheck   | `npm run typecheck` (`tsc --noEmit`) runs as a separate step in the frontend build workflow                                                     |
+| Naming      | `__tests__/<source-name>.test.ts(x)` in the source file's directory; distinct integration suites may use `<source-name>.integration.test.ts(x)` |
 
 ### What to test
 
@@ -175,6 +179,7 @@ in English.
   Existing React Testing Library tests remain valid and may help diagnose
   local behaviour, but are not a substitute for the E2E acceptance path. Do
   not require a component test for static markup alone.
+
 - Hooks and client data-flow logic can have focused tests for state transitions.
 - Services and utilities can have unit tests with the network stubbed. Choose
   a contract/integration check when an HTTP or auth boundary changes.
@@ -184,17 +189,17 @@ in English.
 ### Don't test
 
 - Tailwind class strings.
-- Next.js framework internals (routing, image optimisation).
+- Third-party framework internals; test our route composition and guards.
 - Third-party components without a wrapper of our own.
 
 ## Gateway — Jest + ts-jest
 
-| Concern        | Choice                              |
-| -------------- | ----------------------------------- |
-| Runner         | Jest with `ts-jest`                 |
-| Setup file     | `gateway/src/test/setup.ts`         |
-| Coverage       | All four [service-specific gates](#coverage-policy-pwdrz-118) are mandatory (`gateway/jest.config.js`) |
-| Layout         | `__tests__/<source-name>.test.ts` beside the source (e.g. `src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts`) |
+| Concern    | Choice                                                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Runner     | Jest with `ts-jest`                                                                                                                   |
+| Setup file | `gateway/src/test/setup.ts`                                                                                                           |
+| Coverage   | All four [service-specific gates](#coverage-policy-pwdrz-118) are mandatory (`gateway/jest.config.js`)                                |
+| Layout     | `__tests__/<source-name>.test.ts` beside the source (e.g. `src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts`) |
 
 Focus areas:
 
@@ -226,7 +231,7 @@ integration tests.
 
 The independent [e2e package](../../e2e/README.md) owns Playwright, an isolated
 real stack and startup/teardown. Run `npm --prefix e2e test` after the documented
-installation. Four browser cases cover registration, login/reload-refresh/logout,
+installation. Four browser cases cover registration, login/session-reload/logout,
 bad credentials and publication/feed persistence. A fifth HTTP integration case
 checks anonymous protected-write rejection; it is not browser E2E evidence.
 API fixtures are setup, not proof that the corresponding UI flow works.
@@ -334,15 +339,15 @@ GitHub Tests run 39043075704 на SHA `ad268731d512e2e1838548059d43225df85a88eb`
 
 ### Backend — JUnit 5 + Mockito + Spring Boot Test
 
-| Вопрос | Текущий выбор |
-| --- | --- |
-| Runner | JUnit 5 (`org.junit.jupiter`) |
-| Mocking | Mockito (`@ExtendWith(MockitoExtension.class)`) |
-| Assertions | AssertJ (`assertThat`, `assertThatThrownBy`) |
+| Вопрос              | Текущий выбор                                                                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runner              | JUnit 5 (`org.junit.jupiter`)                                                                                                                      |
+| Mocking             | Mockito (`@ExtendWith(MockitoExtension.class)`)                                                                                                    |
+| Assertions          | AssertJ (`assertThat`, `assertThatThrownBy`)                                                                                                       |
 | Проверка controller | `standaloneSetup` для локального поведения controller; Spring context/security setup — когда контракт зависит от wiring, filters или authorization |
-| Реальная схема | `@MigratedSchemaTest` (`com.devpulse.support`), подробности ниже |
-| Coverage | JaCoCo, LINE ≥ **95%**, BRANCH ≥ **85%**; METHOD/INSTRUCTION диагностические; gate через `./mvnw verify` |
-| Исключённые пакеты | Указаны в execution `check` плагина `jacoco-maven-plugin` в `backend/pom.xml` |
+| Реальная схема      | `@MigratedSchemaTest` (`com.devpulse.support`), подробности ниже                                                                                   |
+| Coverage            | JaCoCo, LINE ≥ **95%**, BRANCH ≥ **85%**; METHOD/INSTRUCTION диагностические; gate через `./mvnw verify`                                           |
+| Исключённые пакеты  | Указаны в execution `check` плагина `jacoco-maven-plugin` в `backend/pom.xml`                                                                      |
 
 #### Имена
 
@@ -390,14 +395,14 @@ replayingARotatedTokenRevokesTheWholeFamily
 
 ### Frontend — Vitest + React Testing Library
 
-| Вопрос | Текущий выбор |
-| --- | --- |
-| Runner | Vitest 3 (`jsdom`) |
-| DOM helpers | `@testing-library/react` |
-| Setup | `src/test/setup.ts` |
-| Coverage | Istanbul; все четыре [посервисных gate](#coverage-policy-pwdrz-118) обязательны (`frontend/vitest.config.ts`) |
-| Typecheck | `npm run typecheck` (`tsc --noEmit`) отдельным шагом frontend build workflow |
-| Имена | `__tests__/<имя-source>.test.ts(x)` в директории исходного файла; отдельный integration suite может называться `<имя-source>.integration.test.ts(x)` |
+| Вопрос      | Текущий выбор                                                                                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runner      | Vitest 3 (`jsdom`)                                                                                                                                   |
+| DOM helpers | `@testing-library/react`                                                                                                                             |
+| Setup       | `src/test/setup.ts`                                                                                                                                  |
+| Coverage    | Istanbul; все четыре [посервисных gate](#coverage-policy-pwdrz-118) обязательны (`frontend/vitest.config.ts`)                                        |
+| Typecheck   | `npm run typecheck` (`tsc --noEmit`) отдельным шагом frontend build workflow                                                                         |
+| Имена       | `__tests__/<имя-source>.test.ts(x)` в директории исходного файла; отдельный integration suite может называться `<имя-source>.integration.test.ts(x)` |
 
 #### Что проверять
 
@@ -407,6 +412,7 @@ replayingARotatedTokenRevokesTheWholeFamily
   React Testing Library остаётся полезной для локальной диагностики, но не
   заменяет E2E acceptance path. Статичная разметка сама по себе не требует
   component test.
+
 - Для hooks и client data flow полезны прицельные тесты переходов state.
 - Services и utilities можно проверять unit-тестами с заглушкой сети.
   При изменении HTTP или auth boundary добавляйте contract/integration check.
@@ -416,16 +422,16 @@ replayingARotatedTokenRevokesTheWholeFamily
 #### Что не тестировать
 
 - Строки Tailwind-классов.
-- Внутреннюю реализацию Next.js (routing, image optimisation).
+- Внутреннюю реализацию сторонних frameworks; наши routes и guards проверяются.
 - Сторонние компоненты без собственной project wrapper.
 
 ### Gateway — Jest + ts-jest
 
-| Вопрос | Текущий выбор |
-| --- | --- |
-| Runner | Jest с `ts-jest` |
-| Setup | `gateway/src/test/setup.ts` |
-| Coverage | Все четыре [посервисных gate](#coverage-policy-pwdrz-118) обязательны (`gateway/jest.config.js`) |
+| Вопрос     | Текущий выбор                                                                                                                                 |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runner     | Jest с `ts-jest`                                                                                                                              |
+| Setup      | `gateway/src/test/setup.ts`                                                                                                                   |
+| Coverage   | Все четыре [посервисных gate](#coverage-policy-pwdrz-118) обязательны (`gateway/jest.config.js`)                                              |
 | Размещение | `__tests__/<имя-source>.test.ts` рядом с исходным файлом, например `src/config/__tests__/index.test.ts`, `src/routes/__tests__/proxy.test.ts` |
 
 Приоритетные области: композиция middleware (auth, rate limiter, error
@@ -457,7 +463,7 @@ integration tests.
 Отдельный [e2e package](../../e2e/README.md) содержит Playwright и launcher
 изолированного реального стенда. После описанной установки запускайте
 `npm --prefix e2e test`: четыре browser-сценария проверяют регистрацию,
-login/reload-refresh/logout, неверные credentials и публикацию/feed persistence.
+login/session-reload/logout, неверные credentials и публикацию/feed persistence.
 Пятая HTTP integration-проверка проверяет anonymous protected write; её нельзя
 называть browser E2E. Подготовка через API не доказывает работу соответствующего UI.
 

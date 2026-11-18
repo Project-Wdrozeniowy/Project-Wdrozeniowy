@@ -7,6 +7,7 @@ on:
       - develop
     paths:
       - 'frontend/**'
+      - 'backend/openapi.json'
       - 'package.json'
       - 'package-lock.json'
       - 'nx.json'
@@ -15,11 +16,14 @@ on:
   pull_request:
     paths:
       - 'frontend/**'
+      - 'backend/openapi.json'
       - 'package.json'
       - 'package-lock.json'
       - 'nx.json'
       - 'tools/**'
       - '.github/workflows/frontend-build.yml'
+
+  workflow_dispatch:
 
 env:
   NX_DAEMON: 'false'
@@ -48,6 +52,4 @@ jobs:
         run: npx nx run frontend:typecheck
 
       - name: Build
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:3000/api
         run: npx nx run frontend:build

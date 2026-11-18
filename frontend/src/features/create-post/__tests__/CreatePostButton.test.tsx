@@ -1,3 +1,5 @@
+import type { ApiRequestOptions } from '@/shared/api/client/orvalTransport';
+import type { AxiosRequestConfig } from 'axios';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -6,11 +8,20 @@ import { CreatePostButton } from '../CreatePostButton';
 import { useStore } from '@/store';
 
 const push = vi.fn();
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
-vi.mock('@/shared/api/forum/forumClient', () => ({
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({ useNavigate: () => push })
+);
+const fixtureOperations = vi.hoisted(() => ({
   categoryService: { list: vi.fn().mockResolvedValue([]) },
   postService: { create: vi.fn() },
 }));
+vi.mock('@/shared/api/client/orvalTransport', async () => {
+  const { mockApiOperations } = await import('@/test/mockApiOperations');
+  return {
+    orvalTransport: (config: AxiosRequestConfig, options: ApiRequestOptions) =>
+      mockApiOperations(config, options, fixtureOperations),
+  };
+});
 
 function setup(state: { isAuthenticated: boolean; isInitialized: boolean }) {
   useStore.setState(state);

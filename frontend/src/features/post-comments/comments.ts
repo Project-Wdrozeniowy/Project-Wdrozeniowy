@@ -1,6 +1,6 @@
 import { MAX_COMMENT_DEPTH } from '@/features/post-comments/comment.const';
 import type { Comment } from '@/shared/api/forum/comment.dto';
-import type { UserProfile } from '@/shared/api/user/user.dto';
+import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 
 const STAFF_ROLES: ReadonlyArray<UserProfile['role']> = ['ADMIN', 'MODERATOR'];
 

@@ -1,5 +1,7 @@
 # AGENTS.md
 
+> **Current topology:** adopted Vite/React Router SPA, Express static hosting and relative `/api`; Spring owns SESSION/CSRF. Start at the root README. Historical spike records are not current operating instructions.
+
 > Agent/tooling entry point. Developers should start with [README.md](README.md)
 > and the [documentation map](docs/README.md); team contribution rules live in
 > [docs/guides/README.md](docs/guides/README.md). Commands and architecture
@@ -7,24 +9,72 @@
 
 ## Project Overview
 
-**Orbita** is a full-stack community forum platform. Users can register, post articles, comment, vote, and receive real-time notifications.
+**Orbita** is a full-stack social platform combining a Reddit-like forum/social
+network with open, interactive analytics. Its core principles are transparency,
+user control, and predictability.
+
+Read the [product vision and priorities](docs/project-vision.md) when making
+product, scope, or architecture decisions. It defines the intended experience,
+academic context, and privacy/accessibility constraints, not implemented feature
+status. The intended MVP combines a functional social core with interactive
+analytics as its main differentiator; exact scope follows the current project
+plan and Jira. An AI assistant is a possible future feature, not a current MVP
+requirement.
 
 The repository is an **Nx monorepo** containing three services, an E2E project,
 and a shared Docker Compose stack. npm workspaces uses the root lockfile;
 Java remains Maven-owned. See the [monorepo runbook](docs/guides/monorepo.md).
 
 ```
-Frontend (Next.js 16)  →  Gateway (Express 5)  →  Backend (Spring Boot 4)  →  PostgreSQL 16
+Development: Vite SPA  →  Gateway (Express 5)  →  Backend (Spring Boot 4)  →  PostgreSQL 16
          port 3001             port 3000                  port 8080
 ```
 
-- **Frontend** (`frontend/`) — Next.js 16 App Router, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod, React Hook Form
-- **Gateway** (`gateway/`) — Node.js, Express 5, TypeScript 6; performs JWT verification, rate limiting, CORS, and reverse-proxies all `/api/*` traffic to the backend
-- **Backend** (`backend/`) — Java 17, Spring Boot 4, Spring Security, Spring Data JPA, PostgreSQL, Flyway migrations, JWT (jjwt 0.12.6)
+Built topology: browser → Express :3000 (HTML/assets and `/api`) → Spring :8080.
+No separate frontend server is needed.
+
+- **Frontend** (`frontend/`) — Vite 7 / React Router 7, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod, React Hook Form
+- **Gateway** (`gateway/`) — Node.js, Express 5, TypeScript 6; performs rate limiting, CORS and bounded HTTP forwarding, and reverse-proxies all `/api/*` traffic to the backend
+- **Backend** (`backend/`) — Java 17, Spring Boot 4, Spring Security, Spring Data JPA, PostgreSQL, Flyway migrations, Spring Session JDBC; jjwt is WS-only compatibility
 - **Infra** — PostgreSQL 16 + Redis 7 (via Docker Compose); Redis is provisioned but not yet wired in application code
 
-Database schema is managed by Flyway (V1–V7: users, forum, notifications, analytics, refresh-token rotation, the default forum categories, and audit timestamps).
+Database schema is managed by Flyway (V1–V12: users, forum, notifications, analytics, refresh-token rotation, the default forum categories, audit timestamps, JDBC sessions, HTTP refresh retirement, intentional post openings, analytics collection starts and the index of identifiable openings).
 ER diagrams live in `docs/db-schema*.mmd`.
+
+### Working principles
+
+- Prioritize valuable, complete, end-to-end functionality that the team can
+  demonstrate. Avoid unnecessary complexity, speculative abstractions, excessive
+  refactoring, duplicated work, and unrelated changes.
+- Use relevant available skills and specialized tools; read their instructions
+  before using them. Consult repository instructions, developer guides, and
+  architectural conventions for technical decisions, and reuse established
+  project patterns and solutions where appropriate.
+- Use Jira for task requirements, acceptance criteria, dependencies, and history.
+  For returned tasks, inspect review comments and reasons for rejection. Local
+  backlog exports are context and execution records, not a substitute for live
+  requirements.
+- Use Figma for existing designs and UI context; do not assume every design is
+  final or fully implemented.
+- Verify implementation against requirements. Neither Jira status nor
+  documentation alone proves that functionality works. Distinguish verified
+  facts, assumptions, and recommendations, and challenge questionable
+  requirements or decisions with reasons.
+- Apply the [product constraints](docs/project-vision.md#product-constraints):
+  GDPR, applicable EU/Polish requirements, privacy by design, data minimization,
+  and WCAG 2.2 AA as an engineering target. Transparency must preserve users'
+  control over personal information.
+- Follow the [EU and Polish regulatory compliance guidance](docs/project-vision.md#eu-and-polish-regulatory-compliance)
+  for relevant features and deployments, including cookies/tracking,
+  user-generated content, accessibility, and AI where applicable. Verify current
+  applicability, distinguish obligations from recommendations and future-only
+  requirements, and raise significant legal or product decisions for
+  clarification. Do not claim compliance without verification.
+- Keep work and responses practical and proportional to the task. Modify Jira,
+  Figma, or code only when the user's request authorizes those actions.
+
+The goal is a coherent, technically sound product that demonstrates Orbita's
+vision, not merely completed Jira tickets.
 
 ---
 
@@ -55,8 +105,8 @@ cp frontend/.env.example frontend/.env
 #   Generate: openssl rand -base64 64 | tr -d '\n'
 ```
 
-> **Critical**: `JWT_SECRET` must be **identical** in root `.env` (used by backend via Docker Compose)
-> and in `gateway/.env`. A mismatch causes 401 on every authenticated request.
+> `JWT_SECRET` is backend-only for provisional WS compatibility (PWDRZ-104).
+> Gateway needs no signing key. REST uses [server sessions](docs/guides/sessions.md).
 
 ### 2. Start the database and backend via Docker Compose
 
@@ -85,8 +135,7 @@ remain declared by each consuming workspace.
 through Compose, waits for backend HTTP readiness and launches frontend/gateway
 through Nx. Ctrl+C stops those source processes; Compose data/services remain.
 `npm run check`, `npm run build`, `npm test`, `npm run test:e2e` and
-`npm run validate` are root workflows. Production builds require explicit
-`NEXT_PUBLIC_API_URL`. Root backend coverage uses a temporary owned PostgreSQL
+`npm run validate` are root workflows. Production frontend builds use relative `/api` without a public API URL. Root backend coverage uses a temporary owned PostgreSQL
 with local Java 17; `backend:coverage:ci` explicitly uses the disposable CI DB.
 Coverage/E2E/lifecycle tasks are never cached. The runbook owns details and
 direct-command escape paths. Do not change existing service gates or enable
@@ -101,10 +150,10 @@ and from source on the same port.
 
 ```bash
 cd frontend
-# Copy the template to frontend/.env if needed; set NEXT_PUBLIC_API_URL to the gateway.
+# frontend/.env is optional; browser requests use relative /api.
 # The root setup section creates this file.
 
-npm run dev -- -p 3001  # Next.js dev server with hot reload on port 3001
+npm run dev -- --port 3001  # Vite HMR; /api proxies through Express
 ```
 
 ### Gateway (port 3000 by default)
@@ -131,15 +180,13 @@ cd backend
 
 ```
 Browser (localhost:3001)
-  → Gateway (localhost:3000/api/*)   ← JWT verified here
-    → Backend (localhost:8080/api/*) ← Spring Security re-validates JWT
+  → Gateway (localhost:3000/api/*)   ← bounded HTTP forwarding
+    → Backend (localhost:8080/api/*) ← Spring Security sessions/CSRF
       → PostgreSQL (localhost:5432)
 ```
 
-Public auth routes that bypass bearer JWT: `POST /api/auth/login`,
-`POST /api/auth/register`, `POST /api/auth/refresh`, and
-`POST /api/auth/logout`. Read-only forum and public-profile routes are also
-listed in `gateway/src/config/index.ts`.
+Spring owns the [endpoint/method access matrix and CSRF policy](docs/guides/sessions.md).
+Gateway has no REST public-route allowlist.
 
 ---
 
@@ -166,14 +213,14 @@ npm run test              # single run
 npm run test:coverage     # with HTML + lcov coverage report
 
 # Run a specific test file
-npx vitest run src/shared/api/auth/__tests__/authClient.test.ts
+npx vitest run src/shared/api/client/__tests__/generatedTransport.integration.test.ts
 
 # Run tests matching a name pattern
 npx vitest run -t "login"
 ```
 
 Test files live in `__tests__/` subdirectories next to the module under test.  
-Example: `src/shared/api/auth/__tests__/authClient.test.ts` tests `src/shared/api/auth/authClient.ts`.
+Example: `src/shared/api/client/__tests__/generatedTransport.integration.test.ts` tests generated operations through the existing transport. API generation and drift checks are documented in `docs/guides/api-bindings.md`.
 
 Vitest 3.2.4 uses Istanbul and includes `src/**/*.{ts,tsx}`, including executable
 pages, components, hooks, libraries, shared code and utilities, even when no test
@@ -190,7 +237,7 @@ npm run test              # jest --coverage
 npm run test:coverage     # same command, alias
 
 # Run a specific test file
-npx jest src/middleware/__tests__/auth.test.ts
+npx jest src/routes/__tests__/httpBoundary.test.ts
 
 # Run tests matching a pattern
 npx jest --testNamePattern "should return 401"
@@ -205,7 +252,7 @@ and `src/middleware/__tests__/`.
 Use the [e2e workspace](e2e/README.md): after root `npm ci` and browser
 installation, run root `npm run test:e2e` or `npm test` in `e2e/`. Its launcher owns an isolated real
 stack; do not substitute developer servers, production data or mocked API
-responses. Four browser flows and one HTTP integration case use Chromium,
+responses. Seven browser flows and two HTTP integration cases use Chromium,
 one worker and no retries. Keep service coverage gates independent.
 `npm run test:probe` must fail a real browser assertion and still clean up.
 Current local/CI/required-check evidence belongs in
@@ -265,18 +312,18 @@ npm run typecheck     # tsc --noEmit
 
 ### Naming conventions
 
-| Item | Convention | Example |
-|------|-----------|---------|
-| React component files | PascalCase `.tsx` | `PostCard.tsx` |
-| Non-component TS files | camelCase `.ts` | `authService.ts`, `usePosts.ts` |
-| TypeScript interfaces/types | PascalCase, no `I` prefix | `AuthResponse`, `User` |
-| Zustand slices | camelCase, `Slice` suffix | `createAuthSlice`, `AuthSlice` |
-| Java classes | PascalCase | `AuthController`, `JwtUtil` |
-| Java packages | `com.devpulse.<domain>.<layer>` | `com.devpulse.auth.service` |
+| Item                        | Convention                      | Example                         |
+| --------------------------- | ------------------------------- | ------------------------------- |
+| React component files       | PascalCase `.tsx`               | `PostCard.tsx`                  |
+| Non-component TS files      | camelCase `.ts`                 | `authService.ts`, `usePosts.ts` |
+| TypeScript interfaces/types | PascalCase, no `I` prefix       | `AuthResponse`, `User`          |
+| Zustand slices              | camelCase, `Slice` suffix       | `createAuthSlice`, `AuthSlice`  |
+| Java classes                | PascalCase                      | `AuthController`, `JwtUtil`     |
+| Java packages               | `com.devpulse.<domain>.<layer>` | `com.devpulse.auth.service`     |
 
 ### Path alias (frontend only)
 
-`@/*` maps to `frontend/src/*`. Example: `import type { User } from '@/shared/types'`.  
+`@/*` maps to `frontend/src/*`. Example: `import type { MyProfileDto } from '@/shared/api/generated/models/myProfileDto.dto'`.
 Defined in `frontend/tsconfig.json`. Always use `@/` for cross-module imports; relative imports only within the same folder.
 
 ---
@@ -289,29 +336,30 @@ frontend/src/
     (auth)/        ← login, register pages (no header/sidebar)
     (main)/        ← home feed, forum, dashboard, profile (with Header + Sidebar)
     layout.tsx     ← root layout, wraps everything in QueryProvider
-  services/        ← API call functions (thin wrappers over ApiClient)
+  features/        ← user actions, form schemas and request mapping
+  widgets/         ← reusable header/sidebar regions
+  shared/api/      ← single transport, generated bindings and Query compositions
+  shared/auth/     ← session bootstrap, generations and cross-tab reconciliation
+  shared/ui/       ← reusable UI
+  shared/lib/      ← shared utilities
+  shared/constants/ ← static data
   store/slices/    ← Zustand slices: authSlice, uiSlice
-  shared/types/    ← domain TypeScript types (User, Post, Comment, etc.)
-  lib/validations/ ← Zod schemas for form validation
-  components/      ← layout/ and ui/ reusable components
-  providers/       ← React context providers (QueryProvider)
-  constants/       ← static data (category list, nav items, mock content)
 
 gateway/src/
-  middleware/      ← auth, cors, rateLimiter, logger
+  middleware/      ← boundedBody, cors, rateLimiter, logger
   routes/          ← proxy.ts (proxies /api/* to backend)
   config/          ← env loading with validation
   types/           ← GatewayConfig, Express extensions
 
 backend/src/main/java/com/devpulse/
-  auth/            ← controller, service, repository, entity, dto, filter
+  auth/            ← controller, service, repository, entity, dto, session
   config/          ← SecurityConfig, OpenApiConfig
   exception/       ← AppException, GlobalExceptionHandler
-  security/        ← JwtUtil (sign, verify, parse)
+  security/        ← WsTokenVerifier (legacy WS-only verification)
 
 backend/src/main/resources/
   application.properties
-  db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics), V5 (refresh-token rotation), V6 (default categories), V7 (audit timestamps)
+  db/migration/    ← V1 (users), V2 (forum), V3 (notifications), V4 (analytics), V5 (refresh-token rotation), V6 (default categories), V7 (audit timestamps), V8 (sessions/auth_version), V9 (HTTP refresh retirement), V10 (intentional post openings), V11 (analytics collection starts), V12 (identifiable openings index)
 
 docs/
   README.md        ← documentation map by audience and purpose
@@ -324,9 +372,9 @@ docs/
 
 ## Architecture Decisions to Know
 
-1. **Dual JWT verification is intentional** — the gateway verifies the token before proxying, and Spring Security re-validates it as defence-in-depth. The same `JWT_SECRET` must be configured in both.
+1. **Spring owns HTTP authentication** — JDBC sessions, account validity, CSRF and resource authorization. Express forwards HTTP without a REST JWT boundary.
 
-2. **Token storage** — the access token lives only in memory (`frontend/src/shared/auth/tokenMemory.ts`). The refresh token is an `HttpOnly; SameSite=Strict` cookie (`/api/auth` path) set by the backend and never appears in a request or response body. On page load `AuthProvider` calls `POST /auth/refresh`, then `GET /users/me`. Never write tokens to `localStorage`/`sessionStorage`. Set `COOKIE_SECURE=false` for plain-HTTP local dev (Safari ignores `Secure` cookies on `http://localhost`).
+2. **Session cookie** — SESSION is host-only, HttpOnly, Path=/, SameSite=Strict, Secure outside explicit HTTP development and has no normal Max-Age/Expires. Idle is 60 minutes; absolute is 12 hours. Bootstrap reads GET /users/me. The shared transport obtains CSRF for unsafe requests. No Bearer/refresh flow or browser credential storage. See [session guide](docs/guides/sessions.md).
 
 3. **Forum feed and creation use real APIs** — home/forum read through `src/shared/api/forum/useForumPosts.ts`; `CreatePostForm` publishes through `POST /api/forum/posts` and invalidates feed queries. PWDRZ-81/111/101 delivered these paths, so E2E must exercise their real API flow. The post detail body is still a placeholder; adjacent comments, tag-list and category-management APIs remain provisional under their own tasks.
 
@@ -336,14 +384,14 @@ docs/
 
 6. **OpenAPI contract** — `backend/openapi.json` is the committed copy of the published contract and lists implemented operations only; `501` stubs are `@Hidden`. After an API change, regenerate it from `backend/` with `./mvnw test -Dtest=OpenApiContractTest -Dopenapi.contract.update=true`; `OpenApiContractTest` fails while it is stale. Swagger UI is at `http://localhost:8080/api/swagger-ui/index.html` when `SWAGGER_ENABLED=true` and must be **disabled in production**.
 
+7. **Frontend bindings (PWDRZ-130)** — pinned Orval generates committed models/operations/Query bindings in `frontend/src/shared/api/generated/`. Root `api:generate` and `api:check` update and validate the full output through the existing transport. Follow `docs/guides/api-bindings.md`; hidden 501 contracts and PWDRZ-150 state consolidation remain separate work.
+
 ### Gateway authentication boundary (PWDRZ-99 / PWDRZ-118)
 
-The gateway verifies Bearer JWTs on API requests; the backend owns token issuance,
-refresh rotation and resource authorization. Next.js serves pages independently,
-so frontend AuthGuard/RoleGuard and session initialization remain UI concerns.
-The unused gateway page redirect guard based on an `orbita_session` cookie was
-removed. Do not reintroduce it as a replacement for the current frontend guards
-without an explicit BFF/SSR architecture decision.
+Spring owns JDBC session validity, CSRF and resource authorization. Express serves
+the SPA and proxies HTTP without a REST access allowlist. Frontend guards and
+session reconciliation remain presentation concerns. Do not replace them with a
+Gateway page-cookie guard. See [session policy](docs/guides/sessions.md).
 
 ## Task Backlog Tracking
 
@@ -388,14 +436,14 @@ report findings without making implementation changes beyond the requested revie
 
 ### Decide within scope and ownership
 
-| Finding | Required action |
-| --- | --- |
-| A marker says to remove/enable something after the **current ticket** | Verify that its prerequisite is now satisfied. Perform the bounded change within the current task when it belongs to its scope and ownership and needs no substantial refactor; update relevant tests and remove/update the resolved marker. Do not defer an obvious in-scope consequence merely because it was not repeated in acceptance criteria. |
-| A marker delegates implementation to **another ticket** | Preserve that ownership. Do not implement the other ticket automatically. Check whether the current task satisfies its dependency and whether any other blockers remain. |
-| A marker has **no ticket**, in the same feature/module | A bounded resolution is allowed when the task works on the same functionality and substantially fulfills the reason for the temporary mechanism. Verify the prerequisite, resolve the marker and related tests, and explicitly identify this additional logically related work in the final response. Mere proximity is insufficient. |
-| A related marker is across a **service/layer or ownership boundary** | Unless the user's existing authorization already includes that change, do not implement it. Briefly describe the problem, its relationship to the current task, the existing ticket or probable need for a separate ticket, and ask whether to address it now if technically feasible. Wait for the answer before the cross-boundary change. |
-| A temporary flag/guard's enabling condition **has occurred** | Complete its intended transition when it is bounded and authorized within scope. Otherwise record an explicit owner/follow-up and why it remains; do not silently leave an expired mechanism indefinitely. Crossing a boundary still requires the preceding rule. |
-| A temporary flag/guard's enabling condition **has not occurred or is unverified** | Preserve the provisional behavior and document the remaining prerequisite or uncertainty. Do not enable it, delete the guard, or describe it as production-ready. |
+| Finding                                                                           | Required action                                                                                                                                                                                                                                                                                                                                      |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A marker says to remove/enable something after the **current ticket**             | Verify that its prerequisite is now satisfied. Perform the bounded change within the current task when it belongs to its scope and ownership and needs no substantial refactor; update relevant tests and remove/update the resolved marker. Do not defer an obvious in-scope consequence merely because it was not repeated in acceptance criteria. |
+| A marker delegates implementation to **another ticket**                           | Preserve that ownership. Do not implement the other ticket automatically. Check whether the current task satisfies its dependency and whether any other blockers remain.                                                                                                                                                                             |
+| A marker has **no ticket**, in the same feature/module                            | A bounded resolution is allowed when the task works on the same functionality and substantially fulfills the reason for the temporary mechanism. Verify the prerequisite, resolve the marker and related tests, and explicitly identify this additional logically related work in the final response. Mere proximity is insufficient.                |
+| A related marker is across a **service/layer or ownership boundary**              | Unless the user's existing authorization already includes that change, do not implement it. Briefly describe the problem, its relationship to the current task, the existing ticket or probable need for a separate ticket, and ask whether to address it now if technically feasible. Wait for the answer before the cross-boundary change.         |
+| A temporary flag/guard's enabling condition **has occurred**                      | Complete its intended transition when it is bounded and authorized within scope. Otherwise record an explicit owner/follow-up and why it remains; do not silently leave an expired mechanism indefinitely. Crossing a boundary still requires the preceding rule.                                                                                    |
+| A temporary flag/guard's enabling condition **has not occurred or is unverified** | Preserve the provisional behavior and document the remaining prerequisite or uncertainty. Do not enable it, delete the guard, or describe it as production-ready.                                                                                                                                                                                    |
 
 For clearly out-of-scope work or a substantial refactor, reuse an existing Jira
 task or create a separate scoped follow-up when authorized, after checking for
@@ -482,9 +530,9 @@ is not a passed gate. Selective CI and wider branch-rule changes remain PWDRZ-13
 
 ## Common Gotchas
 
-- **`NEXT_PUBLIC_API_URL` not set** → the API client falls back to `http://localhost:3000/api` during development; production builds require an explicit value. Set it in `frontend/.env`.
-- **JWT_SECRET mismatch** → gateway returns 401 on every non-public request with no descriptive error. Check that `JWT_SECRET` in `gateway/.env` and in root `.env` (passed to backend via Docker Compose) are identical.
+- **API unavailable** → start Express :3000 and Spring :8080; Vite proxies `/api`. No public API URL is required.
+- **Protected API 401** → missing, expired or revoked server session; sign in again. JWT_SECRET is backend-only WS compatibility, not an HTTP authentication setting.
 - **Flyway migration failure** → inspect the migration error and database state first. `docker compose down -v` deletes local PostgreSQL data; use it only when that data is disposable and a reset is intended.
 - **`@/*` alias not resolving in tests** → Vitest resolves aliases via `resolve.alias` in `vitest.config.ts`. Do not use `tsconfig.json` paths alone — they must be mirrored in the vitest config.
-- **Port conflicts** → Next.js defaults to port 3000, so run it with `-p 3001` while the gateway owns 3000. `NEXT_PUBLIC_API_URL` controls the API target, not the frontend listening port.
+- **Port conflicts** → Vite owns 3001, Express owns 3000. Do not run source and Compose Gateway together.
 - **Coverage reports** → `coverage/` is already ignored at the repository root, and no frontend/gateway coverage files are currently tracked. Do not add generated reports to Git.

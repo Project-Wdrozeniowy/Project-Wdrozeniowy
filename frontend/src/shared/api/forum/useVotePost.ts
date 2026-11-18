@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiErrorStatus } from '@/shared/api/client/apiError';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import { FEED_QUERY_KEY } from '@/shared/api/forum/feedQuery.const';
-import { voteService } from '@/shared/api/forum/forumClient';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
+import { castVote, retractVote } from '@/shared/api/generated/orbita.api';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 import { applyVoteOutcome, scoreAfterRetract, voteActionFor } from '@/shared/api/forum/postVote';
 import type { VoteOutcome } from '@/shared/api/forum/postVote';
 import {
@@ -12,7 +12,8 @@ import {
   VOTE_GONE_MESSAGE,
   VOTE_LOCKED_MESSAGE,
 } from '@/shared/api/forum/vote.const';
-import type { MyVote, VoteType } from '@/shared/api/forum/vote.dto';
+import type { MyVoteDto as MyVote } from '@/shared/api/generated/models/myVoteDto.dto';
+import type { VoteRequestVoteType as VoteType } from '@/shared/api/generated/models/voteRequestVoteType.dto';
 import { toast } from '@/shared/lib/toast';
 
 /** What the user is looking at when they click: needed to choose between cast and retract. */
@@ -53,10 +54,10 @@ export function useVotePost(postId: number) {
       // The page shows its own message on failure; the global toast would print server text.
       const config = { skipErrorToast: true };
       if (action.kind === 'retract') {
-        await voteService.retract(action.vote.id, config);
+        await retractVote(action.vote.id, config);
         return { voteScore: scoreAfterRetract(voteScore, action.vote), myVote: null };
       }
-      const vote = await voteService.cast(
+      const vote = await castVote(
         { entityType: 'POST', entityId: postId, voteType: action.voteType },
         config
       );

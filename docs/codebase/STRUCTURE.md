@@ -149,10 +149,12 @@ com.devpulse/
     GlobalExceptionHandler.java
   security/
     JwtUtil.java
-  forum/                         ← post implementation plus controller contracts for adjacent forum features
+  forum/                         ← posts, comments, votes and subscriptions; category writes and tags are controller contracts
   user/                          ← profile and password-management API
   search/                        ← GET /search across posts, users and tags
-  notification/, analytics/, ai/, recommendation/, websocket/
+  notification/                  ← notifications API (list, read, delete)
+  analytics/                     ← activity, engagement, trends and trending posts (SQL aggregates)
+  ai/, recommendation/, websocket/
                                   ← controller contracts; some endpoints return 501 and are @Hidden
                                     from the published contract, backend/openapi.json
 ```

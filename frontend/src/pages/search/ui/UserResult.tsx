@@ -1,0 +1,21 @@
+import UserAvatar from '@/shared/ui/UserAvatar';
+import type { UserSummaryDto as UserSummary } from '@/shared/api/generated/models/userSummaryDto.dto';
+
+interface UserResultProps {
+  user: UserSummary;
+}
+
+/** There is no public profile page yet, so a user is shown but not linked. */
+export default function UserResult({ user }: UserResultProps) {
+  return (
+    <li className="flex items-center gap-3 px-4 py-3">
+      <UserAvatar {...user} />
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-fg truncate">
+          {user.displayName?.trim() || user.username}
+        </p>
+        <p className="text-xs text-fg-subtle truncate">@{user.username}</p>
+      </div>
+    </li>
+  );
+}

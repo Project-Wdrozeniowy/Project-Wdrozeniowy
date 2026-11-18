@@ -1,5 +1,5 @@
 import VoteButton from '@/features/post-interactions/VoteButton';
-import type { VoteType } from '@/shared/api/forum/vote.dto';
+import type { VoteRequestVoteType as VoteType } from '@/shared/api/generated/models/voteRequestVoteType.dto';
 import { cn } from '@/shared/lib/cn';
 import { ChevronDownVoteIcon, ChevronUpVoteIcon } from '@/shared/ui/icons';
 
@@ -38,9 +38,9 @@ export function VoteColumn({ score, chosen, onVote, disabled, busy }: VoteColumn
       <span
         className={cn(
           'font-semibold text-sm',
-          chosen === 'UP' && 'text-blue-400',
-          chosen === 'DOWN' && 'text-red-400',
-          chosen === null && 'text-white'
+          chosen === 'UP' && 'text-accent',
+          chosen === 'DOWN' && 'text-danger',
+          chosen === null && 'text-fg'
         )}
       >
         {formatScore(score)}

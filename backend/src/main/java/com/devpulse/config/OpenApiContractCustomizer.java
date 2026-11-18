@@ -56,10 +56,39 @@ public class OpenApiContractCustomizer implements OpenApiCustomizer {
 
     @Override
     public void customise(OpenAPI openApi) {
+        describeSessionTransport(openApi);
         describeErrorsAsProblemDetails(openApi);
         requirePropertiesOfResponseSchemas(openApi);
         allowNullInNullableProperties(openApi);
         orderTags(openApi);
+    }
+
+    private static void describeSessionTransport(OpenAPI api) {
+        api.getPaths().forEach((path, item) -> item.readOperationsMap().forEach((method, operation) -> {
+            boolean unsafe = method != io.swagger.v3.oas.models.PathItem.HttpMethod.GET
+                    && method != io.swagger.v3.oas.models.PathItem.HttpMethod.HEAD
+                    && method != io.swagger.v3.oas.models.PathItem.HttpMethod.OPTIONS;
+            if (unsafe) {
+                if (operation.getSecurity() == null || operation.getSecurity().isEmpty()) {
+                    operation.setSecurity(new ArrayList<>(List.of(
+                            new io.swagger.v3.oas.models.security.SecurityRequirement().addList("csrfToken"))));
+                } else {
+                    operation.getSecurity().forEach(requirement -> requirement.addList("csrfToken"));
+                }
+                operation.getResponses().addApiResponse("403", new io.swagger.v3.oas.models.responses.ApiResponse()
+                        .description("CSRF validation failed or access is forbidden"));
+            }
+            if (path.equals("/auth/login") || path.equals("/auth/register") || path.equals("/auth/logout")
+                    || path.equals("/users/me/password")) {
+                operation.getResponses().forEach((code, response) -> {
+                    if (code.startsWith("2")) response.addHeaderObject("Set-Cookie",
+                            new io.swagger.v3.oas.models.headers.Header().schema(new Schema<>().type("string"))
+                                    .description("One or more Set-Cookie headers. SESSION is host-only, HttpOnly, Path=/, "
+                                            + "SameSite=Strict and Secure outside explicit HTTP development. Normal issuance "
+                                            + "has no Max-Age/Expires; deletion expires the cookie. Legacy refreshToken is cleared."));
+                });
+            }
+        }));
     }
 
     private static void describeErrorsAsProblemDetails(OpenAPI openApi) {
@@ -129,7 +158,18 @@ public class OpenApiContractCustomizer implements OpenApiCustomizer {
         types.add("null");
         property.setTypes(types);
         property.setNullable(null);
+        allowNullInEnum(property);
         return property;
+    }
+
+    /** An enum lists every allowed value, so a nullable enum has to list {@code null} as well. */
+    @SuppressWarnings("unchecked")
+    private static void allowNullInEnum(Schema<?> property) {
+        if (property.getEnum() != null && property.getEnum().stream().noneMatch(Objects::isNull)) {
+            List<Object> values = new ArrayList<>(property.getEnum());
+            values.add(null);
+            ((Schema<Object>) property).setEnum(values);
+        }
     }
 
     private static Schema<?> problemDetailSchema() {
@@ -146,7 +186,8 @@ public class OpenApiContractCustomizer implements OpenApiCustomizer {
         schema.addProperty("instance", typed("string").format("uri-reference")
                 .description("Path of the failed request").example("/api/forum/posts/missing"));
         schema.addProperty("errors", typed("object").additionalProperties(typed("string"))
-                .description("Validation messages by field name; present only when request validation fails"));
+                .description("Messages by request field name; present when request validation fails or when "
+                        + "a field causes the error, such as an email used by another account"));
         schema.setRequired(List.of("title", "status", "detail", "instance"));
         return schema;
     }

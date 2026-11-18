@@ -1,53 +1,43 @@
 package com.devpulse.forum.controller;
 
-import com.devpulse.common.dto.PagedResponse;
-import com.devpulse.forum.dto.PostSummaryDto;
 import com.devpulse.forum.dto.TagDto;
-import io.swagger.v3.oas.annotations.Hidden;
+import com.devpulse.forum.service.TagService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 /**
- * Planned tag browsing endpoints, implemented under PWDRZ-143.
+ * REST controller exposing forum tags; reading is public (configured in
+ * {@link com.devpulse.config.SecurityConfig}).
  *
- * <p>Every operation still answers {@code 501 Not Implemented}, so the
- * controller is hidden from the published OpenAPI contract and its
- * annotations serve as the design reference. When an operation is
- * implemented, move {@code @Hidden} from the class to the operations that
- * are still stubs; {@code OpenApiContractTest} fails while an implemented
- * operation is hidden or a stub is published.
+ * <p>There is no posts-by-tag operation here: {@code GET /forum/posts?tag={slug}}
+ * already lists the public posts of a tag, with paging, sorting and the other
+ * post filters.
  */
-@Hidden
-@Tag(name = "Forum – Tags", description = "Browse tags and tag-filtered posts")
+@Tag(name = "Forum – Tags", description = "Browse the tags of published posts")
 @RestController
 @RequestMapping("/forum/tags")
+@RequiredArgsConstructor
 public class TagController {
 
-    @Operation(summary = "List all tags sorted by post count")
-    @ApiResponse(responseCode = "200", description = "Tag list returned")
+    private final TagService tagService;
+
+    /** Returns the tags on at least one public post, most used first, then by name. */
+    @Operation(
+            summary = "List the tags in use, most used first",
+            description = "Tags on at least one published post, ordered by postCount descending, then by name. "
+                    + "Tags used only by drafts or deleted posts are left out. List a tag's posts with "
+                    + "GET /forum/posts?tag={slug}."
+    )
+    @ApiResponse(responseCode = "200", description = "Tag list returned; empty when no published post has a tag")
     @GetMapping
     public List<TagDto> listTags() {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
-    }
-
-    @Operation(summary = "List posts with a specific tag")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Posts returned"),
-        @ApiResponse(responseCode = "404", description = "Tag not found")
-    })
-    @GetMapping("/{slug}/posts")
-    public PagedResponse<PostSummaryDto> listPostsByTag(
-            @Parameter(description = "Tag slug", example = "spring-boot") @PathVariable String slug,
-            @Parameter(description = "Page number (0-based)", example = "0") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size", example = "20") @RequestParam(defaultValue = "20") int size) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        return tagService.listInUse();
     }
 }

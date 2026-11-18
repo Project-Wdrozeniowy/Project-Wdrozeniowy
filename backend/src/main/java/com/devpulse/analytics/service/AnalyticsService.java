@@ -1,0 +1,387 @@
+package com.devpulse.analytics.service;
+
+import com.devpulse.analytics.dto.ActivityChangeDto;
+import com.devpulse.analytics.dto.ActivityTrendDto;
+import com.devpulse.analytics.dto.PlatformSummaryDto;
+import com.devpulse.analytics.dto.PostOpeningDayDto;
+import com.devpulse.analytics.dto.PostOpeningTrendDto;
+import com.devpulse.analytics.dto.PostAnalyticsDto;
+import com.devpulse.analytics.dto.PublicActivityComparisonDto;
+import com.devpulse.analytics.dto.PublicActivityDayDto;
+import com.devpulse.analytics.dto.PublicActivityDto;
+import com.devpulse.analytics.dto.PublicActivityWindowDto;
+import com.devpulse.analytics.dto.PublicCategoryDistributionDto;
+import com.devpulse.analytics.dto.PublicCategoryDto;
+import com.devpulse.analytics.dto.PublicCategoryShareDto;
+import com.devpulse.analytics.dto.TrendDataPointDto;
+import com.devpulse.analytics.dto.UserActivitySummaryDto;
+import com.devpulse.analytics.repository.AnalyticsRepository;
+import com.devpulse.auth.entity.User;
+import com.devpulse.auth.util.AuthenticatedUserResolver;
+import com.devpulse.exception.AppException;
+import com.devpulse.forum.dto.PostSummaryDto;
+import com.devpulse.forum.entity.Post;
+import com.devpulse.forum.entity.PostStatus;
+import com.devpulse.forum.repository.PostRepository;
+import com.devpulse.forum.service.PostService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+/**
+ * Activity and engagement figures.
+ *
+ * <ul>
+ *   <li>Posts count while public (published or locked), comments while visible.</li>
+ *   <li>Votes received are the votes on the user's posts and comments.</li>
+ *   <li>Views are intentional openings reported by the client, the same
+ *       figure the forum shows; reading a post through the API counts nothing.
+ *       Openings are collected from migration V10 on. Unique viewers count
+ *       signed-in readers only, since guests cannot be told apart, and only
+ *       since {@code uniqueViewCountSince}: openings keep their reader for the
+ *       retention of {@link OpeningDetailRetention}, so there is no all-time
+ *       figure.</li>
+ *   <li>Trends count the rows created in the window per UTC day, with 0 for
+ *       quiet days; the first day only counts from the window start.</li>
+ *   <li>Trending posts rank public posts by views + 2 × votes + 3 × comments
+ *       within the window (see {@link AnalyticsRepository#trendingPostIds}).</li>
+ *   <li>Public activity covers whole UTC days: the window starts at 00:00 UTC
+ *       of the first day (inclusive) and ends at 00:00 UTC after the last
+ *       (exclusive). The last day is the current one, so it is partial, and
+ *       every day gets a row, 0 when quiet. It counts records that are public
+ *       now and were created in the window: public posts, and visible comments
+ *       on public posts.</li>
+ *   <li>The public category distribution splits the public posts of the same
+ *       window by their current category, so its rows add up to the public
+ *       activity's posts. Posts without a category, also those whose category
+ *       was deleted, form the last row; shares are null for an empty window.</li>
+ *   <li>The public comparison sets the public activity window, up to now,
+ *       against the window of the same length that ends where it starts:
+ *       no gap, no overlap, and the partial current day is matched by an
+ *       equal span. Both count the records that are public now, so hiding a
+ *       post lowers past figures too. A change from 0 has no percentage.</li>
+ *   <li>A post's daily openings are for its author only, over the window of
+ *       the public activity. Days that ended before openings were collected
+ *       ({@code analytics_collection_starts}) are not measured and have no
+ *       figure, unlike a measured day without openings, which counts 0.</li>
+ * </ul>
+ */
+@Service
+@RequiredArgsConstructor
+public class AnalyticsService {
+
+    public static final int MAX_TRENDING_LIMIT = 50;
+
+    /** Trend windows by name. */
+    static final Map<String, Duration> TREND_PERIODS = Map.of(
+            "24h", Duration.ofHours(24),
+            "7d", Duration.ofDays(7),
+            "30d", Duration.ofDays(30),
+            "90d", Duration.ofDays(90));
+
+    /** Windows offered for trending posts. */
+    static final Map<String, Duration> TRENDING_PERIODS = Map.of(
+            "24h", Duration.ofHours(24),
+            "7d", Duration.ofDays(7),
+            "30d", Duration.ofDays(30));
+
+    /** Windows offered for the public activity; each is a number of whole UTC days. */
+    static final Map<String, Duration> PUBLIC_ACTIVITY_PERIODS = Map.of(
+            "7d", Duration.ofDays(7),
+            "30d", Duration.ofDays(30));
+
+    private static final List<String> METRICS = List.of("posts", "comments", "votes", "users");
+
+    private final AnalyticsRepository analyticsRepository;
+    private final PostRepository postRepository;
+    private final PostService postService;
+    private final AuthenticatedUserResolver currentUser;
+    private final OpeningDetailRetention openingDetailRetention;
+
+    /** The caller's own activity. */
+    @Transactional(readOnly = true)
+    public UserActivitySummaryDto myActivity() {
+        User user = currentUser.currentUser();
+        AnalyticsRepository.UserActivity activity = analyticsRepository.userActivity(user.getId());
+        return UserActivitySummaryDto.builder()
+                .userId(user.getId())
+                .username(user.getUsername())
+                .totalPosts(Math.toIntExact(activity.posts()))
+                .totalComments(Math.toIntExact(activity.comments()))
+                .totalVotesCast(Math.toIntExact(activity.votesCast()))
+                .totalUpvotesReceived(Math.toIntExact(activity.upvotesReceived()))
+                .totalDownvotesReceived(Math.toIntExact(activity.downvotesReceived()))
+                .lastActivityAt(activity.lastActivityAt())
+                .build();
+    }
+
+    /**
+     * Engagement of any post, including drafts and deleted ones, for staff.
+     *
+     * @throws AppException HTTP 404 if the post does not exist
+     */
+    @Transactional(readOnly = true)
+    public PostAnalyticsDto postAnalytics(Long postId) {
+        OffsetDateTime cutoff = openingDetailRetention.cutoff();
+        OffsetDateTime collectedFrom = analyticsRepository.collectedFrom(AnalyticsRepository.POST_VIEWED);
+        OffsetDateTime readersSince = collectedFrom.isAfter(cutoff) ? collectedFrom : cutoff;
+        AnalyticsRepository.PostEngagement engagement = analyticsRepository.postEngagement(postId, readersSince)
+                .orElseThrow(() -> new AppException("Post not found", HttpStatus.NOT_FOUND));
+        return PostAnalyticsDto.builder()
+                .postId(postId)
+                .postTitle(engagement.title())
+                .viewCount(Math.toIntExact(engagement.views()))
+                .uniqueViewCount(Math.toIntExact(engagement.uniqueViewers()))
+                .uniqueViewCountSince(readersSince.withOffsetSameInstant(ZoneOffset.UTC))
+                .commentCount(Math.toIntExact(engagement.comments()))
+                .voteScore(engagement.voteScore())
+                .upvoteCount(Math.toIntExact(engagement.upvotes()))
+                .downvoteCount(Math.toIntExact(engagement.downvotes()))
+                .subscriptionCount(Math.toIntExact(engagement.subscriptions()))
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public PlatformSummaryDto platformSummary() {
+        AnalyticsRepository.PlatformTotals totals = analyticsRepository.platformTotals();
+        return PlatformSummaryDto.builder()
+                .totalUsers(totals.users())
+                .activeUsers(totals.activeUsers())
+                .totalPosts(totals.posts())
+                .totalComments(totals.comments())
+                .totalVotes(totals.votes())
+                .totalCategories(totals.categories())
+                .totalTags(totals.tags())
+                .build();
+    }
+
+    /**
+     * Daily counts of {@code metric} over {@code period}.
+     *
+     * @throws AppException HTTP 400 for an unknown metric or period
+     */
+    @Transactional(readOnly = true)
+    public ActivityTrendDto trend(String metric, String period) {
+        if (!METRICS.contains(metric)) {
+            throw new AppException("metric must be one of " + METRICS, HttpStatus.BAD_REQUEST);
+        }
+        Duration window = window(TREND_PERIODS, period);
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        List<TrendDataPointDto> data = analyticsRepository.dailyCounts(metric, now.minus(window), now)
+                .entrySet().stream()
+                .map(day -> new TrendDataPointDto(day.getKey(), day.getValue()))
+                .toList();
+        return ActivityTrendDto.builder()
+                .metric(metric)
+                .period(period)
+                .total(data.stream().mapToLong(TrendDataPointDto::getCount).sum())
+                .data(data)
+                .build();
+    }
+
+    /**
+     * The most active public posts in {@code period}, with the caller's votes.
+     *
+     * @throws AppException HTTP 400 for an unknown period or a limit outside 1–50
+     */
+    @Transactional(readOnly = true)
+    public List<PostSummaryDto> trendingPosts(String period, int limit) {
+        Duration window = window(TRENDING_PERIODS, period);
+        if (limit < 1 || limit > MAX_TRENDING_LIMIT) {
+            throw new AppException("limit must be between 1 and " + MAX_TRENDING_LIMIT, HttpStatus.BAD_REQUEST);
+        }
+        List<Long> ids = analyticsRepository.trendingPostIds(OffsetDateTime.now(ZoneOffset.UTC).minus(window), limit);
+        Map<Long, Integer> rank = ids.stream().collect(Collectors.toMap(Function.identity(), ids::indexOf));
+        List<Post> posts = postRepository.findAllById(ids).stream()
+                .sorted(Comparator.comparing(post -> rank.get(post.getId())))
+                .toList();
+        return postService.summaries(new PageImpl<>(posts)).getContent();
+    }
+
+    /**
+     * Daily public posts and comments over the last {@code period} UTC days.
+     *
+     * @throws AppException HTTP 400 for an unknown period
+     */
+    @Transactional(readOnly = true)
+    public PublicActivityDto publicActivity(String period) {
+        PublicWindow window = publicWindow(period);
+        List<PublicActivityDayDto> rows = analyticsRepository.publicDailyActivity(window.firstDay(), window.lastDay())
+                .stream()
+                .map(day -> new PublicActivityDayDto(day.date(), day.posts(), day.comments()))
+                .toList();
+        return PublicActivityDto.builder()
+                .period(period)
+                .windowStart(window.start())
+                .windowEnd(window.end())
+                .generatedAt(window.now())
+                .totalPosts(rows.stream().mapToLong(PublicActivityDayDto::getPosts).sum())
+                .totalComments(rows.stream().mapToLong(PublicActivityDayDto::getComments).sum())
+                .days(rows)
+                .build();
+    }
+
+    /**
+     * Public posts created over the last {@code period} UTC days by category,
+     * with each category's share of them.
+     *
+     * @throws AppException HTTP 400 for an unknown period
+     */
+    @Transactional(readOnly = true)
+    public PublicCategoryDistributionDto publicCategoryDistribution(String period) {
+        PublicWindow window = publicWindow(period);
+        List<AnalyticsRepository.CategoryPosts> rows =
+                analyticsRepository.publicPostsByCategory(window.firstDay(), window.lastDay());
+        long total = rows.stream().mapToLong(AnalyticsRepository.CategoryPosts::posts).sum();
+        return PublicCategoryDistributionDto.builder()
+                .period(period)
+                .windowStart(window.start())
+                .windowEnd(window.end())
+                .generatedAt(window.now())
+                .totalPosts(total)
+                .categories(rows.stream().map(row -> PublicCategoryShareDto.builder()
+                        .category(row.categoryId() == null ? null : PublicCategoryDto.builder()
+                                .id(row.categoryId())
+                                .slug(row.slug())
+                                .name(row.name())
+                                .visible(row.visible())
+                                .build())
+                        .posts(row.posts())
+                        .share(share(row.posts(), total))
+                        .build()).toList())
+                .build();
+    }
+
+    /**
+     * Public posts and comments of the current {@code period} window, up to
+     * now, against the equally long window right before it.
+     *
+     * @throws AppException HTTP 400 for an unknown period
+     */
+    @Transactional(readOnly = true)
+    public PublicActivityComparisonDto publicActivityComparison(String period) {
+        PublicWindow window = publicWindow(period);
+        OffsetDateTime start = window.start();
+        OffsetDateTime previousStart = start.minus(Duration.between(start, window.now()));
+        List<AnalyticsRepository.PublicTotals> totals =
+                analyticsRepository.publicTotals(previousStart, start, window.now());
+        AnalyticsRepository.PublicTotals previous = totals.get(0);
+        AnalyticsRepository.PublicTotals current = totals.get(1);
+        return PublicActivityComparisonDto.builder()
+                .period(period)
+                .generatedAt(window.now())
+                .current(new PublicActivityWindowDto(start, window.now(), current.posts(), current.comments()))
+                .previous(new PublicActivityWindowDto(previousStart, start, previous.posts(), previous.comments()))
+                .posts(change(current.posts(), previous.posts()))
+                .comments(change(current.comments(), previous.comments()))
+                .build();
+    }
+
+    /**
+     * Daily openings over the last {@code period} UTC days of a post the
+     * caller wrote. Days that ended before openings were collected are not
+     * measured.
+     *
+     * @throws AppException HTTP 400 for an unknown period; HTTP 404 if the post
+     *                      does not exist, is deleted, or was written by
+     *                      someone else, staff included
+     */
+    @Transactional(readOnly = true)
+    public PostOpeningTrendDto myPostOpenings(Long postId, String period) {
+        PublicWindow window = publicWindow(period);
+        User caller = currentUser.currentUser();
+        Post post = postRepository.findById(postId)
+                .filter(found -> found.getStatus() != PostStatus.DELETED)
+                .filter(found -> found.getAuthor().getId().equals(caller.getId()))
+                .orElseThrow(() -> new AppException("Post not found", HttpStatus.NOT_FOUND));
+        OffsetDateTime collectedFrom = analyticsRepository.collectedFrom(AnalyticsRepository.POST_VIEWED);
+        List<PostOpeningDayDto> days = analyticsRepository
+                .dailyPostOpenings(post.getId(), window.firstDay(), window.lastDay())
+                .entrySet().stream()
+                .map(day -> {
+                    boolean measured = AnalyticsRepository.startOfUtcDay(day.getKey().plusDays(1))
+                            .isAfter(collectedFrom);
+                    return new PostOpeningDayDto(day.getKey(), measured, measured ? day.getValue() : null);
+                })
+                .toList();
+        return PostOpeningTrendDto.builder()
+                .postId(post.getId())
+                .period(period)
+                .windowStart(window.start())
+                .windowEnd(window.end())
+                .generatedAt(window.now())
+                .collectedFrom(collectedFrom)
+                .totalOpenings(days.stream().filter(PostOpeningDayDto::isMeasured)
+                        .mapToLong(PostOpeningDayDto::getOpenings).sum())
+                .days(days)
+                .build();
+    }
+
+    /** {@code current} against {@code previous}; the percentage is null when {@code previous} is 0. */
+    static ActivityChangeDto change(long current, long previous) {
+        long change = current - previous;
+        return ActivityChangeDto.builder()
+                .current(current)
+                .previous(previous)
+                .change(change)
+                .changePercent(previous == 0 ? null : BigDecimal.valueOf(change * 100)
+                        .divide(BigDecimal.valueOf(previous), 1, RoundingMode.HALF_UP))
+                .build();
+    }
+
+    /** {@code part / total} rounded half up to 4 decimals, or null when {@code total} is 0. */
+    static BigDecimal share(long part, long total) {
+        return total == 0 ? null : BigDecimal.valueOf(part).divide(BigDecimal.valueOf(total), 4, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * The public window of {@code period}: whole UTC days from
+     * {@code firstDay} to {@code lastDay}, the current one, read at {@code now}.
+     */
+    private record PublicWindow(LocalDate firstDay, LocalDate lastDay, OffsetDateTime now) {
+
+        OffsetDateTime start() {
+            return AnalyticsRepository.startOfUtcDay(firstDay);
+        }
+
+        OffsetDateTime end() {
+            return AnalyticsRepository.startOfUtcDay(lastDay.plusDays(1));
+        }
+    }
+
+    /**
+     * The window of {@code period} read now. Now is cut to whole milliseconds,
+     * the precision clients parse, so window lengths derived from it are exact
+     * for them too.
+     */
+    private static PublicWindow publicWindow(String period) {
+        long days = window(PUBLIC_ACTIVITY_PERIODS, period).toDays();
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS);
+        LocalDate lastDay = now.toLocalDate();
+        return new PublicWindow(lastDay.minusDays(days - 1), lastDay, now);
+    }
+
+    private static Duration window(Map<String, Duration> periods, String period) {
+        Duration window = periods.get(period);
+        if (window == null) {
+            throw new AppException("period must be one of " + periods.keySet().stream().sorted().toList(),
+                    HttpStatus.BAD_REQUEST);
+        }
+        return window;
+    }
+}

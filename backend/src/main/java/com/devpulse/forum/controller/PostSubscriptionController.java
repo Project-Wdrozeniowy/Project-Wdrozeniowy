@@ -37,7 +37,7 @@ public class PostSubscriptionController {
     /** Subscribes the caller to the post. */
     @Operation(summary = "Subscribe to a post",
             description = "Idempotent: subscribing again changes nothing.",
-            security = @SecurityRequirement(name = "bearerAuth"))
+            security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Subscribed"),
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
@@ -54,7 +54,7 @@ public class PostSubscriptionController {
     /** Unsubscribes the caller from the post. */
     @Operation(summary = "Unsubscribe from a post",
             description = "Idempotent: unsubscribing without a subscription changes nothing.",
-            security = @SecurityRequirement(name = "bearerAuth"))
+            security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Not subscribed any more"),
         @ApiResponse(responseCode = "401", description = "Not authenticated"),
@@ -71,7 +71,7 @@ public class PostSubscriptionController {
     /** Lists the posts the caller is subscribed to. */
     @Operation(summary = "List my post subscriptions",
             description = "Posts the caller is subscribed to and can still read, most recent subscription first.",
-            security = @SecurityRequirement(name = "bearerAuth"))
+            security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Subscriptions returned"),
         @ApiResponse(responseCode = "400", description = "Invalid pagination"),

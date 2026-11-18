@@ -1,4 +1,4 @@
-import { profileSchema } from '../profile.schema';
+import { profileSchema, profileSchemaFor } from '../profile.schema';
 
 const valid = {
   email: 'alice@example.com',
@@ -103,5 +103,21 @@ describe('profileSchema', () => {
         /at most 500/
       );
     });
+  });
+});
+
+describe('profileSchemaFor', () => {
+  const stored = { ...valid, avatarUrl: 'ftp://old.example.com/a.png' };
+
+  it('checks the fields the form shows', () => {
+    expect(profileSchemaFor(['avatarUrl']).safeParse(stored).success).toBe(false);
+    expect(profileSchemaFor(['email']).safeParse({ ...valid, email: 'nope' }).success).toBe(false);
+  });
+
+  it('keeps the value of a field the form does not show, without checking it', () => {
+    const result = profileSchemaFor(['email']).safeParse(stored);
+
+    expect(result.success).toBe(true);
+    expect(result.data?.avatarUrl).toBe('ftp://old.example.com/a.png');
   });
 });

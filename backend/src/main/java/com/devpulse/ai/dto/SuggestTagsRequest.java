@@ -8,16 +8,17 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-@Schema(description = "Request body for AI tag suggestions")
+@Schema(description = "Request body for tag suggestions")
 public class SuggestTagsRequest {
 
-    @NotBlank
-    @Size(min = 10, max = 50_000)
-    @Schema(description = "Post content or title to analyse for tag suggestions",
+    @NotBlank(message = "Content must not be blank")
+    @Size(min = 10, max = 50_000, message = "Content must be between {min} and {max} characters")
+    @Schema(description = "Post content to analyse",
             example = "How to configure Spring Boot with PostgreSQL and Flyway migrations")
     private String content;
 
-    @Size(max = 20)
-    @Schema(description = "Optional post title — improves suggestion accuracy", example = "Spring Boot + PostgreSQL setup")
+    @Size(max = 255, message = "Title must be at most {max} characters")
+    @Schema(description = "Optional post title; its words weigh more than the content's",
+            example = "Spring Boot + PostgreSQL setup")
     private String title;
 }

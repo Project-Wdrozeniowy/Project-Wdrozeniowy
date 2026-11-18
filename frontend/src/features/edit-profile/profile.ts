@@ -7,8 +7,9 @@ import {
 import type { ProfileField } from '@/features/edit-profile/profile.const';
 import { apiErrorStatus } from '@/shared/api/client/apiError';
 import type { ProfileFormData } from '@/features/edit-profile/profile.schema';
-import type { ProblemDetail } from '@/shared/api/client/problem.dto';
-import type { MyProfile, UpdateProfileRequest } from '@/shared/api/user/user.dto';
+import type { ProblemDetail } from '@/shared/api/generated/models/problemDetail.dto';
+import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
+import type { UpdateProfileRequest } from '@/shared/api/generated/models/updateProfileRequest.dto';
 
 /** Form values for a profile. The API's `null` (not set) is an empty input. */
 export function profileToFormValues(profile: MyProfile): ProfileFormData {
@@ -26,11 +27,13 @@ export function profileToFormValues(profile: MyProfile): ProfileFormData {
  */
 export function buildUpdateRequest(
   values: ProfileFormData,
-  profile: MyProfile
+  profile: MyProfile,
+  /** Only these fields can be part of the request; a form that shows some fields sends only those. */
+  fields: readonly ProfileField[] = PROFILE_FIELDS
 ): UpdateProfileRequest {
   const current = profileToFormValues(profile);
   const request: UpdateProfileRequest = {};
-  for (const field of PROFILE_FIELDS) {
+  for (const field of fields) {
     const next = values[field].trim();
     // The stored text may carry stray whitespace the user never saw as a change: compare trimmed
     // with trimmed, so an untouched form never looks edited.
@@ -55,7 +58,7 @@ function isProfileField(key: string): key is ProfileField {
 /**
  * Turns a failed save into messages written by us. Server texts are never shown: validation
  * messages are not meant for users and anything else (5xx, network) could expose internals.
- * A 401 never gets here: the API client refreshes the session or sends the user to /login.
+ * A 401 never gets here: confirmed expiry clears the session presentation.
  */
 export function getProfileSaveError(error: unknown): ProfileSaveError {
   const status = apiErrorStatus(error);

@@ -2,7 +2,7 @@ import { AxiosError } from 'axios';
 import { buildUpdateRequest, getProfileSaveError, profileToFormValues } from '../profile';
 import { profileSchema } from '../profile.schema';
 import type { ProfileFormData } from '../profile.schema';
-import type { MyProfile } from '@/shared/api/user/user.dto';
+import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 const profile: MyProfile = {
   id: 1,
@@ -50,6 +50,13 @@ describe('profileToFormValues', () => {
 describe('buildUpdateRequest', () => {
   it('is empty when nothing changed', () => {
     expect(buildUpdateRequest(unchanged, profile)).toEqual({});
+  });
+
+  it('never includes a field the form does not show, even if its value differs', () => {
+    const drifted = { ...unchanged, bio: 'Changed elsewhere', email: 'new@example.com' };
+
+    expect(buildUpdateRequest(drifted, profile, ['email'])).toEqual({ email: 'new@example.com' });
+    expect(buildUpdateRequest(drifted, profile, ['displayName'])).toEqual({});
   });
 
   it('sends only the fields that changed', () => {

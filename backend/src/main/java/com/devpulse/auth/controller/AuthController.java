@@ -1,152 +1,70 @@
 package com.devpulse.auth.controller;
 
-import com.devpulse.auth.cookie.RefreshTokenCookies;
 import com.devpulse.auth.dto.AuthRequest;
-import com.devpulse.auth.dto.AuthResponse;
 import com.devpulse.auth.dto.RegisterRequest;
+import com.devpulse.auth.session.SessionLifecycle;
 import com.devpulse.auth.service.AuthService;
-import com.devpulse.exception.AppException;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.headers.Header;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller handling authentication endpoints.
- *
- * <p>All endpoints in this controller are public (configured
- * in {@link com.devpulse.config.SecurityConfig}).
- *
- * <p>The refresh token never appears in a response body or request body. It is
- * stored in an {@code HttpOnly} cookie ({@link RefreshTokenCookies}) so JavaScript
- * cannot read it.
- *
- * <p>Available routes:
- * <ul>
- *   <li>{@code POST /auth/register} — register a new account</li>
- *   <li>{@code POST /auth/login}    — log in; sets the refresh cookie</li>
- *   <li>{@code POST /auth/refresh}  — new access token from the refresh cookie (rotates the cookie)</li>
- *   <li>{@code POST /auth/logout}   — revoke the refresh token and clear the cookie</li>
- * </ul>
- */
-@Tag(name = "Auth", description = "Registration, login, token management")
+@Tag(name = "Auth", description = "Session authentication and CSRF bootstrap")
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
+    private final AuthService auth;
+    private final SessionLifecycle sessions;
 
-    private static final String SETS_REFRESH_COOKIE = "Sets the refreshToken cookie: HttpOnly, SameSite=Strict, "
-            + "limited to the auth path, Secure unless COOKIE_SECURE=false";
-    private static final String CLEARS_REFRESH_COOKIE = "Clears the refreshToken cookie (Max-Age=0)";
-    private static final String REFRESH_COOKIE_PARAMETER = "Refresh token cookie set by register, login and refresh; "
-            + "the browser sends it automatically";
+    public record CsrfResponse(String token, String headerName) {}
 
-    private final AuthService authService;
-    private final RefreshTokenCookies refreshTokenCookies;
+    @Operation(summary = "Obtain the session-backed CSRF token")
+    @GetMapping("/csrf")
+    public CsrfResponse csrf(@io.swagger.v3.oas.annotations.Parameter(hidden = true) CsrfToken csrf,
+                             HttpServletRequest request, HttpServletResponse response) {
+        sessions.prepare(request, response);
+        response.setHeader("Cache-Control", "no-store");
+        return new CsrfResponse(csrf.getToken(), csrf.getHeaderName());
+    }
 
-    /**
-     * Registers a new user.
-     *
-     * @param request validated registration data
-     * @return {@link AuthResponse} with the access token; the refresh token is set as a cookie; HTTP 201
-     */
-    @Operation(summary = "Register a new account")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Registered successfully", headers = @Header(
-                name = HttpHeaders.SET_COOKIE, description = SETS_REFRESH_COOKIE, schema = @Schema(types = "string"))),
-        @ApiResponse(responseCode = "400", description = "Validation error"),
-        @ApiResponse(responseCode = "409", description = "Username or email already taken")
-    })
+    @Operation(summary = "Register and establish a server session")
+    @ApiResponses({@ApiResponse(responseCode = "201", description = "Registered; session cookie set, no token payload"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "403", description = "Invalid CSRF token"),
+            @ApiResponse(responseCode = "409", description = "Username or email already registered")})
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public AuthResponse register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
-        return withRefreshCookie(authService.register(request), response);
+    public void register(@Valid @RequestBody RegisterRequest input, HttpServletRequest request,
+                         HttpServletResponse response) {
+        auth.register(input, request, response);
     }
 
-    /**
-     * Logs in a user.
-     *
-     * @param request login credentials (username, password)
-     * @return {@link AuthResponse} with the access token; the refresh token is set as a cookie; HTTP 200
-     */
-    @Operation(summary = "Login and receive an access token")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Authenticated successfully", headers = @Header(
-                name = HttpHeaders.SET_COOKIE, description = SETS_REFRESH_COOKIE, schema = @Schema(types = "string"))),
-        @ApiResponse(responseCode = "400", description = "Validation error"),
-        @ApiResponse(responseCode = "401", description = "Bad credentials")
-    })
+    @Operation(summary = "Login and establish an independent server session")
+    @ApiResponses({@ApiResponse(responseCode = "204", description = "Authenticated; session cookie set"),
+            @ApiResponse(responseCode = "400", description = "Validation error"),
+            @ApiResponse(responseCode = "401", description = "Authentication failed"),
+            @ApiResponse(responseCode = "403", description = "Invalid CSRF token or stale authentication context")})
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody AuthRequest request, HttpServletResponse response) {
-        return withRefreshCookie(authService.login(request), response);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void login(@Valid @RequestBody AuthRequest input, HttpServletRequest request,
+                      HttpServletResponse response) {
+        auth.login(input, request, response);
     }
 
-    /**
-     * Issues a new access token from the refresh cookie and rotates the cookie.
-     *
-     * <p>Also used to restore a session on page load, since the access token only
-     * lives in browser memory. On failure the stale cookie is cleared.
-     *
-     * @param refreshToken the {@code refreshToken} cookie, if present
-     * @return {@link AuthResponse} with a new access token; HTTP 200
-     */
-    @Operation(summary = "Refresh the access token using the refresh cookie")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Token refreshed", headers = @Header(
-                name = HttpHeaders.SET_COOKIE, description = SETS_REFRESH_COOKIE, schema = @Schema(types = "string"))),
-        @ApiResponse(responseCode = "401", description = "Refresh cookie missing, invalid or expired", headers = @Header(
-                name = HttpHeaders.SET_COOKIE, description = CLEARS_REFRESH_COOKIE, schema = @Schema(types = "string")))
-    })
-    @PostMapping("/refresh")
-    public AuthResponse refresh(
-            @Parameter(in = ParameterIn.COOKIE, description = REFRESH_COOKIE_PARAMETER)
-            @CookieValue(name = RefreshTokenCookies.NAME, required = false) String refreshToken,
-            HttpServletResponse response) {
-        try {
-            return withRefreshCookie(authService.refresh(refreshToken), response);
-        } catch (AppException e) {
-            if (e.getStatus() == HttpStatus.UNAUTHORIZED) {
-                refreshTokenCookies.clear(response);
-            }
-            throw e;
-        }
-    }
-
-    /**
-     * Logs the caller out by revoking the refresh token and clearing the cookie.
-     *
-     * <p>Idempotent — a missing, unknown or already-revoked token still returns 204
-     * without disclosing whether the token existed.
-     *
-     * @param refreshToken the {@code refreshToken} cookie, if present
-     */
-    @Operation(summary = "Logout — revoke the refresh token and clear the cookie",
-            description = "The refresh cookie itself acts as the credential, so no access token is required. "
-                    + "Idempotent: a missing, unknown or already-revoked token also returns 204.")
-    @ApiResponse(responseCode = "204", description = "Logged out", headers = @Header(
-            name = HttpHeaders.SET_COOKIE, description = CLEARS_REFRESH_COOKIE, schema = @Schema(types = "string")))
+    @Operation(summary = "Invalidate the current server session", description = "Requires CSRF, including for guests")
+    @ApiResponses({@ApiResponse(responseCode = "204", description = "Session invalidated; cookie cleared"),
+            @ApiResponse(responseCode = "403", description = "Invalid CSRF token")})
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(
-            @Parameter(in = ParameterIn.COOKIE, description = REFRESH_COOKIE_PARAMETER)
-            @CookieValue(name = RefreshTokenCookies.NAME, required = false) String refreshToken,
-            HttpServletResponse response) {
-        authService.logout(refreshToken);
-        refreshTokenCookies.clear(response);
-    }
-
-    private AuthResponse withRefreshCookie(AuthResponse authResponse, HttpServletResponse response) {
-        refreshTokenCookies.write(response, authResponse.getRefreshToken());
-        return authResponse;
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        sessions.logout(request, response);
     }
 }

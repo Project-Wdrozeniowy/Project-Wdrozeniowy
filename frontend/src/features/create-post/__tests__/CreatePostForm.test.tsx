@@ -1,19 +1,27 @@
+import type { ApiRequestOptions } from '@/shared/api/client/orvalTransport';
+import type { AxiosRequestConfig } from 'axios';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AxiosError } from 'axios';
 import { vi } from 'vitest';
 import { CreatePostForm } from '../CreatePostForm';
-import { categoryService, postService } from '@/shared/api/forum/forumClient';
 
-vi.mock('@/shared/api/forum/forumClient', () => ({
+const fixtureOperations = vi.hoisted(() => ({
   categoryService: { list: vi.fn() },
   postService: { create: vi.fn() },
 }));
+const { categoryService, postService } = fixtureOperations;
+vi.mock('@/shared/api/client/orvalTransport', async () => {
+  const { mockApiOperations } = await import('@/test/mockApiOperations');
+  return {
+    orvalTransport: (config: AxiosRequestConfig, options: ApiRequestOptions) =>
+      mockApiOperations(config, options, fixtureOperations),
+  };
+});
 
 const categories = [
   { id: 1, name: 'AI / Tech', slug: 'ai', visible: true },
-  { id: 2, name: 'Hidden', slug: 'hidden', visible: false },
   { id: 3, name: 'Gaming', slug: 'gaming', visible: true },
 ];
 
@@ -44,7 +52,7 @@ beforeEach(() => {
 });
 
 describe('CreatePostForm', () => {
-  it('starts empty with publish disabled and lists only visible categories', async () => {
+  it('starts empty with publish disabled and lists the categories supplied by the backend', async () => {
     setup();
     expect(screen.getByRole('button', { name: 'Publish post' })).toBeDisabled();
     await screen.findByRole('option', { name: 'Gaming' });
@@ -88,7 +96,7 @@ describe('CreatePostForm', () => {
     );
     expect(screen.getByLabelText(/^Title/)).toHaveValue('');
     expect(screen.queryByText('#react')).not.toBeInTheDocument();
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['forum-posts'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['/forum/posts'] });
   });
 
   it('shows Publishing… and blocks a second submit while the request is pending', async () => {
@@ -192,13 +200,13 @@ describe('CreatePostForm', () => {
     await screen.findByRole('option', { name: 'Gaming' });
     vi.mocked(categoryService.list).mockRejectedValue(httpError(500));
     await act(async () => {
-      await queryClient.invalidateQueries({ queryKey: ['forum-categories'] });
+      await queryClient.invalidateQueries({ queryKey: ['/forum/categories'] });
       // Let the screen react to the failed refresh before looking at it.
       // (React Query tells its observers from a zero-delay timer; this one is queued after it.)
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     // The refresh failed, but the screen must have had time to react to it.
-    expect(queryClient.getQueryState(['forum-categories'])?.status).toBe('error');
+    expect(queryClient.getQueryState(['/forum/categories'])?.status).toBe('error');
 
     expect(screen.queryByText(/could not load the categories/)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/^Category/)).toBeEnabled();

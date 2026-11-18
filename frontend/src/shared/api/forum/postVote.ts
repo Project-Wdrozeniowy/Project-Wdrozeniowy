@@ -1,6 +1,7 @@
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
-import type { PostSummary } from '@/shared/api/forum/post.dto';
-import type { MyVote, VoteType } from '@/shared/api/forum/vote.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
+import type { MyVoteDto as MyVote } from '@/shared/api/generated/models/myVoteDto.dto';
+import type { VoteRequestVoteType as VoteType } from '@/shared/api/generated/models/voteRequestVoteType.dto';
 
 /** How much one vote moves a score. */
 export function voteValue(voteType: VoteType): 1 | -1 {

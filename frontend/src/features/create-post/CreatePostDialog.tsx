@@ -1,11 +1,9 @@
-'use client';
-
 import { useIsMutating } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { cn } from '@/shared/lib/cn';
 import { CreatePostForm } from '@/features/create-post/CreatePostForm';
-import { createPostMutationKey } from '@/shared/api/forum/useCreatePost';
+import { getCreatePostMutationKey } from '@/shared/api/generated/orbita.api';
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -19,7 +17,7 @@ export function CreatePostDialog({ open, onClose }: CreatePostDialogProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<Element | null>(null);
-  const publishing = useIsMutating({ mutationKey: createPostMutationKey }) > 0;
+  const publishing = useIsMutating({ mutationKey: getCreatePostMutationKey() }) > 0;
   // A published post starts the next draft from a clean form; an unpublished draft survives a close.
   const [formKey, setFormKey] = useState(0);
   const publishedRef = useRef(false);
@@ -129,29 +127,29 @@ export function CreatePostDialog({ open, onClose }: CreatePostDialogProps) {
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative my-8 w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl outline-none"
+        className="relative my-8 w-full max-w-2xl rounded-xl bg-surface p-6 shadow-2xl outline-none border border-line"
       >
         <button
           type="button"
           onClick={close}
           disabled={publishing}
           aria-label="Close"
-          className="absolute right-4 top-4 text-gray-500 transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40"
+          className="absolute right-4 top-4 text-fg-subtle transition-colors hover:text-fg disabled:cursor-not-allowed disabled:opacity-40"
         >
           ✕
         </button>
-        <div className="mb-4 flex items-center gap-3 border-b border-gray-200 pb-4">
+        <div className="mb-4 flex items-center gap-3 border-b border-line pb-4">
           <span
             aria-hidden="true"
-            className="flex size-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600"
+            className="flex size-8 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/15 text-accent"
           >
             ✎
           </span>
           <div>
-            <h2 id={titleId} className="text-base font-semibold text-gray-900">
+            <h2 id={titleId} className="text-base font-semibold text-fg">
               Create a post
             </h2>
-            <p className="text-xs text-gray-500">Share your thoughts with the community</p>
+            <p className="text-xs text-fg-subtle">Share your thoughts with the community</p>
           </div>
         </div>
         <CreatePostForm

@@ -10,6 +10,7 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Locale;
 
@@ -52,6 +53,21 @@ public final class PostSpecifications {
             Join<Post, Category> join = root.join("category");
             return cb.equal(join.get("id"), categoryId);
         };
+    }
+
+    /** Restrict to posts without a category, including those whose category was deleted. */
+    public static Specification<Post> withoutCategory() {
+        return (root, query, cb) -> cb.isNull(root.get("category"));
+    }
+
+    /** Restrict to posts created at or after {@code from}. */
+    public static Specification<Post> createdFrom(OffsetDateTime from) {
+        return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("createdAt"), from);
+    }
+
+    /** Restrict to posts created before {@code to}. */
+    public static Specification<Post> createdBefore(OffsetDateTime to) {
+        return (root, query, cb) -> cb.lessThan(root.get("createdAt"), to);
     }
 
     /** Restrict to a category by slug. */

@@ -5,6 +5,7 @@ import com.devpulse.exception.AppException;
 import com.devpulse.forum.dto.CreatePostRequest;
 import com.devpulse.forum.dto.PostDto;
 import com.devpulse.forum.dto.PostSummaryDto;
+import com.devpulse.forum.dto.RecordPostOpeningRequest;
 import com.devpulse.forum.dto.UpdatePostRequest;
 import com.devpulse.forum.entity.PostStatus;
 import com.devpulse.forum.service.PostFilter;
@@ -20,10 +21,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -60,16 +63,31 @@ public class PostController {
      * <p>Pagination defaults: size 20, sorted by {@code lastActivityAt} descending.
      */
     @Operation(summary = "List posts with optional filtering and pagination",
-            description = "Public. Without a status filter only published and locked posts are listed. "
-                    + "A bearer token is optional and only widens what the status filter may return.")
+            description = "Public: no authentication is required. Without a status filter only published and "
+                    + "locked posts are listed; a signed-in session is optional and only widens what the status "
+                    + "filter may return. Pages are 0-based with 1 to 100 posts each; posts with equal sort "
+                    + "values are ordered by id, so consecutive pages neither overlap nor skip posts, and a page "
+                    + "past the last one is empty with the same totals. "
+                    + "createdFrom (inclusive) and createdTo (exclusive) bound the creation time and, with "
+                    + "categoryId or uncategorized=true, list the posts behind a public analytics figure: "
+                    + "for the activity row of 2026-11-05 pass createdFrom=2026-11-05T00:00:00Z and "
+                    + "createdTo=2026-11-06T00:00:00Z; for a category row of a window pass its windowStart, "
+                    + "windowEnd and category.id, or uncategorized=true for the row without a category.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Posts returned"),
-        @ApiResponse(responseCode = "400", description = "Invalid pagination or unsupported sort field")
+        @ApiResponse(responseCode = "400", description = "A page below 0 or a size outside 1-100, an unsupported "
+                + "sort field, a malformed number, status, boolean or date, an empty creation range, or "
+                + "uncategorized combined with a category filter")
     })
     @GetMapping
     public PagedResponse<PostSummaryDto> listPosts(
-            @Parameter(description = "Page number (0-based)", example = "0") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size", example = "20") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "Page number (0-based)", example = "0",
+                    schema = @Schema(type = "integer", format = "int32", minimum = "0", defaultValue = "0"))
+                @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size", example = "20",
+                    schema = @Schema(type = "integer", format = "int32", minimum = "1", maximum = "100",
+                            defaultValue = "20"))
+                @RequestParam(defaultValue = "20") int size,
             @Parameter(description = "Case-insensitive text search in title and content") @RequestParam(required = false) String q,
             @Parameter(description = "Filter by category id") @RequestParam(required = false) Long categoryId,
             @Parameter(description = "Filter by category slug") @RequestParam(required = false) String categorySlug,
@@ -80,13 +98,31 @@ public class PostController {
                     + "a status the caller may not see is ignored")
                 @RequestParam(required = false) PostStatus status,
             @Parameter(description = "Sort field", schema = @Schema(type = "string", allowableValues = {"createdAt", "voteScore", "lastActivityAt"}, defaultValue = "lastActivityAt"))
-                @RequestParam(defaultValue = "lastActivityAt") String sort) {
+                @RequestParam(defaultValue = "lastActivityAt") String sort,
+            @Parameter(description = "Only posts created at or after this instant (ISO-8601, e.g. "
+                    + "2026-11-05T00:00:00Z); inclusive", example = "2026-11-05T00:00:00Z")
+                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                OffsetDateTime createdFrom,
+            @Parameter(description = "Only posts created before this instant (ISO-8601); exclusive, and after "
+                    + "createdFrom when both are given", example = "2026-11-06T00:00:00Z")
+                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                OffsetDateTime createdTo,
+            @Parameter(description = "true lists only posts without a category, including those whose category "
+                    + "was deleted; cannot be combined with categoryId or categorySlug")
+                @RequestParam(defaultValue = "false") boolean uncategorized) {
         if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
             throw new AppException("page must be >= 0 and size between 1 and " + MAX_PAGE_SIZE,
                     HttpStatus.BAD_REQUEST);
         }
         if (!SORT_FIELDS.contains(sort)) {
             throw new AppException("Unsupported sort field: " + sort, HttpStatus.BAD_REQUEST);
+        }
+        if (createdFrom != null && createdTo != null && !createdFrom.isBefore(createdTo)) {
+            throw new AppException("createdFrom must be before createdTo", HttpStatus.BAD_REQUEST);
+        }
+        if (uncategorized && (categoryId != null || StringUtils.hasText(categorySlug))) {
+            throw new AppException("uncategorized cannot be combined with categoryId or categorySlug",
+                    HttpStatus.BAD_REQUEST);
         }
         List<Sort.Order> orders = new ArrayList<>();
         if (!StringUtils.hasText(q)) {
@@ -96,12 +132,13 @@ public class PostController {
         // Tie-breaker, so pages don't overlap or skip posts with equal sort values.
         orders.add(Sort.Order.desc("id"));
 
-        PostFilter filter = new PostFilter(q, categoryId, categorySlug, tag, author, status);
+        PostFilter filter = new PostFilter(q, categoryId, categorySlug, tag, author, status,
+                createdFrom, createdTo, uncategorized);
         return PagedResponse.from(postService.search(filter, PageRequest.of(page, size, Sort.by(orders))));
     }
 
     /** Creates a new post, published or as a draft. */
-    @Operation(summary = "Create a new post", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Create a new post", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Post created"),
         @ApiResponse(responseCode = "400", description = "Validation error or unknown category"),
@@ -115,7 +152,8 @@ public class PostController {
 
     /** Returns the post identified by slug. */
     @Operation(summary = "Get a post by slug",
-            description = "Public. A draft is visible only to its author and to admins, who need to send their bearer token.")
+            description = "Public: no authentication is required. A draft is visible only to its author and to "
+                    + "admins, in their signed-in session.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Post found"),
         @ApiResponse(responseCode = "404", description = "Not found, deleted, or a draft the caller may not see")
@@ -127,8 +165,29 @@ public class PostController {
         return postService.getBySlug(slug);
     }
 
+    /** Counts one intentional opening of a post. */
+    @Operation(summary = "Record that a reader opened a post",
+            description = "Public, for guests and members. Call it after the post was actually shown to the reader, "
+                    + "not for prefetches or background refreshes; reading a post counts nothing by itself. "
+                    + "Create a new openingId for each opening and reuse it only to retry that opening: the same "
+                    + "openingId is counted once and is safe to retry for at least 24 hours. Answers 204 whether "
+                    + "or not this delivery was the one counted.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Opening counted, or already counted"),
+        @ApiResponse(responseCode = "400", description = "openingId is missing or not a UUID"),
+        @ApiResponse(responseCode = "404", description = "Not found, deleted, or a draft the caller may not see")
+    })
+    @PostMapping("/{slug}/openings")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void recordOpening(
+            @Parameter(description = "Post slug", example = "how-to-use-spring-boot-with-postgresql")
+            @PathVariable String slug,
+            @Valid @RequestBody RecordPostOpeningRequest request) {
+        postService.recordOpening(slug, request.getOpeningId());
+    }
+
     /** Updates an existing post (author or staff). Only non-null fields are applied. */
-    @Operation(summary = "Update a post by slug", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update a post by slug", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Post updated"),
         @ApiResponse(responseCode = "400", description = "Validation error or unknown category"),
@@ -144,7 +203,7 @@ public class PostController {
     }
 
     /** Soft-deletes a post (author or staff). */
-    @Operation(summary = "Delete a post by slug", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Delete a post by slug", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Post deleted"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -159,7 +218,7 @@ public class PostController {
     }
 
     /** Pins or unpins a post (moderators and admins). */
-    @Operation(summary = "Toggle pin status of a post", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Toggle pin status of a post", security = @SecurityRequirement(name = "sessionAuth"))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Pin status toggled"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),

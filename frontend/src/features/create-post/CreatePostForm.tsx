@@ -1,7 +1,5 @@
-'use client';
-
 import { zodResolver } from '@hookform/resolvers/zod';
-import Link from 'next/link';
+import { Link } from 'react-router';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -22,9 +20,10 @@ import { createPostSchema } from '@/features/create-post/createPost.schema';
 import type { CreatePostFormData } from '@/features/create-post/createPost.schema';
 import { FieldLabel } from '@/features/create-post/FieldLabel';
 import { TagInput } from '@/features/create-post/TagInput';
-import { categoriesQueryKey, useCategories } from '@/shared/api/forum/useCategories';
-import type { Category } from '@/shared/api/forum/category.dto';
-import { useCreatePost } from '@/shared/api/forum/useCreatePost';
+import { getListCategoriesQueryKey, useListCategories } from '@/shared/api/generated/orbita.api';
+import { usePublishPost } from '@/shared/api/forum/usePublishPost';
+import type { CategoryDto as Category } from '@/shared/api/generated/models/categoryDto.dto';
+
 import { cn } from '@/shared/lib/cn';
 
 interface CreatePostFormProps {
@@ -39,7 +38,12 @@ function inputClass(invalid: boolean) {
   return cn('input', invalid && 'ring-2 ring-red-500');
 }
 
-function FieldError({ id, message }: { id: string; message?: string }) {
+interface FieldErrorProps {
+  id: string;
+  message?: string;
+}
+
+function FieldError({ id, message }: FieldErrorProps) {
   if (!message) return null;
   return (
     <p id={id} role="alert" className="text-xs text-red-500">
@@ -56,11 +60,14 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
     categoryError: `${baseId}-category-error`,
     content: `${baseId}-content`,
   };
-  const categories = useCategories();
+  const categories = useListCategories({
+    query: { staleTime: 5 * 60 * 1000 },
+    request: { skipErrorToast: true },
+  });
   const queryClient = useQueryClient();
   // Which field should get the focus once the form is editable again (see the effect below).
   const [focusRequest, setFocusRequest] = useState<CreatePostField | null>(null);
-  const { mutateAsync, isPending } = useCreatePost();
+  const { mutateAsync, isPending } = usePublishPost({ request: { skipErrorToast: true } });
   const [formError, setFormError] = useState<string | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
   const alertRef = useRef<HTMLDivElement>(null);
@@ -101,7 +108,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
     setPublishedSlug(null);
     setFocusRequest(null);
     try {
-      const post = await mutateAsync(buildCreatePostRequest(values));
+      const post = await mutateAsync({ data: buildCreatePostRequest(values) });
       reset(emptyFormValues());
       setPublishedSlug(post.slug);
       onPublished?.();
@@ -116,7 +123,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
       if (rejected.length > 0 && rejected[0] !== 'tags') setFocusRequest(rejected[0]);
       if (fields.categoryId) {
         // The chosen category is gone: stop offering it right away, then reload the real list.
-        queryClient.setQueryData<Category[]>(categoriesQueryKey, (list) =>
+        queryClient.setQueryData<Category[]>(getListCategoriesQueryKey(), (list) =>
           list?.filter((category) => String(category.id) !== values.categoryId)
         );
         void categories.refetch();
@@ -147,7 +154,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
           <p className="text-xs text-emerald-700">
             Your post is now live and visible to the community.{' '}
             <Link
-              href={`/forum/${publishedSlug}`}
+              to={`/forum/${publishedSlug}`}
               onClick={onViewPost}
               className="text-sm font-semibold text-emerald-700 underline"
             >
@@ -162,7 +169,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
           ref={alertRef}
           tabIndex={-1}
           role="alert"
-          className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          className="rounded border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300"
         >
           {formError}
         </div>
@@ -265,19 +272,19 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
         )}
       />
 
-      <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-4">
+      <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
         <button
           type="button"
           onClick={onCancel}
           disabled={isPending}
-          className="rounded border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded border border-line bg-surface px-4 py-2 text-sm font-semibold text-fg transition-colors hover:bg-raised disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={!isValid || isPending}
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+          className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPending ? 'Publishing…' : 'Publish post'}
         </button>

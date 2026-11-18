@@ -18,6 +18,19 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 
     List<Tag> findBySlugIn(Collection<String> slugs);
 
+    /** The tags of all the given posts in one query, for listing a page of posts. */
+    @Query("SELECT new com.devpulse.forum.repository.PostTagRow(p.id, t) FROM Post p JOIN p.tags t "
+            + "WHERE p.id IN :postIds")
+    List<PostTagRow> findByPostIds(@Param("postIds") Collection<Long> postIds);
+
+    /**
+     * Tags on at least one public post, most used first. Tag names are
+     * unique, so ordering ties by name gives every call the same order.
+     * Pass an unsorted {@code pageable}: it only limits the result.
+     */
+    @Query("SELECT t FROM Tag t WHERE t.postCount > 0 ORDER BY t.postCount DESC, t.name ASC")
+    List<Tag> findInUse(Pageable pageable);
+
     /**
      * Creates the tag unless one with the same slug exists. Two posts created
      * at the same moment with the same new tag both succeed instead of one of

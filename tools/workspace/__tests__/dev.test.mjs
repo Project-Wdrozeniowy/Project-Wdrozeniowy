@@ -8,11 +8,7 @@ import { repository } from '../process.mjs';
 
 for (const [key, value, expected] of [
   ['PORT', '3999', 'gateway PORT=3000'],
-  [
-    'NEXT_PUBLIC_API_URL',
-    'https://example.invalid/api',
-    'NEXT_PUBLIC_API_URL=http://localhost:3000/api',
-  ],
+  ['BACKEND_URL', 'https://example.invalid/api', 'BACKEND_URL=http://localhost:8080'],
 ]) {
   test(`dev rejects an incompatible ${key} environment override before starting Docker`, () => {
     const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'orbita-dev-config-'));
@@ -29,7 +25,7 @@ for (const [key, value, expected] of [
       fs.writeFileSync(path.join(fixture, '.env'), 'POSTGRES_PASSWORD=test\nJWT_SECRET=test\n');
       fs.writeFileSync(
         path.join(fixture, 'gateway/.env'),
-        'PORT=3000\nBACKEND_URL=http://localhost:8080\nJWT_SECRET=test\n'
+        'PORT=3000\nBACKEND_URL=http://localhost:8080\n'
       );
       fs.writeFileSync(
         path.join(fixture, 'frontend/.env'),

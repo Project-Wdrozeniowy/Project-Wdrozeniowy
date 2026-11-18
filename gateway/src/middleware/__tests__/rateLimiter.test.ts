@@ -4,7 +4,7 @@ import rateLimiter from '../rateLimiter';
 
 jest.mock('../../config', () => ({
   __esModule: true,
-  default: { rateLimit: { windowMs: 60000, max: 2 } },
+  default: { rateLimit: { windowMs: 60000, max: 2, loginMax: 2, csrfMax: 2 } },
 }));
 
 it('allows the configured requests then returns the unified 429 response and rate headers', async () => {
@@ -20,9 +20,9 @@ it('allows the configured requests then returns the unified 429 response and rat
   expect(rejected.body).toEqual(
     expect.objectContaining({
       status: 429,
-      error: 'Too Many Requests',
-      message: 'Too many requests, please try again later.',
-      path: '/limited',
+      title: 'Too Many Requests',
+      detail: 'Too many requests, please try again later.',
+      instance: '/limited',
     })
   );
   expect(rejected.headers['retry-after']).toBeDefined();

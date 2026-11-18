@@ -1,24 +1,20 @@
-export default function FormField({
-  label,
-  hint,
-  id,
-  error,
-  children,
-}: {
+interface FormFieldProps {
   label: string;
   hint?: string;
   id?: string;
   error?: string;
   children: React.ReactNode;
-}) {
+}
+
+export default function FormField({ label, hint, id, error, children }: FormFieldProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-gray-900 font-semibold text-sm">
+      <label htmlFor={id} className="text-fg font-semibold text-sm">
         {label}
       </label>
       {children}
       {hint && (
-        <p id={id ? `${id}-hint` : undefined} className="text-gray-500 text-xs">
+        <p id={id ? `${id}-hint` : undefined} className="text-fg-subtle text-xs">
           {hint}
         </p>
       )}

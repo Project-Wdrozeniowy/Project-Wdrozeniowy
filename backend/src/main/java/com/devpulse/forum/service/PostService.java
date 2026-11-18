@@ -2,12 +2,14 @@ package com.devpulse.forum.service;
 
 import com.devpulse.auth.entity.User;
 import com.devpulse.auth.repository.UserRepository;
+import com.devpulse.analytics.repository.AnalyticsRepository;
 import com.devpulse.auth.util.AuthenticatedUserResolver;
 import com.devpulse.exception.AppException;
 import com.devpulse.forum.dto.CreatePostRequest;
 import com.devpulse.forum.dto.MyVoteDto;
 import com.devpulse.forum.dto.PostDto;
 import com.devpulse.forum.dto.PostSummaryDto;
+import com.devpulse.forum.dto.TagDto;
 import com.devpulse.forum.dto.UpdatePostRequest;
 import com.devpulse.forum.entity.Category;
 import com.devpulse.forum.entity.Post;
@@ -17,6 +19,7 @@ import com.devpulse.forum.entity.Vote;
 import com.devpulse.forum.repository.CategoryRepository;
 import com.devpulse.forum.repository.PostRepository;
 import com.devpulse.forum.repository.PostSubscriptionRepository;
+import com.devpulse.forum.repository.PostTagRow;
 import com.devpulse.forum.repository.TagRepository;
 import com.devpulse.forum.repository.VoteRepository;
 import com.devpulse.forum.util.SlugUtil;
@@ -45,6 +48,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.devpulse.forum.security.ForumAuthorities.isAdmin;
@@ -91,8 +95,10 @@ public class PostService {
     private final UserRepository userRepository;
     private final VoteRepository voteRepository;
     private final PostSubscriptionRepository subscriptionRepository;
+    private final AnalyticsRepository analyticsRepository;
     private final AuthenticatedUserResolver currentUser;
     private final TransactionTemplate transactionTemplate;
+    private final jakarta.persistence.EntityManager entityManager;
 
     /**
      * Creates a post authored by the caller, published or as a draft.
@@ -141,7 +147,8 @@ public class PostService {
     }
 
     /**
-     * Returns the post with the given slug.
+     * Returns the post with the given slug. Reading it counts nothing; see
+     * {@link #recordOpening}.
      *
      * @throws AppException HTTP 404 if it does not exist, is deleted, or is a
      *                      draft the caller may not see
@@ -149,6 +156,22 @@ public class PostService {
     @Transactional(readOnly = true)
     public PostDto getBySlug(String slug) {
         return full(loadReadable(slug));
+    }
+
+    /**
+     * Counts one opening of a post the caller can read, attributed to the
+     * caller when signed in. Delivering the same {@code openingId} again
+     * counts nothing.
+     *
+     * @throws AppException HTTP 404 if the post does not exist, is deleted, or
+     *                      is a draft the caller may not see
+     */
+    @Transactional
+    public void recordOpening(String slug, String openingId) {
+        Post post = loadReadable(slug);
+        Authentication auth = auth();
+        analyticsRepository.recordPostOpening(post.getId(), isAuthenticated(auth) ? auth.getName() : null,
+                UUID.fromString(openingId));
     }
 
     /**
@@ -162,7 +185,7 @@ public class PostService {
     @Transactional
     @PreAuthorize("@postSecurity.canModify(#slug, authentication)")
     public PostDto update(String slug, UpdatePostRequest request) {
-        Post post = loadReadable(slug);
+        Post post = loadForModification(slug);
         requireEditable(post);
 
         PostStatus statusBefore = post.getStatus();
@@ -206,7 +229,7 @@ public class PostService {
     @Transactional
     @PreAuthorize("@postSecurity.canModify(#slug, authentication)")
     public void delete(String slug) {
-        Post post = loadReadable(slug);
+        Post post = loadForModification(slug);
         requireEditable(post);
 
         boolean wasPublic = isPublic(post.getStatus());
@@ -224,7 +247,7 @@ public class PostService {
     @Transactional
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public PostDto togglePin(String slug) {
-        Post post = loadReadable(slug);
+        Post post = loadForModification(slug);
         post.setPinned(!post.isPinned());
         return full(postRepository.save(post));
     }
@@ -250,6 +273,15 @@ public class PostService {
         if (StringUtils.hasText(filter.categorySlug())) {
             specs.add(PostSpecifications.byCategorySlug(filter.categorySlug()));
         }
+        if (filter.uncategorized()) {
+            specs.add(PostSpecifications.withoutCategory());
+        }
+        if (filter.createdFrom() != null) {
+            specs.add(PostSpecifications.createdFrom(filter.createdFrom()));
+        }
+        if (filter.createdTo() != null) {
+            specs.add(PostSpecifications.createdBefore(filter.createdTo()));
+        }
         if (StringUtils.hasText(filter.tag())) {
             specs.add(PostSpecifications.byTagSlug(filter.tag()));
         }
@@ -263,10 +295,28 @@ public class PostService {
         return summaries(postRepository.findAll(Specification.allOf(specs), pageable));
     }
 
-    /** Maps a page of posts to their listing representation with the caller's votes. */
+    /**
+     * Maps a page of posts to their listing representation with the caller's
+     * votes and the posts' tags, each loaded for the whole page in one query.
+     * Listing counts no opening.
+     */
     public Page<PostSummaryDto> summaries(Page<Post> posts) {
-        Map<Long, MyVoteDto> myVotes = myVotes(posts.map(Post::getId).getContent());
-        return posts.map(post -> PostSummaryDto.from(post, myVotes.get(post.getId())));
+        List<Long> ids = posts.map(Post::getId).getContent();
+        Map<Long, MyVoteDto> myVotes = myVotes(ids);
+        Map<Long, List<TagDto>> tags = tagsOf(ids);
+        return posts.map(post -> PostSummaryDto.from(post, myVotes.get(post.getId()),
+                tags.getOrDefault(post.getId(), List.of())));
+    }
+
+    /** Tags of each of the posts, sorted by slug; posts without tags are absent. */
+    private Map<Long, List<TagDto>> tagsOf(List<Long> postIds) {
+        if (postIds.isEmpty()) {
+            return Map.of();
+        }
+        return tagRepository.findByPostIds(postIds).stream()
+                .collect(Collectors.groupingBy(PostTagRow::postId,
+                        Collectors.collectingAndThen(Collectors.mapping(PostTagRow::tag, Collectors.toList()),
+                                TagDto::sorted)));
     }
 
     /**
@@ -331,6 +381,28 @@ public class PostService {
     public Post loadReadable(String slug) {
         Post post = postRepository.findBySlug(slug)
                 .orElseThrow(PostService::notFound);
+        requireReadable(post);
+        return post;
+    }
+
+    /**
+     * Loads a post the caller may read, by id.
+     *
+     * @throws AppException HTTP 404 if it does not exist, is deleted, or is a
+     *                      draft the caller may not see
+     */
+    public Post loadReadable(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(PostService::notFound);
+        requireReadable(post);
+        return post;
+    }
+
+    /** Serialize writes and refresh any entity previously loaded by authorization or OSIV. */
+    private Post loadForModification(String slug) {
+        Long id = postRepository.lockIdBySlug(slug).orElseThrow(PostService::notFound);
+        Post post = postRepository.findById(id).orElseThrow(PostService::notFound);
+        entityManager.refresh(post);
         requireReadable(post);
         return post;
     }

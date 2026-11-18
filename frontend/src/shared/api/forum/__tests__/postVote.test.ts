@@ -1,5 +1,5 @@
 import { applyVoteOutcome, scoreAfterRetract, voteActionFor, voteValue } from '../postVote';
-import type { PostSummary } from '../post.dto';
+import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 
 function post(id: number, voteScore = 0): PostSummary {

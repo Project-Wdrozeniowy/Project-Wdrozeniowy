@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -56,8 +57,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * committed copy from the {@code backend} directory:
  * <pre>./mvnw test -Dtest=OpenApiContractTest -Dopenapi.contract.update=true</pre>
  */
-@SpringBootTest(properties = "springdoc.api-docs.enabled=true")
-@ActiveProfiles("test")
+@SpringBootTest(classes = ContractTestApplication.class, properties = "springdoc.api-docs.enabled=true")
+@ActiveProfiles({"test", "contract"})
 class OpenApiContractTest {
 
     /** Committed copy of the document; Maven runs the tests in the backend module directory. */
@@ -102,6 +103,31 @@ class OpenApiContractTest {
 
         assertThat(published).as("published operations").isNotEmpty();
         assertThat(problems).isEmpty();
+    }
+
+    @Test
+    void sessionSchemeDescribesTheOpaqueCookie() throws Exception {
+        Map<String, Object> session = JsonPath.read(generatedDocument(), "$.components.securitySchemes.sessionAuth");
+        assertThat(session).containsEntry("type", "apiKey")
+                .containsEntry("name", "SESSION")
+                .containsEntry("in", "cookie")
+                .doesNotContainKeys("scheme", "bearerFormat");
+    }
+
+    @Test
+    void publicAnalyticsNeedNoSessionAndTheOtherAnalyticsDo() throws Exception {
+        String document = generatedDocument();
+
+        for (String open : List.of("/analytics/public/activity", "/analytics/public/categories",
+                "/analytics/public/comparison", "/analytics/trending-posts", "/analytics/public/posts/{id}")) {
+            Map<String, Object> operation = JsonPath.read(document, "$.paths['" + open + "'].get");
+            assertThat(operation).as(open).doesNotContainKey("security");
+        }
+        for (String closed : List.of("/analytics/me", "/analytics/me/posts/{id}", "/analytics/me/posts/{id}/openings", "/analytics/posts/{id}",
+                "/analytics/summary", "/analytics/trends")) {
+            List<Map<String, Object>> security = JsonPath.read(document, "$.paths['" + closed + "'].get.security");
+            assertThat(security).as(closed).containsExactly(Map.of("sessionAuth", List.of()));
+        }
     }
 
     @Test

@@ -1,5 +1,7 @@
 # Orbita
 
+> **Current architecture:** adopted Vite/React Router SPA served by Express. Start below; [PWDRZ-160 history](docs/spikes/pwdrz-160-vite-spa/README.md) preserves the original experiment.
+
 [![Frontend Build](https://img.shields.io/github/actions/workflow/status/Project-Wdrozeniowy/Project-Wdrozeniowy/frontend-build.yml?style=flat-square&label=Frontend)](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions)
 [![Gateway Build](https://img.shields.io/github/actions/workflow/status/Project-Wdrozeniowy/Project-Wdrozeniowy/gateway-build.yml?style=flat-square&label=Gateway)](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions)
 [![Backend Build](https://img.shields.io/github/actions/workflow/status/Project-Wdrozeniowy/Project-Wdrozeniowy/backend-build.yml?style=flat-square&label=Backend)](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions)
@@ -11,26 +13,26 @@ notifications retain task-specific limitations.
 
 ## Architecture
 
-Nx orchestrates three services and the E2E project. npm workspaces shares Node
+Nx orchestrates the frontend build, gateway, backend and E2E project. Production runs the gateway (including static frontend) and backend. npm workspaces shares Node
 installation; Maven owns Java dependencies. See the [monorepo guide](docs/guides/monorepo.md)
 for task ownership, cache boundaries and direct-service escape paths.
 
 ```
-Frontend (Next.js 16)       port 3001
-       ↓
-Gateway (Express 5)         port 3000   ← JWT verification, rate limiting, CORS
+Browser SPA (React + Vite build)
+       ↓  HTML/assets and relative /api on one origin
+Gateway (Express 5)         port 3000   ← rate limiting, CORS, HTTP proxy
        ↓
 Backend (Spring Boot 4)     port 8080   ← business logic, REST API
        ↓
 PostgreSQL 16               port 5432
 ```
 
-| Service | Stack |
-|---------|-------|
-| **Frontend** | Next.js 16, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod |
-| **Gateway** | Node.js, Express 5, TypeScript 6, JWT, Helmet, express-rate-limit |
-| **Backend** | Java 17, Spring Boot 4, Spring Security, Spring Data JPA, Flyway, jjwt |
-| **Infra** | PostgreSQL 16, Redis 7 (Docker Compose) |
+| Service      | Stack                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------ |
+| **Frontend** | Vite 7, React Router 7, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod |
+| **Gateway**  | Node.js, Express 5, TypeScript 6, Helmet, express-rate-limit                                     |
+| **Backend**  | Java 17, Spring Boot 4, Spring Security, Spring Data JPA, Flyway, Spring Session JDBC            |
+| **Infra**    | PostgreSQL 16, Redis 7 (Docker Compose)                                                          |
 
 ## Getting Started
 
@@ -43,13 +45,13 @@ PostgreSQL 16               port 5432
 ### 1. Configure environment
 
 ```bash
-# Root secrets — PostgreSQL credentials, shared JWT secret, Redis config
+# Root secrets — PostgreSQL credentials, backend-only legacy WS key, Redis config
 cp .env.example .env
 
 # Gateway environment
 cp gateway/.env.example gateway/.env
 
-# Frontend API base URL
+# Optional frontend development environment (no API URL required)
 cp frontend/.env.example frontend/.env
 ```
 
@@ -64,9 +66,8 @@ JWT_SECRET=your_base64_secret
 ```
 
 > [!IMPORTANT]
-> Copy the same generated `JWT_SECRET` value into `gateway/.env`. The root `.env`
-> supplies the Compose services; `gateway/.env` is used when running the gateway
-> from source. A mismatch causes 401 on authenticated requests.
+> `JWT_SECRET` is backend-only compatibility for provisional WS (PWDRZ-104).
+> Gateway does not require a signing key. REST uses [server sessions](docs/guides/sessions.md).
 
 ### 2. Install the workspace
 
@@ -85,21 +86,26 @@ From the repository root:
 npm run dev
 ```
 
+Wait for `http://localhost:3000/health` and
+`http://localhost:3001/api/forum/categories` to return 200, then open
+`http://localhost:3001`. Vite can become ready before Gateway. Browser requests use relative `/api`
+through Vite and Express; do not mix `localhost` and `127.0.0.1` for one session.
+
 Root dev starts PostgreSQL/Redis/backend in Compose and frontend/gateway from
-source with hot reload. Configure all three `.env` files first. Ctrl+C stops
+source with hot reload. Configure root and gateway `.env` files first; frontend `.env` is optional. Ctrl+C stops
 frontend/gateway; Compose data and services remain. Stop those explicitly with
 `docker compose stop` when desired. Do not also run the Compose gateway on 3000.
 
 ## Root commands
 
-| Command | Purpose |
-| --- | --- |
-| `npm run check` | Lint, typecheck and formatting |
-| `npm run build` | Build all applications; requires explicit `NEXT_PUBLIC_API_URL` |
-| `npm test` | Service coverage gates; backend uses an owned temporary DB |
-| `npm run test:e2e` | Isolated real-stack browser/integration gate |
-| `npm run validate` | Full build/check/coverage/E2E requirements |
-| `npm run graph` | Nx project graph |
+| Command            | Purpose                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| `npm run check`    | Lint, typecheck and formatting                             |
+| `npm run build`    | Build static frontend, gateway and backend                 |
+| `npm test`         | Service coverage gates; backend uses an owned temporary DB |
+| `npm run test:e2e` | Isolated real-stack browser/integration gate               |
+| `npm run validate` | Full build/check/coverage/E2E requirements                 |
+| `npm run graph`    | Nx project graph                                           |
 
 Install browser binaries once with
 `npm exec --workspace orbita-e2e -- playwright install chromium`.
@@ -115,14 +121,19 @@ terminals. Choose one backend/gateway workflow so each port has one owner.
 
 ```bash
 # Starts postgres, redis, backend, and gateway.
-docker compose up -d
+docker compose up --build -d
 ```
 
-In a separate terminal, start the frontend on `http://localhost:3001`:
+After rebuild/start, wait for `http://localhost:8080/api/forum/categories` to return
+200; inspect `docker compose logs --tail 100 backend gateway` on failure.
+Stop without deleting data using `docker compose stop`. Re-run with `--build`
+after source changes; this local HTTP stack is not a production deployment.
+
+Open the built frontend at `http://localhost:3000`. No separate frontend server is required. For an optional HMR development frontend at `http://localhost:3001`:
 
 ```bash
 cd frontend
-npm run dev -- -p 3001
+npm run dev -- --port 3001
 ```
 
 ### Run backend and gateway from source
@@ -158,7 +169,7 @@ Terminal 4, from the repository root (frontend on `http://localhost:3001`):
 
 ```bash
 cd frontend
-npm run dev -- -p 3001
+npm run dev -- --port 3001
 ```
 
 On Windows PowerShell, Terminal 3 uses the same values from the root `.env`:
@@ -207,13 +218,13 @@ Run a specific test from the relevant service directory (each block starts at th
 
 ```bash
 cd frontend
-npx vitest run src/shared/api/auth/__tests__/authClient.test.ts
+npx vitest run src/shared/api/client/__tests__/generatedTransport.integration.test.ts
 npx vitest run -t "login"
 ```
 
 ```bash
 cd gateway
-npx jest src/middleware/__tests__/auth.test.ts
+npx jest src/routes/__tests__/httpBoundary.test.ts
 ```
 
 ```bash
@@ -223,6 +234,12 @@ cd backend
 ```
 
 ## Code Style
+
+Implemented frontend HTTP models, operations and TanStack Query bindings are generated
+from the committed backend OpenAPI by pinned Orval. Run root `npm run api:generate`
+after a contract change and `npm run api:check` to detect drift; do not edit output.
+See the [API bindings workflow](docs/guides/api-bindings.md) for backend export,
+transport, cache ownership, CI and remaining provisional APIs.
 
 Both the frontend and gateway use **Prettier 3** and **ESLint**. Run the relevant checks from the repository root:
 
@@ -244,23 +261,25 @@ The CI **Lint** workflow enforces `format:check` and `lint` on every push to `ma
 
 ```
 frontend/src/
-  app/(auth)/          ← login, register (no header/sidebar)
-  app/(main)/          ← home feed, forum, dashboard, profile
-  services/            ← API call functions
+  app/                 ← router, layouts, providers and composition
+  pages/               ← screen slices
+  features/            ← user actions, form schemas and request mapping
+  widgets/             ← header and sidebar
+  shared/api/          ← transport, generated bindings and server-cache composition
+  shared/auth/         ← session presentation and CSRF
+  shared/ui/           ← reusable UI
   store/slices/        ← Zustand: authSlice, uiSlice
-  shared/types/        ← domain TypeScript types
-  lib/validations/     ← Zod schemas
 
 gateway/src/
-  middleware/          ← auth, cors, rateLimiter, logger
+  middleware/          ← boundedBody, cors, rateLimiter, logger
   routes/proxy.ts      ← proxies /api/* to backend
   config/              ← env loading with validation
 
 backend/src/main/java/com/devpulse/
-  auth/                ← controller, service, repository, entity, dto, filter
+  auth/                ← controller, service, repository, entity, dto, session
   config/              ← SecurityConfig, OpenApiConfig
   exception/           ← GlobalExceptionHandler (RFC 9457 ProblemDetail)
-  security/            ← JwtUtil
+  security/            ← WsTokenVerifier (legacy WS only)
 
 backend/src/main/resources/db/migration/
   V1__create_users.sql
@@ -268,6 +287,13 @@ backend/src/main/resources/db/migration/
   V3__create_notifications.sql
   V4__create_analytics_tables.sql
   V5__add_replaced_by_to_refresh_tokens.sql
+  V6__seed_default_categories.sql
+  V7__add_audit_timestamps.sql
+  V8__create_server_sessions.sql
+  V9__retire_http_refresh_tokens.sql
+  V10__count_intentional_post_openings.sql
+  V11__record_analytics_collection_starts.sql
+  V12__index_identifiable_opening_details.sql
 ```
 
 Start with the [developer guides](docs/guides/README.md) for architecture,
@@ -292,8 +318,8 @@ npm --prefix gateway run typecheck && npm --prefix gateway run lint && npm --pre
 cd backend && ./mvnw verify
 ```
 
-The `frontend/.env` created during setup supplies `NEXT_PUBLIC_API_URL` to
-the local frontend build. CI supplies it as a workflow environment variable.
+Frontend builds use relative `/api` without a public API URL. Vite proxies it
+in development; Express owns the built application origin.
 
 Every applicable CI check must pass before merge. The
 [PR guide](docs/guides/pr-guidelines.md) explains what to include in the
@@ -303,21 +329,21 @@ enforcement must be checked rather than inferred from this README.
 
 ## Troubleshooting
 
-**401 on every request** — `JWT_SECRET` in `gateway/.env` does not match the one in `.env`. They must be identical.
+**401 on protected requests** — the server session is absent, expired or revoked. Sign in again; REST has no JWT refresh fallback.
 
 **Backend fails to start (Flyway error)** — inspect the migration error and
 database state first. If this is disposable local data and you intentionally
 want a fresh database, the following command deletes the Compose volumes:
+
 ```bash
 docker compose down -v && docker compose up -d
 ```
 
 **`@/*` import not resolving in tests** — the path alias is defined in both `frontend/tsconfig.json` and `frontend/vitest.config.ts`. Both must be present.
 
-**`NEXT_PUBLIC_API_URL` missing** — browser requests fall back to `/api` on the
-frontend origin, where this project has no proxy rewrite. Set the variable to
-`http://localhost:3000/api` for local development. Server-side development code
-falls back to that URL; production server-side code requires the variable.
+**API unavailable in development** — start Gateway :3000 and Spring :8080.
+Vite :3001 proxies relative `/api`; no public API URL is consumed. Use one
+hostname consistently for cookie sessions.
 
 ## License and ownership
 

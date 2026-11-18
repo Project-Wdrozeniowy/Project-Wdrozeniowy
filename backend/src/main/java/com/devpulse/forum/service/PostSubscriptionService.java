@@ -23,7 +23,7 @@ import java.util.Set;
 /**
  * Subscriptions to post threads.
  *
- * <p>A user may subscribe to any post they can read ({@link PostService#loadReadable}):
+ * <p>A user may subscribe to any post they can read ({@link PostService#loadReadable(String)}):
  * published and locked posts, and their own drafts. Subscribing and
  * unsubscribing are idempotent. The list shows the subscriptions whose posts
  * the user can still read, most recent subscription first.

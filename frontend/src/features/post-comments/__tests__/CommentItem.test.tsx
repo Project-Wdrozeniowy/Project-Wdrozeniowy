@@ -1,10 +1,10 @@
-// PROVISIONAL PWDRZ-142/67: local UI/model scenarios use planned comment fixtures; backend remains a 501 stub.
+// Component/model fixtures do not replace real backend acceptance owned by PWDRZ-67.
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { CommentItem } from '../CommentItem';
 import type { Comment } from '@/shared/api/forum/comment.dto';
-import type { UserProfile } from '@/shared/api/user/user.dto';
+import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 
 const alice: UserProfile = {
   id: 1,
