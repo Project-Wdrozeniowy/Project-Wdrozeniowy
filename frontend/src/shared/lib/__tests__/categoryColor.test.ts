@@ -1,4 +1,4 @@
-import { getCategoryColor } from '@/widgets/post-feed/lib/categoryColor';
+import { getCategoryColor, getCategoryTopic } from '@/shared/lib/categoryColor';
 
 const FALLBACK = 'border-line-strong text-fg-subtle';
 
@@ -27,5 +27,21 @@ describe('getCategoryColor', () => {
 
   it.each(['constructor', 'toString', '__proto__'])('is safe for the name/slug "%s"', (value) => {
     expect(getCategoryColor({ name: value, slug: value })).toBe(FALLBACK);
+  });
+});
+
+describe('getCategoryTopic', () => {
+  it('finds the topic by slug, even when the category was renamed', () => {
+    expect(getCategoryTopic({ name: 'Technology', slug: 'ai' })).toBe('AI / Tech');
+  });
+
+  it('falls back to the name when the slug is unknown or missing', () => {
+    expect(getCategoryTopic({ name: 'Gaming', slug: 'something-else' })).toBe('Gaming');
+    expect(getCategoryTopic({ name: 'Science' })).toBe('Science');
+  });
+
+  it('has no topic for another category, nor for inherited object names', () => {
+    expect(getCategoryTopic({ name: 'Chess club', slug: 'chess' })).toBeUndefined();
+    expect(getCategoryTopic({ name: 'constructor', slug: null })).toBeUndefined();
   });
 });

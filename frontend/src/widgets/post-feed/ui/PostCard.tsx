@@ -1,5 +1,5 @@
 import { ACTION_UNAVAILABLE_HINT } from '@/widgets/post-feed/config/postCard.const';
-import { getCategoryColor } from '@/widgets/post-feed/lib/categoryColor';
+import { getCategoryColor } from '@/shared/lib/categoryColor';
 import type { PostCardData } from '@/widgets/post-feed/lib/postCard';
 import { cn } from '@/shared/lib/cn';
 import { CommentIcon, ShareIcon, SaveIcon } from '@/shared/ui/icons';

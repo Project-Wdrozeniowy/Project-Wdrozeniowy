@@ -1,24 +1,33 @@
-import { toPercent } from '@/utils/format';
+import { Link } from 'react-router';
+import type { PostSummaryDto } from '@/shared/api/generated/models/postSummaryDto.dto';
 
 interface TopPostRowProps {
   rank: number;
-  title: string;
-  views: number;
-  engagement: number;
+  post: PostSummaryDto;
 }
 
-export default function TopPostRow({ rank, title, views, engagement }: TopPostRowProps) {
+export default function TopPostRow({ rank, post }: TopPostRowProps) {
   return (
-    <div className="bg-raised rounded-lg px-4 py-3 flex items-center gap-4">
-      <span className="text-fg-subtle font-bold text-base w-5 shrink-0">#{rank}</span>
+    <li className="bg-raised rounded-lg px-4 py-3 flex items-center gap-4">
+      <span aria-hidden="true" className="text-fg-subtle font-bold text-base w-5 shrink-0">
+        #{rank}
+      </span>
       <div className="flex-1 min-w-0">
-        <p className="text-fg font-semibold text-sm truncate">{title}</p>
-        <p className="text-fg-subtle text-xs">{views.toLocaleString()} views</p>
+        <Link
+          to={`/forum/${encodeURIComponent(post.slug)}`}
+          className="block text-fg font-semibold text-sm truncate hover:text-accent focus-visible:outline-2 focus-visible:outline-blue-500"
+        >
+          {post.title}
+        </Link>
+        <p className="text-fg-subtle text-xs">
+          {post.commentCount.toLocaleString('en-US')} comments ·{' '}
+          {post.viewCount.toLocaleString('en-US')} views
+        </p>
       </div>
       <div className="text-right shrink-0">
-        <p className="text-success font-semibold text-sm">{toPercent(engagement)}</p>
-        <p className="text-fg-subtle text-xs">engagement</p>
+        <p className="text-fg font-semibold text-sm">{post.voteScore.toLocaleString('en-US')}</p>
+        <p className="text-fg-subtle text-xs">score</p>
       </div>
-    </div>
+    </li>
   );
 }
