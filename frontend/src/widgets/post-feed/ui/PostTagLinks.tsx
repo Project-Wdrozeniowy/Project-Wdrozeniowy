@@ -15,7 +15,7 @@ export default function PostTagLinks({ tags }: PostTagLinksProps) {
         <li key={tag.slug}>
           <Link
             to={tagHref(tag.slug)}
-            className="inline-block bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium px-2 py-0.5 rounded focus-visible:outline-2 focus-visible:outline-blue-500"
+            className="inline-block bg-raised hover:bg-raised-hover text-fg-soft text-xs font-medium px-2 py-0.5 rounded focus-visible:outline-2 focus-visible:outline-blue-500"
           >
             #{tag.name}
           </Link>

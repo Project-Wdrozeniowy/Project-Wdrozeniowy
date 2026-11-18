@@ -31,8 +31,8 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h1 className="text-gray-50 font-bold text-2xl">{SETTINGS_TITLE}</h1>
-        <p className="text-gray-400 text-sm">{SETTINGS_SUBTITLE}</p>
+        <h1 className="text-fg font-bold text-2xl">{SETTINGS_TITLE}</h1>
+        <p className="text-fg-subtle text-sm">{SETTINGS_SUBTITLE}</p>
       </div>
       <SettingsTabs active={section} />
       <SettingsView section={section} />

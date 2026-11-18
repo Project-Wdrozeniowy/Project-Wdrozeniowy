@@ -6,9 +6,9 @@ export default function SocialAuthButtons() {
   return (
     <>
       <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-gray-500 text-xs">Or continue with</span>
-        <div className="flex-1 h-px bg-gray-200" />
+        <div className="flex-1 h-px bg-raised-hover" />
+        <span className="text-fg-subtle text-xs">Or continue with</span>
+        <div className="flex-1 h-px bg-raised-hover" />
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -16,7 +16,7 @@ export default function SocialAuthButtons() {
           <button
             key={provider}
             type="button"
-            className="flex items-center justify-center py-2.5 rounded bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200 text-xs text-gray-700 font-medium"
+            className="flex items-center justify-center py-2.5 rounded bg-page hover:bg-raised transition-colors border border-line text-xs text-fg-soft font-medium"
           >
             {provider}
           </button>

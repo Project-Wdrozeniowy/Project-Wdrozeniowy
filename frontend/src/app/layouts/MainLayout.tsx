@@ -4,7 +4,7 @@ import Sidebar from '@/widgets/sidebar/Sidebar';
 
 export default function MainLayout() {
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col">
+    <div className="min-h-screen bg-page flex flex-col">
       <Header />
 
       <div className="flex-1 w-full max-w-282.5 mx-auto px-4 lg:px-6 py-6">

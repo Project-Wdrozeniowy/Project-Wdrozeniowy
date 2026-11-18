@@ -69,14 +69,14 @@ describe('PostCard', () => {
 
   it('renders an unknown category with the fallback style', () => {
     renderCard({ ...post, category: 'Something New', categorySlug: 'something-new' });
-    expect(screen.getByText('Something New')).toHaveClass('border-slate-500');
+    expect(screen.getByText('Something New')).toHaveClass('border-line-strong');
   });
 
   it.each(['constructor', 'toString', '__proto__'])(
     'uses the fallback style for a category named "%s"',
     (name) => {
       renderCard({ ...post, category: name, categorySlug: name });
-      expect(screen.getByText(name)).toHaveClass('border-slate-500');
+      expect(screen.getByText(name)).toHaveClass('border-line-strong');
     }
   );
 
@@ -107,8 +107,8 @@ describe('PostCard', () => {
 
   it('highlights the direction the user already voted', () => {
     renderCard({ ...post, voting: { postId: 5, myVote: { id: 9, voteType: 'DOWN' } } });
-    expect(screen.getByRole('button', { name: 'Downvote' })).toHaveClass('text-red-400');
-    expect(screen.getByRole('button', { name: 'Upvote' })).not.toHaveClass('text-blue-400');
+    expect(screen.getByRole('button', { name: 'Downvote' })).toHaveClass('text-danger');
+    expect(screen.getByRole('button', { name: 'Upvote' })).not.toHaveClass('text-accent');
   });
 
   it('does not move the score by itself when the vote is not saved', async () => {

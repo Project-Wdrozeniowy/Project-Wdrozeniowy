@@ -14,7 +14,7 @@ const FILTERS = [
 /** All / Unread. A link each, so the choice is in the URL and survives a reload. */
 export default function NotificationFilter({ unreadOnly }: NotificationFilterProps) {
   return (
-    <nav aria-label="Show notifications" className="flex border-b border-slate-700">
+    <nav aria-label="Show notifications" className="flex border-b border-line">
       {FILTERS.map((filter) => {
         const current = filter.unreadOnly === unreadOnly;
         return (
@@ -25,8 +25,8 @@ export default function NotificationFilter({ unreadOnly }: NotificationFilterPro
             className={cn(
               'px-4 py-2 text-sm font-medium -mb-px border-b-2 focus-visible:outline-2 focus-visible:outline-blue-500',
               current
-                ? 'text-blue-400 border-blue-500'
-                : 'text-slate-400 border-transparent hover:text-slate-200'
+                ? 'text-accent border-blue-500'
+                : 'text-fg-subtle border-transparent hover:text-fg-soft'
             )}
           >
             {filter.label}

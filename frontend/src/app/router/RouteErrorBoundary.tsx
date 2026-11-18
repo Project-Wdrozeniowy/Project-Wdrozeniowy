@@ -3,7 +3,7 @@ import { useRouteError, isRouteErrorResponse, Link } from 'react-router';
 export default function RouteErrorBoundary() {
   const error = useRouteError();
   return (
-    <main className="min-h-screen bg-slate-900 p-8 text-gray-50">
+    <main className="min-h-screen bg-page p-8 text-fg">
       <h1>
         {isRouteErrorResponse(error) && error.status === 404
           ? 'Page not found'

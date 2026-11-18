@@ -13,7 +13,7 @@ export default function EmptyFeed({ topic, tag, pageOutOfRange, onFirstPage }: E
   if (pageOutOfRange) {
     return (
       <div className="flex flex-col items-start gap-3">
-        <p className="text-slate-400 text-sm">This page does not exist.</p>
+        <p className="text-fg-subtle text-sm">This page does not exist.</p>
         <button
           type="button"
           onClick={onFirstPage}
@@ -26,14 +26,14 @@ export default function EmptyFeed({ topic, tag, pageOutOfRange, onFirstPage }: E
   }
   if (tag) {
     return (
-      <p className="text-slate-400 text-sm">
+      <p className="text-fg-subtle text-sm">
         No posts with the tag #{tag}
         {topic === ALL_TOPICS ? '' : ' in this topic'} yet.
       </p>
     );
   }
   return (
-    <p className="text-slate-400 text-sm">
+    <p className="text-fg-subtle text-sm">
       {topic === ALL_TOPICS ? 'No posts yet.' : 'No posts in this topic yet.'}
     </p>
   );

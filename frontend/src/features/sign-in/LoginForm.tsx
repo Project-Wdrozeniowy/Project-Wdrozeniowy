@@ -19,15 +19,18 @@ export default function LoginForm() {
   });
 
   return (
-    <form onSubmit={handleSubmit(signIn)} className="bg-white rounded-xl p-8 flex flex-col gap-5">
+    <form
+      onSubmit={handleSubmit(signIn)}
+      className="bg-surface rounded-xl p-8 flex flex-col gap-5 border border-line"
+    >
       {serverError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded">
+        <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm px-4 py-3 rounded">
           {serverError}
         </div>
       )}
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="login-username" className="text-gray-900 font-semibold text-sm">
+        <label htmlFor="login-username" className="text-fg font-semibold text-sm">
           Username
         </label>
         <input
@@ -43,13 +46,10 @@ export default function LoginForm() {
 
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <label htmlFor="login-password" className="text-gray-900 font-semibold text-sm">
+          <label htmlFor="login-password" className="text-fg font-semibold text-sm">
             Password
           </label>
-          <Link
-            to="/forgot-password"
-            className="text-blue-600 hover:underline text-xs font-semibold"
-          >
+          <Link to="/forgot-password" className="text-accent hover:underline text-xs font-semibold">
             Forgot password?
           </Link>
         </div>
@@ -74,9 +74,9 @@ export default function LoginForm() {
 
       <SocialAuthButtons />
 
-      <p className="text-gray-500 text-sm text-center">
+      <p className="text-fg-subtle text-sm text-center">
         Don&apos;t have an account?{' '}
-        <Link to="/register" className="text-blue-600 hover:underline font-semibold">
+        <Link to="/register" className="text-accent hover:underline font-semibold">
           Sign Up
         </Link>
       </p>

@@ -12,13 +12,13 @@ export default function RecentSearches({ terms, onPick, onRemove }: RecentSearch
     <div role="group" aria-label={SEARCH_RECENT_TITLE}>
       <div
         aria-hidden="true"
-        className="px-3 py-1 bg-slate-900/50 border-y border-slate-700 text-xs font-semibold uppercase tracking-wide text-slate-400"
+        className="px-3 py-1 bg-page/50 border-y border-line text-xs font-semibold uppercase tracking-wide text-fg-subtle"
       >
         {SEARCH_RECENT_TITLE}
       </div>
       <ul>
         {terms.map((term) => (
-          <li key={term} className="flex items-center text-slate-200 hover:bg-slate-700/60">
+          <li key={term} className="flex items-center text-fg-soft hover:bg-raised/60">
             <button
               type="button"
               onClick={() => onPick(term)}
@@ -30,7 +30,7 @@ export default function RecentSearches({ terms, onPick, onRemove }: RecentSearch
               type="button"
               aria-label={`Remove ${term} from recent searches`}
               onClick={() => onRemove(term)}
-              className="px-3 py-2 text-slate-400 hover:text-slate-100 focus-visible:outline-2 focus-visible:outline-blue-500"
+              className="px-3 py-2 text-fg-subtle hover:text-fg focus-visible:outline-2 focus-visible:outline-blue-500"
             >
               ×
             </button>

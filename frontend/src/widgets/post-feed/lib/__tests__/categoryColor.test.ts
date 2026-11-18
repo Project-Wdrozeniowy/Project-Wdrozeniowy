@@ -1,6 +1,6 @@
 import { getCategoryColor } from '@/widgets/post-feed/lib/categoryColor';
 
-const FALLBACK = 'border-slate-500 text-slate-400';
+const FALLBACK = 'border-line-strong text-fg-subtle';
 
 describe('getCategoryColor', () => {
   it('uses the color of the category slug, whatever the category is called', () => {

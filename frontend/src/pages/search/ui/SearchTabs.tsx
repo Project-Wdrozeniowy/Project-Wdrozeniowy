@@ -12,7 +12,7 @@ interface SearchTabsProps {
 /** All / Posts / Users / Tags. A tab is a link, so the kind is in the URL and survives a reload. */
 export default function SearchTabs({ term, active }: SearchTabsProps) {
   return (
-    <nav aria-label="Result kinds" className="flex border-b border-slate-700">
+    <nav aria-label="Result kinds" className="flex border-b border-line">
       {SEARCH_TABS.map((tab) => {
         const current = tab.type === active;
         return (
@@ -23,8 +23,8 @@ export default function SearchTabs({ term, active }: SearchTabsProps) {
             className={cn(
               'px-4 py-2 text-sm font-medium -mb-px border-b-2 focus-visible:outline-2 focus-visible:outline-blue-500',
               current
-                ? 'text-blue-400 border-blue-500'
-                : 'text-slate-400 border-transparent hover:text-slate-200'
+                ? 'text-accent border-blue-500'
+                : 'text-fg-subtle border-transparent hover:text-fg-soft'
             )}
           >
             {tab.label}

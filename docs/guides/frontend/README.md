@@ -143,6 +143,22 @@ Pure ProfileLoadError presentation moved to shared UI because both profile and
 settings consume it. Settings does not depend on the profile page. Business
 requests and cache/session ownership were not moved into the error component.
 
+## Theming
+
+The app has a light theme (the default) and a dark theme, as in the Figma design. Components
+never name a theme colour such as `slate-800` or `gray-50`: they use the semantic tokens of
+`app/styles/globals.css` (`bg-page`, `bg-surface`, `bg-raised`, `border-line`, `text-fg`,
+`text-fg-soft`, `text-fg-muted`, `text-fg-subtle`, `text-accent`, `text-danger`, `text-warning`,
+`cat-*` for categories). A colour with no token (an error box, a brand colour) uses the `dark:`
+variant, for example `bg-red-50 dark:bg-red-500/10`. Text on a coloured button stays `text-white`.
+
+The theme is `data-theme` on `<html>`. `public/theme-init.js` sets it before the first paint
+(stored choice, else the system preference; it is an external file because the gateway's CSP
+allows no inline scripts). `ThemeProvider` keeps it in step with the system and with other tabs,
+and the header's `ThemeToggle` switches it. The choice is stored in `localStorage` under
+`orbita.theme` (the word `light` or `dark` only). Add a token, not a hard-coded colour, when a
+new role is needed.
+
 ## Tests and scope
 
 Tests move with their UI/helper modules. Page/form and session/provider

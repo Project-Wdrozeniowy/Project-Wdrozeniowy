@@ -8,7 +8,7 @@ interface PostPaginationProps {
 }
 
 const BUTTON_CLASS =
-  'px-3 py-1.5 rounded text-sm font-semibold transition-colors bg-slate-800 text-gray-50 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-800 aria-disabled:opacity-60 aria-disabled:cursor-wait';
+  'px-3 py-1.5 rounded text-sm font-semibold transition-colors bg-surface text-fg hover:bg-raised disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-surface aria-disabled:opacity-60 aria-disabled:cursor-wait';
 
 export default function PostPagination({
   page,
@@ -33,7 +33,7 @@ export default function PostPagination({
       >
         Previous
       </button>
-      <span aria-live="polite" className="text-slate-300 text-sm">
+      <span aria-live="polite" className="text-fg-muted text-sm">
         Page {page + 1} of {totalPages}
       </span>
       <button

@@ -9,8 +9,11 @@ interface PostFeedErrorProps {
 /** Recoverable feed failure. Never shows server details; the user can retry. */
 export default function PostFeedError({ onRetry, retrying = false }: PostFeedErrorProps) {
   return (
-    <div role="alert" className="bg-slate-800 rounded-xl p-5 flex flex-col items-start gap-3">
-      <p className="text-slate-200 text-sm">{FEED_ERROR_MESSAGE}</p>
+    <div
+      role="alert"
+      className="bg-surface rounded-xl p-5 flex flex-col items-start gap-3 border border-line"
+    >
+      <p className="text-fg-soft text-sm">{FEED_ERROR_MESSAGE}</p>
       <button
         type="button"
         onClick={onRetry}

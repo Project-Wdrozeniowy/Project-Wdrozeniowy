@@ -8,16 +8,14 @@ export default function ProfileTabs() {
   const [active, setActive] = useState<Tab>('Posts');
 
   return (
-    <div className="bg-gray-100 rounded-xl p-1 flex gap-1 self-start">
+    <div className="bg-raised rounded-xl p-1 flex gap-1 self-start">
       {TABS.map((tab) => (
         <button
           key={tab}
           onClick={() => setActive(tab)}
           className={cn(
             'px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors',
-            active === tab
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-900'
+            active === tab ? 'bg-surface text-fg shadow-sm' : 'text-fg-subtle hover:text-fg'
           )}
         >
           {tab}

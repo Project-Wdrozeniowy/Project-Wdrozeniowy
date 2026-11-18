@@ -41,7 +41,7 @@ export default function SearchPageForm({ term, type }: SearchPageFormProps) {
         maxLength={SEARCH_MAX_LENGTH}
         placeholder={SEARCH_PAGE_PLACEHOLDER}
         autoComplete="off"
-        className="flex-1 min-w-0 bg-slate-800 text-gray-50 placeholder-slate-400 rounded-lg px-4 py-2 text-sm border border-slate-700 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/30"
+        className="flex-1 min-w-0 bg-surface text-fg placeholder-fg-subtle rounded-lg px-4 py-2 text-sm border border-line focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/30"
       />
       <button
         type="submit"

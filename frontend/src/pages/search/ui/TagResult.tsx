@@ -12,18 +12,16 @@ export default function TagResult({ tag }: TagResultProps) {
     <li>
       <Link
         to={tagHref(tag.slug)}
-        className="flex items-center gap-3 px-4 py-3 hover:bg-slate-700/50 focus-visible:outline-2 focus-visible:outline-blue-500"
+        className="flex items-center gap-3 px-4 py-3 hover:bg-raised/50 focus-visible:outline-2 focus-visible:outline-blue-500"
       >
         <span
           aria-hidden="true"
-          className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 text-sm shrink-0"
+          className="w-8 h-8 rounded-full bg-raised flex items-center justify-center text-fg-muted text-sm shrink-0"
         >
           #
         </span>
-        <span className="flex-1 min-w-0 truncate text-sm font-medium text-slate-100">
-          {tag.name}
-        </span>
-        <span className="text-xs text-slate-400 shrink-0">
+        <span className="flex-1 min-w-0 truncate text-sm font-medium text-fg">{tag.name}</span>
+        <span className="text-xs text-fg-subtle shrink-0">
           {tag.postCount} {tag.postCount === 1 ? 'post' : 'posts'}
         </span>
       </Link>

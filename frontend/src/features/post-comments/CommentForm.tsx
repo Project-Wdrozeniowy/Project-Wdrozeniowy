@@ -57,10 +57,10 @@ export function CommentForm({
         placeholder={placeholder}
         rows={3}
         maxLength={COMMENT_MAX_LENGTH}
-        className="w-full resize-none rounded-lg bg-slate-700 px-3 py-2 text-sm text-gray-50 placeholder-slate-400 focus:outline-2 focus:outline-blue-500"
+        className="w-full resize-none rounded-lg bg-raised px-3 py-2 text-sm text-fg placeholder-fg-subtle focus:outline-2 focus:outline-blue-500"
       />
       {error && (
-        <p role="alert" className="text-xs text-red-400">
+        <p role="alert" className="text-xs text-danger">
           {error}
         </p>
       )}
@@ -69,7 +69,7 @@ export function CommentForm({
           <button
             type="button"
             onClick={onCancel}
-            className="text-xs text-slate-400 transition-colors hover:text-slate-200"
+            className="text-xs text-fg-subtle transition-colors hover:text-fg-soft"
           >
             Cancel
           </button>

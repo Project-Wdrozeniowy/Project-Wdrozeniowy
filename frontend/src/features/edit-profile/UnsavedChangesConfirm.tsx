@@ -38,12 +38,12 @@ export default function UnsavedChangesConfirm({ onStay, onLeave }: UnsavedChange
       aria-labelledby={titleId}
       aria-describedby={textId}
       onKeyDown={handleKeyDown}
-      className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex flex-col gap-3"
+      className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 flex flex-col gap-3"
     >
-      <p id={titleId} className="text-amber-900 font-semibold text-sm">
+      <p id={titleId} className="text-amber-900 dark:text-amber-200 font-semibold text-sm">
         {UNSAVED_TITLE}
       </p>
-      <p id={textId} className="text-amber-800 text-sm">
+      <p id={textId} className="text-amber-800 dark:text-amber-300 text-sm">
         {UNSAVED_TEXT}
       </p>
       <div className="flex items-center gap-3">
@@ -58,7 +58,7 @@ export default function UnsavedChangesConfirm({ onStay, onLeave }: UnsavedChange
         <button
           type="button"
           onClick={onLeave}
-          className="text-red-700 hover:text-red-900 font-semibold text-sm px-3 py-2 rounded transition-colors"
+          className="text-red-700 dark:text-red-300 hover:text-red-900 font-semibold text-sm px-3 py-2 rounded transition-colors"
         >
           {UNSAVED_LEAVE_LABEL}
         </button>

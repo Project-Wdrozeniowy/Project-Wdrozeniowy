@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Outlet, ScrollRestoration, useLocation } from 'react-router';
 import AuthProvider from '@/app/providers/AuthProvider';
 import QueryProvider from '@/app/providers/QueryProvider';
+import ThemeProvider from '@/app/providers/ThemeProvider';
 import ToastProvider from '@/app/providers/ToastProvider';
 export default function RootLayout() {
   const { pathname } = useLocation();
@@ -20,6 +21,7 @@ export default function RootLayout() {
       <AuthProvider>
         <Outlet />
       </AuthProvider>
+      <ThemeProvider />
       <ToastProvider />
       <ScrollRestoration />
     </QueryProvider>

@@ -1,6 +1,6 @@
 import { CATEGORIES, CATEGORY_COLORS, isTopic } from '@/shared/constants/categories.const';
 
-const FALLBACK_CATEGORY_COLOR = 'border-slate-500 text-slate-400';
+const FALLBACK_CATEGORY_COLOR = 'border-line-strong text-fg-subtle';
 
 /**
  * Border and text color of a category chip.

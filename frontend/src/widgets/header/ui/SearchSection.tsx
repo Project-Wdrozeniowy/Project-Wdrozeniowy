@@ -11,7 +11,7 @@ export default function SearchSection({ title, children }: SearchSectionProps) {
     <div role="group" aria-label={title}>
       <div
         aria-hidden="true"
-        className="px-3 py-1 bg-slate-900/50 border-y border-slate-700 text-xs font-semibold uppercase tracking-wide text-slate-400"
+        className="px-3 py-1 bg-page/50 border-y border-line text-xs font-semibold uppercase tracking-wide text-fg-subtle"
       >
         {title}
       </div>

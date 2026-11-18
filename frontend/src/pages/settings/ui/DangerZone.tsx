@@ -5,12 +5,12 @@ export default function DangerZone() {
   return (
     <section
       aria-labelledby="danger-zone-title"
-      className="bg-white rounded-xl p-6 flex flex-col gap-3 border border-red-300"
+      className="bg-surface rounded-xl p-6 flex flex-col gap-3 border border-red-300"
     >
       <h2 id="danger-zone-title" className="text-red-600 font-semibold text-lg">
         {DANGER_ZONE_TITLE}
       </h2>
-      <p id="danger-zone-text" className="text-gray-500 text-sm">
+      <p id="danger-zone-text" className="text-fg-subtle text-sm">
         {DANGER_ZONE_TEXT}
       </p>
       <button

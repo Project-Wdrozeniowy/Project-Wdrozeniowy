@@ -11,7 +11,7 @@ interface FieldLabelProps {
 export function FieldLabel({ htmlFor, label, required, counter }: FieldLabelProps) {
   return (
     <div className="flex items-baseline justify-between">
-      <label htmlFor={htmlFor} className="text-sm font-semibold text-gray-900">
+      <label htmlFor={htmlFor} className="text-sm font-semibold text-fg">
         {label}
         {required && (
           <span aria-hidden="true" className="ml-0.5 text-red-500">
@@ -22,7 +22,7 @@ export function FieldLabel({ htmlFor, label, required, counter }: FieldLabelProp
       {counter && (
         <span
           aria-hidden="true"
-          className={cn('text-xs text-gray-500', counter.used > counter.max && 'text-red-500')}
+          className={cn('text-xs text-fg-subtle', counter.used > counter.max && 'text-red-500')}
         >
           {counter.used}/{counter.max}
         </span>

@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
-import { TrendingIcon } from '@/shared/ui/icons';
 import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 
 interface UserActionsProps {
@@ -12,29 +12,21 @@ interface UserActionsProps {
 export default function UserActions({ isAuthenticated, user, logout }: UserActionsProps) {
   return (
     <div className="flex items-center gap-2">
-      <button
-        aria-label="Trending"
-        className="p-2 rounded text-gray-50 hover:bg-slate-700 transition-colors"
-      >
-        <TrendingIcon />
-      </button>
+      <ThemeToggle />
 
       {isAuthenticated && <NotificationBell />}
 
       {isAuthenticated ? (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-400 hidden sm:block">
+          <span className="text-sm text-fg-subtle hidden sm:block">
             {user?.displayName ?? user?.username}
           </span>
-          <Link
-            to="/settings"
-            className="text-sm text-slate-400 hover:text-gray-50 transition-colors"
-          >
+          <Link to="/settings" className="text-sm text-fg-subtle hover:text-fg transition-colors">
             Settings
           </Link>
           <button
             onClick={logout}
-            className="text-sm text-slate-400 hover:text-gray-50 transition-colors"
+            className="text-sm text-fg-subtle hover:text-fg transition-colors"
           >
             Sign out
           </button>
@@ -43,7 +35,7 @@ export default function UserActions({ isAuthenticated, user, logout }: UserActio
         <div className="flex items-center gap-2">
           <Link
             to="/login"
-            className="text-sm text-gray-50 hover:text-slate-300 transition-colors px-3 py-1.5"
+            className="text-sm text-fg hover:text-fg-muted transition-colors px-3 py-1.5"
           >
             Sign in
           </Link>

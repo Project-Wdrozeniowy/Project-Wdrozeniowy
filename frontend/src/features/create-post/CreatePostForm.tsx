@@ -169,7 +169,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
           ref={alertRef}
           tabIndex={-1}
           role="alert"
-          className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          className="rounded border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300"
         >
           {formError}
         </div>
@@ -272,19 +272,19 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
         )}
       />
 
-      <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-4">
+      <div className="flex items-center justify-end gap-3 border-t border-line pt-4">
         <button
           type="button"
           onClick={onCancel}
           disabled={isPending}
-          className="rounded border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded border border-line bg-surface px-4 py-2 text-sm font-semibold text-fg transition-colors hover:bg-raised disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={!isValid || isPending}
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+          className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPending ? 'Publishing…' : 'Publish post'}
         </button>

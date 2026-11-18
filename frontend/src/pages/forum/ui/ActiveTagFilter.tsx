@@ -10,12 +10,12 @@ interface ActiveTagFilterProps {
 export default function ActiveTagFilter({ tag, clearHref }: ActiveTagFilterProps) {
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      <p className="text-slate-300 text-sm">
-        Posts tagged <span className="font-semibold text-blue-400 break-all">#{tag}</span>
+      <p className="text-fg-muted text-sm">
+        Posts tagged <span className="font-semibold text-accent break-all">#{tag}</span>
       </p>
       <Link
         to={clearHref}
-        className="text-sm font-semibold text-slate-300 hover:text-white underline focus-visible:outline-2 focus-visible:outline-blue-500"
+        className="text-sm font-semibold text-fg-muted hover:text-fg underline focus-visible:outline-2 focus-visible:outline-blue-500"
       >
         Show all posts
       </Link>
