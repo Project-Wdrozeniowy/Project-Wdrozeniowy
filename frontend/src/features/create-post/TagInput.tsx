@@ -3,13 +3,16 @@
 import { useId, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { addTag, removeTag } from '@/features/create-post/createPost';
-import { FieldLabel } from '@/features/create-post/FieldLabel';
 import {
   MAX_TAGS,
   TAG_MAX_LENGTH,
   TAG_SEPARATOR_KEYS,
 } from '@/features/create-post/createPost.const';
 import { cn } from '@/shared/lib/cn';
+import FieldError from '@/shared/ui/FieldError';
+import { getFieldControlProps, getFieldIds } from '@/shared/ui/fieldA11y';
+import FieldHint from '@/shared/ui/FieldHint';
+import FieldLabel from '@/shared/ui/FieldLabel';
 
 interface TagInputProps {
   tags: string[];
@@ -26,6 +29,7 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
   const [typedError, setTypedError] = useState<string | null>(null);
   const error = typedError ?? serverError;
   const full = tags.length >= MAX_TAGS;
+  const ids = getFieldIds(id);
 
   function commit() {
     if (disabled) return;
@@ -62,11 +66,11 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
   return (
     <div className="flex flex-col gap-1.5">
       <FieldLabel htmlFor={id} label="Tags" counter={{ used: tags.length, max: MAX_TAGS }} />
-      <p id={`${id}-hint`} className="text-xs text-gray-500">
+      <FieldHint id={ids.hint}>
         Press <kbd className="rounded bg-gray-100 px-1 font-mono">Enter</kbd> or{' '}
         <kbd className="rounded bg-gray-100 px-1 font-mono">,</kbd> to add. Max {MAX_TAGS} tags ·{' '}
         {TAG_MAX_LENGTH} chars each
-      </p>
+      </FieldHint>
       <div
         className={cn('input flex flex-wrap items-center gap-1.5', error && 'ring-2 ring-red-500')}
       >
@@ -94,7 +98,7 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
         ))}
         <input
           ref={inputRef}
-          id={id}
+          {...getFieldControlProps({ id, hasHint: true, hasError: Boolean(error) })}
           value={text}
           onChange={(event) => {
             setText(event.target.value);
@@ -106,16 +110,10 @@ export function TagInput({ tags, onChange, serverError, disabled }: TagInputProp
           readOnly={disabled || full}
           placeholder={full ? '' : 'Add tags and press Enter'}
           autoComplete="off"
-          aria-invalid={Boolean(error)}
-          aria-describedby={cn(`${id}-hint`, error && `${id}-error`)}
           className="min-w-32 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-500"
         />
       </div>
-      {error && (
-        <p id={`${id}-error`} role="alert" className="text-xs text-red-500">
-          {error}
-        </p>
-      )}
+      <FieldError id={ids.error}>{error}</FieldError>
     </div>
   );
 }

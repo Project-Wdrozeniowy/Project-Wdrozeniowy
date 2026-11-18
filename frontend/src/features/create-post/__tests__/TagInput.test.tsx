@@ -120,4 +120,40 @@ describe('TagInput', () => {
     await user.keyboard('{Enter}');
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  describe('field wiring', () => {
+    it('focuses the input from its label and describes it by the hint', async () => {
+      const user = userEvent.setup();
+      render(<Harness />);
+      await user.click(screen.getByText('Tags'));
+      const input = screen.getByLabelText('Tags');
+      expect(input).toHaveFocus();
+      expect(input).toHaveAttribute('aria-describedby', `${input.id}-hint`);
+      expect(input).toHaveAttribute('aria-invalid', 'false');
+      expect(input).toHaveAccessibleDescription(/Press Enter or , to add/);
+    });
+
+    it('references the single error node only while an error is shown', async () => {
+      const user = userEvent.setup();
+      render(<Harness />);
+      const input = screen.getByLabelText('Tags');
+      await user.type(input, 'bad_tag{Enter}');
+
+      const alerts = screen.getAllByRole('alert');
+      expect(alerts).toHaveLength(1);
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+      expect(input).toHaveAttribute('aria-describedby', `${input.id}-hint ${alerts[0].id}`);
+
+      await user.type(input, 'x');
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(input).toHaveAttribute('aria-describedby', `${input.id}-hint`);
+    });
+
+    it('shows an error reported by the server through the same node', () => {
+      render(<TagInput tags={[]} onChange={vi.fn()} serverError="Too many tags" />);
+      const input = screen.getByLabelText('Tags');
+      expect(screen.getByRole('alert')).toHaveTextContent('Too many tags');
+      expect(input).toHaveAttribute('aria-describedby', `${input.id}-hint ${input.id}-error`);
+    });
+  });
 });

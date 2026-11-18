@@ -20,12 +20,13 @@ import {
 import type { CreatePostField } from '@/features/create-post/createPost.const';
 import { createPostSchema } from '@/features/create-post/createPost.schema';
 import type { CreatePostFormData } from '@/features/create-post/createPost.schema';
-import { FieldLabel } from '@/features/create-post/FieldLabel';
 import { TagInput } from '@/features/create-post/TagInput';
 import { categoriesQueryKey, useCategories } from '@/shared/api/forum/useCategories';
 import type { Category } from '@/shared/api/forum/category.dto';
 import { useCreatePost } from '@/shared/api/forum/useCreatePost';
 import { cn } from '@/shared/lib/cn';
+import { getFieldControlProps } from '@/shared/ui/fieldA11y';
+import FormField from '@/shared/ui/FormField';
 
 interface CreatePostFormProps {
   onCancel: () => void;
@@ -39,21 +40,11 @@ function inputClass(invalid: boolean) {
   return cn('input', invalid && 'ring-2 ring-red-500');
 }
 
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <p id={id} role="alert" className="text-xs text-red-500">
-      {message}
-    </p>
-  );
-}
-
 export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePostFormProps) {
   const baseId = useId();
   const ids = {
     title: `${baseId}-title`,
     category: `${baseId}-category`,
-    categoryError: `${baseId}-category-error`,
     content: `${baseId}-content`,
   };
   const categories = useCategories();
@@ -131,6 +122,28 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
   const categoriesUnavailable =
     categoryList.length === 0 && !categories.isPending && !categories.isFetching;
 
+  // One message at a time: while the list is unavailable it replaces a validation error, and the
+  // select references this single node. The retry button only makes sense after a failed request.
+  const categoryProblem = categoriesUnavailable ? (
+    <>
+      {categories.isError ? CATEGORIES_ERROR_MESSAGE : CATEGORIES_EMPTY_MESSAGE}
+      {categories.isError && (
+        <>
+          {' '}
+          <button
+            type="button"
+            onClick={() => categories.refetch()}
+            className="font-semibold underline"
+          >
+            Try again
+          </button>
+        </>
+      )}
+    </>
+  ) : (
+    errors.categoryId?.message
+  );
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -168,36 +181,32 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
         </div>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <FieldLabel
-          htmlFor={ids.title}
-          label="Title"
-          required
-          counter={{ used: title.trim().length, max: TITLE_MAX_LENGTH }}
-        />
+      <FormField
+        label="Title"
+        id={ids.title}
+        required
+        counter={{ used: title.trim().length, max: TITLE_MAX_LENGTH }}
+        error={errors.title?.message}
+      >
         <input
           {...register('title')}
-          id={ids.title}
+          {...getFieldControlProps({ id: ids.title, hasError: Boolean(errors.title?.message) })}
           type="text"
           placeholder="Give your post a clear title"
           readOnly={isPending}
-          aria-invalid={Boolean(errors.title)}
-          aria-describedby={errors.title ? `${ids.title}-error` : undefined}
           className={inputClass(Boolean(errors.title))}
         />
-        <FieldError id={`${ids.title}-error`} message={errors.title?.message} />
-      </div>
+      </FormField>
 
-      <div className="flex flex-col gap-1.5">
-        <FieldLabel htmlFor={ids.category} label="Category" required />
+      <FormField label="Category" id={ids.category} required error={categoryProblem}>
         <select
           {...register('categoryId')}
-          id={ids.category}
+          {...getFieldControlProps({
+            id: ids.category,
+            hasError: Boolean(categoryProblem),
+            invalid: Boolean(errors.categoryId),
+          })}
           disabled={isPending || categories.isPending || categoriesUnavailable}
-          aria-invalid={Boolean(errors.categoryId)}
-          aria-describedby={
-            errors.categoryId || categoriesUnavailable ? ids.categoryError : undefined
-          }
           className={inputClass(Boolean(errors.categoryId))}
         >
           <option value="">
@@ -209,48 +218,24 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
             </option>
           ))}
         </select>
-        <FieldError
-          id={ids.categoryError}
-          message={categoriesUnavailable ? undefined : errors.categoryId?.message}
-        />
-        {categoriesUnavailable && (
-          <p id={ids.categoryError} role="alert" className="text-xs text-red-500">
-            {categories.isError ? CATEGORIES_ERROR_MESSAGE : CATEGORIES_EMPTY_MESSAGE}
-            {categories.isError && (
-              <>
-                {' '}
-                <button
-                  type="button"
-                  onClick={() => categories.refetch()}
-                  className="font-semibold underline"
-                >
-                  Try again
-                </button>
-              </>
-            )}
-          </p>
-        )}
-      </div>
+      </FormField>
 
-      <div className="flex flex-col gap-1.5">
-        <FieldLabel
-          htmlFor={ids.content}
-          label="Body"
-          required
-          counter={{ used: content.trim().length, max: CONTENT_MAX_LENGTH }}
-        />
+      <FormField
+        label="Body"
+        id={ids.content}
+        required
+        counter={{ used: content.trim().length, max: CONTENT_MAX_LENGTH }}
+        error={errors.content?.message}
+      >
         <textarea
           {...register('content')}
-          id={ids.content}
+          {...getFieldControlProps({ id: ids.content, hasError: Boolean(errors.content?.message) })}
           rows={8}
           placeholder="Share your thoughts…"
           readOnly={isPending}
-          aria-invalid={Boolean(errors.content)}
-          aria-describedby={errors.content ? `${ids.content}-error` : undefined}
           className={cn(inputClass(Boolean(errors.content)), 'resize-y')}
         />
-        <FieldError id={`${ids.content}-error`} message={errors.content?.message} />
-      </div>
+      </FormField>
 
       <Controller
         control={control}
