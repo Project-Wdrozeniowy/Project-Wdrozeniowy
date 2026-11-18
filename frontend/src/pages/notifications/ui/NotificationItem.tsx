@@ -99,7 +99,7 @@ export default function NotificationItem({
           onClick={() => {
             if (!busy) onDelete(notification.id);
           }}
-          className={cn(ACTION_CLASS, 'text-red-700 dark:text-red-300 hover:bg-red-400/10')}
+          className={cn(ACTION_CLASS, 'text-danger hover:bg-red-400/10')}
         >
           Delete
         </button>

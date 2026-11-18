@@ -82,7 +82,7 @@ export default function SearchDropdown({
             <button
               type="button"
               onClick={onRetry}
-              className="mt-1 rounded border border-red-400/60 px-3 py-1 text-xs font-semibold text-red-700 dark:text-red-300 hover:bg-red-400/10 focus-visible:outline-2 focus-visible:outline-blue-500"
+              className="mt-1 rounded border border-red-400/60 px-3 py-1 text-xs font-semibold text-danger hover:bg-red-400/10 focus-visible:outline-2 focus-visible:outline-blue-500"
             >
               {SEARCH_RETRY_LABEL}
             </button>

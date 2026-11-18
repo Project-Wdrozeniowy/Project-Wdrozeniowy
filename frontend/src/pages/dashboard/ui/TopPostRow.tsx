@@ -16,9 +16,7 @@ export default function TopPostRow({ rank, title, views, engagement }: TopPostRo
         <p className="text-fg-subtle text-xs">{views.toLocaleString()} views</p>
       </div>
       <div className="text-right shrink-0">
-        <p className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
-          {toPercent(engagement)}
-        </p>
+        <p className="text-success font-semibold text-sm">{toPercent(engagement)}</p>
         <p className="text-fg-subtle text-xs">engagement</p>
       </div>
     </div>

@@ -43,10 +43,12 @@ export function currentTheme(): Theme {
 
 /** What the page shows right now (`theme-init.js` sets it before the first paint). */
 export function readAppliedTheme(): Theme {
+  if (typeof document === 'undefined') return 'light';
   const applied = document.documentElement.getAttribute('data-theme');
   return isTheme(applied) ? applied : currentTheme();
 }
 
 export function applyTheme(theme: Theme): void {
+  if (typeof document === 'undefined') return;
   document.documentElement.setAttribute('data-theme', theme);
 }

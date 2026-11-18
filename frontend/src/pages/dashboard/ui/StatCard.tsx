@@ -13,11 +13,7 @@ export default function StatCard({ label, value, change }: StatCardProps) {
       <div className="flex flex-col gap-1">
         <span className="text-fg-subtle text-sm">{label}</span>
         <span className="text-fg font-bold text-3xl">{value.toLocaleString()}</span>
-        <span
-          className={
-            isPositive ? 'text-sm text-emerald-600 dark:text-emerald-400' : 'text-sm text-danger'
-          }
-        >
+        <span className={isPositive ? 'text-sm text-success' : 'text-sm text-danger'}>
           {isPositive ? '+' : ''}
           {change}%
         </span>

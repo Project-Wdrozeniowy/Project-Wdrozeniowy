@@ -284,7 +284,7 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
         <button
           type="submit"
           disabled={!isValid || isPending}
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+          className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPending ? 'Publishing…' : 'Publish post'}
         </button>

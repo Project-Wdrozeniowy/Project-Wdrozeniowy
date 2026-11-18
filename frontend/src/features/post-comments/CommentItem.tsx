@@ -79,7 +79,7 @@ export function CommentItem({
                   type="button"
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="text-xs text-danger transition-colors hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50"
+                  className="text-xs text-danger transition-colors hover:opacity-80 disabled:opacity-50"
                 >
                   {deleting ? 'Deleting…' : 'Delete'}
                 </button>

@@ -17,7 +17,7 @@ export default function PostCard({ post }: PostCardProps) {
     : '';
 
   return (
-    <article className="bg-surface rounded-xl p-5 flex gap-4 hover:bg-surface/80 transition-colors border border-line">
+    <article className="bg-surface rounded-xl p-5 flex gap-4 hover:bg-raised/50 transition-colors border border-line">
       <PostVoteColumn postId={post.voting.postId} score={post.votes} myVote={post.voting.myVote} />
 
       <div className="flex-1 min-w-0 flex flex-col gap-3">
