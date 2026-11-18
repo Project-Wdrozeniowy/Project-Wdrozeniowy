@@ -1,14 +1,21 @@
 import { cn } from '@/shared/lib/cn';
 
 interface FieldLabelProps {
-  htmlFor: string;
+  /** Id of the control the label focuses. */
+  htmlFor?: string;
   label: string;
+  /** Adds a visual `*`. It is hidden from assistive technology: mark the control as required there. */
   required?: boolean;
-  /** Shown on the right as `used/max`. */
+  /** Shown on the right as `used/max`, in red once `used` exceeds `max`. Hidden from assistive technology. */
   counter?: { used: number; max: number };
 }
 
-export function FieldLabel({ htmlFor, label, required, counter }: FieldLabelProps) {
+/**
+ * The label row of a field: the label, an optional required marker and an optional character
+ * counter. Use it on its own when the hint and the error cannot follow the control in one block
+ * (see `FormField` for the common layout).
+ */
+export default function FieldLabel({ htmlFor, label, required, counter }: FieldLabelProps) {
   return (
     <div className="flex items-baseline justify-between">
       <label htmlFor={htmlFor} className="text-sm font-semibold text-fg">

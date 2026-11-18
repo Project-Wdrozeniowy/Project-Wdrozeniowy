@@ -3,15 +3,17 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useBlocker } from 'react-router';
 import UnsavedChangesConfirm from '@/features/edit-profile/UnsavedChangesConfirm';
-import FormField from '@/shared/ui/FormField';
 import {
   BIO_MAX_LENGTH,
   PROFILE_FIELDS,
+  PROFILE_FIELD_IDS,
   PROFILE_SAVED_MESSAGE,
 } from '@/features/edit-profile/profile.const';
 import type { ProfileField } from '@/features/edit-profile/profile.const';
 import { useUpdateProfile } from '@/shared/api/profile/useUpdateProfile';
 import { cn } from '@/shared/lib/cn';
+import { getFieldControlProps } from '@/shared/ui/fieldA11y';
+import FormField from '@/shared/ui/FormField';
 import {
   buildUpdateRequest,
   getProfileSaveError,
@@ -118,11 +120,6 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
     setFormError(null);
   }
 
-  function describedBy(id: string, hasHint: boolean, field: keyof ProfileFormData) {
-    const ids = [hasHint ? `${id}-hint` : null, errors[field] ? `${id}-error` : null];
-    return ids.filter(Boolean).join(' ') || undefined;
-  }
-
   // The trimmed length is what validation checks and what is sent.
   const bioLength = values.bio.trim().length;
 
@@ -151,15 +148,16 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
       )}
 
       {shows('email') && (
-        <FormField label="Email" id="profile-email" error={errors.email?.message}>
+        <FormField label="Email" id={PROFILE_FIELD_IDS.email} error={errors.email?.message}>
           <input
             {...register('email')}
-            id="profile-email"
+            {...getFieldControlProps({
+              id: PROFILE_FIELD_IDS.email,
+              hasError: Boolean(errors.email?.message),
+            })}
             type="email"
             autoComplete="email"
             readOnly={isPending}
-            aria-invalid={Boolean(errors.email)}
-            aria-describedby={describedBy('profile-email', false, 'email')}
             className={cn('input', errors.email && 'ring-2 ring-red-500')}
           />
         </FormField>
@@ -168,18 +166,20 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
       {shows('displayName') && (
         <FormField
           label="Display name"
-          id="profile-displayName"
+          id={PROFILE_FIELD_IDS.displayName}
           hint="Shown instead of your username. Leave it empty to use your username."
           error={errors.displayName?.message}
         >
           <input
             {...register('displayName')}
-            id="profile-displayName"
+            {...getFieldControlProps({
+              id: PROFILE_FIELD_IDS.displayName,
+              hasHint: true,
+              hasError: Boolean(errors.displayName?.message),
+            })}
             type="text"
             autoComplete="nickname"
             readOnly={isPending}
-            aria-invalid={Boolean(errors.displayName)}
-            aria-describedby={describedBy('profile-displayName', true, 'displayName')}
             className={cn('input', errors.displayName && 'ring-2 ring-red-500')}
           />
         </FormField>
@@ -188,19 +188,21 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
       {shows('avatarUrl') && (
         <FormField
           label="Avatar link"
-          id="profile-avatarUrl"
+          id={PROFILE_FIELD_IDS.avatarUrl}
           hint="A link to an image, starting with http:// or https://."
           error={errors.avatarUrl?.message}
         >
           <input
             {...register('avatarUrl')}
-            id="profile-avatarUrl"
+            {...getFieldControlProps({
+              id: PROFILE_FIELD_IDS.avatarUrl,
+              hasHint: true,
+              hasError: Boolean(errors.avatarUrl?.message),
+            })}
             type="url"
             inputMode="url"
             autoComplete="off"
             readOnly={isPending}
-            aria-invalid={Boolean(errors.avatarUrl)}
-            aria-describedby={describedBy('profile-avatarUrl', true, 'avatarUrl')}
             className={cn('input', errors.avatarUrl && 'ring-2 ring-red-500')}
           />
         </FormField>
@@ -209,17 +211,21 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
       {shows('bio') && (
         <FormField
           label="Bio"
-          id="profile-bio"
+          id={PROFILE_FIELD_IDS.bio}
+          // Intentional exception: the bio counter stays a hint, so it is announced with the field
+          // (as before) instead of the visual-only counter of `FormField`'s `counter` prop.
           hint={`${bioLength}/${BIO_MAX_LENGTH}`}
           error={errors.bio?.message}
         >
           <textarea
             {...register('bio')}
-            id="profile-bio"
+            {...getFieldControlProps({
+              id: PROFILE_FIELD_IDS.bio,
+              hasHint: true,
+              hasError: Boolean(errors.bio?.message),
+            })}
             rows={4}
             readOnly={isPending}
-            aria-invalid={Boolean(errors.bio)}
-            aria-describedby={describedBy('profile-bio', true, 'bio')}
             className={cn('input resize-none', errors.bio && 'ring-2 ring-red-500')}
           />
         </FormField>

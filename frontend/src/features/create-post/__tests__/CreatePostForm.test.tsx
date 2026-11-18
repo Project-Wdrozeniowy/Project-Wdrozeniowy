@@ -282,4 +282,78 @@ describe('CreatePostForm', () => {
     expect(screen.queryByText('No categories are available yet.')).not.toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText(/^Category/)).toHaveFocus());
   });
+
+  describe('field wiring', () => {
+    it('focuses each control from its label', async () => {
+      const { user } = setup();
+      await screen.findByRole('option', { name: 'Gaming' });
+      for (const name of [/^Title/, /^Category/, /^Body/]) {
+        await user.click(screen.getByText(name));
+        expect(screen.getByLabelText(name)).toHaveFocus();
+      }
+    });
+
+    it('marks the required fields and keeps the counter out of the label name', async () => {
+      setup();
+      await screen.findByRole('option', { name: 'Gaming' });
+      expect(screen.getAllByText('*')).toHaveLength(3);
+      expect(screen.getByText('0/120')).toHaveAttribute('aria-hidden', 'true');
+    });
+
+    it('tells assistive technology which fields are required', async () => {
+      setup();
+      await screen.findByRole('option', { name: 'Gaming' });
+      for (const name of [/^Title/, /^Category/, /^Body/]) {
+        expect(screen.getByLabelText(name)).toHaveAttribute('aria-required', 'true');
+      }
+      expect(screen.getByLabelText('Tags')).not.toHaveAttribute('aria-required');
+    });
+
+    it('describes an invalid field by its one error and nothing else', async () => {
+      const { user } = setup();
+      const title = screen.getByLabelText(/^Title/);
+      expect(title).not.toHaveAttribute('aria-describedby');
+
+      await user.click(title);
+      await user.tab();
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent('Title is required');
+      expect(title).toHaveAttribute('aria-describedby', alert.id);
+      expect(document.getElementById(alert.id)).toBe(alert);
+      expect(title).toHaveAccessibleDescription('Title is required');
+    });
+
+    it('describes the category select by its validation error', async () => {
+      const { user } = setup();
+      const select = await screen.findByLabelText(/^Category/);
+      await user.click(select);
+      await user.tab();
+      const alert = await screen.findByRole('alert');
+      expect(select).toHaveAttribute('aria-invalid', 'true');
+      expect(select).toHaveAttribute('aria-describedby', alert.id);
+    });
+
+    it('describes the select by the single unavailable message, with a retry', async () => {
+      vi.mocked(categoryService.list).mockRejectedValue(httpError(500));
+      setup();
+      const alert = await screen.findByRole('alert');
+      const select = screen.getByLabelText(/^Category/);
+      expect(screen.getAllByRole('alert')).toHaveLength(1);
+      expect(alert).toContainElement(screen.getByRole('button', { name: 'Try again' }));
+      expect(select).toHaveAttribute('aria-describedby', alert.id);
+      expect(select).toHaveAttribute('aria-invalid', 'false');
+    });
+
+    it('describes the body by its error and shows the counter', async () => {
+      const { user } = setup();
+      const body = screen.getByLabelText(/^Body/);
+      await user.click(body);
+      await user.tab();
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent('Body is required');
+      expect(body).toHaveAttribute('aria-describedby', alert.id);
+      await user.type(body, 'abcd');
+      expect(screen.getByText('4/5000')).toBeInTheDocument();
+    });
+  });
 });

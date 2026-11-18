@@ -8,6 +8,14 @@ export const BIO_MAX_LENGTH = 1000;
 export const PROFILE_FIELDS = ['email', 'displayName', 'avatarUrl', 'bio'] as const;
 export type ProfileField = (typeof PROFILE_FIELDS)[number];
 
+/** Control ids; the label, hint and error of each field derive their ids from them. */
+export const PROFILE_FIELD_IDS: Record<ProfileField, string> = {
+  email: 'profile-email',
+  displayName: 'profile-displayName',
+  avatarUrl: 'profile-avatarUrl',
+  bio: 'profile-bio',
+};
+
 export const PROFILE_SAVE_ERROR_MESSAGE = 'We could not save your changes. Please try again.';
 export const PROFILE_SAVED_MESSAGE = 'Profile saved.';
 
