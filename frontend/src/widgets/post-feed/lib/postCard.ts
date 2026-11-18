@@ -2,6 +2,7 @@ import { PINNED_BADGE_LABEL } from '@/widgets/post-feed/config/postCard.const';
 import type { PostDto as Post } from '@/shared/api/generated/models/postDto.dto';
 import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 import type { MyVoteDto as MyVote } from '@/shared/api/generated/models/myVoteDto.dto';
+import { authorName, initialOf } from '@/shared/lib/author';
 import { formatTimeAgo } from '@/utils/format';
 
 export interface PostCardTag {
@@ -12,6 +13,8 @@ export interface PostCardTag {
 /** What `PostCard` renders. Both the real API and the mock feed are mapped to it. */
 export interface PostCardData {
   id: string;
+  /** The address of the post's page. */
+  slug: string;
   username: string;
   userInitial: string;
   timeAgo: string;
@@ -33,13 +36,12 @@ export interface PostCardData {
 
 /** A listed `PostSummary` carries no tags; a full `Post` does, and its tags become links. */
 export function toPostCardData(post: PostSummary | Post, now?: number): PostCardData {
-  const username = post.author.displayName?.trim() || post.author.username;
+  const username = authorName(post.author);
   return {
-    // No link to the post: the post page is a placeholder until the view page is implemented.
     id: String(post.id),
+    slug: post.slug,
     username,
-    // Array.from keeps a surrogate pair (emoji) whole, unlike charAt(0).
-    userInitial: (Array.from(username)[0] ?? '').toUpperCase(),
+    userInitial: initialOf(username),
     timeAgo: formatTimeAgo(post.createdAt, now),
     badge: post.pinned ? PINNED_BADGE_LABEL : null,
     category: post.category?.name ?? null,

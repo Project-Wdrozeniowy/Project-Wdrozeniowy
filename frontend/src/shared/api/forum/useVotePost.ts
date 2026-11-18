@@ -3,8 +3,14 @@ import { apiErrorStatus } from '@/shared/api/client/apiError';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import { FEED_QUERY_KEY } from '@/shared/api/forum/feedQuery.const';
 import { castVote, retractVote } from '@/shared/api/generated/orbita.api';
+import type { PostDto as Post } from '@/shared/api/generated/models/postDto.dto';
 import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
-import { applyVoteOutcome, scoreAfterRetract, voteActionFor } from '@/shared/api/forum/postVote';
+import {
+  applyVoteOutcome,
+  isPostDetailQuery,
+  scoreAfterRetract,
+  voteActionFor,
+} from '@/shared/api/forum/postVote';
 import type { VoteOutcome } from '@/shared/api/forum/postVote';
 import {
   VOTE_CONFLICT_MESSAGE,
@@ -46,6 +52,10 @@ function failureMessage(status: number | undefined, retracting: boolean): string
  */
 export function useVotePost(postId: number) {
   const queryClient = useQueryClient();
+  // The post page keeps the post under its own key, whatever page the vote is made on: every
+  // cached copy of this post gets the same answer.
+  const isDetail = (query: Parameters<typeof isPostDetailQuery>[0]) =>
+    isPostDetailQuery(query, postId);
 
   return useMutation({
     mutationKey: ['vote-post', postId],
@@ -68,10 +78,14 @@ export function useVotePost(postId: number) {
         { queryKey: FEED_QUERY_KEY },
         (page) => (page ? applyVoteOutcome(page, postId, outcome) : page)
       );
+      queryClient.setQueriesData<Post>({ predicate: isDetail }, (post) =>
+        post ? { ...post, ...outcome } : post
+      );
       // A cast answers with the new score. A retract answers with nothing (204), so the score
       // written above is computed here and the feed is reloaded to confirm it.
       if (voteActionFor(myVote, clicked).kind === 'retract') {
         void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+        void queryClient.invalidateQueries({ predicate: isDetail });
       }
     },
     onError: (error, { clicked, myVote }) => {
@@ -82,6 +96,7 @@ export function useVotePost(postId: number) {
       // The post or the vote changed under us: show the real state.
       if (status === 404 || status === 409 || (retracting && status === 403)) {
         void queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY });
+        void queryClient.invalidateQueries({ predicate: isDetail });
       }
     },
   });

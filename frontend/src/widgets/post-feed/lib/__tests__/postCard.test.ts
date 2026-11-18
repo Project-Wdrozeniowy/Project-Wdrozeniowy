@@ -33,6 +33,7 @@ describe('toPostCardData', () => {
   it('maps the API summary to what the card renders', () => {
     expect(toPostCardData(summary, NOW)).toEqual({
       id: '42',
+      slug: summary.slug,
       username: 'Alice A.',
       userInitial: 'A',
       timeAgo: '2 hours ago',
@@ -141,6 +142,7 @@ describe('toPostCardData with a real API response', () => {
     const now = Date.parse('2026-10-10T22:49:13Z');
     expect(toPostCardData(REAL_API_ITEM, now)).toEqual({
       id: '8',
+      slug: 'gaming-post-3',
       username: 'alice',
       userInitial: 'A',
       timeAgo: '10 minutes ago',

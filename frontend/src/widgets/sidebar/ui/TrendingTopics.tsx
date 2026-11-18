@@ -3,7 +3,8 @@ import { usePublicCategoryDistribution } from '@/shared/api/analytics/usePublicC
 import { cn } from '@/shared/lib/cn';
 import { ChevronRightIcon } from '@/shared/ui/icons';
 import QueryState from '@/shared/ui/QueryState';
-import { getCategoryColor, getCategoryTopic } from '@/shared/lib/categoryColor';
+import { getCategoryColor } from '@/shared/lib/categoryColor';
+import { topicHref } from '@/shared/lib/topicUrl';
 import {
   NO_TOPICS_TEXT,
   SIDEBAR_PERIOD,
@@ -53,10 +54,8 @@ export default function TrendingTopics() {
         <ol className="flex flex-col gap-0.5">
           {topics.map(({ category, posts }, index) => {
             const name = category?.name ?? '';
-            // The feed filters by the known topic labels (found by slug first, so a renamed category
-            // still filters); another category opens the whole forum.
-            const topic = getCategoryTopic({ name, slug: category?.slug });
-            const href = topic ? `/forum?${new URLSearchParams({ topic }).toString()}` : '/forum';
+            // Another category than a known topic opens the whole forum.
+            const href = topicHref({ name, slug: category?.slug }) ?? '/forum';
             return (
               <li key={category?.id ?? name}>
                 <Link to={href} className="flex items-center justify-between py-2 group">

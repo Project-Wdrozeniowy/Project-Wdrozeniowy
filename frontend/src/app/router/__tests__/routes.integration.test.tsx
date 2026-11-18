@@ -65,9 +65,14 @@ it.each(['/login', '/register', '/', '/forum?tag=react&page=2', '/search?q=react
     expect(router.state.location.search).toBe(new URL(path, 'http://test').search);
   }
 );
-it('reads the dynamic post slug from the browser route', async () => {
+it('reads the dynamic post slug from the browser route and asks the API for that post', async () => {
   await open('/forum/a-real-slug');
-  expect(await screen.findByText('Post slug: a-real-slug')).toBeVisible();
+  await waitFor(() =>
+    expect(vi.mocked(orvalTransport)).toHaveBeenCalledWith(
+      expect.objectContaining({ url: '/forum/posts/a-real-slug', method: 'GET' }),
+      expect.anything()
+    )
+  );
 });
 it.each(['/profile', '/settings', '/settings/account', '/notifications', '/dashboard', '/admin'])(
   'redirects a guest opening %s directly',

@@ -95,9 +95,13 @@ describe('ForumFeed over the real API client', () => {
     renderFeed();
 
     expect(await screen.findByRole('heading', { name: 'Gaming post 3' })).toBeInTheDocument();
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    // The title goes to the post page, by the slug the API gave.
+    expect(screen.getByRole('link', { name: 'Gaming post 3' })).toHaveAttribute(
+      'href',
+      '/forum/gaming-post-3'
+    );
     expect(screen.getByText('alice')).toBeInTheDocument();
-    expect(screen.getByText('4 Comments')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '4 Comments' })).toBeInTheDocument();
     expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
 
     expect(mock.history.get).toHaveLength(1);

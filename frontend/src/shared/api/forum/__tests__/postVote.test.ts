@@ -1,4 +1,10 @@
-import { applyVoteOutcome, scoreAfterRetract, voteActionFor, voteValue } from '../postVote';
+import {
+  applyVoteOutcome,
+  isPostDetailQuery,
+  scoreAfterRetract,
+  voteActionFor,
+  voteValue,
+} from '../postVote';
 import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 
@@ -70,5 +76,30 @@ describe('applyVoteOutcome', () => {
     const before = page(post(1, 5));
     applyVoteOutcome(before, 1, { voteScore: 6, myVote: null });
     expect(before.content[0].voteScore).toBe(5);
+  });
+});
+
+describe('isPostDetailQuery', () => {
+  const detail = { id: 5, slug: 'hello', voteScore: 3, content: 'text' };
+  const query = (queryKey: unknown[], data: unknown) => ({ queryKey, state: { data } });
+
+  it('matches the cached post of the post page with this id', () => {
+    expect(isPostDetailQuery(query(['/forum/posts/hello'], detail), 5)).toBe(true);
+  });
+
+  it('does not match another post, or no data yet', () => {
+    expect(isPostDetailQuery(query(['/forum/posts/hello'], detail), 6)).toBe(false);
+    expect(isPostDetailQuery(query(['/forum/posts/hello'], undefined), 5)).toBe(false);
+  });
+
+  it('does not match the feed, the comments or a query of something else', () => {
+    expect(isPostDetailQuery(query(['/forum/posts', { page: 0 }], detail), 5)).toBe(false);
+    expect(isPostDetailQuery(query(['/forum/posts/hello/comments'], detail), 5)).toBe(false);
+    expect(isPostDetailQuery(query(['/notifications'], detail), 5)).toBe(false);
+    expect(isPostDetailQuery(query([{ not: 'a path' }], detail), 5)).toBe(false);
+  });
+
+  it('does not match data that is not a whole post', () => {
+    expect(isPostDetailQuery(query(['/forum/posts/hello'], { id: 5 }), 5)).toBe(false);
   });
 });
