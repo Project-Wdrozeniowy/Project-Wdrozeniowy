@@ -186,6 +186,18 @@ engineering reading of the ePrivacy storage rules (EDPB Guidelines 2/2023 cover 
 not a reviewed legal text or a compliance claim. The team should confirm it, and write a privacy
 notice, before any public deployment.
 
+## Analytics figures
+
+The sidebar ("Community activity", "Trending Topics") and the dashboard show only what the
+platform counts, read through `shared/api/analytics/` from the public analytics endpoints
+(`/analytics/public/comparison`, `/public/activity`, `/public/categories`, `/trending-posts`) and
+the signed-in user's own totals (`/analytics/me`). The admin-only `/analytics/summary` and
+`/analytics/trends` are not used by these pages. Never put a fixed or invented number on a page:
+if the platform cannot know a figure (online users, posts per minute, hourly activity), the page
+does not show it. A card that reads a query uses `shared/ui/QueryState`, so loading, a fixed
+failure message with a retry, and "nothing yet" look the same everywhere. Charts carry their
+values as a text alternative.
+
 ## Tests and scope
 
 Tests move with their UI/helper modules. Page/form and session/provider

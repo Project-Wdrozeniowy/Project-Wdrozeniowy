@@ -1,43 +1,21 @@
-// PROVISIONAL mock dashboard data: PWDRZ-145 now publishes analytics; PWDRZ-130 generates bindings.
-// Live dashboard integration still needs UI metric/role mapping, outside binding generation.
-export const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
+export const DASHBOARD_TITLE = 'Analytics Dashboard';
+export const DASHBOARD_SUBTITLE = 'Public activity of the community, from the platform data.';
+export const PERIOD_SWITCH_LABEL = 'Time window';
 
-export const STATS = [
-  { label: 'Total Posts Today', value: 1234, change: 12.5 },
-  { label: 'Active Users', value: 8432, change: 5.2 },
-  { label: 'Trending Posts', value: 23, change: -3.1 },
-  { label: 'Total Views', value: 45200, change: 18.3 },
-];
+export const NO_ACTIVITY_TEXT = 'No public posts or comments in this window yet.';
+export const NO_TOP_POSTS_TEXT = 'No post has had activity in this window yet.';
+export const NO_EARLIER_DATA_TEXT = 'No earlier data to compare';
+export const UNAVAILABLE_TEXT = 'Not available';
 
-// Monthly engagement scores for the Engagement Trends chart
-export const ENGAGEMENT_PER_MONTH = [55, 62, 48, 70, 80, 75, 90, 85, 95, 88, 102, 110];
+/** Colours of the line and bar charts (the chart text and grid follow the theme). */
+export const CHART_COLORS = {
+  posts: '#2563eb',
+  comments: '#10b981',
+  categories: '#8b5cf6',
+} as const;
 
-// Hourly activity counts (0–23h) for the User Activity by Hour chart
-export const ACTIVITY_BY_HOUR = [
-  5, 8, 12, 18, 25, 30, 42, 55, 60, 58, 50, 45, 40, 38, 42, 50, 60, 65, 58, 45, 32, 20, 12, 7,
-];
-
-export const TOP_POSTS = [
-  { title: 'Amazing new tech discovery', views: 12300, engagement: 0.89 },
-  { title: 'Senate reaches bipartisan infrastructure deal', views: 8700, engagement: 0.76 },
-  { title: 'Scientists develop efficient carbon capture', views: 7200, engagement: 0.82 },
-  { title: 'Gaming meta shift after patch 2.4', views: 5900, engagement: 0.71 },
-  { title: 'Free programming resources collection', views: 4800, engagement: 0.68 },
-];
-
-export const POSTS_PER_MONTH = [40, 58, 45, 72, 65, 88, 74, 105, 92, 118, 98, 140];
-
-export const POSTS_BY_TOPIC = [88, 62, 45, 72, 55, 38, 30];
+/** The most category bars shown; the chart stays readable and the server order is kept. Any
+ * further categories are added up in one "Other" bar. */
+export const MAX_CATEGORY_BARS = 8;
+export const NO_CATEGORY_LABEL = 'No category';
+export const OTHER_CATEGORIES_LABEL = 'Other';
