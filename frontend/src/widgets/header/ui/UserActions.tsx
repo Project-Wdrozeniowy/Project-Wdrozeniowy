@@ -1,4 +1,5 @@
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
+import MobileMenu from './MobileMenu';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
@@ -10,17 +11,21 @@ interface UserActionsProps {
 }
 
 export default function UserActions({ isAuthenticated, user, logout }: UserActionsProps) {
+  const pathname = useLocation().pathname;
+
   return (
     <div className="flex items-center gap-2">
       <ThemeToggle />
 
       {isAuthenticated && <NotificationBell />}
 
+      {/* Small screens: one menu instead of the text links below. */}
+      {/* Keyed by the page: following any link, or going back, closes an open menu. */}
+      <MobileMenu key={pathname} isAuthenticated={isAuthenticated} user={user} logout={logout} />
+
       {isAuthenticated ? (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-fg-subtle hidden sm:block">
-            {user?.displayName ?? user?.username}
-          </span>
+        <div className="hidden md:flex items-center gap-2">
+          <span className="text-sm text-fg-subtle">{user?.displayName ?? user?.username}</span>
           <Link to="/settings" className="text-sm text-fg-subtle hover:text-fg transition-colors">
             Settings
           </Link>
@@ -32,7 +37,7 @@ export default function UserActions({ isAuthenticated, user, logout }: UserActio
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-2">
           <Link
             to="/login"
             className="text-sm text-fg hover:text-fg-muted transition-colors px-3 py-1.5"

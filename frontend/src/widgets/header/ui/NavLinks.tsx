@@ -1,14 +1,10 @@
 import { Link } from 'react-router';
 import { cn } from '@/shared/lib/cn';
+import { isActiveLink } from '@/widgets/header/lib/isActiveLink';
 
 interface NavLink {
   href: string;
   label: string;
-}
-
-/** `/forum/some-post` keeps "Forum" highlighted; `/` only matches the home page exactly. */
-export function isActiveLink(pathname: string, href: string): boolean {
-  return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 }
 
 interface NavLinksProps {
