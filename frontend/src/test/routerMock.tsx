@@ -13,6 +13,7 @@ export async function routerMock(overrides: Record<string, unknown> = {}) {
     useNavigate: () => vi.fn(),
     useLocation: () => ({ pathname: '/', search: '', hash: '', state: null, key: 'test' }),
     useSearchParams: () => [new URLSearchParams(), vi.fn()],
+    useBlocker: () => ({ state: 'unblocked', reset: vi.fn(), proceed: vi.fn() }),
     ...overrides,
   };
 }

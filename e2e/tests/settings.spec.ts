@@ -1,14 +1,14 @@
 import { test, expect, signIn, apiResponse, gatewayURL, csrfHeaders } from '../support/fixtures.js';
 
-// PWDRZ-108: the settings page against the real backend. Account edits go through
+// PWDRZ-108: the settings page against the real backend. Profile edits go through
 // PATCH /api/users/me, the password change through POST /api/users/me/password.
 test('saves account fields through PATCH /api/users/me and keeps them after a reload', async ({
   page,
   account,
 }) => {
   await signIn(page, account);
-  await page.goto('/settings');
-  const form = page.getByRole('form', { name: 'Account settings' });
+  await page.goto('/settings/profile');
+  const form = page.getByRole('form', { name: 'Profile information' });
   const displayName = `E2E ${account.username}`.slice(0, 60);
   const avatarUrl = 'https://example.com/avatar.png';
   await form.getByLabel('Display name', { exact: true }).fill(displayName);
@@ -24,7 +24,7 @@ test('saves account fields through PATCH /api/users/me and keeps them after a re
   expect(profile.avatarUrl).toBe(avatarUrl);
 
   await page.reload();
-  const reloaded = page.getByRole('form', { name: 'Account settings' });
+  const reloaded = page.getByRole('form', { name: 'Profile information' });
   await expect(reloaded.getByLabel('Display name', { exact: true })).toHaveValue(displayName);
   await expect(reloaded.getByLabel('Avatar link', { exact: true })).toHaveValue(avatarUrl);
 });
@@ -36,7 +36,7 @@ test('changes the password through POST /api/users/me/password and forces a new 
 }) => {
   const newPassword = 'E2eNewPassword456!';
   await signIn(page, account);
-  await page.goto('/settings');
+  await page.goto('/settings/account');
   const form = page.getByRole('form', { name: 'Change password' });
   await form.getByLabel('Current password', { exact: true }).fill(account.password);
   await form.getByLabel('New password', { exact: true }).fill(newPassword);

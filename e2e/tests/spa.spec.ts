@@ -255,7 +255,7 @@ test('SPA: representative layouts remain usable at desktop and narrow widths', a
     await page.goto(path);
     await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
     if (path === '/settings')
-      await expect(page.getByRole('form', { name: 'Account settings' })).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Profile information' })).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     await testInfo.attach(`${path.split('?')[0].slice(1) || 'home'}-desktop`, {
       body: await page.screenshot(),
@@ -267,7 +267,7 @@ test('SPA: representative layouts remain usable at desktop and narrow widths', a
     await page.goto(path);
     await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
     if (path === '/settings')
-      await expect(page.getByRole('form', { name: 'Account settings' })).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Profile information' })).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
     ).toBe(true);

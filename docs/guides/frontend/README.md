@@ -30,6 +30,13 @@ stays in its page; dashboard charts and a page's feed are not promoted to widget
 just because they are large. The shared post-feed presentation is genuinely
 consumed by both home and forum.
 
+The settings page has one URL per section (`/settings/profile`, `/settings/account`);
+`/settings` and any section that cannot be opened go to `/settings/profile`. The
+design's other tabs (notifications, appearance, privacy, content) are shown as not
+available yet until the backend has endpoints for them. Profile editing lives only
+on the settings page; the profile page is read-only and links to it. Both settings
+sections reuse `features/edit-profile/ProfileForm` with the fields they show.
+
 ```text
 src/
   main.tsx

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { ROLE_LABELS } from '@/pages/profile/config/profileView.const';
 import { isHttpUrl } from '@/shared/lib/url';
 import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
@@ -62,6 +63,13 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
       {profile.bio && (
         <p className="text-gray-700 text-sm whitespace-pre-wrap break-words">{profile.bio}</p>
       )}
+
+      <Link
+        to="/settings/profile"
+        className="self-start text-blue-600 hover:text-blue-700 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-blue-500"
+      >
+        Edit profile
+      </Link>
     </section>
   );
 }

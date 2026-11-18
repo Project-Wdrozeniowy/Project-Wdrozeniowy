@@ -1,10 +1,11 @@
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { vi } from 'vitest';
 import SettingsView from '@/pages/settings/ui/SettingsView';
+import type { OpenSettingsSectionId } from '@/pages/settings/config/settingsView.const';
 import { toast } from '@/shared/lib/toast';
 import { apiClient } from '@/shared/api/client/api';
 import { useStore } from '@/store';
@@ -49,10 +50,13 @@ const PROFILE: MyProfile = {
 const axiosInstance = (apiClient as unknown as { client: AxiosInstance }).client;
 let mock: MockAdapter;
 
-function renderView(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
+function renderView(
+  section: OpenSettingsSectionId = 'account',
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+) {
   return render(
     <QueryClientProvider client={client}>
-      <SettingsView />
+      <SettingsView section={section} />
     </QueryClientProvider>
   );
 }
@@ -80,7 +84,7 @@ afterEach(() => {
 });
 
 describe('loading', () => {
-  it('shows an accessible loading state, then both forms', async () => {
+  it('shows an accessible loading state, then the account forms', async () => {
     mock.onGet('/users/me').reply(200, PROFILE);
     renderView();
     expect(screen.getByRole('status', { name: 'Loading your settings' })).toBeInTheDocument();
@@ -102,13 +106,13 @@ describe('loading', () => {
 });
 
 describe('account settings', () => {
-  it('saves only the changed field through PATCH /users/me and offers a link, not an upload', async () => {
+  it('saves only the changed profile field through PATCH /users/me and offers a link, not an upload', async () => {
     mock.onGet('/users/me').reply(200, PROFILE);
     mock
       .onPatch('/users/me')
       .reply(200, { ...PROFILE, avatarUrl: 'https://img.example.com/a.png' });
-    renderView();
-    await screen.findByRole('form', { name: 'Account settings' });
+    renderView('profile');
+    await screen.findByRole('form', { name: 'Profile information' });
 
     const avatar = field('Avatar link');
     expect(avatar).toHaveAttribute('type', 'url');
@@ -128,8 +132,8 @@ describe('account settings', () => {
 
   it('refuses a link that is not http(s) before any request', async () => {
     mock.onGet('/users/me').reply(200, PROFILE);
-    renderView();
-    await screen.findByRole('form', { name: 'Account settings' });
+    renderView('profile');
+    await screen.findByRole('form', { name: 'Profile information' });
 
     const user = userEvent.setup();
     await user.type(field('Avatar link'), 'ftp://files.example.com/a.png');
@@ -161,7 +165,7 @@ describe('password change', () => {
       .onGet('/users/me')
       .reply(() => [200, useStore.getState().user?.id === bob.id ? bob : PROFILE]);
     mock.onPost('/users/me/password').reply(204);
-    renderView(client);
+    renderView('account', client);
     await screen.findByRole('form', { name: 'Change password' });
     const user = await fillPasswords();
     await user.click(screen.getByRole('button', { name: 'Change password' }));
@@ -305,6 +309,76 @@ describe('password change', () => {
     await user.click(screen.getByRole('button', { name: 'Change password' }));
 
     expect(await screen.findByText('Passwords do not match')).toBeInTheDocument();
+    expect(mock.history.post).toHaveLength(0);
+  });
+});
+
+describe('the two sections', () => {
+  it('keeps the profile fields on the profile section and the email on the account section', async () => {
+    mock.onGet('/users/me').reply(200, PROFILE);
+    const profile = renderView('profile');
+    await screen.findByRole('form', { name: 'Profile information' });
+    expect(screen.queryByLabelText('Email')).not.toBeInTheDocument();
+    expect(screen.queryByRole('form', { name: 'Change password' })).not.toBeInTheDocument();
+    expect(field('Display name').value).toBe('Alice');
+    expect(screen.getByLabelText('Bio')).toBeInTheDocument();
+    profile.unmount();
+
+    renderView('account');
+    await screen.findByRole('form', { name: 'Account settings' });
+    expect(field('Email').value).toBe('alice@example.com');
+    expect(screen.queryByLabelText('Display name')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Bio')).not.toBeInTheDocument();
+  });
+
+  it('saves a new email from the account section and sends nothing else', async () => {
+    mock.onGet('/users/me').reply(200, PROFILE);
+    mock.onPatch('/users/me').reply(200, { ...PROFILE, email: 'new@example.com' });
+    renderView('account');
+    await screen.findByRole('form', { name: 'Account settings' });
+
+    const user = userEvent.setup();
+    await user.clear(field('Email'));
+    await user.type(field('Email'), 'new@example.com');
+    await user.click(
+      within(screen.getByRole('form', { name: 'Account settings' })).getByRole('button', {
+        name: 'Save changes',
+      })
+    );
+
+    await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ email: 'new@example.com' });
+  });
+
+  it('is not blocked by a stored avatar link the profile section would reject', async () => {
+    mock.onGet('/users/me').reply(200, { ...PROFILE, avatarUrl: 'ftp://old.example.com/a.png' });
+    mock.onPatch('/users/me').reply(200, { ...PROFILE, email: 'new@example.com' });
+    renderView('account');
+    await screen.findByRole('form', { name: 'Account settings' });
+
+    const user = userEvent.setup();
+    await user.clear(field('Email'));
+    await user.type(field('Email'), 'new@example.com');
+    await user.click(
+      within(screen.getByRole('form', { name: 'Account settings' })).getByRole('button', {
+        name: 'Save changes',
+      })
+    );
+
+    await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ email: 'new@example.com' });
+  });
+
+  it('shows the danger zone without any way to delete the account yet', async () => {
+    mock.onGet('/users/me').reply(200, PROFILE);
+    renderView('account');
+
+    const zone = await screen.findByRole('region', { name: 'Danger zone' });
+    expect(zone).toHaveTextContent('not available yet');
+    const button = within(zone).getByRole('button', { name: 'Delete account' });
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(button);
+    expect(mock.history.delete).toHaveLength(0);
     expect(mock.history.post).toHaveLength(0);
   });
 });

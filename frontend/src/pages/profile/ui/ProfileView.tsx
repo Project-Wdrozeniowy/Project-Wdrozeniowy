@@ -1,11 +1,10 @@
 import { useMyProfile } from '@/shared/api/profile/useMyProfile';
 import ProfileCard from './ProfileCard';
-import ProfileForm from '@/features/edit-profile/ProfileForm';
 import ProfileLoadError from '@/shared/ui/ProfileLoadError';
 import ProfileSkeleton from './ProfileSkeleton';
 
 /**
- * The signed-in user's profile, loaded from `GET /users/me`, with the edit form.
+ * The signed-in user's profile, loaded from `GET /users/me`. Editing lives on the settings page.
  * An expired session never shows up here: the session coordinator handles confirmed expiry.
  */
 export default function ProfileView() {
@@ -19,10 +18,5 @@ export default function ProfileView() {
     return <ProfileSkeleton />;
   }
 
-  return (
-    <>
-      <ProfileCard profile={data} />
-      <ProfileForm profile={data} />
-    </>
-  );
+  return <ProfileCard profile={data} />;
 }
