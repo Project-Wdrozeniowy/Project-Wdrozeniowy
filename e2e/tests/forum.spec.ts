@@ -46,22 +46,22 @@ test('publishes a persisted post and casts, switches and retracts its vote throu
   const vote = await castResponse.json();
   expect(vote.newScore).toBe(1);
   expect(vote.voteType).toBe('UP');
-  await expect(card.getByRole('button', { name: 'Upvote' })).toHaveClass(/text-blue-400/);
+  await expect(card.getByRole('button', { name: 'Upvote' })).toHaveClass(/text-accent/);
 
   // Reload proves the personal vote comes back through the generated feed query and bearer.
   await page.reload();
-  await expect(card.getByRole('button', { name: 'Upvote' })).toHaveClass(/text-blue-400/);
+  await expect(card.getByRole('button', { name: 'Upvote' })).toHaveClass(/text-accent/);
   const switched = apiResponse(page, '/forum/votes', 'POST');
   await card.getByRole('button', { name: 'Downvote', exact: true }).click();
   const switchedResponse = await switched;
   expect(switchedResponse.status()).toBe(200);
   expect((await switchedResponse.json()).newScore).toBe(-1);
-  await expect(card.getByRole('button', { name: 'Downvote' })).toHaveClass(/text-red-400/);
+  await expect(card.getByRole('button', { name: 'Downvote' })).toHaveClass(/text-danger/);
 
   const retracted = apiResponse(page, `/forum/votes/${vote.id}`, 'DELETE');
   await card.getByRole('button', { name: 'Downvote', exact: true }).click();
   expect((await retracted).status()).toBe(204);
-  await expect(card.getByRole('button', { name: 'Downvote' })).not.toHaveClass(/text-red-400/);
+  await expect(card.getByRole('button', { name: 'Downvote' })).not.toHaveClass(/text-danger/);
   const afterRetract = await request.get(`${gatewayURL}/api/forum/posts/${post.slug}`);
   expect((await afterRetract.json()).voteScore).toBe(0);
   // The detail page is still a placeholder. Do not present it as implemented

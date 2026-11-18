@@ -51,11 +51,18 @@ test('SPA: production assets, fallback and API failures retain their boundaries'
       nodes.map((node) => node.getAttribute('src') ?? node.getAttribute('href')!)
     );
   expect(sources.length).toBeGreaterThan(0);
+  // The theme script runs before the first paint (no inline script is allowed), so it is a plain
+  // file at the root. It has no fingerprint, so it must never be cached as immutable.
+  expect(sources).toContain('/theme-init.js');
   for (const source of sources) {
-    expect(source).toMatch(/^\/assets\//);
     const asset = await request.get(source);
     expect(asset.status()).toBe(200);
     expect(asset.headers()['content-type']).toMatch(/javascript|text\/css/);
+    if (source === '/theme-init.js') {
+      expect(asset.headers()['cache-control']).toBe('no-cache');
+      continue;
+    }
+    expect(source).toMatch(/^\/assets\//);
     expect(asset.headers()['cache-control']).toContain('immutable');
   }
   for (const path of ['/assets/missing.js', '/missing.css']) {
