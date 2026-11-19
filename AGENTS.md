@@ -252,8 +252,9 @@ and `src/middleware/__tests__/`.
 Use the [e2e workspace](e2e/README.md): after root `npm ci` and browser
 installation, run root `npm run test:e2e` or `npm test` in `e2e/`. Its launcher owns an isolated real
 stack; do not substitute developer servers, production data or mocked API
-responses. The browser flows (`*.spec.ts`) and the HTTP integration cases (`*.integration.spec.ts`) use Chromium,
-one worker and no retries. Keep service coverage gates independent.
+responses. The browser flows (the `*.spec.ts` files that are not `*.integration.spec.ts`) drive
+Chromium; the HTTP integration cases (`*.integration.spec.ts`) call the real gateway directly with
+no browser. All run with one worker and no retries. Keep service coverage gates independent.
 `npm run test:probe` must fail a real browser assertion and still clean up.
 Current local/CI/required-check evidence belongs in
 [the PWDRZ-117 execution record](docs/agent-task-backlog/pwdrz-117-execution.md).
