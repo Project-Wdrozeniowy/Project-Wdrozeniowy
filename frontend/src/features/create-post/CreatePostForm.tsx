@@ -24,8 +24,11 @@ import { usePublishPost } from '@/shared/api/forum/usePublishPost';
 import type { CategoryDto as Category } from '@/shared/api/generated/models/categoryDto.dto';
 
 import { cn } from '@/shared/lib/cn';
+import { getLoadPhase } from '@/shared/lib/loadPhase';
 import { getFieldControlProps } from '@/shared/ui/fieldA11y';
 import FormField from '@/shared/ui/FormField';
+import RetryButton from '@/shared/ui/RetryButton';
+import RetryStatus from '@/shared/ui/RetryStatus';
 
 interface CreatePostFormProps {
   onCancel: () => void;
@@ -119,32 +122,37 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
   }
 
   const categoryList = categories.data ?? [];
+  const categoryPhase = getLoadPhase(categories);
   // A failed background refetch keeps the cached list; only an empty result is a problem.
   // While the list reloads (after a rejected category) an empty cache is not yet a verdict.
   const categoriesUnavailable =
     categoryList.length === 0 && !categories.isPending && !categories.isFetching;
+  // A retry after a failed load keeps the message and its button on screen, so the keyboard user
+  // keeps their place and the retry is announced.
+  const categoriesRetrying = categoryList.length === 0 && categoryPhase === 'retrying';
+  const categoriesFailed = categories.isError || categoriesRetrying;
 
   // One message at a time: while the list is unavailable it replaces a validation error, and the
   // select references this single node. The retry button only makes sense after a failed request.
-  const categoryProblem = categoriesUnavailable ? (
-    <>
-      {categories.isError ? CATEGORIES_ERROR_MESSAGE : CATEGORIES_EMPTY_MESSAGE}
-      {categories.isError && (
-        <>
-          {' '}
-          <button
-            type="button"
-            onClick={() => categories.refetch()}
-            className="font-semibold underline"
-          >
-            Try again
-          </button>
-        </>
-      )}
-    </>
-  ) : (
-    errors.categoryId?.message
-  );
+  const categoryProblem =
+    categoriesUnavailable || categoriesRetrying ? (
+      <>
+        {categoriesFailed ? CATEGORIES_ERROR_MESSAGE : CATEGORIES_EMPTY_MESSAGE}
+        {categoriesFailed && (
+          <>
+            {' '}
+            <RetryButton
+              onRetry={() => categories.refetch()}
+              retrying={categoriesRetrying}
+              variant="inline"
+              status={false}
+            />
+          </>
+        )}
+      </>
+    ) : (
+      errors.categoryId?.message
+    );
 
   return (
     <form
@@ -213,7 +221,9 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
             invalid: Boolean(errors.categoryId),
             required: true,
           })}
-          disabled={isPending || categories.isPending || categoriesUnavailable}
+          disabled={
+            isPending || categories.isPending || categoriesUnavailable || categoriesRetrying
+          }
           className={inputClass(Boolean(errors.categoryId))}
         >
           <option value="">
@@ -225,6 +235,8 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
             </option>
           ))}
         </select>
+        {/* Outside the message the select references, so it is not read as part of its description. */}
+        {categoriesFailed && <RetryStatus retrying={categoriesRetrying} />}
       </FormField>
 
       <FormField

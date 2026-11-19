@@ -5,6 +5,7 @@ import {
   PROFILE_POSTS_TITLE,
 } from '@/pages/profile/config/profileView.const';
 import { uniquePosts } from '@/pages/profile/lib/profilePosts';
+import { getLoadPhase } from '@/shared/lib/loadPhase';
 import { useAuthorPosts } from '@/shared/api/forum/useAuthorPosts';
 import PanelError from '@/shared/ui/PanelError';
 import { PostCard, toPostCardData } from '@/widgets/post-feed';
@@ -20,13 +21,16 @@ export default function ProfilePosts({ username }: ProfilePostsProps) {
   const query = useAuthorPosts(username);
   const posts = uniquePosts(query.data?.pages.flatMap((page) => page.content) ?? []);
 
+  const phase = getLoadPhase(query);
+
   let body;
-  if (query.isLoadingError) {
+  if (phase === 'failed' || phase === 'retrying') {
+    // A retry keeps the error on screen, so the keyboard user keeps their place.
     body = (
       <PanelError
         message={PROFILE_POSTS_ERROR_TEXT}
         onRetry={() => query.refetch()}
-        retrying={query.isFetching}
+        retrying={phase === 'retrying'}
       />
     );
   } else if (username === '' || query.isPending) {

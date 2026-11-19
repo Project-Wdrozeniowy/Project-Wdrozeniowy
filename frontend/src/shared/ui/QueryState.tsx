@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { getLoadPhase } from '@/shared/lib/loadPhase';
 import PanelError from '@/shared/ui/PanelError';
 import { PANEL_ERROR_TEXT } from '@/shared/ui/panelError.const';
 
@@ -8,6 +9,8 @@ interface QueryStateProps {
     /** Failed before there was any data: a failed refresh keeps showing the old data. */
     isLoadingError: boolean;
     isFetching: boolean;
+    /** Lets a retry be told from a first load; see `getLoadPhase`. */
+    errorUpdateCount: number;
     refetch: () => unknown;
   };
   /** Defaults to the shared fixed message. */
@@ -28,12 +31,18 @@ export default function QueryState({
   emptyText = '',
   children,
 }: QueryStateProps) {
-  if (query.isLoadingError) {
+  const phase = getLoadPhase(query);
+  if (phase === 'failed' || phase === 'retrying') {
+    // Kept on screen while the retry runs, so the keyboard user keeps their place.
     return (
-      <PanelError message={errorText} onRetry={() => query.refetch()} retrying={query.isFetching} />
+      <PanelError
+        message={errorText}
+        onRetry={() => query.refetch()}
+        retrying={phase === 'retrying'}
+      />
     );
   }
-  if (query.isPending) return <>{skeleton}</>;
+  if (phase === 'loading') return <>{skeleton}</>;
   if (empty) return <p className="text-sm text-fg-subtle">{emptyText}</p>;
   return <>{children}</>;
 }

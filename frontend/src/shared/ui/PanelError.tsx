@@ -1,7 +1,9 @@
+import RetryButton from '@/shared/ui/RetryButton';
+
 interface PanelErrorProps {
   message: string;
-  onRetry: () => void;
-  /** A retry is running: the button ignores further clicks. */
+  onRetry: () => unknown;
+  /** A retry is running: the button ignores further activations. */
   retrying: boolean;
 }
 
@@ -10,16 +12,7 @@ export default function PanelError({ message, onRetry, retrying }: PanelErrorPro
   return (
     <div role="alert" className="flex flex-col items-start gap-2 text-sm text-fg-muted">
       <p>{message}</p>
-      <button
-        type="button"
-        onClick={() => {
-          if (!retrying) onRetry();
-        }}
-        aria-disabled={retrying}
-        className="rounded border border-line-strong px-3 py-1 text-sm font-semibold text-fg hover:bg-raised aria-disabled:opacity-60 aria-disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-blue-500"
-      >
-        {retrying ? 'Trying…' : 'Try again'}
-      </button>
+      <RetryButton onRetry={onRetry} retrying={retrying} variant="outline" />
     </div>
   );
 }

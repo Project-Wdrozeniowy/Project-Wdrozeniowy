@@ -1,11 +1,9 @@
+import SkeletonStatus from '@/shared/ui/SkeletonStatus';
+import { PROFILE_LOADING_LABEL } from '@/pages/profile/config/profileView.const';
+
 export default function ProfileSkeleton() {
   return (
-    <div
-      role="status"
-      aria-label="Loading your profile"
-      aria-busy="true"
-      className="flex flex-col gap-4"
-    >
+    <SkeletonStatus label={PROFILE_LOADING_LABEL} className="flex flex-col gap-4">
       <div className="bg-surface rounded-xl p-6 flex items-center gap-4 border border-line">
         <div className="w-24 h-24 rounded-full bg-raised animate-pulse shrink-0" />
         <div className="flex flex-col gap-2">
@@ -19,6 +17,6 @@ export default function ProfileSkeleton() {
           <div key={i} className="h-10 bg-raised rounded animate-pulse" />
         ))}
       </div>
-    </div>
+    </SkeletonStatus>
   );
 }

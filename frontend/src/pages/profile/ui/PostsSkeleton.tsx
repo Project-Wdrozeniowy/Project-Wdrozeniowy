@@ -1,13 +1,9 @@
+import SkeletonStatus from '@/shared/ui/SkeletonStatus';
 import { PROFILE_POSTS_LOADING_LABEL } from '@/pages/profile/config/profileView.const';
 
 export default function PostsSkeleton() {
   return (
-    <div
-      role="status"
-      aria-label={PROFILE_POSTS_LOADING_LABEL}
-      aria-busy="true"
-      className="flex flex-col gap-3"
-    >
+    <SkeletonStatus label={PROFILE_POSTS_LOADING_LABEL} className="flex flex-col gap-3">
       {Array.from({ length: 3 }).map((_, i) => (
         <div
           key={i}
@@ -18,6 +14,6 @@ export default function PostsSkeleton() {
           <div className="h-3 w-4/5 bg-raised rounded" />
         </div>
       ))}
-    </div>
+    </SkeletonStatus>
   );
 }

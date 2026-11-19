@@ -2,6 +2,7 @@ import ProfileLoadError from '@/shared/ui/ProfileLoadError';
 import ChangePasswordForm from '@/features/change-password/ChangePasswordForm';
 import ProfileForm from '@/features/edit-profile/ProfileForm';
 import { useMyProfile } from '@/shared/api/profile/useMyProfile';
+import { getLoadPhase } from '@/shared/lib/loadPhase';
 import {
   ACCOUNT_SECTION_FIELDS,
   ACCOUNT_SECTION_TITLE,
@@ -21,13 +22,15 @@ interface SettingsViewProps {
  * one cache (`useMyProfile`) and one save path (`PATCH /users/me`), so the pages cannot disagree.
  */
 export default function SettingsView({ section }: SettingsViewProps) {
-  const { data, isPending, isLoadingError, isFetching, refetch } = useMyProfile();
+  const query = useMyProfile();
+  const { data, refetch } = query;
+  const phase = getLoadPhase(query);
 
   // A failed refresh keeps the form on screen, so only "never loaded" is a full error.
-  if (isLoadingError) {
-    return <ProfileLoadError onRetry={() => refetch()} retrying={isFetching} />;
+  if (phase === 'failed' || phase === 'retrying') {
+    return <ProfileLoadError onRetry={() => refetch()} retrying={phase === 'retrying'} />;
   }
-  if (isPending) {
+  if (phase === 'loading' || !data) {
     return <SettingsSkeleton />;
   }
 
