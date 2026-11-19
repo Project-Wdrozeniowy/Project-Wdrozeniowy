@@ -6,3 +6,12 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   MODERATOR: 'Moderator',
   ADMIN: 'Admin',
 };
+
+/** Names the profile skeleton for assistive technology. */
+export const PROFILE_LOADING_LABEL = 'Loading your profile';
+
+/**
+ * The posts list on the profile has no content yet (PWDRZ-60), so its placeholder says it is not
+ * available instead of claiming to load.
+ */
+export const PROFILE_POSTS_UNAVAILABLE_LABEL = 'Your posts are not available yet.';

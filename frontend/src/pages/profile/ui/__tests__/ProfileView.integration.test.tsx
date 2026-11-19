@@ -139,6 +139,26 @@ describe('loading the profile', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('keeps the error and the focused button while a retry runs', async () => {
+    mock.onGet('/users/me').replyOnce(500, { status: 500, detail: 'boom' });
+    renderView();
+    const retry = await screen.findByRole('button', { name: 'Try again' });
+
+    mock.onGet('/users/me').reply(() => new Promise(() => {}));
+    const user = userEvent.setup();
+    await user.click(retry);
+
+    const running = await screen.findByRole('button', { name: 'Trying again…' });
+    expect(running).toBe(retry);
+    expect(running).toHaveFocus();
+    expect(running).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('alert')).toHaveTextContent('We could not load your profile');
+    expect(screen.queryByRole('status', { name: 'Loading your profile' })).not.toBeInTheDocument();
+
+    await user.click(running);
+    expect(mock.history.get).toHaveLength(2);
+  });
+
   it('shows the same message for a network error without a toast', async () => {
     mock.onGet('/users/me').networkError();
     renderView();

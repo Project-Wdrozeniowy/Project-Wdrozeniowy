@@ -2,20 +2,22 @@ import { PostCard, PostFeedError, PostFeedSkeleton, toPostCardData } from '@/wid
 import { Link } from 'react-router';
 import { HOME_ALL_POSTS_LABEL, HOME_EMPTY_MESSAGE } from '@/pages/home/config/homeFeed.const';
 import { useForumPosts } from '@/shared/api/forum/useForumPosts';
+import { getLoadPhase } from '@/shared/lib/loadPhase';
 
 /**
  * The newest posts on the home page: the first page of the forum feed, without pagination.
  * The rest of the posts are one link away on the forum page.
  */
 export default function HomeFeed() {
-  const { data, isPending, isLoadingError, isRefetchError, isFetching, refetch } = useForumPosts({
-    page: 0,
-  });
+  const query = useForumPosts({ page: 0 });
+  const { data, isRefetchError, isFetching, refetch } = query;
+  const phase = getLoadPhase(query);
 
-  if (isLoadingError) {
-    return <PostFeedError onRetry={() => refetch()} retrying={isFetching} />;
+  // A retry keeps the error on screen, so the keyboard user keeps their place.
+  if (phase === 'failed' || phase === 'retrying') {
+    return <PostFeedError onRetry={() => refetch()} retrying={phase === 'retrying'} />;
   }
-  if (isPending) {
+  if (phase === 'loading' || !data) {
     return <PostFeedSkeleton />;
   }
 

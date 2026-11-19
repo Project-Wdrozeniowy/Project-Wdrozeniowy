@@ -119,6 +119,25 @@ describe('HomeFeed', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('keeps the error and the focused button while a retry runs, and ignores a second activation', async () => {
+    list.mockRejectedValueOnce(new Error('down'));
+    renderHome();
+    const retry = await screen.findByRole('button', { name: 'Try again' });
+
+    list.mockReturnValue(new Promise(() => {}));
+    const user = userEvent.setup();
+    await user.click(retry);
+
+    const running = await screen.findByRole('button', { name: 'Trying again…' });
+    expect(running).toBe(retry);
+    expect(running).toHaveFocus();
+    expect(running).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('alert')).toHaveTextContent(FEED_ERROR_MESSAGE);
+
+    await user.click(running);
+    expect(list).toHaveBeenCalledTimes(2);
+  });
+
   it('does not claim there are no posts when a refresh of an empty page fails', async () => {
     list.mockResolvedValueOnce(pageOf([]));
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

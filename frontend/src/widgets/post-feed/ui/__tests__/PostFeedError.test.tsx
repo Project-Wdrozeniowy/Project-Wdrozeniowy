@@ -24,7 +24,8 @@ describe('PostFeedError', () => {
     render(<PostFeedError onRetry={onRetry} retrying />);
 
     const button = screen.getByRole('button', { name: 'Trying again…' });
-    expect(button).toBeDisabled();
+    // Not `disabled`: the button keeps keyboard focus while the retry runs.
+    expect(button).toHaveAttribute('aria-disabled', 'true');
     await userEvent.setup().click(button);
     expect(onRetry).not.toHaveBeenCalled();
   });

@@ -489,18 +489,59 @@ describe('ForumFeed – states', () => {
     await waitFor(() => expect(document.body).not.toHaveTextContent('Network Error'));
   });
 
-  it('swaps the error for the loading state while retrying, and asks the API again once', async () => {
+  it('keeps the error and its button on screen while retrying, and asks the API again once', async () => {
     list.mockRejectedValueOnce(new Error('Network Error'));
     renderFeed();
     const alert = await screen.findByRole('alert');
     expect(list).toHaveBeenCalledTimes(1);
 
     list.mockReturnValue(new Promise(() => {}));
-    await userEvent.setup().click(within(alert).getByRole('button', { name: 'Try again' }));
+    const user = userEvent.setup();
+    const retry = within(alert).getByRole('button', { name: 'Try again' });
+    await user.click(retry);
 
-    expect(await screen.findByRole('status', { name: 'Loading posts…' })).toBeInTheDocument();
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // The same button, still focused, now saying the retry is running and announced politely.
+    const running = await screen.findByRole('button', { name: 'Trying again…' });
+    expect(running).toBe(retry);
+    expect(running).toHaveFocus();
+    expect(running).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('status')).toHaveTextContent('Trying again…');
+    expect(screen.queryByRole('status', { name: 'Loading posts…' })).not.toBeInTheDocument();
+
+    await user.click(running);
     expect(list).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the error on screen while retrying a page that failed after a page change', async () => {
+    list.mockResolvedValue(pageOf([8, 7, 6], { page: 0, totalPages: 3, totalElements: 8 }));
+    const { rerenderFeed } = renderFeed();
+    await screen.findByText('Post 8');
+
+    search = 'page=2';
+    list.mockRejectedValueOnce(new Error('Network Error'));
+    rerenderFeed();
+    const alert = await screen.findByRole('alert');
+
+    list.mockReturnValue(new Promise(() => {}));
+    const user = userEvent.setup();
+    const retry = within(alert).getByRole('button', { name: 'Try again' });
+    await user.click(retry);
+
+    const running = await screen.findByRole('button', { name: 'Trying again…' });
+    expect(running).toBe(retry);
+    expect(running).toHaveFocus();
+    expect(screen.queryByText('Post 8')).not.toBeInTheDocument();
+  });
+
+  it('shows the loading state for a first load, not the retry state', async () => {
+    list.mockReturnValue(new Promise(() => {}));
+    renderFeed();
+
+    expect(screen.getByRole('status', { name: 'Loading posts…' })).toHaveAttribute(
+      'aria-busy',
+      'true'
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('keeps the loaded posts and shows a notice when a background refresh fails', async () => {

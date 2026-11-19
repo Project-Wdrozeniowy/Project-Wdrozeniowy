@@ -18,6 +18,7 @@ describe('PostFeedSkeleton', () => {
 
   it('hides the decorative cards from assistive technology', () => {
     const { container } = render(<PostFeedSkeleton />);
-    expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(6);
+    const hidden = container.querySelector('[aria-hidden="true"]');
+    expect(hidden?.children).toHaveLength(6);
   });
 });

@@ -2,6 +2,7 @@ import { PostCard, PostFeedError, PostFeedSkeleton, toPostCardData } from '@/wid
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { ALL_TOPICS, isTopic } from '@/shared/constants/categories.const';
 import { useForumPosts } from '@/shared/api/forum/useForumPosts';
+import { getLoadPhase } from '@/shared/lib/loadPhase';
 import { parsePageParam, parseTagParam, topicToCategorySlug } from '@/pages/forum/lib/forumFeed';
 import ActiveTagFilter from './ActiveTagFilter';
 import CategoryFilter from './CategoryFilter';
@@ -25,15 +26,11 @@ export default function ForumFeed() {
   const page = parsePageParam(searchParams.get('page'));
   const categorySlug = activeTopic === ALL_TOPICS ? undefined : topicToCategorySlug(activeTopic);
 
-  const {
-    data,
-    isPending,
-    isLoadingError,
-    isRefetchError,
-    isFetching,
-    isPlaceholderData,
-    refetch,
-  } = useForumPosts({ page, categorySlug, tag });
+  const query = useForumPosts({ page, categorySlug, tag });
+  const { data, isRefetchError, isFetching, isPlaceholderData, refetch } = query;
+  const phase = getLoadPhase(query);
+  const failed = phase === 'failed' || phase === 'retrying';
+  const loadingFirst = phase === 'loading' || !data;
 
   function updateLocation(update: (params: URLSearchParams) => void, mode: 'push' | 'replace') {
     const params = new URLSearchParams(searchParams.toString());
@@ -79,19 +76,20 @@ export default function ForumFeed() {
 
   // The pagination has its own fixed slot below the content, so it is the same element while the
   // content changes between the posts and the loading state. That keeps keyboard focus on it.
-  const loadingAnotherPage = !isLoadingError && !isPending && isPlaceholderData;
+  const loadingAnotherPage = !failed && !loadingFirst && isPlaceholderData;
   const showPagination =
-    !isLoadingError &&
-    !isPending &&
+    !failed &&
+    !loadingFirst &&
     (loadingAnotherPage || (data.content.length > 0 && !isPlaceholderData));
 
   return (
     <>
       <CategoryFilter active={activeTopic} onSelect={handleSelectTopic} />
       {tag && <ActiveTagFilter tag={tag} clearHref={hrefWithoutTag()} />}
-      {isLoadingError ? (
-        <PostFeedError onRetry={() => refetch()} retrying={isFetching} />
-      ) : isPending ? (
+      {failed ? (
+        // A retry keeps the error on screen, so the keyboard user keeps their place.
+        <PostFeedError onRetry={() => refetch()} retrying={phase === 'retrying'} />
+      ) : loadingFirst ? (
         // First load or a new topic: nothing to show yet.
         <PostFeedSkeleton />
       ) : loadingAnotherPage ? (
