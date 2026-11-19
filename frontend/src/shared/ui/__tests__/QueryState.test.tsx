@@ -3,7 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import QueryState from '@/shared/ui/QueryState';
 
-const ready = { isPending: false, isLoadingError: false, isFetching: false, refetch: vi.fn() };
+const ready = {
+  isPending: false,
+  isLoadingError: false,
+  isFetching: false,
+  errorUpdateCount: 0,
+  refetch: vi.fn(),
+};
 
 function renderState(query = ready, extra: { empty?: boolean; emptyText?: string } = {}) {
   return render(
@@ -62,10 +68,28 @@ describe('QueryState', () => {
     const refetch = vi.fn();
     renderState({ ...ready, isLoadingError: true, isFetching: true, refetch });
 
-    const button = screen.getByRole('button', { name: 'Trying…' });
+    const button = screen.getByRole('button', { name: 'Trying again…' });
     await userEvent.click(button);
 
     expect(button).toHaveAttribute('aria-disabled', 'true');
     expect(refetch).not.toHaveBeenCalled();
+  });
+
+  it('keeps the failure on screen while a retry runs after a failed first load', () => {
+    renderState({ ...ready, isPending: true, isFetching: true, errorUpdateCount: 1 });
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Fixed failure text');
+    expect(screen.getByRole('button', { name: 'Trying again…' })).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
+    expect(screen.queryByText('skeleton')).not.toBeInTheDocument();
+  });
+
+  it('shows the skeleton, not the failure, for a first load that has not failed', () => {
+    renderState({ ...ready, isPending: true, isFetching: true, errorUpdateCount: 0 });
+
+    expect(screen.getByText('skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

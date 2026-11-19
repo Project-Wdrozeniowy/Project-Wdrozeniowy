@@ -150,6 +150,21 @@ describe('the posts of the profile', () => {
     expect(await screen.findByRole('link', { name: 'Post 7' })).toBeInTheDocument();
   });
 
+  it('keeps the posts error and its focused button on screen while the retry runs', async () => {
+    mock.onGet('/forum/posts').replyOnce(500, { detail: 'boom' });
+    mock.onGet('/forum/posts').reply(() => new Promise(() => {}));
+    renderPage();
+
+    const alert = await screen.findByRole('alert');
+    const retry = within(alert).getByRole('button', { name: 'Try again' });
+    await userEvent.click(retry);
+
+    const running = await screen.findByRole('button', { name: 'Trying again…' });
+    expect(running).toBe(retry);
+    expect(running).toHaveFocus();
+    expect(screen.queryByRole('status', { name: 'Loading your posts' })).not.toBeInTheDocument();
+  });
+
   it('keeps the loaded posts and says so when the next page fails', async () => {
     mock
       .onGet('/forum/posts')

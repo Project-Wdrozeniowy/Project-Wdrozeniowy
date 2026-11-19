@@ -7,6 +7,9 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: 'Admin',
 };
 
+/** Names the profile skeleton for assistive technology. */
+export const PROFILE_LOADING_LABEL = 'Loading your profile';
+
 export const PROFILE_POSTS_TITLE = 'Posts';
 export const PROFILE_POSTS_ERROR_TEXT = 'We could not load your posts. Please try again.';
 export const PROFILE_POSTS_REFRESH_ERROR_TEXT =

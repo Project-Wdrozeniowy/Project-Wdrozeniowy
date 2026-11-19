@@ -283,6 +283,56 @@ describe('CreatePostForm', () => {
     await waitFor(() => expect(screen.getByLabelText(/^Category/)).toHaveFocus());
   });
 
+  describe('category list feedback', () => {
+    it('keeps the unavailable message and its focused retry while the retry runs', async () => {
+      vi.mocked(categoryService.list).mockRejectedValueOnce(httpError(500));
+      const { user } = setup();
+      const retry = await screen.findByRole('button', { name: 'Try again' });
+      const select = screen.getByLabelText(/^Category/);
+      const alert = screen.getByRole('alert');
+      expect(select).toHaveAttribute('aria-describedby', alert.id);
+
+      vi.mocked(categoryService.list).mockReturnValue(new Promise(() => {}) as never);
+      const callsBeforeRetry = vi.mocked(categoryService.list).mock.calls.length;
+      await user.click(retry);
+
+      const running = await screen.findByRole('button', { name: 'Trying again…' });
+      expect(running).toBe(retry);
+      expect(running).toHaveFocus();
+      expect(running).toHaveAttribute('aria-disabled', 'true');
+      expect(select).toBeDisabled();
+      // The retry is announced by a status outside the node that describes the select.
+      const status = screen.getByRole('status');
+      expect(status).toHaveTextContent('Trying again…');
+      expect(screen.getByRole('alert')).not.toContainElement(status);
+      // The same single node still describes the select.
+      expect(screen.getAllByRole('alert')).toHaveLength(1);
+      expect(select).toHaveAttribute('aria-describedby', screen.getByRole('alert').id);
+
+      await user.click(running);
+      // One request for the activation; the click while it runs asks for nothing more.
+      expect(vi.mocked(categoryService.list)).toHaveBeenCalledTimes(callsBeforeRetry + 1);
+    });
+
+    it('offers no retry when the list is empty, and says so differently from a failure', async () => {
+      vi.mocked(categoryService.list).mockResolvedValue([] as never);
+      setup();
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'No categories are available yet.'
+      );
+      expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    });
+
+    it('shows the loading option, not a failure, while the first load runs', async () => {
+      vi.mocked(categoryService.list).mockReturnValue(new Promise(() => {}) as never);
+      setup();
+      expect(
+        await screen.findByRole('option', { name: 'Loading categories…' })
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+  });
+
   describe('field wiring', () => {
     it('focuses each control from its label', async () => {
       const { user } = setup();
