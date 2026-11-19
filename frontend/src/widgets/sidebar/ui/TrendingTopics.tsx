@@ -3,7 +3,7 @@ import { usePublicCategoryDistribution } from '@/shared/api/analytics/usePublicC
 import { cn } from '@/shared/lib/cn';
 import { ChevronRightIcon } from '@/shared/ui/icons';
 import QueryState from '@/shared/ui/QueryState';
-import { getCategoryColor } from '@/shared/lib/categoryColor';
+import { getCategoryDotColor } from '@/shared/lib/categoryColor';
 import { topicHref } from '@/shared/lib/topicUrl';
 import {
   NO_TOPICS_TEXT,
@@ -66,8 +66,8 @@ export default function TrendingTopics() {
                     <span
                       aria-hidden="true"
                       className={cn(
-                        'w-3 h-3 rounded-full shrink-0 border bg-current',
-                        getCategoryColor({ name, slug: category?.slug })
+                        'w-3 h-3 rounded-full shrink-0',
+                        getCategoryDotColor({ name, slug: category?.slug })
                       )}
                     />
                     <span className="text-fg text-sm truncate group-hover:text-accent transition-colors">

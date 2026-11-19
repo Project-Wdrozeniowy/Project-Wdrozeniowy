@@ -65,7 +65,7 @@ describe('PostCard', () => {
 
   it('colors the chip by category slug even when the name differs from our topic labels', () => {
     renderCard({ ...post, category: 'Technology', categorySlug: 'ai' });
-    expect(screen.getByText('Technology')).toHaveClass('border-cat-ai');
+    expect(screen.getByText('Technology')).toHaveClass('border-cat-ai/40');
   });
 
   it('renders an unknown category with the fallback style', () => {

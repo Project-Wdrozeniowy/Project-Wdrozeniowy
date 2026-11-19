@@ -1,7 +1,8 @@
-import { CATEGORIES, CATEGORY_COLORS, isTopic } from '@/shared/constants/categories.const';
+import { CATEGORIES, CATEGORY_STYLES, isTopic } from '@/shared/constants/categories.const';
 import type { Topic } from '@/shared/constants/categories.const';
 
-const FALLBACK_CATEGORY_COLOR = 'border-line-strong text-fg-subtle';
+const FALLBACK_CATEGORY_COLOR = 'border-line-strong bg-raised text-fg-subtle';
+const FALLBACK_CATEGORY_DOT = 'bg-fg-subtle';
 
 type CategoryRef = { name: string; slug?: string | null };
 
@@ -17,8 +18,14 @@ export function getCategoryTopic(category: CategoryRef): Topic | undefined {
   return isTopic(category.name) ? category.name : undefined;
 }
 
-/** Border and text color of a category chip. */
+/** Tint, border and text colour of a category chip. */
 export function getCategoryColor(category: CategoryRef): string {
   const topic = getCategoryTopic(category);
-  return topic === undefined ? FALLBACK_CATEGORY_COLOR : CATEGORY_COLORS[topic];
+  return topic === undefined ? FALLBACK_CATEGORY_COLOR : CATEGORY_STYLES[topic].chip;
+}
+
+/** The solid dot colour of a category in a list; neutral for a category that is not a known topic. */
+export function getCategoryDotColor(category: CategoryRef): string {
+  const topic = getCategoryTopic(category);
+  return topic === undefined ? FALLBACK_CATEGORY_DOT : CATEGORY_STYLES[topic].dot;
 }
