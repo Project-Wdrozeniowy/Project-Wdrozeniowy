@@ -7,13 +7,13 @@ describe('CategoryChip', () => {
 
     const chip = screen.getByText('Gaming');
     expect(chip.tagName).toBe('SPAN');
-    expect(chip).toHaveClass('border-cat-gaming', 'text-cat-gaming');
+    expect(chip).toHaveClass('border-cat-gaming/40', 'bg-cat-gaming/10', 'text-cat-gaming');
   });
 
   it('takes the colour from the slug, whatever the category is called', () => {
     render(<CategoryChip name="Technology" slug="ai" />);
 
-    expect(screen.getByText('Technology')).toHaveClass('border-cat-ai');
+    expect(screen.getByText('Technology')).toHaveClass('border-cat-ai/40');
   });
 
   it('uses a neutral colour for a category that is not a known topic', () => {
@@ -27,6 +27,6 @@ describe('CategoryChip', () => {
 
     const chip = screen.getByRole('link', { name: 'Gaming' });
     expect(chip).toHaveAttribute('href', '/forum?topic=Gaming');
-    expect(chip).toHaveClass('border-cat-gaming');
+    expect(chip).toHaveClass('border-cat-gaming/40');
   });
 });

@@ -136,6 +136,22 @@ describe('TrendingTopics', () => {
     );
   });
 
+  it('gives each topic its own colour dot, and a neutral one to a category that is not a known topic', async () => {
+    fakeAnalyticsServer(mock, {
+      categories: () =>
+        makeCategories([
+          ['Gaming', 3],
+          ['Chess club', 2],
+        ]),
+    });
+    renderWidget(<TrendingTopics />);
+
+    const gaming = await screen.findByRole('link', { name: /Gaming/ });
+    const chess = screen.getByRole('link', { name: /Chess club/ });
+    expect(gaming.querySelector('[aria-hidden="true"].rounded-full')).toHaveClass('bg-cat-gaming');
+    expect(chess.querySelector('[aria-hidden="true"].rounded-full')).toHaveClass('bg-fg-subtle');
+  });
+
   it('shows at most five', async () => {
     const rows: Array<[string, number]> = Array.from({ length: 8 }, (_, i) => [
       `Topic ${i}`,
