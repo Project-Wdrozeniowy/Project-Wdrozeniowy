@@ -56,6 +56,7 @@ describe('the settings sections', () => {
       const tab = screen.getByText(name).closest('[aria-disabled]');
       expect(tab).toHaveAttribute('aria-disabled', 'true');
       expect(tab).toHaveTextContent('Not available yet');
+      expect(tab).toHaveAttribute('title', 'Not available yet');
     }
   });
 

@@ -38,7 +38,11 @@ export default function SettingsTabs({ active }: SettingsTabsProps) {
                 {section.label}
               </Link>
             ) : (
-              <span aria-disabled="true" className={cn(TAB_CLASS, 'block text-fg-subtle')}>
+              <span
+                aria-disabled="true"
+                title={SETTINGS_UNAVAILABLE_LABEL}
+                className={cn(TAB_CLASS, 'block text-fg-subtle cursor-not-allowed')}
+              >
                 {section.label}
                 <span className="sr-only"> ({SETTINGS_UNAVAILABLE_LABEL})</span>
               </span>

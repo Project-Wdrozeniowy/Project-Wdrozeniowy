@@ -252,8 +252,9 @@ and `src/middleware/__tests__/`.
 Use the [e2e workspace](e2e/README.md): after root `npm ci` and browser
 installation, run root `npm run test:e2e` or `npm test` in `e2e/`. Its launcher owns an isolated real
 stack; do not substitute developer servers, production data or mocked API
-responses. Seven browser flows and two HTTP integration cases use Chromium,
-one worker and no retries. Keep service coverage gates independent.
+responses. The browser flows (the `*.spec.ts` files that are not `*.integration.spec.ts`) drive
+Chromium; the HTTP integration cases (`*.integration.spec.ts`) call the real gateway directly with
+no browser. All run with one worker and no retries. Keep service coverage gates independent.
 `npm run test:probe` must fail a real browser assertion and still clean up.
 Current local/CI/required-check evidence belongs in
 [the PWDRZ-117 execution record](docs/agent-task-backlog/pwdrz-117-execution.md).
@@ -279,7 +280,7 @@ Tests annotated with `@MigratedSchemaTest` (`com.devpulse.support`) are the exce
 
 - **Formatter**: Prettier 3 — config in `frontend/.prettierrc` and `gateway/.prettierrc`
   - `semi: true`, `singleQuote: true`, `tabWidth: 2`, `trailingComma: "es5"`, `printWidth: 100`, `endOfLine: "lf"`, `jsxSingleQuote: false`
-- **Linter**: ESLint 9 (`eslint-config-next`) for frontend; ESLint 10 (`typescript-eslint`) for gateway
+- **Linter**: ESLint 9 (`typescript-eslint` with the react, react-hooks and jsx-a11y plugins) for frontend; ESLint 10 (`typescript-eslint`) for gateway
 
 ```bash
 # Frontend
@@ -332,18 +333,17 @@ Defined in `frontend/tsconfig.json`. Always use `@/` for cross-module imports; r
 
 ```
 frontend/src/
-  app/
-    (auth)/        ← login, register pages (no header/sidebar)
-    (main)/        ← home feed, forum, dashboard, profile (with Header + Sidebar)
-    layout.tsx     ← root layout, wraps everything in QueryProvider
+  app/             ← App, router (routes, guards), layouts (root, auth, main), providers, config, styles
+  pages/           ← one slice per screen: home, forum, post, search, login, register, dashboard,
+                     profile, settings, notifications, admin
   features/        ← user actions, form schemas and request mapping
-  widgets/         ← reusable header/sidebar regions
+  widgets/         ← reusable regions: header, sidebar, post-feed, consent-banner
   shared/api/      ← single transport, generated bindings and Query compositions
   shared/auth/     ← session bootstrap, generations and cross-tab reconciliation
   shared/ui/       ← reusable UI
   shared/lib/      ← shared utilities
   shared/constants/ ← static data
-  store/slices/    ← Zustand slices: authSlice, uiSlice
+  store/slices/    ← Zustand slices: authSlice, uiSlice, consentSlice
 
 gateway/src/
   middleware/      ← boundedBody, cors, rateLimiter, logger
@@ -376,7 +376,7 @@ docs/
 
 2. **Session cookie** — SESSION is host-only, HttpOnly, Path=/, SameSite=Strict, Secure outside explicit HTTP development and has no normal Max-Age/Expires. Idle is 60 minutes; absolute is 12 hours. Bootstrap reads GET /users/me. The shared transport obtains CSRF for unsafe requests. No Bearer/refresh flow or browser credential storage. See [session guide](docs/guides/sessions.md).
 
-3. **Forum feed and creation use real APIs** — home/forum read through `src/shared/api/forum/useForumPosts.ts`; `CreatePostForm` publishes through `POST /api/forum/posts` and invalidates feed queries. PWDRZ-81/111/101 delivered these paths, so E2E must exercise their real API flow. The post detail body is still a placeholder; adjacent comments, tag-list and category-management APIs remain provisional under their own tasks.
+3. **Forum feed and creation use real APIs** — home/forum read through `src/shared/api/forum/useForumPosts.ts`; `CreatePostForm` publishes through `POST /api/forum/posts` and invalidates feed queries. PWDRZ-81/111/101 delivered these paths, so E2E must exercise their real API flow. The post page shows the real post (`GET /forum/posts/{slug}`) and the feed links to it; adjacent comments, tag-list and category-management APIs remain provisional under their own tasks.
 
 4. **Redis** — provisioned in Docker Compose, not yet wired in application code. It is reserved for future integration; the first use case has not been selected. Do not remove it or the `depends_on` from compose as a documentation cleanup.
 
