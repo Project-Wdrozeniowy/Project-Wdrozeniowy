@@ -1,5 +1,5 @@
 /** Badge text of a pinned post. */
 export const PINNED_BADGE_LABEL = 'pinned';
 
-/** Feed detail navigation, sharing and saving retain their baseline placeholder behavior. */
+/** Sharing and saving have no API yet: their buttons stay disabled and say why. */
 export const ACTION_UNAVAILABLE_HINT = 'Not available yet';

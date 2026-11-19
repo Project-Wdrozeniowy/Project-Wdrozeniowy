@@ -13,8 +13,9 @@ export function parsePageParam(value: string | null): number {
 
 /**
  * The feed filters by the topic label from the URL (`?topic=AI+%2F+Tech`, which the sidebar links to).
- * The API filters by category slug and `GET /forum/categories` is not implemented yet, so the slug
- * is taken from the known categories: a category's `key` is its slug.
+ * The API filters by category slug. The slug of a known topic is taken from the known categories
+ * (a category's `key` is its slug); reading `GET /forum/categories` would also find the slugs of
+ * categories this app does not know, which is not done yet.
  */
 export function topicToCategorySlug(topic: string): string | undefined {
   return CATEGORIES.find((category) => category.label === topic)?.key;

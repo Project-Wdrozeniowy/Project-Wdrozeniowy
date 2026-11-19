@@ -240,7 +240,7 @@ The baseline is Chromium desktop, one worker and zero retries. Tests must be
 independent, observe accessible UI/API outcomes and use real services/migrations.
 Do not read HttpOnly cookie values in browser code, inject tokens into browser
 storage, mock a missing feature, or duplicate whole unit-test matrices here.
-Post details/comments and provisional registration fields are explicitly limited
+Comments (PWDRZ-67) and provisional registration fields are explicitly limited
 by their own tasks. Coverage gates remain separate.
 
 The separate workflow declares the `E2E (Chromium)` check on all PRs and pushes
