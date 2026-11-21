@@ -8,7 +8,7 @@ import { registerSchema } from '@/features/sign-up/register.schema';
 import type { RegisterFormData } from '@/features/sign-up/register.schema';
 import { useSignUp } from '@/features/sign-up/useSignUp';
 import { cn } from '@/shared/lib/cn';
-import SocialAuthButtons from '@/shared/ui/SocialAuthButtons';
+import SocialSignInNotice from '@/shared/ui/SocialSignInNotice';
 import FormField from '@/shared/ui/FormField';
 
 export default function RegisterForm() {
@@ -148,7 +148,7 @@ export default function RegisterForm() {
         {isSubmitting ? 'Creating account…' : 'Create Account'}
       </button>
 
-      <SocialAuthButtons />
+      <SocialSignInNotice />
 
       <p className="text-fg-subtle text-sm text-center">
         Already have an account?{' '}

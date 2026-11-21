@@ -175,6 +175,22 @@ named "Orbita", and no horizontal scroll). Decisions:
   Topics shows the categories with the most posts (no per-topic trend arrows: there is no trend per
   topic).
 
+## Sign-in and sign-up pages (PWDRZ-29)
+
+Every action on these pages has an outcome. What the backend cannot do yet is shown as unavailable,
+with the reason on the page, and is not a control that does nothing or a link that ends in a 404:
+
+- **Password recovery.** There is no recovery contract (no reset endpoint, no email delivery), so
+  the "Forgot password?" link is gone and the password field says "Password recovery is not
+  available yet." (`PASSWORD_RECOVERY_UNAVAILABLE_TEXT`).
+- **Google, GitHub and Discord.** There is no social sign-in contract. `SocialSignInNotice` shows the
+  providers as a plain list under a "Coming soon" badge, with a sentence that says to use the form.
+  They are not buttons. It is the same pattern as the interests on the sign-up page (PWDRZ-154).
+
+Both are provisional: the constants files (`login.const.ts`, `socialSignIn.const.ts`) name what is
+missing and what to do when it exists. Building recovery or OAuth is new authentication work, not a
+fix on these pages. A test lists every link on both pages and checks each one has a route.
+
 ## Theming
 
 The app has a light theme (the default) and a dark theme, as in the Figma design. Components

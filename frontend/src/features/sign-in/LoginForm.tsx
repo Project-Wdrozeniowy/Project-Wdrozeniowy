@@ -3,9 +3,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@/features/sign-in/login.schema';
 import type { LoginFormData } from '@/features/sign-in/login.schema';
+import { PASSWORD_RECOVERY_UNAVAILABLE_TEXT } from '@/features/sign-in/login.const';
 import { useSignIn } from '@/features/sign-in/useSignIn';
 import { cn } from '@/shared/lib/cn';
-import SocialAuthButtons from '@/shared/ui/SocialAuthButtons';
+import FormField from '@/shared/ui/FormField';
+import SocialSignInNotice from '@/shared/ui/SocialSignInNotice';
+import { getFieldControlProps } from '@/shared/ui/fieldA11y';
 
 export default function LoginForm() {
   const { signIn, serverError } = useSignIn();
@@ -29,40 +32,36 @@ export default function LoginForm() {
         </div>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="login-username" className="text-fg font-semibold text-sm">
-          Username
-        </label>
+      <FormField label="Username" id="login-username" error={errors.username?.message}>
         <input
           {...register('username')}
-          id="login-username"
+          {...getFieldControlProps({ id: 'login-username', hasError: Boolean(errors.username) })}
           type="text"
           placeholder="your_username"
           autoComplete="username"
           className={cn('input', errors.username && 'ring-2 ring-red-500')}
         />
-        {errors.username && <p className="text-red-500 text-xs">{errors.username.message}</p>}
-      </div>
+      </FormField>
 
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <label htmlFor="login-password" className="text-fg font-semibold text-sm">
-            Password
-          </label>
-          <Link to="/forgot-password" className="text-accent hover:underline text-xs font-semibold">
-            Forgot password?
-          </Link>
-        </div>
+      <FormField
+        label="Password"
+        id="login-password"
+        hint={PASSWORD_RECOVERY_UNAVAILABLE_TEXT}
+        error={errors.password?.message}
+      >
         <input
           {...register('password')}
-          id="login-password"
+          {...getFieldControlProps({
+            id: 'login-password',
+            hasHint: true,
+            hasError: Boolean(errors.password),
+          })}
           type="password"
           placeholder="Enter your password"
           autoComplete="current-password"
           className={cn('input', errors.password && 'ring-2 ring-red-500')}
         />
-        {errors.password && <p className="text-red-500 text-xs">{errors.password.message}</p>}
-      </div>
+      </FormField>
 
       <button
         type="submit"
@@ -72,7 +71,7 @@ export default function LoginForm() {
         {isSubmitting ? 'Signing in…' : 'Sign In'}
       </button>
 
-      <SocialAuthButtons />
+      <SocialSignInNotice />
 
       <p className="text-fg-subtle text-sm text-center">
         Don&apos;t have an account?{' '}

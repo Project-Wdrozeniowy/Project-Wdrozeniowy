@@ -1,7 +1,7 @@
 import { transferableAbortController } from 'node:util';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createMemoryRouter, RouterProvider } from 'react-router';
+import { createMemoryRouter, matchRoutes, RouterProvider } from 'react-router';
 import { vi } from 'vitest';
 import { orvalTransport } from '@/shared/api/client/orvalTransport';
 import { routes } from '@/app/router/routes';
@@ -65,6 +65,20 @@ it.each(['/login', '/register', '/', '/forum?tag=react&page=2', '/search?q=react
     expect(router.state.location.search).toBe(new URL(path, 'http://test').search);
   }
 );
+it.each(['/login', '/register'])(
+  'every link on %s leads to a page that exists (no dead ends)',
+  async (path) => {
+    await open(path);
+    await waitFor(() => expect(document.querySelector('form')).not.toBeNull());
+
+    const hrefs = [...document.querySelectorAll('a[href]')].map((a) => a.getAttribute('href')!);
+    expect(hrefs.length).toBeGreaterThan(0);
+    for (const href of hrefs) {
+      expect(matchRoutes(routes, href), `${href} has no route`).not.toBeNull();
+    }
+  }
+);
+
 it('reads the dynamic post slug from the browser route and asks the API for that post', async () => {
   await open('/forum/a-real-slug');
   await waitFor(() =>

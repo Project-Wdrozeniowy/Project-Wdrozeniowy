@@ -150,3 +150,44 @@ test('retains registration fields after an occupied username is rejected', async
   await expect(page.getByLabel('Confirm Password', { exact: true })).toHaveValue(account.password);
   await expect(page.getByRole('checkbox')).toBeChecked();
 });
+
+for (const [name, size] of [
+  ['on a desktop', { width: 1440, height: 900 }],
+  ['on a phone', { width: 390, height: 844 }],
+] as const) {
+  test(`the sign-in and sign-up pages have no dead ends ${name}`, async ({ page }) => {
+    await page.setViewportSize(size);
+    for (const [path, other] of [
+      ['/login', '/register'],
+      ['/register', '/login'],
+    ] as const) {
+      await page.goto(path);
+      await expect(page.locator('form')).toBeVisible();
+
+      // No recovery link ending in a 404; the form says recovery is not available.
+      await expect(page.getByRole('link', { name: /forgot/i })).toHaveCount(0);
+      if (path === '/login') {
+        await expect(page.getByText('Password recovery is not available yet.')).toBeVisible();
+      }
+
+      // The social providers are shown as unavailable, not as buttons that do nothing.
+      for (const provider of ['Google', 'GitHub', 'Discord']) {
+        await expect(page.getByRole('button', { name: provider })).toHaveCount(0);
+        await expect(page.getByRole('link', { name: provider })).toHaveCount(0);
+      }
+      await expect(page.getByText(/is not available yet\. Use the form above\./)).toBeVisible();
+
+      // Every link in the form goes to a page that exists.
+      const links = page.locator('form a[href]');
+      await expect(links).toHaveCount(1);
+      await links.first().click();
+      await expect(page).toHaveURL(other);
+      await expect(page.locator('form')).toBeVisible();
+      await expect(page.getByText(/page not found/i)).toHaveCount(0);
+
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+      ).toBe(true);
+    }
+  });
+}
