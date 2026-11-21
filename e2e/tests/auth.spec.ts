@@ -53,7 +53,7 @@ test('signs in, restores the session after reload, and remains signed out after 
   const logout = apiResponse(page, '/auth/logout', 'POST');
   await signOutThroughMenu(page);
   expect((await logout).status()).toBe(204);
-  // Signed out: the header offers to sign in again (the buttons show from 1024px up).
+  // Signed out: the header offers to sign in again (the buttons show from 768px up).
   await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
   const rejectedProfile = apiResponse(page, '/users/me', 'GET');
   await page.reload();

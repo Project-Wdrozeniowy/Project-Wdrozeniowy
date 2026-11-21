@@ -161,8 +161,8 @@ named "Orbita", and no horizontal scroll). Decisions:
 - **User actions.** A member has the theme toggle, the notification bell and one account menu
   behind the user icon (name, Profile, Settings, Sign out), at every width, as in the design. Text
   links for the name, "Settings" and "Sign out" did not fit next to the page links and the search
-  field between 768px and 1000px. A guest has the same menu below 1024px and the Sign in and
-  Sign up buttons from 1024px. The search field is narrower from 768px to 1023px.
+  field between 768px and 1000px. A guest has the same menu on a phone and the Sign in and Sign up
+  buttons from 768px. The search field is narrower from 768px to 1023px.
 - **Analytics is public.** The dashboard route needs no session: its figures are the public
   analytics, and only the user's own totals need one (they are shown to a member only).
 - **Unsupported actions.** An entry or action whose feature does not exist is left out of a menu

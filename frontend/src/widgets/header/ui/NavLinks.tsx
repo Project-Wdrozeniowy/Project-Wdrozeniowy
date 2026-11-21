@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { cn } from '@/shared/lib/cn';
 import { isActiveLink } from '@/shared/lib/isActiveLink';
-import { NAV_ICONS } from './navIcons';
+import { pageIcon } from '@/shared/ui/pageIcons';
 
 interface NavLink {
   href: string;
@@ -18,7 +18,7 @@ export default function NavLinks({ links, pathname }: NavLinksProps) {
     <nav className="hidden md:flex items-center gap-1">
       {links.map(({ href, label }) => {
         const active = isActiveLink(pathname, href);
-        const Icon = NAV_ICONS[href];
+        const Icon = pageIcon(href);
         return (
           <Link
             key={href}

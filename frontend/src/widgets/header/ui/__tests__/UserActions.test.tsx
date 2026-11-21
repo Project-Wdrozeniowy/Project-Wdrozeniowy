@@ -123,24 +123,24 @@ describe('UserActions', () => {
     );
   });
 
-  it('gives a guest the menu below 1024px and the two buttons from 1024px, and a member only the menu', () => {
+  it('gives a guest the menu on a phone and the two buttons from 768px, and a member only the menu', () => {
     const { container, rerender } = render(
       <UserActions isAuthenticated={false} user={null} logout={() => {}} />
     );
     expect(screen.getByRole('button', { name: 'Account menu' }).parentElement).toHaveClass(
-      'lg:hidden'
+      'md:hidden'
     );
     expect(screen.getByRole('link', { name: 'Sign in' }).parentElement).toHaveClass(
       'hidden',
-      'lg:flex'
+      'md:flex'
     );
 
     rerender(<UserActions isAuthenticated user={user as never} logout={() => {}} />);
 
     expect(screen.getByRole('button', { name: 'Account menu' }).parentElement).not.toHaveClass(
-      'lg:hidden'
+      'md:hidden'
     );
     expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
-    expect(container.querySelector('.lg\\:flex')).toBeNull();
+    expect(container.querySelector('.md\\:flex')).toBeNull();
   });
 });

@@ -163,11 +163,11 @@ describe('AccountMenu', () => {
 
   it('takes extra classes for its wrapper', () => {
     render(
-      <AccountMenu isAuthenticated={false} user={null} logout={vi.fn()} className="lg:hidden" />
+      <AccountMenu isAuthenticated={false} user={null} logout={vi.fn()} className="md:hidden" />
     );
 
     expect(screen.getByRole('button', { name: 'Account menu' }).parentElement).toHaveClass(
-      'lg:hidden',
+      'md:hidden',
       'relative'
     );
   });

@@ -69,8 +69,8 @@ test('the shell works for a guest at every width the design is compared at', asy
         expect(await noSideScroll(page)).toBe(true);
         if (path !== '/dashboard') await createPostWhole(page);
       }
-      // A guest has Sign in and Sign up: as buttons from 1024px, in the account menu before that.
-      if (width >= 1024) {
+      // A guest has Sign in and Sign up: as buttons from 768px, in the account menu on a phone.
+      if (width >= 768) {
         await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
         await expect(page.getByRole('link', { name: 'Sign up', exact: true })).toBeVisible();
       } else {
