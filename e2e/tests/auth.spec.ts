@@ -54,7 +54,9 @@ test('signs in, restores the session after reload, and remains signed out after 
   await signOutThroughMenu(page);
   expect((await logout).status()).toBe(204);
   // Signed out: the header offers to sign in again (the buttons show from 768px up).
-  await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('banner').getByRole('link', { name: 'Sign in', exact: true })
+  ).toBeVisible();
   const rejectedProfile = apiResponse(page, '/users/me', 'GET');
   await page.reload();
   expect((await rejectedProfile).status()).toBe(401);
@@ -102,9 +104,10 @@ test('corrects rejected credentials and reconciles both tabs after each submissi
   expect((await corrected).status()).toBe(204);
   await expect(page).toHaveURL(/\/$/);
   for (const tab of [page, other]) {
-    await expect(
-      tab.getByRole('banner').getByText(account.username, { exact: true })
-    ).toBeVisible();
+    // The name is in the account menu now, so check the menu says who is signed in.
+    await tab.getByRole('button', { name: 'Account menu' }).click();
+    await expect(tab.getByText(`Signed in as ${account.username}`, { exact: true })).toBeVisible();
+    await tab.keyboard.press('Escape');
   }
   expect(loginCount).toBe(2);
 });

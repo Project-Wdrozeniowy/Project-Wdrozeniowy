@@ -71,8 +71,9 @@ test('the shell works for a guest at every width the design is compared at', asy
       }
       // A guest has Sign in and Sign up: as buttons from 768px, in the account menu on a phone.
       if (width >= 768) {
-        await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
-        await expect(page.getByRole('link', { name: 'Sign up', exact: true })).toBeVisible();
+        const header = page.getByRole('banner');
+        await expect(header.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
+        await expect(header.getByRole('link', { name: 'Sign up', exact: true })).toBeVisible();
       } else {
         await page.getByRole('button', { name: 'Account menu' }).click();
         await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
