@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router';
-import MobileMenu from './MobileMenu';
+import AccountMenu from './AccountMenu';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
@@ -19,34 +19,31 @@ export default function UserActions({ isAuthenticated, user, logout }: UserActio
 
       {isAuthenticated && <NotificationBell />}
 
-      {/* Small screens: one menu instead of the text links below. */}
-      {/* Keyed by the page: following any link, or going back, closes an open menu. */}
-      <MobileMenu key={pathname} isAuthenticated={isAuthenticated} user={user} logout={logout} />
+      {/*
+        The account links sit behind the user icon, as in the design: the name, "Settings" and "Sign out"
+        as text did not fit next to the page links and the search field between 768px and 1000px.
+        Keyed by the page: following any link, or going back, closes an open menu.
+      */}
+      <AccountMenu
+        key={pathname}
+        isAuthenticated={isAuthenticated}
+        user={user}
+        logout={logout}
+        // A guest also has the two buttons below from 768px up, so the menu is only needed on a phone.
+        className={isAuthenticated ? undefined : 'md:hidden'}
+      />
 
-      {isAuthenticated ? (
-        <div className="hidden md:flex items-center gap-2">
-          <span className="text-sm text-fg-subtle">{user?.displayName ?? user?.username}</span>
-          <Link to="/settings" className="text-sm text-fg-subtle hover:text-fg transition-colors">
-            Settings
-          </Link>
-          <button
-            onClick={logout}
-            className="text-sm text-fg-subtle hover:text-fg transition-colors"
-          >
-            Sign out
-          </button>
-        </div>
-      ) : (
-        <div className="hidden md:flex items-center gap-2">
+      {!isAuthenticated && (
+        <div className="hidden md:flex items-center gap-1 lg:gap-2">
           <Link
             to="/login"
-            className="text-sm text-fg hover:text-fg-muted transition-colors px-3 py-1.5"
+            className="text-sm text-fg hover:text-fg-muted transition-colors px-2 lg:px-3 py-1.5 focus-visible:outline-2 focus-visible:outline-blue-500"
           >
             Sign in
           </Link>
           <Link
             to="/register"
-            className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded transition-colors"
+            className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-2 lg:px-3 py-1.5 rounded transition-colors focus-visible:outline-2 focus-visible:outline-blue-500"
           >
             Sign up
           </Link>

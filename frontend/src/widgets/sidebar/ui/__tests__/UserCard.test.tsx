@@ -130,4 +130,23 @@ describe('UserCard', () => {
     expect(screen.queryByText('Comments')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
   });
+
+  it('shows an icon with each entry, hidden from assistive technology', () => {
+    notifications(0);
+    renderCard();
+
+    const nav = screen.getByRole('navigation', { name: 'Your account' });
+    for (const link of within(nav).getAllByRole('link')) {
+      expect(link.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+    }
+  });
+
+  it('offers no entry for a feature the app does not have', () => {
+    notifications(0);
+    renderCard();
+
+    for (const name of ['Messages', 'Saved Posts', 'Your Stats', 'Achievements']) {
+      expect(screen.queryByText(name)).not.toBeInTheDocument();
+    }
+  });
 });

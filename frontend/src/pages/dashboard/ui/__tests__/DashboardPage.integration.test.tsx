@@ -220,14 +220,17 @@ describe('when there is nothing or something fails', () => {
     expect(screen.queryByText('Not available')).not.toBeInTheDocument();
   });
 
-  it('shows "Not available", not a loading state for ever, for a query that is not enabled', async () => {
+  it('offers a guest the public figures only: no own totals, no request for them, nothing broken', async () => {
     fakeAnalyticsServer(mock);
     useStore.setState({ user: null, isAuthenticated: false });
     renderPage();
 
     await screen.findByText('60');
-    expect(screen.getAllByText('Not available')).toHaveLength(2);
-    expect(screen.queryByRole('status', { name: 'Loading Your posts' })).not.toBeInTheDocument();
+    expect(screen.getByText('Posts')).toBeInTheDocument();
+    expect(screen.getByText('Comments')).toBeInTheDocument();
+    expect(screen.queryByText('Your posts')).not.toBeInTheDocument();
+    expect(screen.queryByText('Upvotes you received')).not.toBeInTheDocument();
+    expect(screen.queryByText('Not available')).not.toBeInTheDocument();
     expect(requestsTo(mock, '/analytics/me')).toHaveLength(0);
   });
 });

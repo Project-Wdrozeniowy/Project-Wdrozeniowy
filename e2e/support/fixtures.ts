@@ -84,7 +84,24 @@ export async function signIn(page: Page, identity: Identity): Promise<void> {
   const profileResponse = await profile;
   expect(profileResponse.status()).toBe(200);
   expect((await profileResponse.json()).username).toBe(identity.username);
+  await expectSignedIn(page);
+}
+
+/**
+ * A signed-in user has the account menu, and "Sign out" in it. (The menu is behind the user icon at
+ * every width, so the page itself has no "Sign out" until it is opened.)
+ */
+export async function expectSignedIn(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Account menu' }).click();
   await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
+}
+
+/** Signs out through the account menu. */
+export async function signOutThroughMenu(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
 }
 
 export { expect };

@@ -1,6 +1,7 @@
 import { formatChange } from '@/shared/lib/formatChange';
 import { usePublicActivityComparison } from '@/shared/api/analytics/usePublicActivityComparison';
 import { cn } from '@/shared/lib/cn';
+import { CommentIcon, PostIcon } from '@/shared/ui/icons';
 import QueryState from '@/shared/ui/QueryState';
 import { COMMUNITY_ACTIVITY_TITLE, SIDEBAR_PERIOD, SIDEBAR_PERIOD_LABEL } from './sidebar.const';
 
@@ -30,8 +31,18 @@ export default function CommunityActivity() {
   const query = usePublicActivityComparison(SIDEBAR_PERIOD);
   const rows = query.data
     ? [
-        { label: 'Posts', figures: query.data.posts },
-        { label: 'Comments', figures: query.data.comments },
+        {
+          label: 'Posts',
+          figures: query.data.posts,
+          icon: <PostIcon />,
+          tint: 'bg-blue-500/15 text-accent',
+        },
+        {
+          label: 'Comments',
+          figures: query.data.comments,
+          icon: <CommentIcon />,
+          tint: 'bg-emerald-500/15 text-success',
+        },
       ]
     : [];
 
@@ -46,11 +57,22 @@ export default function CommunityActivity() {
       </div>
       <QueryState query={query} skeleton={<ActivitySkeleton />}>
         <dl className="flex flex-col gap-2">
-          {rows.map(({ label, figures }) => {
+          {rows.map(({ label, figures, icon, tint }) => {
             const change = formatChange(figures.changePercent);
             return (
               <div key={label} className="flex items-center justify-between">
-                <dt className="text-fg text-sm">{label}</dt>
+                <dt className="flex items-center gap-3 text-fg text-sm">
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center shrink-0',
+                      tint
+                    )}
+                  >
+                    {icon}
+                  </span>
+                  {label}
+                </dt>
                 <dd className="flex items-center gap-2">
                   {change.tone !== 'none' && (
                     <span className={cn('text-xs', TONE_CLASS[change.tone])}>{change.text}</span>

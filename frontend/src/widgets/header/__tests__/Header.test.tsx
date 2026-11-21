@@ -28,7 +28,9 @@ beforeEach(() => {
 it('reports sign-out success only after the shared lifecycle succeeds', async () => {
   vi.mocked(signOutSession).mockResolvedValue(undefined);
   render(<Header />);
-  await userEvent.setup().click(screen.getByRole('button', { name: 'Sign out' }));
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Account menu' }));
+  await user.click(screen.getByRole('button', { name: 'Sign out' }));
   await waitFor(() => expect(toast.success).toHaveBeenCalledWith('You have been signed out.'));
   expect(signOutSession).toHaveBeenCalledTimes(1);
 });
@@ -36,7 +38,9 @@ it('reports sign-out success only after the shared lifecycle succeeds', async ()
 it('reports a recoverable sign-out failure without announcing success', async () => {
   vi.mocked(signOutSession).mockRejectedValue(new Error('offline'));
   render(<Header />);
-  await userEvent.setup().click(screen.getByRole('button', { name: 'Sign out' }));
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Account menu' }));
+  await user.click(screen.getByRole('button', { name: 'Sign out' }));
   await waitFor(() =>
     expect(toast.error).toHaveBeenCalledWith('Could not sign out. Please try again.', 'api-error')
   );

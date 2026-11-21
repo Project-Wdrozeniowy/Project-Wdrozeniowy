@@ -74,7 +74,7 @@ it('reads the dynamic post slug from the browser route and asks the API for that
     )
   );
 });
-it.each(['/profile', '/settings', '/settings/account', '/notifications', '/dashboard', '/admin'])(
+it.each(['/profile', '/settings', '/settings/account', '/notifications', '/admin'])(
   'redirects a guest opening %s directly',
   async (path) => {
     const router = await open(path);
@@ -82,6 +82,15 @@ it.each(['/profile', '/settings', '/settings/account', '/notifications', '/dashb
     expect(await screen.findByRole('heading', { name: 'Welcome Back' })).toBeVisible();
   }
 );
+it('opens the dashboard for a guest too: its figures are public', async () => {
+  const router = await open('/dashboard');
+  await waitFor(() => expect(router.state.navigation.state).toBe('idle'));
+  expect(router.state.location.pathname).toBe('/dashboard');
+  expect(router.state.errors).toBeNull();
+  expect(await screen.findByRole('heading', { name: 'Analytics Dashboard' })).toBeVisible();
+  // The user's own totals need a session, so a guest is not offered them.
+  expect(screen.queryByText('Your posts')).not.toBeInTheDocument();
+});
 it.each([
   '/profile',
   '/settings/profile',
@@ -98,7 +107,7 @@ it.each([
   const router = await open(path);
   await waitFor(() => expect(router.state.initialized).toBe(true));
   expect(router.state.errors).toBeNull();
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible());
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Account menu' })).toBeVisible());
   expect(router.state.location.pathname).toBe(path);
 });
 it.each(['/settings', '/settings/privacy', '/settings/nonsense'])(

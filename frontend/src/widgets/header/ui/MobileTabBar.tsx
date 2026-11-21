@@ -1,17 +1,9 @@
 import { Link, useLocation } from 'react-router';
 import { cn } from '@/shared/lib/cn';
-import { ChartBarIcon, CommentIcon, HomeIcon, UserIcon } from '@/shared/ui/icons';
 import { useStore } from '@/store';
 import { isActiveLink } from '@/shared/lib/isActiveLink';
 import { MOBILE_PROFILE_LINK, MOBILE_TABS_LABEL, NAV_LINKS } from './header.const';
-
-/** One icon per page link; the labels and addresses come from NAV_LINKS, so there is one list. */
-const ICONS: Record<string, () => React.JSX.Element> = {
-  '/': HomeIcon,
-  '/forum': CommentIcon,
-  '/dashboard': ChartBarIcon,
-  [MOBILE_PROFILE_LINK.href]: UserIcon,
-};
+import { PAGE_ICONS } from '@/shared/ui/pageIcons';
 
 /** The page links on small screens, where the top bar has none. Hidden from `md` up. */
 export default function MobileTabBar() {
@@ -26,7 +18,7 @@ export default function MobileTabBar() {
     >
       <ul className="flex">
         {tabs.map(({ href, label }) => {
-          const Icon = ICONS[href];
+          const Icon = PAGE_ICONS[href];
           const active = isActiveLink(pathname, href);
           return (
             <li key={href} className="flex-1">
