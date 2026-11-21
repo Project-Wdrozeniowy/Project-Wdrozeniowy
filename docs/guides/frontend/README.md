@@ -191,6 +191,26 @@ Both are provisional: the constants files (`login.const.ts`, `socialSignIn.const
 missing and what to do when it exists. Building recovery or OAuth is new authentication work, not a
 fix on these pages. A test lists every link on both pages and checks each one has a route.
 
+## Profile page (PWDRZ-60)
+
+`/profile` shows the signed-in user and is read-only. Editing lives under `/settings` (PWDRZ-108),
+reached by "Edit profile" and by the "Settings" entry of the section bar. Both read the same cached
+profile (`useMyProfile`), and a save updates that cache and the store, so the profile, the account
+menu and the sidebar card show the same name.
+
+- **Sections** are links (`/profile?tab=activity`), so a reload, the back button and a shared link
+  keep the open one. A missing, unknown or unavailable value opens the posts (`parseProfileTab`).
+- **Posts** and **Activity** have data. Each state is truthful: loading, an empty text, or a fixed
+  error with a retry. A section that is not open does not request anything.
+- **Comments** and **Saved** are shown as "Not available yet": the API has no endpoint that lists a
+  user's comments and no bookmarks. Neither has a ticket yet (see `PROFILE_TABS`).
+- **Activity** shows the user's totals from `/analytics/me`. The chart over time is PWDRZ-153's: the
+  API has no per-day series of the user's own activity.
+- **Left out of the design on purpose:** karma, badges, recent activity, followers, location, website
+  and Follow. There is no data for them, and the numbers would be invented. The profile card shows
+  the real vote totals (upvotes received, downvotes received, votes cast) instead. Reviewers should
+  confirm this.
+
 ## Theming
 
 The app has a light theme (the default) and a dark theme, as in the Figma design. Components

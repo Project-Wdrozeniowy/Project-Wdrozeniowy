@@ -27,6 +27,17 @@ test('saves account fields through PATCH /api/users/me and keeps them after a re
   const reloaded = page.getByRole('form', { name: 'Profile information' });
   await expect(reloaded.getByLabel('Display name', { exact: true })).toHaveValue(displayName);
   await expect(reloaded.getByLabel('Avatar link', { exact: true })).toHaveValue(avatarUrl);
+
+  // The saved name is the same on every screen that shows it: the profile, the account menu and the
+  // sidebar card (PWDRZ-60).
+  await page.goto('/profile');
+  await expect(page.getByRole('heading', { level: 1, name: displayName })).toBeVisible();
+  await page.getByRole('button', { name: 'Account menu' }).click();
+  await expect(page.getByText(`Signed in as ${displayName}`, { exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(
+    page.getByRole('complementary').getByText(displayName, { exact: true })
+  ).toBeVisible();
 });
 
 test('changes the password through POST /api/users/me/password and forces a new sign-in', async ({

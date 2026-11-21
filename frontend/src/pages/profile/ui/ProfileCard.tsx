@@ -1,22 +1,20 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { ROLE_LABELS } from '@/pages/profile/config/profileView.const';
+import { formatDate } from '@/shared/lib/formatDate';
 import { isHttpUrl } from '@/shared/lib/url';
 import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 const joinedFormat = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' });
 
-/** "October 2026", or `null` for a value that is not a date (formatting it would throw). */
-function formatJoined(createdAt: string): string | null {
-  const date = new Date(createdAt);
-  return Number.isNaN(date.getTime()) ? null : joinedFormat.format(date);
-}
-
 interface ProfileCardProps {
   profile: MyProfile;
+  /** The vote totals, which load on their own, so the card never waits for them. */
+  votes?: ReactNode;
 }
 
-export default function ProfileCard({ profile }: ProfileCardProps) {
+export default function ProfileCard({ profile, votes }: ProfileCardProps) {
   // The link that failed, not a flag: a new link gets its own chance to load.
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
 
@@ -27,7 +25,7 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
     profile.avatarUrl !== null &&
     isHttpUrl(profile.avatarUrl) &&
     profile.avatarUrl !== failedAvatarUrl;
-  const joined = formatJoined(profile.createdAt);
+  const joined = formatDate(profile.createdAt, joinedFormat);
 
   return (
     <section
@@ -66,6 +64,8 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
       {profile.bio && (
         <p className="text-fg-soft text-sm whitespace-pre-wrap break-words">{profile.bio}</p>
       )}
+
+      {votes}
 
       <Link
         to="/settings/profile"

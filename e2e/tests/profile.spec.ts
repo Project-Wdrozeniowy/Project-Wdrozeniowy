@@ -80,3 +80,39 @@ test("the profile lists the user's own posts and the sidebar shows real counts",
     expect(entry).toMatch(/^GET \/api\/forum\/posts\?/);
   }
 });
+
+// The sections of the profile (PWDRZ-60): the open ones have real content, the others say they are
+// not available, and the open section and the way to the settings survive a reload.
+test('the profile sections: Activity has content, the others are not available, Settings and back work', async ({
+  page,
+  account,
+}) => {
+  await signIn(page, account);
+  await page.goto('/profile');
+  const sections = page.getByRole('navigation', { name: 'Profile sections' });
+
+  // A new account has no posts: a truthful empty text, not a skeleton that never ends.
+  await expect(page.getByText('You have not published a post yet.')).toBeVisible();
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+  for (const name of ['Comments', 'Saved']) {
+    await expect(sections.getByRole('link', { name: new RegExp(name) })).toHaveCount(0);
+    await expect(sections.getByText(`${name} (Not available yet)`)).toBeVisible();
+  }
+
+  await sections.getByRole('link', { name: 'Activity', exact: true }).click();
+  await expect(page).toHaveURL(/\/profile\?tab=activity$/);
+  const activity = page.getByRole('region', { name: 'Your activity' });
+  await expect(activity.getByText(/over time is not available yet/)).toBeVisible();
+  await expect(activity.getByText('Posts', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Your activity' })).toBeVisible();
+
+  // The sidebar has a Settings link too: this one is the profile's own.
+  await page.getByRole('main').getByRole('link', { name: 'Settings', exact: true }).click();
+  await expect(page).toHaveURL(/\/settings\/profile$/);
+  await page.goBack();
+  await expect(page.getByRole('region', { name: 'Your activity' })).toBeVisible();
+  await sections.getByRole('link', { name: 'Posts', exact: true }).click();
+  await expect(page).toHaveURL(/\/profile$/);
+  await expect(page.getByText('You have not published a post yet.')).toBeVisible();
+});

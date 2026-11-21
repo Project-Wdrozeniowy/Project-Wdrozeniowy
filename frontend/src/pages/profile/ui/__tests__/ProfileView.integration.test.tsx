@@ -52,11 +52,23 @@ function renderView(client = new QueryClient({ defaultOptions: { queries: { retr
   };
 }
 
+const SUMMARY = {
+  userId: 1,
+  username: 'alice',
+  totalPosts: 12,
+  totalComments: 5,
+  totalUpvotesReceived: 290,
+  totalDownvotesReceived: 7,
+  totalVotesCast: 80,
+  lastActivityAt: '2026-11-08T10:00:00.000Z',
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
   mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
+  mock.onGet('/analytics/me').reply(200, SUMMARY);
   apiClient.setUnauthorizedHandler(undefined);
   useStore.setState({ user: PROFILE, isAuthenticated: true, isInitialized: true });
   Object.defineProperty(window, 'location', {
@@ -98,7 +110,11 @@ describe('loading the profile', () => {
       'href',
       '/settings/profile'
     );
-    expect(mock.history.get).toHaveLength(1);
+    // The profile once, and the vote totals once for the card: nothing else is read.
+    expect(mock.history.get.map((request) => request.url).sort()).toEqual([
+      '/analytics/me',
+      '/users/me',
+    ]);
   });
 
   it('falls back to the username when there is no display name', async () => {

@@ -2,13 +2,19 @@ import { useMyProfile } from '@/shared/api/profile/useMyProfile';
 import { getLoadPhase } from '@/shared/lib/loadPhase';
 import ProfileCard from './ProfileCard';
 import ProfileLoadError from '@/shared/ui/ProfileLoadError';
+import ProfileVotes from './ProfileVotes';
 import ProfileSkeleton from './ProfileSkeleton';
 
 /**
  * The signed-in user's profile, loaded from `GET /users/me`. Editing lives on the settings page.
  * An expired session never shows up here: the session coordinator handles confirmed expiry.
  */
-export default function ProfileView() {
+interface ProfileViewProps {
+  /** The vote totals in the card. Off while another section shows the same totals. */
+  showVotes?: boolean;
+}
+
+export default function ProfileView({ showVotes = true }: ProfileViewProps) {
   const query = useMyProfile();
   const { data, refetch } = query;
   const phase = getLoadPhase(query);
@@ -21,5 +27,5 @@ export default function ProfileView() {
     return <ProfileSkeleton />;
   }
 
-  return <ProfileCard profile={data} />;
+  return <ProfileCard profile={data} votes={showVotes ? <ProfileVotes /> : undefined} />;
 }
