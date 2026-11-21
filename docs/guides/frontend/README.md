@@ -148,6 +148,33 @@ Pure ProfileLoadError presentation moved to shared UI because both profile and
 settings consume it. Settings does not depend on the profile page. Business
 requests and cache/session ownership were not moved into the error component.
 
+## Application shell (PWDRZ-28)
+
+The shell is compared with the design at 1440, 1024, 768, 390 and 320px, for a guest and for a
+member with a very long name and a focused search; `e2e/tests/shell.spec.ts` holds that check
+(every page link reachable by pointer and keyboard, "Create Post" whole on screen, the logo link
+named "Orbita", and no horizontal scroll). Decisions:
+
+- **Page links.** From 768px they are in the top bar with an icon each (Home, Forum, Analytics);
+  below 768px they are the bottom bar, with the profile for a member. The logo link is named by
+  its visible text at every width.
+- **User actions.** A member has the theme toggle, the notification bell and one account menu
+  behind the user icon (name, Profile, Settings, Sign out), at every width, as in the design. Text
+  links for the name, "Settings" and "Sign out" did not fit next to the page links and the search
+  field between 768px and 1000px. A guest has the same menu below 1024px and the Sign in and
+  Sign up buttons from 1024px. The search field is narrower from 768px to 1023px.
+- **Analytics is public.** The dashboard route needs no session: its figures are the public
+  analytics, and only the user's own totals need one (they are shown to a member only).
+- **Unsupported actions.** An entry or action whose feature does not exist is left out of a menu
+  (Messages, Saved posts, Your stats, Achievements, followers), or, where the design shows it
+  inside a control we do have, shown disabled with "Not available yet" (Share, Save, the profile
+  and settings tabs). No counter, badge or trend is invented to imitate the design.
+- **Sidebar.** The user card links only pages the app has (Profile, Notifications with its real
+  unread count, Settings) with an icon each, and shows real post and comment counts. Community
+  activity shows the platform's posts and comments of the last 7 days with an icon each; Trending
+  Topics shows the categories with the most posts (no per-topic trend arrows: there is no trend per
+  topic).
+
 ## Theming
 
 The app has a light theme (the default) and a dark theme, as in the Figma design. Components

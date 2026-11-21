@@ -139,7 +139,7 @@ export default function SearchBar() {
               setOpen(true);
             }}
             onKeyDown={handleKeyDown}
-            className="bg-raised text-fg placeholder-fg-subtle rounded text-sm pl-9 pr-3 py-2 w-56 focus:w-72 transition-[width] focus:outline-none focus:ring-2 focus:ring-blue-600/50 focus:border-blue-600 border border-transparent"
+            className="bg-raised text-fg placeholder-fg-subtle rounded text-sm pl-9 pr-3 py-2 w-36 focus:w-40 lg:w-56 lg:focus:w-72 transition-[width] focus:outline-none focus:ring-2 focus:ring-blue-600/50 focus:border-blue-600 border border-transparent"
           />
         </form>
         {open && (

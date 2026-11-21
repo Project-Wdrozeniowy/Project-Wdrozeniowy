@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { FocusEvent, KeyboardEvent } from 'react';
 import { Link } from 'react-router';
+import { cn } from '@/shared/lib/cn';
 import { UserIcon } from '@/shared/ui/icons';
 import { ACCOUNT_MENU_LABEL } from './header.const';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
@@ -8,17 +9,25 @@ import type { UserProfileDto as UserProfile } from '@/shared/api/generated/model
 const ITEM_CLASS =
   'block w-full text-left px-3 py-2 text-sm text-fg hover:bg-raised focus-visible:outline-2 focus-visible:outline-blue-500';
 
-interface MobileMenuProps {
+interface AccountMenuProps {
   isAuthenticated: boolean;
   user: UserProfile | null;
   logout: () => void;
+  /** Extra classes of the wrapper, e.g. to hide it where another control does its job. */
+  className?: string;
 }
 
 /**
- * The account links of small screens, where the top bar has no room for them. A disclosure, not
- * an ARIA menu: a button that shows a short list of links. Hidden from `md` up.
+ * The account links of the top bar, behind the user icon at every width: the text links they
+ * replace did not fit between 768px and 1000px. A disclosure, not an ARIA menu: a button that shows
+ * a short list of links.
  */
-export default function MobileMenu({ isAuthenticated, user, logout }: MobileMenuProps) {
+export default function AccountMenu({
+  isAuthenticated,
+  user,
+  logout,
+  className,
+}: AccountMenuProps) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -54,7 +63,7 @@ export default function MobileMenu({ isAuthenticated, user, logout }: MobileMenu
   return (
     <div
       ref={containerRef}
-      className="relative md:hidden"
+      className={cn('relative', className)}
       onKeyDown={handleKeyDown}
       onBlur={handleBlur}
     >

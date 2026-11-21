@@ -54,6 +54,21 @@ describe('CommunityActivity', () => {
     expect(document.body).not.toHaveTextContent(/Online Users|Posts per minute/);
   });
 
+  it('shows a round icon with each figure, and the figures are still read as text', async () => {
+    fakeAnalyticsServer(mock);
+    renderWidget(<CommunityActivity />);
+
+    const region = await screen.findByRole('region', { name: 'Community activity' });
+    await within(region).findByText('60');
+    const terms = region.querySelectorAll('dt');
+    expect(terms).toHaveLength(2);
+    for (const term of terms) {
+      expect(term.querySelector('[aria-hidden="true"] svg')).not.toBeNull();
+    }
+    expect(within(region).getByText('Posts')).toBeInTheDocument();
+    expect(within(region).getByText('Comments')).toBeInTheDocument();
+  });
+
   it('shows a loading state first', () => {
     mock.onGet('/analytics/public/comparison').reply(() => new Promise(() => {}));
     renderWidget(<CommunityActivity />);
@@ -88,6 +103,14 @@ describe('CommunityActivity', () => {
 });
 
 describe('TrendingTopics', () => {
+  it('has the trending icon in its title', async () => {
+    fakeAnalyticsServer(mock);
+    renderWidget(<TrendingTopics />);
+
+    const heading = await screen.findByRole('heading', { name: 'Trending Topics' });
+    expect(heading.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+  });
+
   it('lists the categories with the most posts, each linking to the forum filtered by it', async () => {
     fakeAnalyticsServer(mock);
     renderWidget(<TrendingTopics />);

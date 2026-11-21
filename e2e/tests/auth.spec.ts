@@ -1,4 +1,11 @@
-import { test, expect, apiResponse, signIn } from '../support/fixtures.js';
+import {
+  test,
+  expect,
+  apiResponse,
+  signIn,
+  expectSignedIn,
+  signOutThroughMenu,
+} from '../support/fixtures.js';
 
 test('registers through the browser and displays the authenticated session', async ({
   page,
@@ -29,7 +36,7 @@ test('registers through the browser and displays the authenticated session', asy
   const me = await loaded.json();
   expect(me.username).toBe(identity.username);
   expect(me.displayName).toBe('E2E User');
-  await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+  await expectSignedIn(page);
 });
 
 test('signs in, restores the session after reload, and remains signed out after logout', async ({
@@ -42,11 +49,12 @@ test('signs in, restores the session after reload, and remains signed out after 
   const loaded = await profile;
   expect(loaded.status()).toBe(200);
   expect((await loaded.json()).username).toBe(account.username);
-  await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+  await expectSignedIn(page);
   const logout = apiResponse(page, '/auth/logout', 'POST');
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await signOutThroughMenu(page);
   expect((await logout).status()).toBe(204);
-  await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
+  // Signed out: the header offers to sign in again (the buttons show from 1024px up).
+  await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
   const rejectedProfile = apiResponse(page, '/users/me', 'GET');
   await page.reload();
   expect((await rejectedProfile).status()).toBe(401);

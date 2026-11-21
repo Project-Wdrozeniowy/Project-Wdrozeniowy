@@ -1,5 +1,12 @@
 import { spawnSync } from 'node:child_process';
-import { test, expect, signIn, apiResponse, apiSignIn } from '../support/fixtures.js';
+import {
+  test,
+  expect,
+  signIn,
+  apiResponse,
+  apiSignIn,
+  expectSignedIn,
+} from '../support/fixtures.js';
 
 // Migration parity for an already reachable flow, not full PWDRZ-67 acceptance.
 test('SPA: the existing comment flow keeps working on the dynamic post route', async ({
@@ -20,7 +27,7 @@ test('SPA: the existing comment flow keeps working on the dynamic post route', a
   const post = await created.json();
   await signIn(page, account);
   await page.goto(`/forum/${post.slug}`);
-  await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+  await expectSignedIn(page);
   const content = `Persisted comment ${account.username}`;
   await page.getByLabel('Add a comment', { exact: true }).fill(content);
   const saved = apiResponse(page, `/forum/posts/${post.slug}/comments`, 'POST');
@@ -150,11 +157,15 @@ test('SPA: guest and user guards, same-origin session cookies and protected relo
   context,
   account,
 }) => {
-  for (const path of ['/profile', '/settings', '/dashboard', '/admin']) {
+  for (const path of ['/profile', '/settings', '/admin']) {
     await page.goto(path);
     await expect(page).toHaveURL('/login');
     await expect(page.getByRole('heading', { name: 'Welcome Back' })).toBeVisible();
   }
+  // The dashboard is public (its figures are public); a guest stays on it.
+  await page.goto('/dashboard');
+  await expect(page).toHaveURL('/dashboard');
+  await expect(page.getByRole('heading', { name: 'Analytics Dashboard' })).toBeVisible();
   await signIn(page, account);
   const cookies = await context.cookies();
   expect(
@@ -170,10 +181,10 @@ test('SPA: guest and user guards, same-origin session cookies and protected relo
   // `/settings` itself redirects to its first section, so the sections are opened directly.
   for (const path of ['/profile', '/settings/profile', '/settings/account', '/dashboard']) {
     await page.goto(path);
-    await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+    await expectSignedIn(page);
     await expect(page).toHaveURL(path);
     await page.reload();
-    await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+    await expectSignedIn(page);
     await expect(page).toHaveURL(path);
   }
   await page.goto('/admin');
@@ -263,7 +274,7 @@ test('SPA: representative layouts remain usable at desktop and narrow widths', a
   await signIn(page, account);
   for (const path of ['/', '/forum', '/search?q=spike', '/profile', '/settings']) {
     await page.goto(path);
-    await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+    await expectSignedIn(page);
     if (path === '/settings')
       await expect(page.getByRole('form', { name: 'Profile information' })).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
@@ -275,13 +286,10 @@ test('SPA: representative layouts remain usable at desktop and narrow widths', a
   await page.setViewportSize({ width: 390, height: 844 });
   for (const path of ['/forum', '/settings']) {
     await page.goto(path);
-    // On a phone the top bar has no text links: the page links are a bottom bar and the account
-    // links are in a menu.
+    // On a phone the page links are a bottom bar, and the account links are in the menu.
     await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeHidden();
-    await page.getByRole('button', { name: 'Account menu' }).click();
-    await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
-    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
+    await expectSignedIn(page);
     if (path === '/settings')
       await expect(page.getByRole('form', { name: 'Profile information' })).toBeVisible();
     expect(

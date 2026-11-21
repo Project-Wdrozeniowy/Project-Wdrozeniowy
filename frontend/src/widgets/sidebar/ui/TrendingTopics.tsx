@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { usePublicCategoryDistribution } from '@/shared/api/analytics/usePublicCategoryDistribution';
 import { cn } from '@/shared/lib/cn';
-import { ChevronRightIcon } from '@/shared/ui/icons';
+import { ChevronRightIcon, TrendingIcon } from '@/shared/ui/icons';
 import QueryState from '@/shared/ui/QueryState';
 import { getCategoryDotColor } from '@/shared/lib/categoryColor';
 import { topicHref } from '@/shared/lib/topicUrl';
@@ -42,7 +42,12 @@ export default function TrendingTopics() {
       className="bg-surface rounded-xl p-4 flex flex-col gap-4 border border-line"
     >
       <div className="flex flex-col gap-1">
-        <h2 className="text-fg font-semibold text-xl leading-none">{TRENDING_TOPICS_TITLE}</h2>
+        <h2 className="flex items-center gap-2 text-fg font-semibold text-xl leading-none">
+          <span className="text-accent">
+            <TrendingIcon />
+          </span>
+          {TRENDING_TOPICS_TITLE}
+        </h2>
         <p className="text-fg-subtle text-xs">{SIDEBAR_PERIOD_LABEL}</p>
       </div>
       <QueryState

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
-import MobileMenu from '@/widgets/header/ui/MobileMenu';
+import AccountMenu from '@/widgets/header/ui/AccountMenu';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
 
 const user = { username: 'alice', displayName: 'Alice A.' } as UserProfile;
@@ -9,7 +9,7 @@ const user = { username: 'alice', displayName: 'Alice A.' } as UserProfile;
 function renderMenu(isAuthenticated = true, logout = vi.fn()) {
   render(
     <>
-      <MobileMenu
+      <AccountMenu
         isAuthenticated={isAuthenticated}
         user={isAuthenticated ? user : null}
         logout={logout}
@@ -20,7 +20,7 @@ function renderMenu(isAuthenticated = true, logout = vi.fn()) {
   return { logout, button: screen.getByRole('button', { name: 'Account menu' }) };
 }
 
-describe('MobileMenu', () => {
+describe('AccountMenu', () => {
   it('is closed until the button is pressed', () => {
     const { button } = renderMenu();
 
@@ -44,7 +44,7 @@ describe('MobileMenu', () => {
 
   it('falls back to the username when there is no display name', async () => {
     render(
-      <MobileMenu
+      <AccountMenu
         isAuthenticated
         user={{ username: 'alice', displayName: null } as UserProfile}
         logout={vi.fn()}
@@ -153,11 +153,22 @@ describe('MobileMenu', () => {
   });
 
   it('shows no name line while the profile is not there', async () => {
-    render(<MobileMenu isAuthenticated user={null} logout={vi.fn()} />);
+    render(<AccountMenu isAuthenticated user={null} logout={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Account menu' }));
 
     expect(screen.queryByText(/Signed in as/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
+  });
+
+  it('takes extra classes for its wrapper', () => {
+    render(
+      <AccountMenu isAuthenticated={false} user={null} logout={vi.fn()} className="lg:hidden" />
+    );
+
+    expect(screen.getByRole('button', { name: 'Account menu' }).parentElement).toHaveClass(
+      'lg:hidden',
+      'relative'
+    );
   });
 });

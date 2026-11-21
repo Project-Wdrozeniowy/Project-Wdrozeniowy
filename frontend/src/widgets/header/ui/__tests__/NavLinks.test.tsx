@@ -29,4 +29,22 @@ describe('NavLinks', () => {
     expect(screen.getByRole('link', { name: 'Forum' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current');
   });
+
+  it('shows an icon with each link, hidden from assistive technology, so the name stays the label', () => {
+    render(
+      <NavLinks
+        links={[
+          { href: '/', label: 'Home' },
+          { href: '/forum', label: 'Forum' },
+          { href: '/dashboard', label: 'Analytics' },
+        ]}
+        pathname="/"
+      />
+    );
+
+    for (const name of ['Home', 'Forum', 'Analytics']) {
+      const link = screen.getByRole('link', { name });
+      expect(link.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+    }
+  });
 });

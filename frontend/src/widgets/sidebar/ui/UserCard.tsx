@@ -4,7 +4,15 @@ import { useUnreadNotificationCount } from '@/shared/api/notifications/useUnread
 import { UNREAD_BADGE_MAX } from '@/shared/api/notifications/notification.const';
 import { cn } from '@/shared/lib/cn';
 import { isActiveLink } from '@/shared/lib/isActiveLink';
+import { BellIcon, SettingsIcon, UserIcon } from '@/shared/ui/icons';
 import { NAV_LINKS } from '@/widgets/sidebar/ui/sidebar.const';
+
+/** One icon per entry of the card, by its address. */
+const ENTRY_ICONS: Record<string, () => React.JSX.Element> = {
+  '/profile': UserIcon,
+  '/notifications': BellIcon,
+  '/settings': SettingsIcon,
+};
 
 interface UserCardProps {
   user: UserProfile;
@@ -32,6 +40,7 @@ export default function UserCard({ user, initials, pathname }: UserCardProps) {
       <nav aria-label="Your account" className="flex flex-col gap-0.5">
         {NAV_LINKS.map(({ href, label }) => {
           const active = isActiveLink(pathname, href);
+          const Icon = ENTRY_ICONS[href];
           return (
             <Link
               key={href}
@@ -42,7 +51,10 @@ export default function UserCard({ user, initials, pathname }: UserCardProps) {
                 active ? 'bg-raised text-fg' : 'text-fg hover:bg-raised'
               )}
             >
-              {label}
+              <span className="flex items-center gap-3">
+                {Icon && <Icon />}
+                {label}
+              </span>
               {href === '/notifications' && unread > 0 && (
                 <span className="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold leading-5 text-center">
                   <span aria-hidden="true">

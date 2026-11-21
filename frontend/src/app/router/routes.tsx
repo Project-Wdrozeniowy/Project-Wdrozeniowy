@@ -48,18 +48,20 @@ export const routes: RouteObject[] = [
             lazy: async () => ({ Component: (await import('@/pages/search')).SearchPage }),
           },
           {
+            // Public: the figures come from the public analytics endpoints; only the user's own
+            // totals need a session, and the page shows them only when there is one.
+            path: 'dashboard',
+            lazy: async () => ({
+              Component: (await import('@/pages/dashboard')).DashboardPage,
+            }),
+          },
+          {
             element: (
               <AuthGuard>
                 <Outlet />
               </AuthGuard>
             ),
             children: [
-              {
-                path: 'dashboard',
-                lazy: async () => ({
-                  Component: (await import('@/pages/dashboard')).DashboardPage,
-                }),
-              },
               {
                 path: 'profile',
                 lazy: async () => ({ Component: (await import('@/pages/profile')).ProfilePage }),
