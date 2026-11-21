@@ -1,6 +1,6 @@
 import type { ApiRequestOptions } from '@/shared/api/client/orvalTransport';
 import type { AxiosRequestConfig } from 'axios';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AxiosError } from 'axios';
@@ -161,6 +161,84 @@ describe('PostVoteColumn – while a request runs', () => {
 
     await act(async () => finish(vote(9, 'UP', 6)));
     await waitFor(() => expect(up).not.toHaveAttribute('aria-disabled'));
+  });
+});
+
+describe('PostVoteColumn – a double click', () => {
+  it('sends one request when the second click comes before the screen has re-rendered', async () => {
+    let finish: (value: unknown) => void = () => {};
+    vi.mocked(voteService.cast).mockReturnValue(
+      new Promise((resolve) => (finish = resolve)) as never
+    );
+    setup(5, null);
+    const up = screen.getByRole('button', { name: 'Upvote' });
+
+    // Two clicks in one go, as a real double click: nothing renders in between, so the busy state
+    // of the buttons cannot be what stops the second one.
+    up.click();
+    up.click();
+    await waitFor(() => expect(voteService.cast).toHaveBeenCalledTimes(1));
+
+    await act(async () => finish(vote(9, 'UP', 6)));
+    expect(voteService.cast).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PostVoteColumn – the same post on two screens', () => {
+  it('sends no second request while a vote of the post is pending, wherever it was started', async () => {
+    let finish: (value: unknown) => void = () => {};
+    vi.mocked(voteService.cast).mockReturnValue(
+      new Promise((resolve) => (finish = resolve)) as never
+    );
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const user = userEvent.setup();
+    const columns = (
+      <>
+        <section aria-label="feed">
+          <PostVoteColumn postId={1} score={5} myVote={null} />
+        </section>
+        <section aria-label="detail">
+          <PostVoteColumn postId={1} score={5} myVote={null} />
+        </section>
+        <section aria-label="other post">
+          <PostVoteColumn postId={2} score={9} myVote={null} />
+        </section>
+      </>
+    );
+    render(<QueryClientProvider client={queryClient}>{columns}</QueryClientProvider>);
+    const within = (name: string) => screen.getByRole('region', { name });
+
+    await user.click(within('feed').querySelector('button[aria-label="Upvote"]')!);
+    const detailUp = within('detail').querySelector('button[aria-label="Upvote"]')!;
+    await waitFor(() => expect(detailUp).toHaveAttribute('aria-disabled', 'true'));
+    await user.click(detailUp);
+    await user.click(within('detail').querySelector('button[aria-label="Downvote"]')!);
+    expect(voteService.cast).toHaveBeenCalledTimes(1);
+
+    // Another post is not held up by it.
+    expect(within('other post').querySelector('button[aria-label="Upvote"]')).not.toHaveAttribute(
+      'aria-disabled'
+    );
+
+    await act(async () => finish(vote(9, 'UP', 6)));
+    await waitFor(() => expect(detailUp).not.toHaveAttribute('aria-disabled'));
+  });
+});
+
+describe('PostVoteColumn – offline', () => {
+  afterEach(() => onlineManager.setOnline(true));
+
+  it('sends the vote and shows the message when it fails, instead of holding it back silently', async () => {
+    onlineManager.setOnline(false);
+    vi.mocked(voteService.cast).mockRejectedValue(new AxiosError('Network Error', 'ERR_NETWORK'));
+    const { user } = setup(5, null);
+
+    await user.click(screen.getByRole('button', { name: 'Upvote' }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(VOTE_ERROR_MESSAGE));
+    expect(voteService.cast).toHaveBeenCalledTimes(1);
+    // The post is free again, not stuck as busy.
+    expect(screen.getByRole('button', { name: 'Upvote' })).not.toHaveAttribute('aria-disabled');
   });
 });
 

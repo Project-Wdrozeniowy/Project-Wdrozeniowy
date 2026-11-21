@@ -224,6 +224,27 @@ menu and the sidebar card show the same name.
   the real vote totals (upvotes received, downvotes received, votes cast) instead. Reviewers should
   confirm this.
 
+## Post voting (PWDRZ-97)
+
+A vote is the server's. The screen changes only when the API has answered (`useVotePost`), so a
+rejected or failed request leaves the post as it was and shows a fixed message; there is nothing to
+roll back. This was chosen over optimistic updates on purpose: a vote the server did not accept is
+never shown. The buttons show a busy state while a request runs.
+
+- **Cast, switch, retract.** The same direction again retracts (`DELETE /forum/votes/{id}`), anything
+  else casts (the server switches an existing vote). A cast answers with the new score. A retract
+  answers 204, so the score is computed and then confirmed by a reload of the lists.
+- **One cache answer for every copy.** The feed (and the Home feed), the profile's list of posts and
+  the post page all get the same outcome, so they agree without a reload.
+- **One request at a time per post.** A column asks the mutation cache at the click
+  (`queryClient.isMutating` with `votePostMutationKey`), not the last render: a double click
+  delivers its second click before the screen has caught up, and a vote started on another screen a
+  moment ago also counts. The busy look comes from `useIsMutating`.
+- **Guests** are sent to `/login` and nothing is requested. A 401 is silent: the session handling
+  already sends the user to sign in.
+- **Tests.** The unit tests cover each rule above. `vote-consistency.spec.ts` runs the real stack:
+  cast with a double click (one request), the post page and the feed agree, switch, reload, retract.
+
 ## Theming
 
 The app has a light theme (the default) and a dark theme, as in the Figma design. Components

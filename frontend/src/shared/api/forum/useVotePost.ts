@@ -25,6 +25,9 @@ import type { MyVoteDto as MyVote } from '@/shared/api/generated/models/myVoteDt
 import type { VoteRequestVoteType as VoteType } from '@/shared/api/generated/models/voteRequestVoteType.dto';
 import { toast } from '@/shared/lib/toast';
 
+/** Identifies the votes on one post, whichever screen started them. */
+export const votePostMutationKey = (postId: number) => ['vote-post', postId] as const;
+
 /** What the user is looking at when they click: needed to choose between cast and retract. */
 export interface VoteClick {
   clicked: VoteType;
@@ -51,7 +54,8 @@ function failureMessage(status: number | undefined, retracting: boolean): string
  * casts one (the server switches an existing vote). The feed cache gets the server's answer, so
  * the screen never shows a vote the server did not accept (a retract's score is the one exception:
  * the server sends none, so it is computed and then confirmed by a reload). While a request runs
- * `isPending` is true and the buttons should not react, so two requests never race each other.
+ * the post has a pending vote (`useIsMutating` with `votePostMutationKey`) and the buttons should
+ * not react, so two requests never race each other, even from two screens.
  */
 export function useVotePost(postId: number) {
   const queryClient = useQueryClient();
@@ -61,7 +65,11 @@ export function useVotePost(postId: number) {
     isPostDetailQuery(query, postId);
 
   return useMutation({
-    mutationKey: ['vote-post', postId],
+    mutationKey: votePostMutationKey(postId),
+    // Offline, the request still goes out and fails, so the user gets the message. Paused until the
+    // network came back, the vote would be sent later with no sign of it, and the post would stay
+    // busy on every screen meanwhile.
+    networkMode: 'always',
     mutationFn: async ({ clicked, voteScore, myVote }: VoteClick): Promise<VoteOutcome> => {
       const action = voteActionFor(myVote, clicked);
       // The page shows its own message on failure; the global toast would print server text.
