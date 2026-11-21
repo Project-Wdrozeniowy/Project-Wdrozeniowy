@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LoginPage } from '@/pages/login';
 import { RegisterPage } from '@/pages/register';
@@ -240,7 +240,8 @@ describe('registration interests (provisional, PWDRZ-154)', () => {
   it('shows the interests as unavailable instead of a working choice', () => {
     render(<RegisterPage />);
 
-    expect(screen.getByText('Coming soon')).toBeInTheDocument();
+    const interests = screen.getByRole('region', { name: 'Select Your Interests' });
+    expect(within(interests).getByText('Coming soon')).toBeInTheDocument();
     expect(screen.getByText(/Choosing topics is not available yet/)).toBeInTheDocument();
     // No topic can be pressed: none of the categories is a button.
     for (const { label } of CATEGORIES) {
@@ -261,5 +262,57 @@ describe('registration interests (provisional, PWDRZ-154)', () => {
       'password',
       'username',
     ]);
+  });
+});
+
+describe('actions that have no outcome yet (PWDRZ-29)', () => {
+  it('has no password-recovery link: there is no recovery page, and the form says so', () => {
+    render(<LoginPage />);
+
+    expect(screen.queryByRole('link', { name: /forgot/i })).toBeNull();
+    expect(document.querySelector('a[href="/forgot-password"]')).toBeNull();
+    const hint = screen.getByText('Password recovery is not available yet.');
+    // The hint is read with the password field.
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription(hint.textContent ?? '');
+  });
+
+  it.each([
+    ['sign-in', LoginPage, 'Sign In'],
+    ['sign-up', RegisterPage, 'Create Account'],
+  ])(
+    'shows the social providers on the %s page as unavailable, not as dead buttons',
+    (_, Page, submit) => {
+      render(<Page />);
+
+      for (const provider of ['Google', 'GitHub', 'Discord']) {
+        expect(screen.getByText(provider)).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: provider })).toBeNull();
+        expect(screen.queryByRole('link', { name: provider })).toBeNull();
+      }
+      expect(screen.getByRole('list', { name: /Social sign-in providers/ })).toBeInTheDocument();
+      expect(screen.getByText(/is not available yet\. Use the form above\./)).toBeInTheDocument();
+      // Pressing a provider does nothing, so nothing is pressable: the only buttons are the form's own.
+      const names = screen.getAllByRole('button').map((button) => button.textContent);
+      expect(names).toEqual([submit]);
+    }
+  );
+
+  it('marks both empty fields as invalid, each with its own error', async () => {
+    render(<LoginPage />);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Sign In' }));
+
+    for (const label of ['Username', 'Password']) {
+      const field = await screen.findByLabelText(label);
+      await waitFor(() => expect(field).toHaveAttribute('aria-invalid', 'true'));
+      expect(field).toHaveAccessibleDescription(/.+/);
+    }
+  });
+
+  it('keeps the links that lead somewhere: Sign Up on the sign-in page, Sign In on sign-up', () => {
+    const { unmount } = render(<LoginPage />);
+    expect(screen.getByRole('link', { name: 'Sign Up' })).toHaveAttribute('href', '/register');
+    unmount();
+    render(<RegisterPage />);
+    expect(screen.getByRole('link', { name: 'Sign In' })).toHaveAttribute('href', '/login');
   });
 });
