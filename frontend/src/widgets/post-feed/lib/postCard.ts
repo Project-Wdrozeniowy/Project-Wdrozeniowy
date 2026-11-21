@@ -57,3 +57,8 @@ export function toPostCardData(post: PostSummary | Post, now?: number): PostCard
     voting: { postId: post.id, myVote: post.myVote },
   };
 }
+
+/** "1 Comment", "3 Comments": the text of the link to a post's comments. */
+export function commentsLabel(count: number): string {
+  return `${count} ${count === 1 ? 'Comment' : 'Comments'}`;
+}

@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { ACTION_UNAVAILABLE_HINT } from '@/widgets/post-feed/config/postCard.const';
+import { commentsLabel } from '@/widgets/post-feed/lib/postCard';
 import type { PostCardData } from '@/widgets/post-feed/lib/postCard';
 import { CommentIcon, ShareIcon, SaveIcon } from '@/shared/ui/icons';
 import PostTagLinks from './PostTagLinks';
@@ -14,6 +15,8 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
+  const comments = commentsLabel(post.comments);
+
   return (
     <article className="bg-surface rounded-xl p-5 flex gap-4 hover:bg-raised/50 transition-colors border border-line">
       <PostVoteColumn postId={post.voting.postId} score={post.votes} myVote={post.voting.myVote} />
@@ -52,7 +55,8 @@ export default function PostCard({ post }: PostCardProps) {
         <div className="flex items-center gap-2 flex-wrap">
           <ActionLink
             icon={<CommentIcon />}
-            label={`${post.comments} Comments`}
+            label={comments}
+            context={`on ${post.title}`}
             to={`${postHref(post.slug)}#comments`}
           />
           <ActionButton

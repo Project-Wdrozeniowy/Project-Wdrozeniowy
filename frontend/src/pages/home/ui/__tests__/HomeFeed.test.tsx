@@ -180,7 +180,7 @@ describe('HomeFeed', () => {
     await screen.findByText('Post 1');
     const href = screen.getByRole('link', { name: 'Post 1' }).getAttribute('href');
     expect(href).toMatch(/^\/forum\/.+/);
-    expect(screen.getByRole('link', { name: '2 Comments' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '2 Comments on Post 1' })).toHaveAttribute(
       'href',
       `${href}#comments`
     );

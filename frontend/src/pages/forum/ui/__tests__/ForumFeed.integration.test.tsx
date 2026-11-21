@@ -101,7 +101,7 @@ describe('ForumFeed over the real API client', () => {
       '/forum/gaming-post-3'
     );
     expect(screen.getByText('alice')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '4 Comments' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '4 Comments on Gaming post 3' })).toBeInTheDocument();
     expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
 
     expect(mock.history.get).toHaveLength(1);
