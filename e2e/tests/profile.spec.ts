@@ -59,9 +59,14 @@ test("the profile lists the user's own posts and the sidebar shows real counts",
   await expect(posts.getByRole('button', { name: 'Load more' })).toHaveCount(0);
 
   // The sections without an API are shown as not available, not as a skeleton that never loads.
-  const tabs = page.getByRole('list', { name: 'Profile sections' });
-  await expect(tabs.getByText('Posts')).toHaveAttribute('aria-current', 'true');
-  for (const label of ['Comments', 'Saved', 'Activity']) {
+  // Posts and Activity are open (links); Comments and Saved are not.
+  const tabs = page.getByRole('navigation', { name: 'Profile sections' });
+  await expect(tabs.getByRole('link', { name: 'Posts', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page'
+  );
+  await expect(tabs.getByRole('link', { name: 'Activity', exact: true })).toBeVisible();
+  for (const label of ['Comments', 'Saved']) {
     await expect(tabs).toContainText(`${label} (Not available yet)`);
   }
 
