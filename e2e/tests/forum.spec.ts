@@ -48,7 +48,7 @@ test('publishes a persisted post and casts, switches and retracts its vote throu
   expect(vote.voteType).toBe('UP');
   await expect(card.getByRole('button', { name: 'Upvote' })).toHaveClass(/text-accent/);
 
-  // Reload proves the personal vote comes back through the generated feed query and bearer.
+  // Reload proves the personal vote comes back from the server through the generated feed query.
   await page.reload();
   await expect(card.getByRole('button', { name: 'Upvote' })).toHaveClass(/text-accent/);
   const switched = apiResponse(page, '/forum/votes', 'POST');
@@ -64,6 +64,4 @@ test('publishes a persisted post and casts, switches and retracts its vote throu
   await expect(card.getByRole('button', { name: 'Downvote' })).not.toHaveClass(/text-danger/);
   const afterRetract = await request.get(`${gatewayURL}/api/forum/posts/${post.slug}`);
   expect((await afterRetract.json()).voteScore).toBe(0);
-  // The detail page is still a placeholder. Do not present it as implemented
-  // or mock comments (PWDRZ-142/67) to make a detail-page scenario pass.
 });
