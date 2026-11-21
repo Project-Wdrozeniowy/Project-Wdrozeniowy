@@ -135,7 +135,7 @@ describe('ForumFeed – data flow', () => {
     const card = within(screen.getByRole('article'));
     const href = card.getByRole('link', { name: 'Post 7' }).getAttribute('href');
     expect(href).toMatch(/^\/forum\/.+/);
-    expect(card.getByRole('link', { name: '2 Comments' })).toHaveAttribute(
+    expect(card.getByRole('link', { name: '2 Comments on Post 7' })).toHaveAttribute(
       'href',
       `${href}#comments`
     );

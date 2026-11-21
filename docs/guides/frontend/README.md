@@ -125,6 +125,19 @@ navigation keeps filter/pagination focus. The global route error boundary
 retains the existing not-found and failure UI. API authorization remains in
 Spring; Spring owns JDBC sessions and CSRF; Express transparently forwards HTTP (PWDRZ-99).
 
+## Feed cards and the way to a post (PWDRZ-81)
+
+Each card in the feed opens its own post: the title links to `/forum/<slug>` and the "N Comments"
+link to `/forum/<slug>#comments` (the post page scrolls to the discussion once it has loaded). Both
+are real links, so keyboard, middle-click and a copied address work, and the comments link is named
+"3 Comments on <title>" so a list of links is not the same words once per card. Share and Save have
+no API and stay disabled with "Not available yet"; they are not described as actions.
+
+The feed keeps the topic, tag and page in the URL (`?topic=`, `?tag=`, `?page=`), so Back from a
+post returns to the same page of the same filter, and the browser restores the scroll position. The
+e2e test `forum-navigation.spec.ts` follows this on the real stack: card, post, Back, the keyboard
+path, a reload and a direct address, as a guest and a member, on a desktop and a phone width.
+
 ## Imports and public entries
 
 Production dependencies flow `app → pages → widgets → features → shared`;

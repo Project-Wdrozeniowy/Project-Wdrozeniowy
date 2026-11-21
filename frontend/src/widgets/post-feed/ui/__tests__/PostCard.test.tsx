@@ -126,9 +126,30 @@ describe('PostCard', () => {
       'href',
       '/forum/hello-world'
     );
-    expect(screen.getByRole('link', { name: '3 Comments' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '3 Comments on Hello world' })).toHaveAttribute(
       'href',
       '/forum/hello-world#comments'
+    );
+  });
+
+  it('says which post the comments link belongs to, and keeps the visible text first', () => {
+    renderCard(post);
+
+    const link = screen.getByRole('link', { name: /Comments/ });
+    // A list of links reads "3 Comments on Hello world", not the same words once per card.
+    expect(link).toHaveAccessibleName('3 Comments on Hello world');
+    expect(link.textContent).toBe('3 Comments');
+  });
+
+  it.each([
+    [0, '0 Comments'],
+    [1, '1 Comment'],
+    [2, '2 Comments'],
+  ])('writes %i comments as "%s"', (comments, text) => {
+    renderCard({ ...post, comments });
+
+    expect(screen.getByRole('link', { name: new RegExp(`^${text} on`) })).toHaveTextContent(
+      new RegExp(`^${text}$`)
     );
   });
 
