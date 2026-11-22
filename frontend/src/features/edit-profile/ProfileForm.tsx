@@ -7,13 +7,19 @@ import {
   BIO_MAX_LENGTH,
   PROFILE_FIELDS,
   PROFILE_FIELD_IDS,
+  PROFILE_PICTURE_LABEL,
   PROFILE_SAVED_MESSAGE,
+  PROFILE_UPLOAD_UNAVAILABLE_TEXT,
+  USERNAME_HINT,
+  USERNAME_ID,
 } from '@/features/edit-profile/profile.const';
 import type { ProfileField } from '@/features/edit-profile/profile.const';
 import { useUpdateProfile } from '@/shared/api/profile/useUpdateProfile';
 import { cn } from '@/shared/lib/cn';
 import { getFieldControlProps } from '@/shared/ui/fieldA11y';
 import FormField from '@/shared/ui/FormField';
+import RetryButton from '@/shared/ui/RetryButton';
+import UserAvatar from '@/shared/ui/UserAvatar';
 import {
   buildUpdateRequest,
   getProfileSaveError,
@@ -97,9 +103,11 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
     const request = buildUpdateRequest(formValues, profile, fields);
     if (Object.keys(request).length === 0) return;
 
-    setFormError(null);
+    // The failure message stays until the result is known: it holds the Retry button, which must
+    // stay in the page while it retries (the keyboard user keeps their place).
     try {
       const updated = await mutateAsync({ data: request });
+      setFormError(null);
       reset(profileToFormValues(updated), { keepDirtyValues: false });
       toast.success(PROFILE_SAVED_MESSAGE);
     } catch (error: unknown) {
@@ -141,9 +149,15 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
           ref={alertRef}
           tabIndex={-1}
           role="alert"
-          className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm px-4 py-3 rounded"
+          className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 text-sm px-4 py-3 rounded flex items-center justify-between gap-3 flex-wrap"
         >
-          {formError}
+          <p>{formError}</p>
+          {/* The form still holds what the user typed, so trying again is saving again. */}
+          <RetryButton
+            onRetry={() => handleSubmit(onSubmit)()}
+            retrying={isPending}
+            variant="outline"
+          />
         </div>
       )}
 
@@ -161,6 +175,22 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
             className={cn('input', errors.email && 'ring-2 ring-red-500')}
           />
         </FormField>
+      )}
+
+      {shows('avatarUrl') && (
+        <div className="flex items-center gap-4">
+          <UserAvatar
+            id={profile.id}
+            username={profile.username}
+            displayName={profile.displayName}
+            avatarUrl={profile.avatarUrl}
+            size={64}
+          />
+          <div className="flex flex-col gap-1 min-w-0">
+            <p className="text-fg font-semibold text-sm">{PROFILE_PICTURE_LABEL}</p>
+            <p className="text-fg-subtle text-xs">{PROFILE_UPLOAD_UNAVAILABLE_TEXT}</p>
+          </div>
+        </div>
       )}
 
       {shows('displayName') && (
@@ -181,6 +211,20 @@ export default function ProfileForm({ profile, fields, title }: ProfileFormProps
             autoComplete="nickname"
             readOnly={isPending}
             className={cn('input', errors.displayName && 'ring-2 ring-red-500')}
+          />
+        </FormField>
+      )}
+
+      {/* The username goes with the name it stands behind: shown where the display name is edited. */}
+      {shows('displayName') && (
+        <FormField label="Username" id={USERNAME_ID} hint={USERNAME_HINT}>
+          <input
+            id={USERNAME_ID}
+            type="text"
+            value={profile.username}
+            readOnly
+            aria-describedby={`${USERNAME_ID}-hint`}
+            className="input"
           />
         </FormField>
       )}

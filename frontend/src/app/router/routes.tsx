@@ -7,6 +7,7 @@ import AuthGuard from './guards/AuthGuard';
 import RoleGuard from './guards/RoleGuard';
 import SessionLoader from './guards/SessionLoader';
 import RouteErrorBoundary from './RouteErrorBoundary';
+import type { RouteHandle } from './routeHandle';
 
 export const routes: RouteObject[] = [
   {
@@ -75,6 +76,8 @@ export const routes: RouteObject[] = [
               {
                 // `/settings` has no section: the page sends it to the default one.
                 path: 'settings/:section?',
+                // As in the design, the settings use the whole width and have no sidebar.
+                handle: { wide: true } satisfies RouteHandle,
                 lazy: async () => ({ Component: (await import('@/pages/settings')).SettingsPage }),
               },
               {

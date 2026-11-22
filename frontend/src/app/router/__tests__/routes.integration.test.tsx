@@ -106,6 +106,28 @@ it('opens the dashboard for a guest too: its figures are public', async () => {
   expect(screen.queryByText('Your posts')).not.toBeInTheDocument();
 });
 it.each([
+  ['/settings/profile', false],
+  ['/settings/account', false],
+  ['/profile', true],
+  ['/forum', true],
+])(
+  '%s has the sidebar: %s (the settings use the whole width, as in the design)',
+  async (path, hasSidebar) => {
+    useStore.setState({ user, isAuthenticated: true });
+    vi.mocked(orvalTransport).mockImplementation(async (config) => {
+      if (config.url === '/users/me') return user as never;
+      throw new Error('Network is isolated in this routing test');
+    });
+    const router = await open(path);
+    await waitFor(() => expect(router.state.initialized).toBe(true));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Account menu' })).toBeVisible());
+    expect(router.state.location.pathname).toBe(path);
+    if (hasSidebar) expect(screen.getByRole('complementary')).toBeInTheDocument();
+    else expect(screen.queryByRole('complementary')).toBeNull();
+  }
+);
+
+it.each([
   '/profile',
   '/settings/profile',
   '/settings/account',
