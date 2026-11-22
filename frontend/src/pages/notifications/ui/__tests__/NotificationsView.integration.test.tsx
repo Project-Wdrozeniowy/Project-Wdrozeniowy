@@ -48,7 +48,6 @@ beforeEach(() => {
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
   useStore.setState({
-    user: { id: 1, username: 'alice' } as never,
     isAuthenticated: true,
     isInitialized: true,
   });
@@ -111,7 +110,7 @@ describe('loading and showing the notifications', () => {
   });
 
   it('sends nothing to the API for a guest: the notifications are private', async () => {
-    useStore.setState({ user: null, isAuthenticated: false });
+    useStore.setState({ isAuthenticated: false });
     fakeNotificationServer(mock, [makeNotification()]);
     renderView();
 

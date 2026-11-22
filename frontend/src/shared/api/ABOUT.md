@@ -9,4 +9,4 @@ This directory owns the frontend's **single gateway-facing transport and server-
 
 See the [generation and drift-check workflow](../../../../docs/guides/api-bindings.md).
 
-TanStack Query is the canonical server cache; the overlapping profile in Zustand is separate [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150) work. See the [frontend architecture target](../../../../docs/guides/frontend/README.md).
+TanStack Query is the canonical server cache, including the signed-in user's profile (`profile/currentUser.ts`, [PWDRZ-150](https://project-wdrz.atlassian.net/browse/PWDRZ-150)). See the [frontend architecture target](../../../../docs/guides/frontend/README.md).

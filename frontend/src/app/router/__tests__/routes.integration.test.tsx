@@ -45,7 +45,7 @@ async function open(path: string) {
 }
 beforeEach(() => {
   vi.mocked(orvalTransport).mockRejectedValue({ isAxiosError: true, response: { status: 401 } });
-  useStore.setState({ user: null, isInitialized: true, isAuthenticated: false });
+  useStore.setState({ isInitialized: true, isAuthenticated: false });
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 });
 afterEach(() => {
@@ -113,7 +113,7 @@ it.each([
 ])(
   '%s has the sidebar: %s (the settings use the whole width, as in the design)',
   async (path, hasSidebar) => {
-    useStore.setState({ user, isAuthenticated: true });
+    useStore.setState({ isAuthenticated: true });
     vi.mocked(orvalTransport).mockImplementation(async (config) => {
       if (config.url === '/users/me') return user as never;
       throw new Error('Network is isolated in this routing test');
@@ -135,7 +135,7 @@ it.each([
   '/dashboard',
   '/admin',
 ])('renders the implemented protected route %s for its permitted user', async (path) => {
-  useStore.setState({ user: { ...user, role: 'ADMIN' }, isAuthenticated: true });
+  useStore.setState({ isAuthenticated: true });
   vi.mocked(orvalTransport).mockImplementation(async (config) => {
     if (config.url === '/users/me') return { ...user, role: 'ADMIN' } as never;
     throw new Error('Network is isolated in this routing test');
@@ -149,7 +149,7 @@ it.each([
 it.each(['/settings', '/settings/privacy', '/settings/nonsense'])(
   'sends %s to the profile section of the settings',
   async (path) => {
-    useStore.setState({ user, isAuthenticated: true });
+    useStore.setState({ isAuthenticated: true });
     vi.mocked(orvalTransport).mockImplementation(async (config) => {
       if (config.url === '/users/me') return user as never;
       throw new Error('Network is isolated in this routing test');
@@ -162,7 +162,7 @@ it.each(['/settings', '/settings/privacy', '/settings/nonsense'])(
 );
 describe('leaving a settings section with unsaved changes', () => {
   async function openProfileSection() {
-    useStore.setState({ user, isAuthenticated: true });
+    useStore.setState({ isAuthenticated: true });
     vi.mocked(orvalTransport).mockImplementation(async (config) => {
       if (config.url === '/users/me') return user as never;
       throw new Error('Network is isolated in this routing test');
@@ -209,7 +209,7 @@ describe('leaving a settings section with unsaved changes', () => {
   });
 });
 it('rejects the admin page for an ordinary authenticated user', async () => {
-  useStore.setState({ user, isAuthenticated: true });
+  useStore.setState({ isAuthenticated: true });
   vi.mocked(orvalTransport).mockImplementation(async (config) => {
     if (config.url === '/users/me') return user as never;
     throw new Error('Network is isolated in this routing test');

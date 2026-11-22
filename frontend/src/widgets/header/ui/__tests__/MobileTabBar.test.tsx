@@ -13,7 +13,7 @@ vi.mock('react-router', async () =>
 
 beforeEach(() => {
   pathname = '/';
-  useStore.setState({ isAuthenticated: false, user: null });
+  useStore.setState({ isAuthenticated: false });
 });
 
 describe('MobileTabBar', () => {

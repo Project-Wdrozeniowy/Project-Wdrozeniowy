@@ -53,7 +53,7 @@ function renderCard(pathname = '/', user: UserProfileDto = USER) {
 beforeEach(() => {
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
-  useStore.setState({ user: USER as never, isAuthenticated: true, isInitialized: true });
+  useStore.setState({ isAuthenticated: true, isInitialized: true });
 });
 
 afterEach(() => mock.restore());

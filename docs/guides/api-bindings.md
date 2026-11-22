@@ -102,7 +102,7 @@ server payloads; transport tests and real-stack tests provide separate evidence.
 | AI tag-suggestion adapter           | Operation is generated; the handwritten `aiService` is still in use         |
 | WebSocket events                    | Separate non-REST protocol, PWDRZ-104                                       |
 | Gateway error envelope              | Not part of the backend OpenAPI; inspect unknown errors safely              |
-| Overlapping profile in Zustand      | Existing synchronization retained; consolidation belongs to PWDRZ-150       |
+| Profile copies                      | One: the Query entry of `GET /users/me`; the store holds only the lifecycle |
 
 Implemented auth, user, posts, votes, search, notifications and analytics operations
 have no handwritten compatibility service wrappers or duplicate wire DTOs. Use the

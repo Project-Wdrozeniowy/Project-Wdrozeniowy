@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { observeSessionChanges, reconcileSession } from '@/shared/auth/session';
 import { useStore } from '@/store';
@@ -8,11 +9,13 @@ interface AuthProviderProps {
 }
 
 export default function AuthProvider({ children }: AuthProviderProps) {
+  const queryClient = useQueryClient();
   const status = useStore((state) => state.sessionStatus);
   const [bootstrapped, setBootstrapped] = useState(false);
   useEffect(() => {
     let mounted = true;
-    const stop = observeSessionChanges();
+    // The session code keeps the signed-in user's profile in this client's cache.
+    const stop = observeSessionChanges(queryClient);
     void reconcileSession().finally(() => {
       if (mounted) setBootstrapped(true);
     });
@@ -20,7 +23,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       mounted = false;
       stop();
     };
-  }, []);
+  }, [queryClient]);
   // Resolve the initial cookie identity before optional-auth page queries can cache a response.
   // Later explicit auth transitions keep forms mounted so failed submissions preserve input.
   if (!bootstrapped) return <SessionLoader />;

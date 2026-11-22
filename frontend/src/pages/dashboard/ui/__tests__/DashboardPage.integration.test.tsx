@@ -44,7 +44,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
-  useStore.setState({ user: { id: 1, username: 'alice' } as never, isAuthenticated: true });
+  useStore.setState({ isAuthenticated: true });
 });
 
 afterEach(() => mock.restore());
@@ -222,7 +222,7 @@ describe('when there is nothing or something fails', () => {
 
   it('offers a guest the public figures only: no own totals, no request for them, nothing broken', async () => {
     fakeAnalyticsServer(mock);
-    useStore.setState({ user: null, isAuthenticated: false });
+    useStore.setState({ isAuthenticated: false });
     renderPage();
 
     await screen.findByText('60');

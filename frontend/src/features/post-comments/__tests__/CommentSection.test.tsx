@@ -6,6 +6,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { CommentSection } from '../CommentSection';
 import { apiClient } from '@/shared/api/client/api';
 import { useStore } from '@/store';
+import { signInUser } from '@/test/session';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import type { Comment } from '@/shared/api/forum/comment.dto';
 import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
@@ -67,8 +68,9 @@ function pageOf(
 const axiosInstance = (apiClient as unknown as { client: AxiosInstance }).client;
 let mock: MockAdapter;
 
+let client: QueryClient;
+
 function renderSection() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <CommentSection slug="hello" />
@@ -77,14 +79,15 @@ function renderSection() {
 }
 
 function signedIn(user: UserProfile = alice) {
-  useStore.setState({ user, isAuthenticated: true, isInitialized: true });
+  signInUser(client, user);
 }
 
 beforeEach(() => {
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
   mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
-  useStore.setState({ user: null, isAuthenticated: false, isInitialized: true });
+  useStore.setState({ isAuthenticated: false, isInitialized: true });
 });
 
 afterEach(() => {
@@ -184,7 +187,7 @@ describe('CommentSection – guests', () => {
 
 describe('CommentSection – while the session is being restored', () => {
   it('shows neither the sign-in prompt nor the form until we know who the user is', async () => {
-    useStore.setState({ user: null, isAuthenticated: false, isInitialized: false });
+    useStore.setState({ isAuthenticated: false, isInitialized: false });
     mock.onGet(LIST_URL).reply(200, pageOf([comment(1)]));
     renderSection();
 
@@ -194,19 +197,19 @@ describe('CommentSection – while the session is being restored', () => {
   });
 
   it('then shows the form for a restored session, without ever showing the prompt', async () => {
-    useStore.setState({ user: null, isAuthenticated: false, isInitialized: false });
+    useStore.setState({ isAuthenticated: false, isInitialized: false });
     mock.onGet(LIST_URL).reply(200, pageOf([comment(1)]));
     renderSection();
     await screen.findByText('Comment 1');
 
-    act(() => useStore.getState().setAuth(alice));
+    act(() => signInUser(client, alice));
 
     expect(await screen.findByLabelText('Add a comment')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
   });
 
   it('shows the sign-in prompt once the restore found no session', async () => {
-    useStore.setState({ user: null, isAuthenticated: false, isInitialized: false });
+    useStore.setState({ isAuthenticated: false, isInitialized: false });
     mock.onGet(LIST_URL).reply(200, pageOf([comment(1)]));
     renderSection();
     await screen.findByText('Comment 1');

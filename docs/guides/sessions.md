@@ -151,5 +151,29 @@ PWDRZ-161 may evaluate Spring RememberMeServices with a separate, revocable
 persistent credential. Successful restoration must call the same establishment
 lifecycle to create a **fresh limited session**, check account-wide revocation
 and renew CSRF. PWDRZ-99 adds no remember-me filter, flag, UI, credential table,
-cookie, restoration endpoint or dormant implementation. PWDRZ-150 continues to
-own full profile-state consolidation; session isolation is implemented here.
+cookie, restoration endpoint or dormant implementation. The profile-state
+consolidation (PWDRZ-150) is done: see "Who is signed in" below.
+
+## Who is signed in (PWDRZ-150)
+
+The signed-in user's profile (`GET /users/me`) has **one** client copy: the TanStack Query entry
+`currentUserQueryKey` (`frontend/src/shared/api/profile/currentUser.ts`). Nothing mirrors it in
+Zustand, so nothing is synchronised by hand.
+
+- **Written by** `shared/auth/session.ts` when the server confirms a session (page load, sign-in,
+  registration, a focus check or another tab's change), and by a profile save with the server's
+  answer. `AuthProvider` binds the app's `QueryClient` to the session code while it is mounted; a
+  session change with no cache bound fails loudly.
+- **Read by** the header, the sidebar, the guards, the comment form, the create-post button and the
+  profile and settings pages, through `useCurrentUser()` (no request of its own) and `useMyProfile()`
+  (read from the server when a page opens). A refetch or a save reaches all of them.
+- **The store keeps only the lifecycle**: `sessionStatus` (`checking`, `authenticated`, `guest`,
+  `error`), with `isAuthenticated` (only `authenticated`) and `isInitialized` (the first check has
+  ended). Readers check `isAuthenticated` first, so a guest never sees a profile that is still in
+  the cache. Their meaning is written in `authSlice.ts`.
+- **Account isolation.** When the session is confirmed for a different user id than the cached one,
+  the session code clears the whole cache before writing the new profile. When the session ends or is
+  being re-checked (sign-out, expiry, another tab), `QueryProvider` clears the cache. One account's
+  data is never shown to the next.
+- **Guards.** `RoleGuard` waits for the lifecycle and for the role: signed in without a profile in
+  the cache yet is a loader, never a redirect.

@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { useLocation } from 'react-router';
 import { signOutSession } from '@/shared/auth/session';
+import { useCurrentUser } from '@/shared/api/profile/currentUser';
 import { useStore } from '@/store';
 import OrbitaLogo from '@/shared/ui/OrbitaLogo';
 import NavLinks from './ui/NavLinks';
@@ -12,7 +13,7 @@ import { API_ERROR_TOAST_ID, toast } from '@/shared/lib/toast';
 export default function Header() {
   const pathname = useLocation().pathname;
   const isAuthenticated = useStore((state) => state.isAuthenticated);
-  const user = useStore((state) => state.user);
+  const user = useCurrentUser() ?? null;
 
   async function handleSignOut() {
     try {

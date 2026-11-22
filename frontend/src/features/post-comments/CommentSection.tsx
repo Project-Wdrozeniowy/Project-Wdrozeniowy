@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { useCallback } from 'react';
 import { useComments } from '@/shared/api/forum/useComments';
 import { apiErrorMessage, apiErrorStatus } from '@/shared/api/client/apiError';
+import { useCurrentUser } from '@/shared/api/profile/currentUser';
 import { useStore } from '@/store';
 import { CommentForm } from './CommentForm';
 import { CommentItem } from './CommentItem';
@@ -14,7 +15,7 @@ interface CommentSectionProps {
 }
 
 export function CommentSection({ slug }: CommentSectionProps) {
-  const user = useStore((state) => state.user);
+  const user = useCurrentUser() ?? null;
   const isAuthenticated = useStore((state) => state.isAuthenticated);
   // False until the session restore after a reload has finished. Until then we do not know yet
   // whether the visitor is signed in, so the sign-in prompt must not flash.

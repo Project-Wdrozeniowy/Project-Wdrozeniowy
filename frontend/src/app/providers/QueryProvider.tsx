@@ -31,9 +31,11 @@ export default function QueryProvider({ children }: QueryProviderProps) {
   );
 
   // Cached data belongs to the signed-in user. Without this, the next account in the same tab
-  // could be served the previous one's profile (or any other per-user query). That covers a
-  // sign-out and also another account replacing the session without one. Updates to the same
-  // user (a profile edit, a session refresh) keep the cache.
+  // could be served the previous one's profile (or any other per-user query). This covers every way
+  // the session ends or is being re-checked (sign-out, expiry, a change in another tab). Another
+  // account replacing the session in one step is handled where the user is established
+  // (`shared/auth/session.ts`), which compares the cached user's id. A profile edit or a session
+  // refresh of the same user keeps the cache.
   useEffect(
     () =>
       useStore.subscribe((state, previous) => {
@@ -47,9 +49,7 @@ export default function QueryProvider({ children }: QueryProviderProps) {
           }
           return;
         }
-        const signedOut = !state.isAuthenticated;
-        const anotherUser = state.user?.id !== previous.user?.id;
-        if (signedOut || anotherUser) {
+        if (!state.isAuthenticated) {
           void queryClient.cancelQueries();
           queryClient.clear();
         }

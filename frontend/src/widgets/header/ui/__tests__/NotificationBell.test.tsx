@@ -36,7 +36,6 @@ beforeEach(() => {
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
   useStore.setState({
-    user: { id: 1, username: 'alice' } as never,
     isAuthenticated: true,
     isInitialized: true,
   });
@@ -83,7 +82,7 @@ describe('NotificationBell', () => {
   });
 
   it('asks nothing for a guest', async () => {
-    useStore.setState({ user: null, isAuthenticated: false });
+    useStore.setState({ isAuthenticated: false });
     fakeNotificationServer(mock, unread(2));
     renderBell();
 

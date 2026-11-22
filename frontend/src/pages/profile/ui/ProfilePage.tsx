@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router';
 import { PROFILE_TAB_PARAM } from '@/pages/profile/config/profileView.const';
 import { parseProfileTab } from '@/pages/profile/lib/profileTab';
-import { useMyProfile } from '@/shared/api/profile/useMyProfile';
+import { useMyProfile } from '@/shared/api/profile/currentUser';
 import ProfileActivity from './ProfileActivity';
 import ProfilePosts from './ProfilePosts';
 import ProfileTabs from './ProfileTabs';

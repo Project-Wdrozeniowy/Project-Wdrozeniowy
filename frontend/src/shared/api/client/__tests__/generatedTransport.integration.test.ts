@@ -1,7 +1,7 @@
 import type * as Operations from '@/shared/api/generated/orbita.api';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { NotificationDto } from '@/shared/api/generated/models/notificationDto.dto';
 import type { PagedResponseNotificationDto } from '@/shared/api/generated/models/pagedResponseNotificationDto.dto';
 import type { UserActivitySummaryDto } from '@/shared/api/generated/models/userActivitySummaryDto.dto';
@@ -34,7 +34,8 @@ it('preserves a profile 401 after successful login instead of treating it as a s
   useStore.getState().logout();
   mock.onPost('/auth/login').reply(204);
   mock.onGet('/users/me').reply(401, { detail: 'Authentication failed' });
-  const stop = observeSessionChanges();
+  const sessionClient = new QueryClient();
+  const stop = observeSessionChanges(sessionClient);
   try {
     await expect(
       authenticateSession((signal) =>
@@ -43,7 +44,9 @@ it('preserves a profile 401 after successful login instead of treating it as a s
     ).rejects.toMatchObject({ response: { status: 401 } });
     expect(mock.history.post.filter((request) => request.url === '/auth/login')).toHaveLength(1);
     expect(useStore.getState().sessionStatus).toBe('error');
-    expect(useStore.getState().user).toBeNull();
+    // Nobody is signed in: there is no profile in the cache and the store says so.
+    expect(useStore.getState().isAuthenticated).toBe(false);
+    expect(sessionClient.getQueryData(['/users/me'])).toBeUndefined();
   } finally {
     stop();
     vi.unstubAllGlobals();
@@ -88,7 +91,13 @@ it('starts generated search queries only after initial guest bootstrap and cache
     return null;
   }
   try {
-    render(createElement(AuthProvider, null, createElement(SearchConsumer)));
+    render(
+      createElement(
+        QueryClientProvider,
+        { client },
+        createElement(AuthProvider, null, createElement(SearchConsumer))
+      )
+    );
     await waitFor(() => expect(finishProfile).toBeDefined());
     expect(mock.history.get.filter((request) => request.url === '/search')).toHaveLength(0);
     finishProfile([401, {}]);
@@ -123,7 +132,7 @@ it('keeps a public search result usable when a concurrent focus probe confirms t
       })
   );
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const stop = observeSessionChanges();
+  const stop = observeSessionChanges(client);
   try {
     const bootstrap = reconcileSession(true);
     const generation = sessionEvents.current();
