@@ -567,6 +567,37 @@ describe('ForumFeed – states', () => {
   });
 });
 
+describe('ForumFeed – tags on the cards of the listing', () => {
+  it('shows the tags a listed post carries, each a link to the feed of that tag', async () => {
+    list.mockResolvedValue({
+      ...pageOf([1, 2]),
+      content: [
+        makePost(1, {
+          tags: [
+            { id: 1, name: 'react', slug: 'react', postCount: 3 },
+            { id: 2, name: 'Spring Boot', slug: 'spring-boot', postCount: 5 },
+          ],
+        }),
+        makePost(2),
+      ],
+    });
+    renderFeed();
+
+    const cardOf = (title: string) =>
+      within(screen.getByRole('heading', { name: title }).closest('article')!);
+    await screen.findByRole('heading', { name: 'Post 1' });
+    const first = cardOf('Post 1');
+    expect(first.getByRole('link', { name: '#react' })).toHaveAttribute('href', '/forum?tag=react');
+    expect(first.getByRole('link', { name: '#Spring Boot' })).toHaveAttribute(
+      'href',
+      '/forum?tag=spring-boot'
+    );
+    // The list is named "Tags", and a post without tags has no list at all.
+    expect(first.getByRole('list', { name: 'Tags' })).toBeInTheDocument();
+    expect(cardOf('Post 2').queryAllByRole('list')).toHaveLength(0);
+  });
+});
+
 describe('ForumFeed – tag filter', () => {
   it('asks the API for the tag of the URL and says the feed is limited to it', async () => {
     search = 'tag=react';

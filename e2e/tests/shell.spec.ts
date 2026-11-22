@@ -66,7 +66,7 @@ test('the shell works for a guest at every width the design is compared at', asy
         await expect(page).toHaveURL(path);
         await destinationsReachable(page, width, false);
         await focusSearchIfShown(page, width);
-        expect(await noSideScroll(page)).toBe(true);
+        expect(await noSideScroll(page), `${path} scrolls sideways at ${width}px`).toBe(true);
         if (path !== '/dashboard') await createPostWhole(page);
       }
       // A guest has Sign in and Sign up: as buttons from 768px, in the account menu on a phone.
@@ -110,7 +110,7 @@ test('the shell works for a member with a very long name at every width, with a 
         await expect(page).toHaveURL(path);
         await destinationsReachable(page, width, true);
         await focusSearchIfShown(page, width);
-        expect(await noSideScroll(page)).toBe(true);
+        expect(await noSideScroll(page), `${path} scrolls sideways at ${width}px`).toBe(true);
         if (path === '/' || path === '/forum') await createPostWhole(page);
       }
 
@@ -122,7 +122,9 @@ test('the shell works for a member with a very long name at every width, with a 
       const signedInAs = page.getByText(/^Signed in as /);
       await expect(signedInAs).toBeVisible();
       await expect(signedInAs).toContainText(LONG_NAME.slice(0, 20));
-      expect(await noSideScroll(page)).toBe(true);
+      expect(await noSideScroll(page), `the open account menu scrolls sideways at ${width}px`).toBe(
+        true
+      );
       // (The sidebar card has its own Settings and Profile links, so these are the header's.)
       const header = page.getByRole('banner');
       const settings = await header

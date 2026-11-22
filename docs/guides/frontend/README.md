@@ -138,6 +138,26 @@ post returns to the same page of the same filter, and the browser restores the s
 e2e test `forum-navigation.spec.ts` follows this on the real stack: card, post, Back, the keyboard
 path, a reload and a direct address, as a guest and a member, on a desktop and a phone width.
 
+## Tag browsing (PWDRZ-107)
+
+A post's tags come with the feed itself: every `PostSummaryDto` of `GET /forum/posts` carries a
+compact `tags` list (name and slug, at most five, A to Z; PWDRZ-183), so a card never fetches its
+post just to show tags. `toPostCardData` maps them, `PostTagLinks` renders each as a link to
+`/forum?tag=<slug>` (`tagHref`, the slug is encoded), and the same card is used on the forum, the
+home page and the profile.
+
+- **The feed of a tag** is `GET /forum/posts?tag=<slug>`; the tag, the topic and the page live in the
+  URL, so it survives a reload and works with Back and Forward. A tag on top of a topic shows the
+  posts of both; clearing the tag keeps the topic.
+- **Unknown or empty tags** are not errors: the feed says "No posts with the tag #x yet." and shows
+  no other posts. Errors and loading follow the feed's fixed texts and retry.
+- **Not used:** the 501 tag-specific posts endpoint (dropped by PWDRZ-143). A tag index or sidebar
+  (`GET /forum/tags`) is optional and not built.
+- **Tests:** `ForumFeed.test.tsx` and `postCard.test.ts` use the real feed shape (a listed post with
+  tags), not a full post. `tag-browsing.spec.ts` starts from a tag on a real feed card and follows
+  it through paging, Back and Forward, a category, an unknown tag and "Show all posts"; it also
+  checks that no single post is read for its tags.
+
 ## Imports and public entries
 
 Production dependencies flow `app → pages → widgets → features → shared`;

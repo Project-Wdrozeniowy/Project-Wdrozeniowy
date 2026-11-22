@@ -51,6 +51,8 @@ test('a feed card opens its own post and discussion, and Back restores the page 
       await page.goto(feedUrl);
       const card = page.getByRole('article').filter({ hasText: title });
       await expect(card).toBeVisible();
+      // The tag of the post is on its card, as a link.
+      await expect(card.getByRole('link', { name: `#${tag}`, exact: true })).toBeVisible();
       await card.getByRole('link', { name: title, exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/forum/${slug}$`));
       await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();

@@ -80,8 +80,23 @@ describe('toPostCardData', () => {
     expect(data.categorySlug).toBeNull();
   });
 
-  it('has no tags for a listed post: the listing API does not return them', () => {
+  it('has no tags for a post without any', () => {
     expect(toPostCardData(summary, NOW).tags).toEqual([]);
+  });
+
+  it('keeps the tags of a listed post, the real feed shape, as links data', () => {
+    // A PostSummary from the feed: compact tags, no post text, no `subscribed`.
+    const listed: PostSummary = {
+      ...summary,
+      tags: [
+        { id: 2, name: 'react', slug: 'react', postCount: 4 },
+        { id: 7, name: 'Spring Boot', slug: 'spring-boot', postCount: 9 },
+      ],
+    };
+    expect(toPostCardData(listed, NOW).tags).toEqual([
+      { name: 'react', slug: 'react' },
+      { name: 'Spring Boot', slug: 'spring-boot' },
+    ]);
   });
 
   it('keeps the tags of a full post as links data', () => {
