@@ -7,8 +7,9 @@ import { vi } from 'vitest';
 import HomeFeed from '@/pages/home/ui/HomeFeed';
 import { ACTION_UNAVAILABLE_HINT } from '@/widgets/post-feed/config/postCard.const';
 import { FEED_ERROR_MESSAGE } from '@/widgets/post-feed/config/feed.const';
-import { FEED_PAGE_SIZE, FEED_QUERY_KEY, FEED_SORT } from '@/shared/api/forum/feedQuery.const';
+import { FEED_PAGE_SIZE, FEED_QUERY_KEY } from '@/shared/api/forum/feedQuery.const';
 import { useStore } from '@/store';
+import type { OpenFeedSortId } from '@/shared/constants/feedSort.const';
 import type { PagedResponse } from '@/shared/api/client/pagination.dto';
 import type { PostSummaryDto as PostSummary } from '@/shared/api/generated/models/postSummaryDto.dto';
 
@@ -61,11 +62,11 @@ function pageOf(ids: number[], totalPages = 1): PagedResponse<PostSummary> {
   };
 }
 
-function renderHome() {
+function renderHome(sort: OpenFeedSortId = 'new') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <HomeFeed />
+      <HomeFeed sort={sort} />
     </QueryClientProvider>
   );
 }
@@ -84,7 +85,7 @@ describe('HomeFeed', () => {
     expect(screen.getByText('Post 1')).toBeInTheDocument();
     expect(list).toHaveBeenCalledTimes(1);
     expect(list).toHaveBeenCalledWith(
-      { page: 0, size: FEED_PAGE_SIZE, sort: FEED_SORT, categorySlug: undefined, tag: undefined },
+      { page: 0, size: FEED_PAGE_SIZE, sort: 'createdAt', categorySlug: undefined, tag: undefined },
       expect.objectContaining({ skipErrorToast: true, signal: expect.any(AbortSignal) })
     );
   });
@@ -143,7 +144,7 @@ describe('HomeFeed', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <HomeFeed />
+        <HomeFeed sort="new" />
       </QueryClientProvider>
     );
     expect(await screen.findByText('No posts yet.')).toBeInTheDocument();
@@ -162,7 +163,7 @@ describe('HomeFeed', () => {
     renderHome();
 
     const link = await screen.findByRole('link', { name: /See all posts/ });
-    expect(link).toHaveAttribute('href', '/forum');
+    expect(link).toHaveAttribute('href', '/forum?sort=new');
   });
 
   it('has no link to the forum when everything is already shown', async () => {
@@ -218,5 +219,38 @@ describe('HomeFeed', () => {
       { entityType: 'POST', entityId: 1, voteType: 'UP' },
       expect.anything()
     );
+  });
+});
+
+describe('HomeFeed – the order', () => {
+  it.each([
+    ['new', 'createdAt', '/forum?sort=new'],
+    ['top', 'voteScore', '/forum?sort=top'],
+  ] as const)(
+    'asks the API for the %s order (%s) and links "See all posts" to the same order',
+    async (sort, apiSort, href) => {
+      list.mockResolvedValue(pageOf([1, 2], 3));
+      renderHome(sort);
+
+      await screen.findByText('Post 1');
+      expect(list.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ page: 0, size: FEED_PAGE_SIZE, sort: apiSort })
+      );
+      expect(screen.getByRole('link', { name: /See all posts/ })).toHaveAttribute('href', href);
+    }
+  );
+
+  it('shows the posts in the order the server gave, without sorting them again', async () => {
+    // The scores are not in order, as the creation times would not be: the page must not tidy them.
+    const posts = [makePost(1), makePost(2), makePost(3)];
+    posts[0].voteScore = 1;
+    posts[1].voteScore = 9;
+    posts[2].voteScore = 5;
+    list.mockResolvedValue({ ...pageOf([]), content: [posts[2], posts[0], posts[1]] });
+    renderHome('top');
+
+    await screen.findByText('Post 3');
+    const titles = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    expect(titles).toEqual(['Post 3', 'Post 1', 'Post 2']);
   });
 });
