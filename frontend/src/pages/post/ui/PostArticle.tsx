@@ -8,16 +8,17 @@ import { authorName, initialOf } from '@/shared/lib/author';
 import { topicHref } from '@/shared/lib/topicUrl';
 import CategoryChip from '@/shared/ui/CategoryChip';
 import { CommentIcon, SaveIcon, ShareIcon } from '@/shared/ui/icons';
+import Markdown from '@/shared/ui/Markdown';
 import { formatTimeAgo } from '@/utils/format';
-import { ACTION_UNAVAILABLE_HINT, PostTagLinks } from '@/widgets/post-feed';
+import { ACTION_UNAVAILABLE_HINT, PostTagLinks, commentsLabel } from '@/widgets/post-feed';
 
 interface PostArticleProps {
   post: Post;
 }
 
 /**
- * The post of the thread page. The text is user content and is shown as plain text (line breaks
- * kept), never as markup.
+ * The post of the thread page. The text is user content written in Markdown (the API says so), shown
+ * by `Markdown`, which allows no raw HTML, no script and no remote images.
  */
 export default function PostArticle({ post }: PostArticleProps) {
   const titleId = useId();
@@ -27,7 +28,7 @@ export default function PostArticle({ post }: PostArticleProps) {
   return (
     <article
       aria-labelledby={titleId}
-      className="bg-surface rounded-xl p-6 flex gap-4 border border-line"
+      className="bg-surface rounded-xl p-4 sm:p-6 flex gap-4 border border-line"
     >
       <PostVoteColumn postId={post.id} score={post.voteScore} myVote={post.myVote} />
 
@@ -73,14 +74,12 @@ export default function PostArticle({ post }: PostArticleProps) {
           tags={post.tags.map(({ name: tagName, slug }) => ({ name: tagName, slug }))}
         />
 
-        <div className="text-fg-muted text-base leading-relaxed whitespace-pre-wrap break-words">
-          {post.content}
-        </div>
+        <Markdown>{post.content}</Markdown>
 
         <div className="flex items-center gap-2 flex-wrap">
           <ActionLink
             icon={<CommentIcon />}
-            label={`${post.commentCount} Comments`}
+            label={commentsLabel(post.commentCount)}
             to="#comments"
             replace
           />

@@ -183,6 +183,37 @@ the loaded posts:
   paging); it has no picker but says which order it is in, with "Back to the usual order", and
   without a usable order it is what it was (the most recent activity first). Merging the home page and the forum is a product decision, not made here.
 
+## Post page and Markdown (PWDRZ-164)
+
+`/forum/:slug` shows one post from `GET /forum/posts/{slug}` (public) and its discussion
+(`CommentSection`). The API answers 404 for a missing post, a deleted one, and a draft the reader
+may not see, so the page has one truthful "Post not found" state (nothing of a draft leaks); a
+failed load shows a fixed message with Retry. Feed cards, search results and a direct address all
+open the same page and the same persisted body. The author sees their own draft, named as one.
+
+- **Markdown.** The API defines post and comment content as Markdown. The post body is shown by
+  `shared/ui/Markdown` (`react-markdown` with `remark-gfm`: tables, task lists, strikethrough). It
+  builds React elements and never an HTML string, so nothing is injected.
+- **What user text may do:** no raw HTML (`skipHtml`: script, iframe, handlers and style are
+  dropped); links only to absolute http(s) and mailto addresses, plus the footnote anchors the
+  renderer makes (`#user-content-…`, so text cannot point at other elements of the page). A web
+  link opens in a new tab with `rel="noopener noreferrer nofollow ugc"`; a mail or footnote link
+  stays in the tab. A `javascript:`, `data:`, relative or other fragment link is plain text.
+  **Images are not loaded** (that would tell a third-party host who reads the post), so an image is
+  a link named by its alt text ("Image: alt"), or plain text inside another link (no link in a
+  link). Headings start at h2, so the page keeps one h1 (HTML has no level below h6, so h5 and h6
+  are both h6). A single line break stays a line break, as these posts were shown before Markdown.
+  Code and tables scroll inside their own box, which is named ("Code", "Table") and focusable, so
+  a long line never widens the page.
+- **Tests.** `Markdown.test.tsx` runs about 50 real attack and mistake cases, each of which must
+  come out inert; `post-detail.spec.ts` runs a hostile and rich post on the real stack (nothing
+  executes, nothing reaches a tracker, no sideways scroll at 390 and 320 px), a member commenting,
+  search to post, and the draft and missing states.
+- **Not covered:** comments are Markdown by contract but are still shown as plain text. The same
+  component can serve them later.
+- **New dependencies:** `react-markdown` and `remark-gfm` (and their unified/remark packages), only
+  in the lazy post-page chunk.
+
 ## Imports and public entries
 
 Production dependencies flow `app → pages → widgets → features → shared`;

@@ -17,7 +17,7 @@ test('a feed card opens its own post and discussion, and Back restores the page 
       headers,
       data: {
         title: `Nav ${tag} ${index}`,
-        content: `Body ${index}.`,
+        content: `Body **${index}**.`,
         categoryId: categories[0].id,
         tags: [tag],
       },
@@ -56,6 +56,8 @@ test('a feed card opens its own post and discussion, and Back restores the page 
       await card.getByRole('link', { name: title, exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/forum/${slug}$`));
       await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+      // The body is the persisted Markdown, shown formatted.
+      await expect(page.getByRole('article').locator('strong')).toBeVisible();
 
       // Back is the same page of the same filter, not the first page of everything.
       await page.goBack();
