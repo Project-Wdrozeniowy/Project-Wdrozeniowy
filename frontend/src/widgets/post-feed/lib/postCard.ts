@@ -28,13 +28,13 @@ export interface PostCardData {
   excerpt: string | null;
   votes: number;
   comments: number;
-  /** Tags of the post. The listing API does not return them yet, so a listed post has none. */
+  /** Tags of the post, as the feed lists them (compact: name and slug, at most 5, A to Z). */
   tags: PostCardTag[];
   /** What voting needs: the post to vote on and the user's current vote. */
   voting: { postId: number; myVote: MyVote | null };
 }
 
-/** A listed `PostSummary` carries no tags; a full `Post` does, and its tags become links. */
+/** A listed `PostSummary` and a full `Post` both carry their tags; each tag becomes a link. */
 export function toPostCardData(post: PostSummary | Post, now?: number): PostCardData {
   const username = authorName(post.author);
   return {
@@ -50,10 +50,8 @@ export function toPostCardData(post: PostSummary | Post, now?: number): PostCard
     excerpt: null,
     votes: post.voteScore,
     comments: post.commentCount,
-    tags:
-      'tags' in post && Array.isArray(post.tags)
-        ? post.tags.map(({ name, slug }) => ({ name, slug }))
-        : [],
+    // A malformed post (tags null or missing) shows no tags instead of breaking the whole feed.
+    tags: Array.isArray(post.tags) ? post.tags.map(({ name, slug }) => ({ name, slug })) : [],
     voting: { postId: post.id, myVote: post.myVote },
   };
 }
