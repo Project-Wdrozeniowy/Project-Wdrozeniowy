@@ -706,3 +706,61 @@ describe('ForumFeed – tag filter', () => {
     expect(screen.queryByText('Post 8')).not.toBeInTheDocument();
   });
 });
+
+describe('ForumFeed – the order from the home page', () => {
+  it.each([
+    ['new', 'createdAt'],
+    ['top', 'voteScore'],
+  ])('asks for the order of ?sort=%s (%s)', async (value, apiSort) => {
+    list.mockResolvedValue(pageOf([1]));
+    search = `sort=${value}`;
+    renderFeed();
+
+    await screen.findByText('Post 1');
+    expect(list.mock.calls[0][0]).toEqual(expect.objectContaining({ sort: apiSort }));
+  });
+
+  it.each([null, 'nonsense', 'hot', 'lastActivityAt'])(
+    "keeps the forum's own order for ?sort=%s",
+    async (value) => {
+      list.mockResolvedValue(pageOf([1]));
+      search = value === null ? '' : `sort=${value}`;
+      renderFeed();
+
+      await screen.findByText('Post 1');
+      // Without a usable order in the address the forum is what it was.
+      expect(list.mock.calls[0][0]).toEqual(expect.objectContaining({ sort: 'lastActivityAt' }));
+    }
+  );
+
+  it('says which order the feed is in, and offers the way back to the usual one', async () => {
+    list.mockResolvedValue(pageOf([1]));
+    search = 'topic=Gaming&sort=top&page=2';
+    renderFeed();
+
+    expect(await screen.findByText('The highest score first, of all time')).toBeInTheDocument();
+    // The way back drops the order and the page and keeps the rest.
+    expect(screen.getByRole('link', { name: 'Back to the usual order' })).toHaveAttribute(
+      'href',
+      '/forum?topic=Gaming'
+    );
+  });
+
+  it.each([null, 'nonsense', 'hot'])('shows no order notice for ?sort=%s', async (value) => {
+    list.mockResolvedValue(pageOf([1]));
+    search = value === null ? '' : `sort=${value}`;
+    renderFeed();
+
+    await screen.findByText('Post 1');
+    expect(screen.queryByText(/^Order:/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back to the usual order' })).toBeNull();
+  });
+
+  it('keeps the order in the address when the page changes', async () => {
+    list.mockResolvedValue(pageOf([1], { totalPages: 2 }));
+    search = 'sort=top';
+    renderFeed();
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Next' }));
+    expect(mockPush).toHaveBeenCalledWith('/forum?sort=top&page=2');
+  });
+});

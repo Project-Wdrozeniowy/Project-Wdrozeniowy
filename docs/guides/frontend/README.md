@@ -158,6 +158,31 @@ home page and the profile.
   it through paging, Back and Forward, a category, an unknown tag and "Show all posts"; it also
   checks that no single post is read for its tags.
 
+## Home feed and its order (PWDRZ-111)
+
+The home page shows the first page of the real feed (`GET /forum/posts`, mapped by
+`toPostCardData`), with "See all posts" to the forum. Its tabs are server orders, never a re-sort of
+the loaded posts:
+
+- **New** (the default, the bare address `/`) asks `sort=createdAt`: the newest post first.
+- **Top** (`/?sort=top`) asks `sort=voteScore`: the highest score first, of all time (there is no
+  time window in the contract).
+- **Hot** is shown as "Not available yet" and cannot be opened. A hot order needs a ranking
+  contract that does not exist: `lastActivityAt` moves only when a post is created or edited
+  (comments and votes do not touch it), so it would be "new" under another name, and
+  `GET /analytics/trending-posts` ranks by views, votes and comments but has no paging and none of
+  the card data. It is a backend and product decision with no ticket yet; the dependency is written
+  in `shared/constants/feedSort.const.ts`.
+- **Address, refresh and history.** The order is in the address, so a reload and a shared link keep
+  it. Picking a tab replaces the history entry (like the topic filter of the forum), so Back leaves
+  the page and does not walk through the tabs. An unknown or unavailable `?sort=` is New.
+- **Loading.** While another order loads, the posts of the previous one are not shown (they would
+  look like the new order): the feed query keeps its previous result only for the same topic, tag
+  and order.
+- **The forum** reads the same `?sort=` (from "See all posts", which keeps the order and the
+  paging); it has no picker but says which order it is in, with "Back to the usual order", and
+  without a usable order it is what it was (the most recent activity first). Merging the home page and the forum is a product decision, not made here.
+
 ## Imports and public entries
 
 Production dependencies flow `app → pages → widgets → features → shared`;

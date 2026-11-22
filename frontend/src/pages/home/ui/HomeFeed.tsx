@@ -2,14 +2,21 @@ import { PostCard, PostFeedError, PostFeedSkeleton, toPostCardData } from '@/wid
 import { Link } from 'react-router';
 import { HOME_ALL_POSTS_LABEL, HOME_EMPTY_MESSAGE } from '@/pages/home/config/homeFeed.const';
 import { useForumPosts } from '@/shared/api/forum/useForumPosts';
+import type { OpenFeedSortId } from '@/shared/constants/feedSort.const';
+import { feedSortHref, feedSortToApi } from '@/shared/lib/feedSort';
 import { getLoadPhase } from '@/shared/lib/loadPhase';
 
+interface HomeFeedProps {
+  /** The order the user picked. The server sorts: nothing here reorders the posts it returned. */
+  sort: OpenFeedSortId;
+}
+
 /**
- * The newest posts on the home page: the first page of the forum feed, without pagination.
- * The rest of the posts are one link away on the forum page.
+ * The first page of the forum feed in the picked order, without pagination. The rest of the posts
+ * are one link away on the forum page, in the same order.
  */
-export default function HomeFeed() {
-  const query = useForumPosts({ page: 0 });
+export default function HomeFeed({ sort }: HomeFeedProps) {
+  const query = useForumPosts({ page: 0, sort: feedSortToApi(sort) });
   const { data, isRefetchError, isFetching, refetch } = query;
   const phase = getLoadPhase(query);
 
@@ -35,7 +42,7 @@ export default function HomeFeed() {
       </div>
       {data.totalPages > 1 && (
         <Link
-          to="/forum"
+          to={feedSortHref('/forum', sort)}
           className="self-start text-accent hover:text-accent-hover text-sm font-semibold"
         >
           {HOME_ALL_POSTS_LABEL} →

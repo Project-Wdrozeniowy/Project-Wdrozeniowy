@@ -1,9 +1,13 @@
 import { PostCard, PostFeedError, PostFeedSkeleton, toPostCardData } from '@/widgets/post-feed';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { ALL_TOPICS, isTopic } from '@/shared/constants/categories.const';
+import { FEED_SORT } from '@/shared/api/forum/feedQuery.const';
+import { FEED_SORTS, FEED_SORT_PARAM } from '@/shared/constants/feedSort.const';
+import { feedSortToApi, openFeedSort } from '@/shared/lib/feedSort';
 import { useForumPosts } from '@/shared/api/forum/useForumPosts';
 import { getLoadPhase } from '@/shared/lib/loadPhase';
 import { parsePageParam, parseTagParam, topicToCategorySlug } from '@/pages/forum/lib/forumFeed';
+import ActiveSortFilter from './ActiveSortFilter';
 import ActiveTagFilter from './ActiveTagFilter';
 import CategoryFilter from './CategoryFilter';
 import EmptyFeed from './EmptyFeed';
@@ -24,9 +28,13 @@ export default function ForumFeed() {
   const activeTopic = isTopic(topicParam) ? topicParam : ALL_TOPICS;
   const tag = parseTagParam(searchParams.get('tag'));
   const page = parsePageParam(searchParams.get('page'));
+  // The order comes from the home page's "See all posts" (`?sort=`); the forum has no picker.
+  // Without a usable one the forum is what it was: the most recent activity first.
+  const sortParam = openFeedSort(searchParams.get(FEED_SORT_PARAM));
+  const sort = sortParam ? feedSortToApi(sortParam) : FEED_SORT;
   const categorySlug = activeTopic === ALL_TOPICS ? undefined : topicToCategorySlug(activeTopic);
 
-  const query = useForumPosts({ page, categorySlug, tag });
+  const query = useForumPosts({ page, categorySlug, tag, sort });
   const { data, isRefetchError, isFetching, isPlaceholderData, refetch } = query;
   const phase = getLoadPhase(query);
   const failed = phase === 'failed' || phase === 'retrying';
@@ -64,6 +72,14 @@ export default function ForumFeed() {
     return query ? `${pathname}?${query}` : pathname;
   }
 
+  function hrefWithoutSort() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(FEED_SORT_PARAM);
+    params.delete('page');
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }
+
   function handlePageChange(nextPage: number) {
     updateLocation((params) => {
       if (nextPage <= 0) {
@@ -86,6 +102,12 @@ export default function ForumFeed() {
     <>
       <CategoryFilter active={activeTopic} onSelect={handleSelectTopic} />
       {tag && <ActiveTagFilter tag={tag} clearHref={hrefWithoutTag()} />}
+      {sortParam && (
+        <ActiveSortFilter
+          description={FEED_SORTS.find((option) => option.id === sortParam)?.description ?? ''}
+          clearHref={hrefWithoutSort()}
+        />
+      )}
       {failed ? (
         // A retry keeps the error on screen, so the keyboard user keeps their place.
         <PostFeedError onRetry={() => refetch()} retrying={phase === 'retrying'} />
