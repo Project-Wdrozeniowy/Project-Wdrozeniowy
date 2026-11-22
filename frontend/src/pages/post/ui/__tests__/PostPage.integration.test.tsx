@@ -133,15 +133,45 @@ describe('showing the post', () => {
     expect(mock.history.get.find((request) => request.url === '/forum/posts/hello')).toBeDefined();
   });
 
-  it('shows the text as plain text, never as markup, and keeps its line breaks', async () => {
-    servePost({ content: '<img src=x onerror=alert(1)> <b>bold</b>\nnext line' });
+  it('shows the Markdown body as formatted text, under the one h1 of the page', async () => {
+    servePost({
+      content:
+        '# Big heading\n\nSome **bold** text and a [link](https://example.com/x).\n\n- a\n- b',
+    });
+    renderPage();
+
+    const article = await screen.findByRole('article', { name: 'Hello thread' });
+    expect(within(article).getByText('bold').tagName).toBe('STRONG');
+    expect(within(article).getByRole('link', { name: 'link' })).toHaveAttribute(
+      'href',
+      'https://example.com/x'
+    );
+    // The two items of the body's list (the tags are a list too, so they are named).
+    expect(within(article).getByText('a', { selector: 'li' })).toBeInTheDocument();
+    expect(within(article).getByText('b', { selector: 'li' })).toBeInTheDocument();
+    // The author's "#" is a lower heading: the title stays the only h1.
+    expect(within(article).getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(within(article).getByRole('heading', { level: 2, name: 'Big heading' })).toBeVisible();
+  });
+
+  it('shows a hostile body as inert text: no script, no handler, no image, no javascript link', async () => {
+    servePost({
+      content: [
+        '<img src=x onerror=alert(1)> <b>bold</b>',
+        '<script>alert(1)</script>',
+        '[x](javascript:alert(1))',
+        '![pixel](https://tracker.example/p.png)',
+      ].join('\n\n'),
+    });
     const { container } = renderPage();
 
     await screen.findByRole('article');
-    expect(container.querySelector('img')).toBeNull();
-    expect(container.querySelector('b')).toBeNull();
-    expect(screen.getByText(/<img src=x onerror=alert\(1\)>/)).toBeInTheDocument();
-    expect(screen.getByText(/next line/)).toHaveClass('whitespace-pre-wrap');
+    expect(container.querySelector('script')).toBeNull();
+    expect(container.querySelector('article img')).toBeNull();
+    expect(container.querySelector('article b')).toBeNull();
+    expect(container.innerHTML).not.toMatch(/onerror|javascript:/i);
+    // The image is offered as a link, not loaded.
+    expect(screen.getByRole('link', { name: 'Image: pixel' })).toBeInTheDocument();
   });
 
   it('shows a category that is not a known topic as plain text, and a post without one', async () => {
@@ -167,6 +197,18 @@ describe('showing the post', () => {
     const article = await screen.findByRole('article');
     expect(within(article).getByText('pinned')).toBeInTheDocument();
     expect(within(article).getByText('locked')).toBeInTheDocument();
+  });
+
+  it.each([
+    [0, '0 Comments'],
+    [1, '1 Comment'],
+    [7, '7 Comments'],
+  ])('writes %i comments as "%s", as the feed card does', async (commentCount, label) => {
+    servePost({ commentCount });
+    renderPage();
+
+    const article = await screen.findByRole('article', { name: 'Hello thread' });
+    expect(within(article).getByRole('link', { name: label })).toHaveAttribute('href', '#comments');
   });
 
   it('keeps share and save disabled with a reason, as in the feed', async () => {
