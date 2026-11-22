@@ -53,17 +53,17 @@ screenshots, HTML report and service logs are saved under `artifacts/<run-id>/`.
 The launcher supplies test-only values; the root/frontend/gateway `.env` files
 are not copied into snapshots or loaded by Compose.
 
-| Setting                  | Value / behavior                                                                                         |
-| ------------------------ | -------------------------------------------------------------------------------------------------------- |
-| Browser / gateway origin | `http://127.0.0.1:3100` (Express serves the built SPA)                                                   |
-| API prefix               | Same browser origin, `/api`                                                                              |
-| Backend readiness        | `http://127.0.0.1:8180/api/forum/categories`                                                             |
-| Database                 | Fresh `orbita_e2e` database in a unique Compose project, tmpfs storage, no host DB port                  |
-| DB password / JWT secret | Generated per run; the Base64 legacy WS key is supplied only to backend                                  |
-| CORS                     | Exact frontend origin                                                                                    |
-| Cookies                  | `COOKIE_SECURE=false` on this HTTP-only local stack; HttpOnly/SameSite/path behavior stays real          |
-| Migrations               | Flyway applies the full migration history, including V8/V9 for sessions, with Hibernate validation       |
-| Rate limiting            | Test-only max 1000 avoids fixture/readiness exhaustion; rate limiting itself is tested in gateway suites |
+| Setting                  | Value / behavior                                                                                                                             |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser / gateway origin | `http://127.0.0.1:3100` (Express serves the built SPA)                                                                                       |
+| API prefix               | Same browser origin, `/api`                                                                                                                  |
+| Backend readiness        | `http://127.0.0.1:8180/api/forum/categories`                                                                                                 |
+| Database                 | Fresh `orbita_e2e` database in a unique Compose project, tmpfs storage, no host DB port                                                      |
+| DB password / JWT secret | Generated per run; the Base64 legacy WS key is supplied only to backend                                                                      |
+| CORS                     | Exact frontend origin                                                                                                                        |
+| Cookies                  | `COOKIE_SECURE=false` on this HTTP-only local stack; HttpOnly/SameSite/path behavior stays real                                              |
+| Migrations               | Flyway applies the full migration history, including V8/V9 for sessions, with Hibernate validation                                           |
+| Rate limiting            | Test-only max 10000 avoids fixture/readiness exhaustion (one address runs the whole suite); rate limiting itself is tested in gateway suites |
 
 To resolve a port conflict, set `E2E_GATEWAY_PORT` and/or
 `E2E_BACKEND_PORT` before `npm test`. Only distinct numeric ports are accepted;

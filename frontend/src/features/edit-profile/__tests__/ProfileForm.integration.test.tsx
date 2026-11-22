@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
@@ -388,6 +388,51 @@ describe('save failures', () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
+  it('offers a Retry in the failure message that saves the same edit again', async () => {
+    mock.onPatch('/users/me').replyOnce(500, { status: 500 });
+    await editBioAndSave();
+    const alert = await screen.findByRole('alert');
+
+    mock.onPatch('/users/me').reply(200, { ...PROFILE, bio: 'Hello there more' });
+    await userEvent.setup().click(within(alert).getByRole('button', { name: /try again|retry/i }));
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Profile saved.'));
+    expect(mock.history.patch).toHaveLength(2);
+    // Both requests carried the same edit, and nothing else.
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ bio: 'Hello there more' });
+    expect(lastPatchBody()).toEqual({ bio: 'Hello there more' });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('keeps the failure message and its Retry in the page while the retry runs', async () => {
+    mock.onPatch('/users/me').replyOnce(500, { status: 500 });
+    await editBioAndSave();
+    const alert = await screen.findByRole('alert');
+    const retry = within(alert).getByRole('button', { name: /try again|retry/i });
+    retry.focus();
+
+    let finish: () => void = () => {};
+    mock
+      .onPatch('/users/me')
+      .reply(
+        () =>
+          new Promise(
+            (resolve) => (finish = () => resolve([200, { ...PROFILE, bio: 'Hello there more' }]))
+          )
+      );
+    await userEvent.setup().keyboard('{Enter}');
+
+    // Running: the same alert and button are still there, and the button still has the focus.
+    await waitFor(() => expect(mock.history.patch).toHaveLength(2));
+    expect(screen.getByRole('alert')).toBe(alert);
+    expect(retry).toBeInTheDocument();
+    expect(retry).toHaveFocus();
+
+    await act(async () => finish());
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Profile saved.'));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('succeeds on a second attempt and clears the failure message', async () => {
     mock.onPatch('/users/me').replyOnce(500, { status: 500 });
     await editBioAndSave();
@@ -679,5 +724,39 @@ describe('leaving with unsaved changes', () => {
     await user.click(saveButton());
 
     await waitFor(() => expect(tryToUnload()).toBe(false));
+  });
+});
+
+describe('what the profile section shows besides the editable fields', () => {
+  beforeEach(() => {
+    mock.onGet('/users/me').reply(200, PROFILE);
+  });
+
+  it('shows the username as read-only text that is never sent', async () => {
+    mock.onPatch('/users/me').reply(200, { ...PROFILE, bio: 'Hello there more' });
+    renderView();
+    await loaded();
+
+    const username = input('Username');
+    expect(username.value).toBe('alice');
+    expect(username).toHaveAttribute('readonly');
+    expect(screen.getByText('Your username cannot be changed.')).toBeInTheDocument();
+
+    await userEvent.setup().type(input('Bio'), ' more');
+    await userEvent.setup().click(saveButton());
+    await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+    expect(lastPatchBody()).not.toHaveProperty('username');
+  });
+
+  it('says a photo cannot be uploaded yet, and offers no upload control, only the link', async () => {
+    renderView();
+    await loaded();
+
+    expect(screen.getByText('Profile picture')).toBeInTheDocument();
+    expect(screen.getByText(/Uploading a photo is not available yet/)).toBeInTheDocument();
+    expect(document.querySelector('input[type="file"]')).toBeNull();
+    expect(screen.queryByRole('button', { name: /upload/i })).toBeNull();
+    // The one way to set a picture is a link, and the form says it is a link.
+    expect(input('Avatar link').type).toBe('url');
   });
 });

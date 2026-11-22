@@ -1,8 +1,9 @@
-import { Navigate, useParams } from 'react-router';
+import { Link, Navigate, useParams } from 'react-router';
 import SettingsTabs from './SettingsTabs';
 import SettingsView from './SettingsView';
 import {
   DEFAULT_SETTINGS_SECTION,
+  SETTINGS_BACK_LABEL,
   SETTINGS_SECTIONS,
   SETTINGS_SUBTITLE,
   SETTINGS_TITLE,
@@ -30,9 +31,18 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-fg font-bold text-2xl">{SETTINGS_TITLE}</h1>
-        <p className="text-fg-subtle text-sm">{SETTINGS_SUBTITLE}</p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-fg font-bold text-2xl">{SETTINGS_TITLE}</h1>
+          <p className="text-fg-subtle text-sm">{SETTINGS_SUBTITLE}</p>
+        </div>
+        {/* The way back: the settings have no sidebar, so the profile is one click away here. */}
+        <Link
+          to="/profile"
+          className="text-accent hover:text-accent-hover text-sm font-semibold focus-visible:outline-2 focus-visible:outline-blue-500"
+        >
+          {SETTINGS_BACK_LABEL}
+        </Link>
       </div>
       <SettingsTabs active={section} />
       <SettingsView section={section} />

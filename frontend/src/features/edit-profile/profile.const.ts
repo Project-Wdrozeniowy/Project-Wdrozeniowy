@@ -15,6 +15,14 @@ export const PROFILE_FIELD_IDS: Record<ProfileField, string> = {
   avatarUrl: 'profile-avatarUrl',
   bio: 'profile-bio',
 };
+/** The username is shown, never edited. */
+export const USERNAME_ID = 'profile-username';
+
+export const PROFILE_PICTURE_LABEL = 'Profile picture';
+/** The design has an upload; there is only a link to an image (`avatarUrl`), so the text says so. */
+export const PROFILE_UPLOAD_UNAVAILABLE_TEXT =
+  'Uploading a photo is not available yet. Use a link to an image below.';
+export const USERNAME_HINT = 'Your username cannot be changed.';
 
 export const PROFILE_SAVE_ERROR_MESSAGE = 'We could not save your changes. Please try again.';
 export const PROFILE_SAVED_MESSAGE = 'Profile saved.';

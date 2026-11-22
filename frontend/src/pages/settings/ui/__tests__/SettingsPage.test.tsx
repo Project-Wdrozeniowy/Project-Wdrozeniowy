@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { vi } from 'vitest';
 import SettingsPage from '@/pages/settings/ui/SettingsPage';
 
@@ -35,7 +35,28 @@ describe('the settings sections', () => {
       'href',
       '/settings/account'
     );
-    expect(screen.getAllByRole('link')).toHaveLength(2);
+    // The sections that can be opened, and nothing else, are the links of the section bar.
+    expect(
+      within(screen.getByRole('navigation', { name: 'Settings sections' })).getAllByRole('link')
+    ).toHaveLength(2);
+  });
+
+  it('has a way back to the profile, since the settings have no sidebar', () => {
+    params = { section: 'profile' };
+    render(<SettingsPage />);
+
+    expect(screen.getByRole('link', { name: 'View profile' })).toHaveAttribute('href', '/profile');
+  });
+
+  it('gives every tab of the design its icon, also the ones that cannot be opened', () => {
+    params = { section: 'profile' };
+    render(<SettingsPage />);
+
+    const bar = screen.getByRole('navigation', { name: 'Settings sections' });
+    for (const item of within(bar).getAllByRole('listitem')) {
+      expect(item.querySelector('svg')).not.toBeNull();
+    }
+    expect(within(bar).getAllByRole('listitem')).toHaveLength(6);
   });
 
   it('marks the current section for assistive technology', () => {

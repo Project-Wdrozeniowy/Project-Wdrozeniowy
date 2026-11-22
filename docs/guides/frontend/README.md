@@ -265,6 +265,34 @@ never shown. The buttons show a busy state while a request runs.
 - **Tests.** The unit tests cover each rule above. `vote-consistency.spec.ts` runs the real stack:
   cast with a double click (one request), the post page and the feed agree, switch, reload, retract.
 
+## Settings page (PWDRZ-108)
+
+`/settings` is its own screen, separate from `/profile` (which only shows the profile). It uses the
+whole width with no sidebar, as in the design: a route says so with `handle: { wide: true }` and
+`MainLayout` reads it. The way back is "View profile", and the profile has "Edit profile".
+
+- **Sections** are links (`/settings/profile`, `/settings/account`), each with its icon. Leaving a
+  section with unsaved edits asks first (Keep editing / Leave and discard changes).
+- **Profile** and **Account** share one form (`ProfileForm`): one validation, one save path
+  (`PATCH /users/me`), one cache (`useMyProfile`) that the profile, the account menu and the sidebar
+  read, so a saved change shows everywhere. Each section sends only the fields it shows, and only
+  the ones that changed. Save is off until something changed; Discard throws the draft away. A
+  rejected value is said next to its field; a failed save shows a fixed message with Retry (the
+  draft is kept). The username is shown read-only and is never sent.
+- **Avatar** is a link to an image (`avatarUrl`, validated as http or https), not an upload. The
+  design's upload is shown as "not available yet" text, with no control.
+- **Change password** is a separate form (`POST /users/me/password`). It confirms first, because it
+  signs the user out everywhere; a wrong current password is said and nothing changes.
+- **Not available yet:** Notifications, Appearance, Privacy and Content are shown, cannot be opened,
+  and are never sent to `PATCH /users/me`; Delete account has no working button. Location, website,
+  e-mail preferences and upload have no API. The dependency of each is written in
+  `settingsView.const.ts`. None has a ticket yet.
+- **Toasts** are at the bottom right (they covered the header's bell and account button at the
+  top), above the bottom bar on a phone.
+- **Tests.** Unit tests cover each rule above; `settings.spec.ts` runs them on the real stack: save
+  and reload, validation then correction, discard, leaving with a draft, the way back to the
+  profile, a wrong current password, the password change and signing in again.
+
 ## Theming
 
 The app has a light theme (the default) and a dark theme, as in the Figma design. Components
