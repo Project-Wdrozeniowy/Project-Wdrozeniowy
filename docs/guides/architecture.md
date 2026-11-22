@@ -65,7 +65,7 @@ The [frontend architecture](frontend/README.md) owns the current route/slice map
 `app/router` composes routes, `app/layouts` owns frames, `app/providers` owns providers,
 and `pages` owns screens. Widgets hold reusable regions, features own user actions,
 and `shared/api` and `shared/auth` own transport/session infrastructure. Query owns
-server cache; PWDRZ-150 retains profile-state consolidation. Development adds Vite
+server cache, including the signed-in user's profile (PWDRZ-150). Development adds Vite
 :3001 proxying `/api` through Express. Built operation needs no frontend server.
 
 > **Existing gap:** These are architectural responsibilities, not a claim
@@ -197,7 +197,7 @@ PostgreSQL enum mapping **обязателен round-trip тест с мигра
 `app/router` компонует routes, `app/layouts` — frames, `app/providers` — providers,
 `pages` — экраны. Widgets содержат общие блоки, features — действия пользователя,
 `shared/api` и `shared/auth` — transport и сессии. Query владеет server cache;
-PWDRZ-150 сохраняет profile-state consolidation. В development Vite :3001 проксирует
+в том числе профиль текущего пользователя (PWDRZ-150). В development Vite :3001 проксирует
 `/api` через Express; в production Express раздаёт build без frontend server.
 
 > **Существующее расхождение:** Это правила ответственности, а не заявление,

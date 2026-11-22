@@ -8,6 +8,7 @@ import SettingsView from '@/pages/settings/ui/SettingsView';
 import type { OpenSettingsSectionId } from '@/pages/settings/config/settingsView.const';
 import { toast } from '@/shared/lib/toast';
 import { apiClient } from '@/shared/api/client/api';
+import { currentUserQueryKey } from '@/shared/api/profile/currentUser';
 import { useStore } from '@/store';
 import { sessionEvents } from '@/shared/auth/sessionEvents';
 import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
@@ -76,7 +77,7 @@ beforeEach(() => {
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
   mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
-  useStore.setState({ user: PROFILE, isAuthenticated: true, isInitialized: true });
+  useStore.setState({ isAuthenticated: true, isInitialized: true, sessionStatus: 'authenticated' });
 });
 
 afterEach(() => {
@@ -111,7 +112,8 @@ describe('account settings', () => {
     mock
       .onPatch('/users/me')
       .reply(200, { ...PROFILE, avatarUrl: 'https://img.example.com/a.png' });
-    renderView('profile');
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    renderView('profile', client);
     await screen.findByRole('form', { name: 'Profile information' });
 
     const avatar = field('Avatar link');
@@ -127,7 +129,10 @@ describe('account settings', () => {
       avatarUrl: 'https://img.example.com/a.png',
     });
     expect(toast.success).toHaveBeenCalledWith('Profile saved.');
-    expect(useStore.getState().user?.avatarUrl).toBe('https://img.example.com/a.png');
+    // The one copy of the profile, which the header and the sidebar read, has the saved value.
+    expect(client.getQueryData<MyProfile>(currentUserQueryKey)?.avatarUrl).toBe(
+      'https://img.example.com/a.png'
+    );
   });
 
   it('refuses a link that is not http(s) before any request', async () => {
@@ -153,17 +158,23 @@ describe('password change', () => {
       email: 'bob@example.com',
       displayName: 'Bob',
     };
+    // What the session code does when another account takes over: new generation, old cache gone.
     const completed = vi.fn(() => {
       sessionEvents.advance();
-      useStore.getState().setAuth(bob);
+      client.clear();
+      client.setQueryData(currentUserQueryKey, bob);
+      useStore.getState().setAuthenticated();
     });
-    const client = new QueryClient({
+    const client: QueryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
       mutationCache: new MutationCache({ onSuccess: completed }),
     });
     mock
       .onGet('/users/me')
-      .reply(() => [200, useStore.getState().user?.id === bob.id ? bob : PROFILE]);
+      .reply(() => [
+        200,
+        client.getQueryData<MyProfile>(currentUserQueryKey)?.id === bob.id ? bob : PROFILE,
+      ]);
     mock.onPost('/users/me/password').reply(204);
     renderView('account', client);
     await screen.findByRole('form', { name: 'Change password' });
@@ -174,7 +185,7 @@ describe('password change', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(useStore.getState().user).toEqual(bob);
+    expect(client.getQueryData(currentUserQueryKey)).toEqual(bob);
     expect(useStore.getState().isAuthenticated).toBe(true);
     expect(mockReplace).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();

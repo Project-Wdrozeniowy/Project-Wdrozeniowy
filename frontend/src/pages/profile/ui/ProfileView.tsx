@@ -1,4 +1,4 @@
-import { useMyProfile } from '@/shared/api/profile/useMyProfile';
+import { useMyProfile } from '@/shared/api/profile/currentUser';
 import { getLoadPhase } from '@/shared/lib/loadPhase';
 import ProfileCard from './ProfileCard';
 import ProfileLoadError from '@/shared/ui/ProfileLoadError';

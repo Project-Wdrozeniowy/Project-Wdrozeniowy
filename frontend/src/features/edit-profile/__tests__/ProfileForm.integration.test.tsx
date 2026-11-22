@@ -11,7 +11,11 @@ import { apiClient } from '@/shared/api/client/api';
 import { useStore } from '@/store';
 import { sessionEvents } from '@/shared/auth/sessionEvents';
 import { useUpdateProfile } from '@/shared/api/profile/useUpdateProfile';
-import { myProfileQueryKey, useMyProfile } from '@/shared/api/profile/useMyProfile';
+import {
+  currentUserQueryKey,
+  useCurrentUser,
+  useMyProfile,
+} from '@/shared/api/profile/currentUser';
 import type { MyProfileDto as MyProfile } from '@/shared/api/generated/models/myProfileDto.dto';
 
 /**
@@ -49,9 +53,12 @@ let mock: MockAdapter;
  */
 function ProfileFormHarness() {
   const { data } = useMyProfile();
+  // What the header and the sidebar read: the same cache entry, through the shared hook.
+  const current = useCurrentUser();
   if (!data) return null;
   return (
     <>
+      <p data-testid="current-user">{current?.displayName || current?.username}</p>
       <h1>{data.displayName || data.username}</h1>
       <p>{data.postCount} Posts</p>
       <ProfileForm profile={data} fields={PROFILE_FIELDS} title="Account settings" />
@@ -87,7 +94,7 @@ beforeEach(() => {
   apiClient.clearCsrf();
   mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
   apiClient.setUnauthorizedHandler(undefined);
-  useStore.setState({ user: PROFILE, isAuthenticated: true, isInitialized: true });
+  useStore.setState({ isAuthenticated: true, isInitialized: true, sessionStatus: 'authenticated' });
   Object.defineProperty(window, 'location', {
     writable: true,
     value: { ...window.location, href: '/profile' },
@@ -101,6 +108,7 @@ afterEach(() => {
 it('cannot restore the previous account after a profile save waits for cache cancellation', async () => {
   mock.onPatch('/users/me').reply(200, { ...PROFILE, displayName: 'Saved Alice' });
   const client = new QueryClient();
+  client.setQueryData(currentUserQueryKey, PROFILE);
   let finishCancellation!: () => void;
   const cancellation = vi.spyOn(client, 'cancelQueries').mockImplementation(
     () =>
@@ -120,15 +128,17 @@ it('cannot restore the previous account after a profile save waits for cache can
   await waitFor(() => expect(finishCancellation).toBeDefined());
   const bob = { ...PROFILE, id: 2, username: 'bob', email: 'bob@example.com', displayName: 'Bob' };
   act(() => {
+    // What the session code does when another account takes over: new generation, old cache gone.
     sessionEvents.advance();
-    useStore.getState().setAuth(bob);
+    client.clear();
+    client.setQueryData(currentUserQueryKey, bob);
     finishCancellation();
   });
   await act(async () => {
     await saving;
   });
-  expect(useStore.getState().user).toEqual(bob);
-  expect(client.getQueryData(myProfileQueryKey(PROFILE.id))).toBeUndefined();
+  // The old account's save does not overwrite the new account's profile.
+  expect(client.getQueryData(currentUserQueryKey)).toEqual(bob);
   cancellation.mockRestore();
   client.clear();
 });
@@ -164,8 +174,8 @@ describe('saving changes', () => {
     expect(mock.history.patch).toHaveLength(1);
     expect(lastPatchBody()).toEqual({ displayName: 'Alice A.' });
     expect(screen.getByRole('heading', { level: 1, name: 'Alice A.' })).toBeInTheDocument();
-    // The header and the sidebar read the user from the store.
-    expect(useStore.getState().user?.displayName).toBe('Alice A.');
+    // The header and the sidebar read the same cache entry, so they show it without a refetch.
+    expect(screen.getByTestId('current-user')).toHaveTextContent('Alice A.');
     // The saved values are the new baseline.
     expect(saveButton()).toBeDisabled();
     expect(input('Display name').value).toBe('Alice A.');
@@ -483,7 +493,7 @@ describe('data staying in step with the server', () => {
     await loaded();
 
     act(() => {
-      client.setQueryData(['/users/me', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
+      client.setQueryData(currentUserQueryKey, { ...PROFILE, displayName: 'Changed elsewhere' });
     });
 
     await waitFor(() => expect(input('Display name').value).toBe('Changed elsewhere'));
@@ -498,7 +508,7 @@ describe('data staying in step with the server', () => {
     const typed = input('Bio').value;
 
     act(() => {
-      client.setQueryData(['/users/me', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
+      client.setQueryData(currentUserQueryKey, { ...PROFILE, displayName: 'Changed elsewhere' });
     });
 
     // The untouched field follows the server, the field being edited keeps the user's text.
@@ -517,7 +527,7 @@ describe('data staying in step with the server', () => {
     await user.clear(input('Bio'));
     await user.type(input('Bio'), 'Mine');
     act(() => {
-      client.setQueryData(['/users/me', 1], { ...PROFILE, displayName: 'Changed elsewhere' });
+      client.setQueryData(currentUserQueryKey, { ...PROFILE, displayName: 'Changed elsewhere' });
     });
     await waitFor(() => expect(input('Display name').value).toBe('Changed elsewhere'));
 
@@ -562,7 +572,7 @@ describe('data staying in step with the server', () => {
     await user.type(input('Display name'), ' typed');
 
     act(() => {
-      client.setQueryData(['/users/me', 1], { ...PROFILE, postCount: 99 });
+      client.setQueryData(currentUserQueryKey, { ...PROFILE, postCount: 99 });
     });
 
     expect(input('Display name').value).toBe('Alice typed');
@@ -609,29 +619,6 @@ describe('data staying in step with the server', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Saved' })).toBeInTheDocument();
     expect(input('Display name').value).toBe('Saved');
-  });
-
-  it("never shows another account's cached profile after the user changed", async () => {
-    const first = renderView();
-    await loaded();
-    expect(screen.getByRole('heading', { level: 1, name: 'Alice' })).toBeInTheDocument();
-    first.unmount();
-
-    // A different account, same browser tab, same query cache.
-    const bob = {
-      ...PROFILE,
-      id: 2,
-      username: 'bob',
-      email: 'bob@example.com',
-      displayName: 'Bob',
-    };
-    useStore.setState({ user: bob, isAuthenticated: true });
-    mock.onGet('/users/me').reply(200, bob);
-    renderView(first.client);
-
-    expect(screen.queryByText('alice@example.com')).not.toBeInTheDocument();
-    expect(await screen.findByRole('heading', { level: 1, name: 'Bob' })).toBeInTheDocument();
-    expect(input('Email').value).toBe('bob@example.com');
   });
 });
 

@@ -1,7 +1,7 @@
 import ProfileLoadError from '@/shared/ui/ProfileLoadError';
 import ChangePasswordForm from '@/features/change-password/ChangePasswordForm';
 import ProfileForm from '@/features/edit-profile/ProfileForm';
-import { useMyProfile } from '@/shared/api/profile/useMyProfile';
+import { useMyProfile } from '@/shared/api/profile/currentUser';
 import { getLoadPhase } from '@/shared/lib/loadPhase';
 import {
   ACCOUNT_SECTION_FIELDS,

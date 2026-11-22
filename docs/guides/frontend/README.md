@@ -89,7 +89,7 @@ src/
 
 Only segments with real code are created. No new entities/processes layer,
 empty folder scaffold, generic base page or route-generation mechanism is added.
-Existing store/profile overlap remains PWDRZ-150's responsibility.
+The signed-in user's profile has one client copy (see "Session state and the signed-in user").
 
 ## Routing
 
@@ -317,6 +317,16 @@ whole width with no sidebar, as in the design: a route says so with `handle: { w
 - **Tests.** Unit tests cover each rule above; `settings.spec.ts` runs them on the real stack: save
   and reload, validation then correction, discard, leaving with a draft, the way back to the
   profile, a wrong current password, the password change and signing in again.
+
+## Session state and the signed-in user (PWDRZ-150)
+
+The signed-in user's profile has one client copy, the TanStack Query entry of `GET /users/me`
+(`shared/api/profile/currentUser.ts`). The header, the sidebar, the guards, the comment form and the
+profile and settings pages read it (`useCurrentUser`, `useMyProfile`), so a save or a refetch shows
+everywhere. The Zustand `authSlice` keeps only the session lifecycle (`sessionStatus`,
+`isAuthenticated`, `isInitialized`), documented in the slice. Tests that need a signed-in user use
+`@/test/session` (`signInUser(client, user)`), which marks the session and seeds that client's
+cache. Details and the account-isolation rules are in [sessions.md](../sessions.md).
 
 ## Theming
 

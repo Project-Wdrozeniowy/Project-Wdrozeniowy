@@ -87,7 +87,7 @@ beforeEach(() => {
   mock.onGet('/users/me').reply(200, PROFILE);
   mock.onGet('/analytics/me').reply(200, SUMMARY);
   route.search = '';
-  useStore.setState({ user: PROFILE as never, isAuthenticated: true, isInitialized: true });
+  useStore.setState({ isAuthenticated: true, isInitialized: true });
 });
 
 afterEach(() => mock.restore());

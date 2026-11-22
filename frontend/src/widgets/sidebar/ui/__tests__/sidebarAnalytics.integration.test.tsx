@@ -35,7 +35,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
-  useStore.setState({ user: null, isAuthenticated: false });
+  useStore.setState({ isAuthenticated: false });
 });
 
 afterEach(() => mock.restore());

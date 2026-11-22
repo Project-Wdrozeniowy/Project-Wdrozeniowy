@@ -102,7 +102,7 @@ function postTitles() {
 beforeEach(() => {
   vi.clearAllMocks();
   search = '';
-  useStore.setState({ user: null, isAuthenticated: false, isInitialized: true });
+  useStore.setState({ isAuthenticated: false, isInitialized: true });
 });
 
 describe('ForumFeed – data flow', () => {
@@ -166,7 +166,7 @@ describe('ForumFeed – data flow', () => {
   });
 
   it('casts a vote for a signed-in user and shows the score the server answers with', async () => {
-    useStore.setState({ user: { id: 1 } as never, isAuthenticated: true });
+    useStore.setState({ isAuthenticated: true });
     // The server answers the refresh that follows a vote with the updated post, as a real one does.
     list.mockResolvedValueOnce(pageOf([7])).mockResolvedValue({
       ...pageOf([7]),

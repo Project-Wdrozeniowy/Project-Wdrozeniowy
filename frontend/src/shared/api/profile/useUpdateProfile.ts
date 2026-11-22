@@ -1,12 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { myProfileQueryKey } from '@/shared/api/profile/useMyProfile';
+import { currentUserQueryKey } from '@/shared/api/profile/currentUser';
+import type { MyProfileDto } from '@/shared/api/generated/models/myProfileDto.dto';
 import { useUpdateProfile as useUpdateProfileMutation } from '@/shared/api/generated/orbita.api';
 import { useStore } from '@/store';
 import { sessionEvents } from '@/shared/auth/sessionEvents';
 
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
-  const updateUser = useStore((state) => state.updateUser);
 
   return useUpdateProfileMutation({
     request: { skipErrorToast: true },
@@ -14,16 +14,13 @@ export function useUpdateProfile() {
       // The form maps failures to its own messages; the global toast would print server text.
       onSuccess: async (profile) => {
         const generation = sessionEvents.current();
-        const currentUser = useStore.getState().user;
-        if (!useStore.getState().isAuthenticated || currentUser?.id !== profile.id) return;
-        const key = myProfileQueryKey(profile.id);
+        const cachedId = () => queryClient.getQueryData<MyProfileDto>(currentUserQueryKey)?.id;
+        if (!useStore.getState().isAuthenticated || cachedId() !== profile.id) return;
         // A refresh that started before the save would overwrite the saved profile when it lands.
-        await queryClient.cancelQueries({ queryKey: key });
-        if (generation !== sessionEvents.current() || useStore.getState().user?.id !== profile.id)
-          return;
-        queryClient.setQueryData(key, profile);
-        // The header and sidebar read the user from the store.
-        updateUser(profile);
+        await queryClient.cancelQueries({ queryKey: currentUserQueryKey });
+        if (generation !== sessionEvents.current() || cachedId() !== profile.id) return;
+        // The one copy of the profile: the header, the sidebar, the profile and the settings read it.
+        queryClient.setQueryData(currentUserQueryKey, profile);
       },
     },
   });

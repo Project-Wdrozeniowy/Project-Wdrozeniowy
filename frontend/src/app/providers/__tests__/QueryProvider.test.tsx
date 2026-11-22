@@ -2,6 +2,7 @@ import { act, render, renderHook, screen } from '@testing-library/react';
 import { QueryObserver, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import QueryProvider from '@/app/providers/QueryProvider';
+import { currentUserQueryKey } from '@/shared/api/profile/currentUser';
 import { useStore } from '@/store';
 
 // the optional devtools
@@ -74,37 +75,17 @@ describe('QueryProvider cache and sign-out', () => {
   }
 
   afterEach(() => {
-    useStore.setState({ user: null, isAuthenticated: false });
+    useStore.setState({ isAuthenticated: false });
   });
 
   it('drops every cached query when the user signs out, so the next user never sees them', () => {
     useStore.setState({ isAuthenticated: true });
     const client = captureClient();
-    client.setQueryData(['/users/me', 1], { email: 'private@example.com' });
+    client.setQueryData(currentUserQueryKey, { email: 'private@example.com' });
 
     act(() => useStore.getState().logout());
 
-    expect(client.getQueryData(['/users/me', 1])).toBeUndefined();
-  });
-
-  it('drops the cache when another account replaces the session without a sign-out', () => {
-    useStore.setState({ isAuthenticated: true, user: { id: 1 } as never });
-    const client = captureClient();
-    client.setQueryData(['anything-per-user'], 'account 1 data');
-
-    act(() => useStore.setState({ user: { id: 2 } as never }));
-
-    expect(client.getQueryData(['anything-per-user'])).toBeUndefined();
-  });
-
-  it('keeps the cache when the same user is updated (a profile edit or a session refresh)', () => {
-    useStore.setState({ isAuthenticated: true, user: { id: 1, displayName: 'A' } as never });
-    const client = captureClient();
-    client.setQueryData(['anything-per-user'], 'account 1 data');
-
-    act(() => useStore.setState({ user: { id: 1, displayName: 'B' } as never }));
-
-    expect(client.getQueryData(['anything-per-user'])).toBe('account 1 data');
+    expect(client.getQueryData(currentUserQueryKey)).toBeUndefined();
   });
 
   it('keeps the cache while the session stays signed in', () => {
@@ -130,7 +111,7 @@ describe('QueryProvider cache and sign-out', () => {
     const client = captureClient();
     client.setQueryData(['/forum/posts', { page: 1 }], 'guest page that is not on screen');
 
-    act(() => useStore.setState({ user: { id: 1 } as never, isAuthenticated: true }));
+    act(() => useStore.setState({ isAuthenticated: true }));
 
     expect(client.getQueryData(['/forum/posts', { page: 1 }])).toBeUndefined();
   });
@@ -144,20 +125,10 @@ describe('QueryProvider cache and sign-out', () => {
       staleTime: Infinity,
     }).subscribe(() => {});
 
-    act(() => useStore.setState({ user: { id: 1 } as never, isAuthenticated: true }));
+    act(() => useStore.setState({ isAuthenticated: true }));
 
     expect(client.getQueryData(['/forum/posts', { page: 0 }])).toBe('page');
     expect(client.getQueryState(['/forum/posts', { page: 0 }])?.isInvalidated).toBe(true);
     unsubscribe();
-  });
-
-  it('keeps the feed for an update of an already signed-in user', () => {
-    useStore.setState({ user: { id: 1 } as never, isAuthenticated: true });
-    const client = captureClient();
-    client.setQueryData(['/forum/posts', { page: 0 }], 'page');
-
-    act(() => useStore.setState({ user: { id: 1, displayName: 'New' } as never }));
-
-    expect(client.getQueryData(['/forum/posts', { page: 0 }])).toBe('page');
   });
 });

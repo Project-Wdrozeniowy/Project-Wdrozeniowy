@@ -1,10 +1,11 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import Header from '../Header';
 import { signOutSession } from '@/shared/auth/session';
 import { toast } from '@/shared/lib/toast';
-import { useStore } from '@/store';
+import { signInUser } from '@/test/session';
 
 vi.mock('@/shared/auth/session', () => ({ signOutSession: vi.fn() }));
 vi.mock('@/shared/lib/toast', () => ({
@@ -15,19 +16,26 @@ vi.mock('../ui/SearchBar', () => ({ default: () => null }));
 // The bell has its own tests and needs a QueryClient that this sign-out test does not.
 vi.mock('../ui/NotificationBell', () => ({ default: () => null }));
 
+let client: QueryClient;
+const alice = { id: 1, username: 'alice', displayName: 'Alice', role: 'USER' };
+
+function renderHeader() {
+  return render(
+    <QueryClientProvider client={client}>
+      <Header />
+    </QueryClientProvider>
+  );
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
-  useStore.setState({
-    isAuthenticated: true,
-    user: { id: 1, username: 'alice', displayName: 'Alice', role: 'USER' } as NonNullable<
-      ReturnType<typeof useStore.getState>['user']
-    >,
-  });
+  client = new QueryClient();
+  signInUser(client, alice);
 });
 
 it('reports sign-out success only after the shared lifecycle succeeds', async () => {
   vi.mocked(signOutSession).mockResolvedValue(undefined);
-  render(<Header />);
+  renderHeader();
   const user = userEvent.setup();
   await user.click(screen.getByRole('button', { name: 'Account menu' }));
   await user.click(screen.getByRole('button', { name: 'Sign out' }));
@@ -37,7 +45,7 @@ it('reports sign-out success only after the shared lifecycle succeeds', async ()
 
 it('reports a recoverable sign-out failure without announcing success', async () => {
   vi.mocked(signOutSession).mockRejectedValue(new Error('offline'));
-  render(<Header />);
+  renderHeader();
   const user = userEvent.setup();
   await user.click(screen.getByRole('button', { name: 'Account menu' }));
   await user.click(screen.getByRole('button', { name: 'Sign out' }));

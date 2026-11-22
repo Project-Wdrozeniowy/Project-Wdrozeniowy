@@ -72,7 +72,7 @@ beforeEach(() => {
   apiClient.clearCsrf();
   mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
   mock.onGet('/forum/posts').reply((config) => [200, pageFor(config.params.sort)]);
-  useStore.setState({ user: null, isAuthenticated: false, isInitialized: true });
+  useStore.setState({ isAuthenticated: false, isInitialized: true });
 });
 
 afterEach(() => mock.restore());

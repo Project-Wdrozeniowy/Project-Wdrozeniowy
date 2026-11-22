@@ -96,7 +96,7 @@ beforeEach(() => {
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
   mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
-  useStore.setState({ user: null, isAuthenticated: false, isInitialized: true });
+  useStore.setState({ isAuthenticated: false, isInitialized: true });
 });
 
 afterEach(() => mock.restore());
@@ -262,7 +262,7 @@ describe('voting on the post page', () => {
   });
 
   it('shows the score the server answers with, on this page', async () => {
-    useStore.setState({ user: { id: 2 } as never, isAuthenticated: true, isInitialized: true });
+    useStore.setState({ isAuthenticated: true, isInitialized: true });
     servePost();
     mock.onPost('/forum/votes').reply(201, {
       id: 9,
@@ -286,7 +286,7 @@ describe('voting on the post page', () => {
   });
 
   it('takes the vote back, and shows the score the server confirms', async () => {
-    useStore.setState({ user: { id: 2 } as never, isAuthenticated: true, isInitialized: true });
+    useStore.setState({ isAuthenticated: true, isInitialized: true });
     mock
       .onGet('/forum/posts/hello')
       .replyOnce(200, { ...POST, voteScore: 4, myVote: { id: 9, voteType: 'UP' } });
@@ -353,7 +353,6 @@ describe('the post changing under the reader', () => {
 
   it('shows the new comment count after the user comments', async () => {
     useStore.setState({
-      user: { id: 2, username: 'bob' } as never,
       isAuthenticated: true,
       isInitialized: true,
     });

@@ -73,7 +73,7 @@ function renderHome(sort: OpenFeedSortId = 'new') {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  useStore.setState({ user: null, isAuthenticated: false, isInitialized: true });
+  useStore.setState({ isAuthenticated: false, isInitialized: true });
 });
 
 describe('HomeFeed', () => {
@@ -200,7 +200,7 @@ describe('HomeFeed', () => {
   });
 
   it('sends a vote through the API from the home page', async () => {
-    useStore.setState({ user: { id: 1 } as never, isAuthenticated: true, isInitialized: true });
+    useStore.setState({ isAuthenticated: true, isInitialized: true });
     list.mockResolvedValue(pageOf([1]));
     vi.mocked(voteService.cast).mockResolvedValue({
       id: 9,

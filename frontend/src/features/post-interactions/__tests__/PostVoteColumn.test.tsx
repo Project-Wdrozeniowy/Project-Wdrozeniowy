@@ -77,7 +77,7 @@ const cached = (queryClient: QueryClient) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  useStore.setState({ user: { id: 7 } as never, isAuthenticated: true, isInitialized: true });
+  useStore.setState({ isAuthenticated: true, isInitialized: true });
 });
 
 describe('PostVoteColumn – casting', () => {
@@ -297,7 +297,7 @@ describe('PostVoteColumn – failures that depend on the action', () => {
 
 describe('PostVoteColumn – who may vote', () => {
   it('sends a guest to the login page and makes no request', async () => {
-    useStore.setState({ user: null, isAuthenticated: false });
+    useStore.setState({ isAuthenticated: false });
     const { user } = setup(5, null);
 
     await user.click(screen.getByRole('button', { name: 'Upvote' }));

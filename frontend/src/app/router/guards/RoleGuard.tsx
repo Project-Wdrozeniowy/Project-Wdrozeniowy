@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import { useCurrentUser } from '@/shared/api/profile/currentUser';
 import { useStore } from '@/store';
 import type { UserProfileDtoRole as UserRole } from '@/shared/api/generated/models/userProfileDtoRole.dto';
 import SessionLoader from './SessionLoader';
@@ -16,21 +17,24 @@ interface RoleGuardProps {
 export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const navigate = useNavigate();
   const isInitialized = useStore((s) => s.isInitialized);
-  const user = useStore((s) => s.user);
+  const isAuthenticated = useStore((s) => s.isAuthenticated);
+  const user = useCurrentUser();
   const status = useStore((s) => s.sessionStatus);
 
-  const hasAccess = user !== null && allowedRoles.includes(user.role);
+  // Signed in, but the profile (and so the role) is not in the cache yet: not a decision to make.
+  const waitingForRole = isAuthenticated && user === undefined;
+  const hasAccess = user !== undefined && allowedRoles.includes(user.role);
 
   useEffect(() => {
-    if (!isInitialized || status === 'error') return;
-    if (user === null) {
+    if (!isInitialized || status === 'error' || waitingForRole) return;
+    if (user === undefined) {
       navigate('/login', { replace: true });
     } else if (!hasAccess) {
       navigate('/', { replace: true });
     }
-  }, [isInitialized, user, hasAccess, status, navigate]);
+  }, [isInitialized, user, hasAccess, waitingForRole, status, navigate]);
 
-  if (!isInitialized) return <SessionLoader />;
+  if (!isInitialized || waitingForRole) return <SessionLoader />;
   if (!hasAccess) return null;
 
   return <>{children}</>;

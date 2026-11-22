@@ -28,7 +28,7 @@ vi.mock('react-router', async () =>
   (await import('@/test/routerMock')).routerMock({ useNavigate: () => vi.fn() })
 );
 
-beforeEach(() => useStore.setState({ user: null, isAuthenticated: false, isInitialized: true }));
+beforeEach(() => useStore.setState({ isAuthenticated: false, isInitialized: true }));
 
 function renderCard(data: PostCardData) {
   const client = new QueryClient();

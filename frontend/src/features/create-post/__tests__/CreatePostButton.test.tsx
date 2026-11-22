@@ -5,6 +5,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { CreatePostButton } from '../CreatePostButton';
+import { currentUserQueryKey } from '@/shared/api/profile/currentUser';
 import { useStore } from '@/store';
 
 const push = vi.fn();
@@ -23,10 +24,15 @@ vi.mock('@/shared/api/client/orvalTransport', async () => {
   };
 });
 
+// Who is signed in is the profile in the query cache, as in the app; the store holds the lifecycle.
+let client: QueryClient;
+const asUser = (id: number) => client.setQueryData(currentUserQueryKey, { id });
+
 function setup(state: { isAuthenticated: boolean; isInitialized: boolean }) {
+  client = new QueryClient();
   useStore.setState(state);
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={client}>
       <CreatePostButton />
     </QueryClientProvider>
   );
@@ -34,7 +40,7 @@ function setup(state: { isAuthenticated: boolean; isInitialized: boolean }) {
 }
 
 beforeEach(() => push.mockClear());
-afterEach(() => useStore.setState({ user: null, isAuthenticated: false, isInitialized: false }));
+afterEach(() => useStore.setState({ isAuthenticated: false, isInitialized: false }));
 
 describe('CreatePostButton', () => {
   it('is disabled until the session has been restored', async () => {
@@ -61,32 +67,43 @@ describe('CreatePostButton', () => {
 
   it("does not show one user's unpublished draft to the next user", async () => {
     const user = setup({ isAuthenticated: true, isInitialized: true });
-    useStore.setState({ user: { id: 1 } as never });
+    act(() => {
+      asUser(1);
+    });
     await user.click(screen.getByRole('button', { name: /Create Post/ }));
     await user.type(screen.getByLabelText(/^Title/), 'private draft');
     await user.click(screen.getByRole('button', { name: 'Close' }));
 
-    act(() => useStore.setState({ user: { id: 2 } as never }));
+    act(() => {
+      asUser(2);
+    });
     await user.click(screen.getByRole('button', { name: /Create Post/ }));
     expect(screen.getByLabelText(/^Title/)).toHaveValue('');
   });
 
   it('closes the dialog when the signed-in user changes', async () => {
     const user = setup({ isAuthenticated: true, isInitialized: true });
-    useStore.setState({ user: { id: 1 } as never });
+    act(() => {
+      asUser(1);
+    });
     await user.click(screen.getByRole('button', { name: /Create Post/ }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
-    act(() => useStore.setState({ user: null, isAuthenticated: false }));
+    act(() => useStore.setState({ isAuthenticated: false }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('does not reopen by itself when the same user signs back in', async () => {
     const user = setup({ isAuthenticated: true, isInitialized: true });
-    useStore.setState({ user: { id: 1 } as never });
+    act(() => {
+      asUser(1);
+    });
     await user.click(screen.getByRole('button', { name: /Create Post/ }));
-    act(() => useStore.setState({ user: null, isAuthenticated: false }));
-    act(() => useStore.setState({ user: { id: 1 } as never, isAuthenticated: true }));
+    act(() => useStore.setState({ isAuthenticated: false }));
+    act(() => {
+      asUser(1);
+      useStore.setState({ isAuthenticated: true });
+    });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

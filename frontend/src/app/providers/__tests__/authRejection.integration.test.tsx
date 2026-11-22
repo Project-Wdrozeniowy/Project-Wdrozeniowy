@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import MockAdapter from 'axios-mock-adapter';
 import type { AxiosInstance } from 'axios';
@@ -5,14 +6,17 @@ import AuthProvider from '@/app/providers/AuthProvider';
 import LoginForm from '@/features/sign-in/LoginForm';
 import RegisterForm from '@/features/sign-up/RegisterForm';
 import { apiClient } from '@/shared/api/client/api';
+import { currentUserQueryKey } from '@/shared/api/profile/currentUser';
 import { useStore } from '@/store';
 
 let http: MockAdapter;
+let client: QueryClient;
 const profile = { id: 1, username: 'alice' };
 const banner = /unable to verify your session/i;
 const retry = { name: 'Retry session check' };
 
 beforeEach(() => {
+  client = new QueryClient();
   vi.stubGlobal('BroadcastChannel', undefined);
   http = new MockAdapter((apiClient as unknown as { client: AxiosInstance }).client);
   http.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
@@ -26,7 +30,11 @@ afterEach(() => {
 });
 
 async function form(register = false) {
-  render(<AuthProvider>{register ? <RegisterForm /> : <LoginForm />}</AuthProvider>);
+  render(
+    <QueryClientProvider client={client}>
+      <AuthProvider>{register ? <RegisterForm /> : <LoginForm />}</AuthProvider>
+    </QueryClientProvider>
+  );
   await screen.findByLabelText('Username');
   expect(useStore.getState().sessionStatus).toBe('guest');
   const fields = { Username: 'alice', Password: 'Password123' };
@@ -51,7 +59,7 @@ it.each([
   http.onPost('/auth/' + operation).reply(status, { detail });
   await form(operation === 'register');
   expect(await screen.findByText(message)).toBeVisible();
-  expect(useStore.getState()).toMatchObject({ sessionStatus: 'guest', user: null });
+  expect(useStore.getState()).toMatchObject({ sessionStatus: 'guest' });
   expect(screen.queryByText(banner)).toBeNull();
   expect(screen.queryByRole('button', retry)).toBeNull();
   expect(screen.getByLabelText('Username')).toHaveValue('alice');
@@ -73,7 +81,7 @@ it.each([
   await form();
   expect(await screen.findByText(banner)).toBeVisible();
   expect(screen.queryByText('Invalid username or password')).toBeNull();
-  expect(useStore.getState()).toMatchObject({ sessionStatus: 'error', user: null });
+  expect(useStore.getState()).toMatchObject({ sessionStatus: 'error' });
   expect(http.history.post).toHaveLength(posts);
 });
 
@@ -81,7 +89,7 @@ it('treats a gateway failure during submission as an unknown session', async () 
   http.onPost('/auth/login').reply(502);
   await form();
   expect(await screen.findByRole('button', retry)).toBeVisible();
-  expect(useStore.getState()).toMatchObject({ sessionStatus: 'error', user: null });
+  expect(useStore.getState()).toMatchObject({ sessionStatus: 'error' });
   expect(http.history.post).toHaveLength(1);
 });
 
@@ -91,9 +99,9 @@ it.each([401, 503])('keeps profile %s after accepted credentials recoverable', a
   await form();
   expect(await screen.findByText(banner)).toBeVisible();
   expect(screen.queryByText('Invalid username or password')).toBeNull();
-  expect(useStore.getState()).toMatchObject({ sessionStatus: 'error', user: null });
+  expect(useStore.getState()).toMatchObject({ sessionStatus: 'error' });
   fireEvent.click(screen.getByRole('button', retry));
-  await waitFor(() => expect(useStore.getState().user).toEqual(profile));
+  await waitFor(() => expect(client.getQueryData(currentUserQueryKey)).toEqual(profile));
   expect(screen.queryByText(banner)).toBeNull();
   expect(http.history.post).toHaveLength(1);
 });
@@ -107,7 +115,7 @@ it.each([
   http.onGet('/users/me').reply(status, profile);
   await form();
   expect(await screen.findByText(banner)).toBeVisible();
-  expect(useStore.getState()).toMatchObject({ sessionStatus: 'error', user: null });
+  expect(useStore.getState()).toMatchObject({ sessionStatus: 'error' });
   fireEvent.click(screen.getByRole('button', retry));
   await waitFor(() =>
     expect(http.history.get.filter((r) => r.url === '/users/me')).toHaveLength(2)

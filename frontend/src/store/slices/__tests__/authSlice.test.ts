@@ -1,89 +1,85 @@
 import { createStore } from 'zustand';
 import { createAuthSlice, type AuthSlice } from '../authSlice';
-import type { UserProfileDto as UserProfile } from '@/shared/api/generated/models/userProfileDto.dto';
-
-const mockUser: UserProfile = {
-  id: 1,
-  username: 'johndoe',
-  displayName: 'John Doe',
-  avatarUrl: null,
-  bio: null,
-  role: 'USER',
-  status: 'ACTIVE',
-  postCount: 0,
-  commentCount: 0,
-  createdAt: new Date().toISOString(),
-};
 
 function makeStore() {
   return createStore<AuthSlice>()(createAuthSlice);
 }
 
-beforeEach(() => {});
-
-describe('authSlice >-65 initial state', () => {
-  it('starts as a not-yet-initialised guest', () => {
-    const { user, isAuthenticated, isInitialized } = makeStore().getState();
-    expect(user).toBeNull();
+describe('authSlice: initial state', () => {
+  it('starts as a not-yet-initialised session that is being checked, with nobody signed in', () => {
+    const { isAuthenticated, isInitialized, sessionStatus } = makeStore().getState();
     expect(isAuthenticated).toBe(false);
     expect(isInitialized).toBe(false);
+    expect(sessionStatus).toBe('checking');
+  });
+
+  it('holds no user: who is signed in is the query cache, never a copy here', () => {
+    expect(makeStore().getState()).not.toHaveProperty('user');
   });
 });
 
-describe('authSlice >-65 setAuth', () => {
-  it('stores the user, marks the session authenticated and initialised', () => {
+describe('authSlice: setAuthenticated', () => {
+  it('marks the session authenticated and initialised', () => {
     const store = makeStore();
-    store.getState().setAuth(mockUser);
-    const { user, isAuthenticated, isInitialized } = store.getState();
-    expect(user).toEqual(mockUser);
-    expect(isAuthenticated).toBe(true);
-    expect(isInitialized).toBe(true);
+    store.getState().setAuthenticated();
+    expect(store.getState()).toMatchObject({
+      isAuthenticated: true,
+      isInitialized: true,
+      sessionStatus: 'authenticated',
+    });
   });
 
-  it('keeps the access token in memory only, never in storage', () => {
-    const store = makeStore();
-    store.getState().setAuth(mockUser);
-    expect(localStorage.getItem('accessToken')).toBeNull();
-    expect(localStorage.getItem('refreshToken')).toBeNull();
+  it('stores nothing in the browser', () => {
+    makeStore().getState().setAuthenticated();
+    expect(localStorage.length).toBe(0);
   });
 });
 
-describe('authSlice >-65 setInitialized', () => {
-  it('marks restore as finished without authenticating', () => {
+describe('authSlice: setInitialized', () => {
+  it('marks the first check as finished without authenticating', () => {
     const store = makeStore();
     store.getState().setInitialized();
-    expect(store.getState().isInitialized).toBe(true);
-    expect(store.getState().isAuthenticated).toBe(false);
+    expect(store.getState()).toMatchObject({
+      isInitialized: true,
+      isAuthenticated: false,
+      sessionStatus: 'guest',
+    });
+  });
+
+  it('keeps an authenticated session authenticated', () => {
+    const store = makeStore();
+    store.getState().setAuthenticated();
+    store.getState().setInitialized();
+    expect(store.getState().sessionStatus).toBe('authenticated');
   });
 });
 
-describe('authSlice >-65 logout', () => {
-  it('clears the user and the in-memory token but stays initialised', () => {
+describe('authSlice: setSessionStatus', () => {
+  it.each([
+    ['checking', false],
+    ['guest', true],
+    ['error', true],
+  ] as const)('%s: nobody is signed in, and initialised is %s', (status, initialised) => {
     const store = makeStore();
-    store.getState().setAuth(mockUser);
+    store.getState().setAuthenticated();
+    store.getState().setSessionStatus(status);
+    expect(store.getState()).toMatchObject({
+      isAuthenticated: false,
+      isInitialized: initialised,
+      sessionStatus: status,
+    });
+  });
+});
+
+describe('authSlice: logout', () => {
+  it('ends the session but stays initialised', () => {
+    const store = makeStore();
+    store.getState().setAuthenticated();
     store.getState().logout();
-    const { user, isAuthenticated, isInitialized } = store.getState();
-    expect(user).toBeNull();
-    expect(isAuthenticated).toBe(false);
-    expect(isInitialized).toBe(true);
-  });
-});
-
-describe('authSlice >-65 updateUser', () => {
-  it('replaces the user of a signed-in session and keeps the token', () => {
-    const store = makeStore();
-    store.getState().setAuth(mockUser);
-    store.getState().updateUser({ ...mockUser, displayName: 'New name' });
-
-    expect(store.getState().user?.displayName).toBe('New name');
-    expect(store.getState().isAuthenticated).toBe(true);
-  });
-
-  it('ignores updates for a guest, so a late response cannot sign anyone in', () => {
-    const store = makeStore();
-    store.getState().updateUser(mockUser);
-
-    expect(store.getState().user).toBeNull();
-    expect(store.getState().isAuthenticated).toBe(false);
+    expect(store.getState()).toMatchObject({
+      isAuthenticated: false,
+      isInitialized: true,
+      sessionStatus: 'guest',
+    });
   });
 });

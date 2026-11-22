@@ -70,7 +70,7 @@ beforeEach(() => {
   mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
   mock.onGet('/analytics/me').reply(200, SUMMARY);
   apiClient.setUnauthorizedHandler(undefined);
-  useStore.setState({ user: PROFILE, isAuthenticated: true, isInitialized: true });
+  useStore.setState({ isAuthenticated: true, isInitialized: true });
   Object.defineProperty(window, 'location', {
     writable: true,
     value: { ...window.location, href: '/profile' },

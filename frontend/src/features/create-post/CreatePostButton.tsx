@@ -1,13 +1,14 @@
 import { useNavigate } from 'react-router';
 import { useState } from 'react';
 import { CreatePostDialog } from '@/features/create-post/CreatePostDialog';
+import { useCurrentUser } from '@/shared/api/profile/currentUser';
 import { useStore } from '@/store';
 
 /** Opens the create-post dialog. A guest is sent to sign in first. */
 export function CreatePostButton() {
   const navigate = useNavigate();
   const isAuthenticated = useStore((state) => state.isAuthenticated);
-  const userId = useStore((state) => state.user?.id);
+  const userId = useCurrentUser()?.id;
   // Until the session is restored a signed-in user would look like a guest.
   const isInitialized = useStore((state) => state.isInitialized);
   // Remembers whose session opened the dialog: when the user changes (sign-out, another account)

@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router';
+import { useCurrentUser } from '@/shared/api/profile/currentUser';
 import { useStore } from '@/store';
 import UserCard from './ui/UserCard';
 import GuestCard from './ui/GuestCard';
@@ -7,7 +8,8 @@ import TrendingTopics from './ui/TrendingTopics';
 
 export default function Sidebar() {
   const pathname = useLocation().pathname;
-  const { isAuthenticated, user } = useStore();
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const user = useCurrentUser();
 
   const initials = user
     ? (user.displayName || user.username)
