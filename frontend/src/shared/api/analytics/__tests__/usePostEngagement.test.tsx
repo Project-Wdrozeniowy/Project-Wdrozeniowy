@@ -5,8 +5,11 @@ import MockAdapter from 'axios-mock-adapter';
 import type { ReactNode } from 'react';
 import { apiClient } from '@/shared/api/client/api';
 import { getPublicSummaryQueryKey } from '@/shared/api/generated/orbita.api';
-import { authorEngagementKey, invalidatePostEngagement } from '../postEngagement';
-import { usePostEngagement } from '../usePostEngagement';
+import {
+  authorEngagementKey,
+  invalidatePostEngagement,
+} from '@/shared/api/analytics/postEngagement';
+import { usePostEngagement } from '@/shared/api/analytics/usePostEngagement';
 
 const summary = {
   postId: 5,

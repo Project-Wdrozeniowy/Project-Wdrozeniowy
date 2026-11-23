@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { vi } from 'vitest';
-import PostInsights from '../PostInsights';
+import PostInsights from '@/pages/post/ui/PostInsights';
 import { apiClient } from '@/shared/api/client/api';
 import type { PostDto } from '@/shared/api/generated/models/postDto.dto';
 import { getPublicSummaryQueryKey } from '@/shared/api/generated/orbita.api';

@@ -7,8 +7,8 @@ import { apiClient } from '@/shared/api/client/api';
 import { authorEngagementKey } from '@/shared/api/analytics/postEngagement';
 import { usePostEngagement } from '@/shared/api/analytics/usePostEngagement';
 import { getPublicSummaryQueryKey } from '@/shared/api/generated/orbita.api';
-import { useComments } from '../useComments';
-import { useVotePost } from '../useVotePost';
+import { useComments } from '@/shared/api/forum/useComments';
+import { useVotePost } from '@/shared/api/forum/useVotePost';
 
 const initial = {
   postId: 5,
