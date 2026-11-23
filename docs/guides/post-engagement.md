@@ -61,3 +61,43 @@ Server denial governs future reads; it cannot retract copies already received by
 another person. No live remote-tab invalidation or new realtime infrastructure is
 provided. See [sessions](sessions.md), [API bindings](api-bindings.md) and the
 [execution record](../agent-task-backlog/pwdrz-167-execution.md) for access and evidence.
+
+## Post-page insights (PWDRZ-169)
+
+The post page places insights between the article and discussion. Guests and other
+members read the public summary. Details reveals accumulated openings and their
+UTC collection date without making another request. The current author reads the
+owner summary instead, including UP/DOWN counts and their own draft. A staff role
+does not grant access to another author's summary. No card is requested for deleted
+posts or a non-owner viewing a non-public post through staff article permissions.
+
+The card labels the aggregate **Visible comments**, including replies. The
+discussion heading separately counts root threads, and article/feed counts keep
+their existing semantics. A score of zero is not evidence that nobody voted.
+Opening totals start at the returned collectedFrom; they are not unique readers.
+
+Author query keys include the current account ID. The card's post/account key
+also resets local presentation and detaches old observers. Session generations,
+request cancellation and the existing provider clearing prevent late answers
+from reappearing after logout or account replacement. A check of the same session
+retains the card. An author 401 follows the shared session handler; 403 does not
+sign out the account. A summary 404 also revalidates the article.
+
+Refresh insights reads both the summary and article. It preserves the discussion
+and its unsent draft, prevents duplicate activation, and does not report success
+if either read fails. These GETs are independent snapshots, not an atomic combined
+response. Accepted post votes and comment creation/reply/deletion cancel old
+summary reads and invalidate only that post's public/account-scoped summary keys.
+Inactive copies are marked stale; refetch failure does not undo an accepted write.
+
+Initial loading uses a named skeleton. Errors replace the figures with a fixed
+message and recovery control; raw server detail/transport messages are not shown.
+Retry remains mounted while running and on another failure. A successful keyboard
+retry returns focus to Details (public) or Refresh insights (author), provided the
+reader has not moved outside the card. Refresh/loading statuses are announced.
+
+PWDRZ-171 owns daily charts, compact trend bars, 7/30-day selection and daily tables.
+The summary does not display nonfunctional controls for that work. PWDRZ-166 owns
+navigation/reload opening delivery: no summary read, disclosure or refresh records
+an opening. See the [approved implementation plan](../agent-task-backlog/pwdrz-169-implementation-plan.md)
+and [PWDRZ-169 execution evidence](../agent-task-backlog/pwdrz-169-execution.md).
