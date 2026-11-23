@@ -12,15 +12,16 @@ const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
 interface CommentSectionProps {
   slug: string;
+  postId: number;
 }
 
-export function CommentSection({ slug }: CommentSectionProps) {
+export function CommentSection({ slug, postId }: CommentSectionProps) {
   const user = useCurrentUser() ?? null;
   const isAuthenticated = useStore((state) => state.isAuthenticated);
   // False until the session restore after a reload has finished. Until then we do not know yet
   // whether the visitor is signed in, so the sign-in prompt must not flash.
   const isInitialized = useStore((state) => state.isInitialized);
-  const { query, addComment, deleteComment } = useComments(slug);
+  const { query, addComment, deleteComment } = useComments(slug, postId);
 
   const { data, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage } = query;
   const comments = data?.pages.flatMap((page) => page.content) ?? [];

@@ -24,6 +24,7 @@ import {
 import type { MyVoteDto as MyVote } from '@/shared/api/generated/models/myVoteDto.dto';
 import type { VoteRequestVoteType as VoteType } from '@/shared/api/generated/models/voteRequestVoteType.dto';
 import { toast } from '@/shared/lib/toast';
+import { invalidatePostEngagement } from '@/shared/api/analytics/postEngagement';
 
 /** Identifies the votes on one post, whichever screen started them. */
 export const votePostMutationKey = (postId: number) => ['vote-post', postId] as const;
@@ -85,6 +86,7 @@ export function useVotePost(postId: number) {
       return { voteScore: vote.newScore, myVote: { id: vote.id, voteType: vote.voteType } };
     },
     onSuccess: (outcome, { myVote, clicked }) => {
+      void invalidatePostEngagement(queryClient, postId);
       queryClient.setQueriesData<PagedResponse<PostSummary>>(
         { queryKey: FEED_QUERY_KEY },
         (page) => (page ? applyVoteOutcome(page, postId, outcome) : page)
