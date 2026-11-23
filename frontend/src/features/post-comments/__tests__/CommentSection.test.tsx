@@ -73,7 +73,7 @@ let client: QueryClient;
 function renderSection() {
   return render(
     <QueryClientProvider client={client}>
-      <CommentSection slug="hello" />
+      <CommentSection slug="hello" postId={5} />
     </QueryClientProvider>
   );
 }

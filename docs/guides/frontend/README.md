@@ -302,6 +302,12 @@ menu and the sidebar card show the same name.
 
 ## Post voting (PWDRZ-97)
 
+The post page also composes public/author engagement under PWDRZ-169. Its query
+ownership, account isolation, refresh/error behavior and precise metric labels are
+documented in [post engagement](../post-engagement.md#post-page-insights-pwdrz-169).
+Summary refresh also reads the article; accepted votes and comment changes
+invalidate the affected post's summaries. Daily trends remain PWDRZ-171.
+
 A vote is the server's. The screen changes only when the API has answered (`useVotePost`), so a
 rejected or failed request leaves the post as it was and shows a fixed message; there is nothing to
 roll back. This was chosen over optimistic updates on purpose: a vote the server did not accept is

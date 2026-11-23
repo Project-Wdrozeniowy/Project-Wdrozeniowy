@@ -4,8 +4,9 @@ import { commentService } from '@/shared/api/forum/forumClient';
 import { COMMENTS_PAGE_SIZE } from '@/shared/api/forum/commentQuery.const';
 import { FEED_QUERY_KEY } from '@/shared/api/forum/feedQuery.const';
 import { getGetPostQueryKey } from '@/shared/api/generated/orbita.api';
+import { invalidatePostEngagement } from '@/shared/api/analytics/postEngagement';
 
-export function useComments(slug: string) {
+export function useComments(slug: string, postId: number) {
   const queryClient = useQueryClient();
   const queryKey = ['comments', slug];
   // A comment also changes the count the post page and the feed show for this post.
@@ -14,6 +15,7 @@ export function useComments(slug: string) {
       queryClient.invalidateQueries({ queryKey }),
       queryClient.invalidateQueries({ queryKey: getGetPostQueryKey(slug) }),
       queryClient.invalidateQueries({ queryKey: FEED_QUERY_KEY }),
+      invalidatePostEngagement(queryClient, postId),
     ]);
 
   const query = useInfiniteQuery({

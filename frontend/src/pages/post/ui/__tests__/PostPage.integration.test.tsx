@@ -96,6 +96,13 @@ beforeEach(() => {
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
   mock.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
+  mock.onGet('/analytics/public/posts/5').reply(200, {
+    postId: 5,
+    viewCount: 10,
+    commentCount: 4,
+    voteScore: 3,
+    collectedFrom: '2026-11-01T00:00:00Z',
+  });
   useStore.setState({ isAuthenticated: false, isInitialized: true });
 });
 
@@ -318,7 +325,9 @@ describe('voting on the post page', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Upvote' }));
 
-    expect(await screen.findByText('4')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(within(screen.getByRole('article')).getByText('4')).toBeInTheDocument()
+    );
     expect(JSON.parse(mock.history.post[0].data)).toEqual({
       entityType: 'POST',
       entityId: 5,
@@ -336,11 +345,15 @@ describe('voting on the post page', () => {
     mock.onGet('/forum/posts/hello/comments').reply(200, EMPTY_COMMENTS);
     mock.onDelete('/forum/votes/9').reply(204);
     renderPage();
-    await screen.findByText('4');
+    await waitFor(() =>
+      expect(within(screen.getByRole('article')).getByText('4')).toBeInTheDocument()
+    );
 
     await userEvent.click(screen.getByRole('button', { name: 'Upvote' }));
 
-    expect(await screen.findByText('3')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(within(screen.getByRole('article')).getByText('3')).toBeInTheDocument()
+    );
     expect(screen.getByRole('button', { name: 'Upvote' })).not.toHaveClass('text-accent');
   });
 });

@@ -6,6 +6,7 @@ import { isPostNotFound } from '@/pages/post/lib/postView';
 import { usePost } from '@/shared/api/forum/usePost';
 import PanelError from '@/shared/ui/PanelError';
 import PostArticle from './PostArticle';
+import PostInsights from './PostInsights';
 import PostNotFound from './PostNotFound';
 import PostSkeleton from './PostSkeleton';
 
@@ -32,9 +33,10 @@ export default function PostPage() {
     return (
       <div className="flex flex-col gap-6">
         <PostArticle post={query.data} />
+        <PostInsights post={query.data} onRefreshPost={() => query.refetch()} />
         {/* The target of the "N Comments" links. */}
         <div id="comments">
-          <CommentSection slug={slug} />
+          <CommentSection slug={slug} postId={query.data.id} />
         </div>
       </div>
     );
