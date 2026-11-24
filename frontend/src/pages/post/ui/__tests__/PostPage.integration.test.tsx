@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
@@ -9,6 +9,7 @@ import { apiClient } from '@/shared/api/client/api';
 import type { PostDto } from '@/shared/api/generated/models/postDto.dto';
 import { toast } from '@/shared/lib/toast';
 import { useStore } from '@/store';
+import { signInUser } from '@/test/session';
 
 /**
  * PostPage -> hooks -> generated operations -> the real ApiClient (axios, CSRF, interceptors).
@@ -72,8 +73,9 @@ const EMPTY_COMMENTS = {
   totalPages: 0,
 };
 
-function renderPage() {
+function renderPage(owner = false) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  if (owner) signInUser(client, { ...POST.author, status: 'ACTIVE' });
   return {
     client,
     ...render(
@@ -103,7 +105,219 @@ beforeEach(() => {
     voteScore: 3,
     collectedFrom: '2026-11-01T00:00:00Z',
   });
+  mock.onGet('/analytics/me/posts/5').reply(200, {
+    postId: 5,
+    viewCount: 10,
+    commentCount: 4,
+    voteScore: 3,
+    collectedFrom: '2026-11-01T00:00:00Z',
+    upvoteCount: 3,
+    downvoteCount: 0,
+    subscriptionCount: 0,
+  });
   useStore.setState({ isAuthenticated: false, isInitialized: true });
+});
+
+describe('editing an own publication (PWDRZ-190)', () => {
+  it('keeps a visible rejection after a moderation lock removes the editor', async () => {
+    servePost();
+    mock.onPatch('/forum/posts/hello').reply(403, {});
+    renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    await userEvent.type(screen.getByLabelText(/^Title/), ' local');
+    servePost({ status: 'LOCKED' });
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        'This change was not allowed. Check your access and try again.'
+      )
+    );
+    expect(screen.getByText('locked')).toBeVisible();
+  });
+
+  it('keeps the dialog pending and delivers one PATCH even for two immediate submits', async () => {
+    servePost();
+    let finish!: (response: [number, PostDto]) => void;
+    mock.onPatch('/forum/posts/hello').reply(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+    );
+    renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    await userEvent.type(screen.getByLabelText(/^Title/), ' changed');
+    const form = screen.getByRole('form', { name: 'Edit post' });
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeDisabled();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await act(async () => {
+      finish([200, { ...POST, title: POST.title + ' changed' }]);
+    });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('maps a real-shaped validation error to the field and keeps text for correction', async () => {
+    servePost();
+    mock
+      .onPatch('/forum/posts/hello')
+      .reply(400, { errors: { title: 'secret internal validation text' } });
+    renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    const title = screen.getByLabelText(/^Title/);
+    await userEvent.type(title, ' changed');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(await screen.findByText('Check the title and try again.')).toBeVisible();
+    await waitFor(() => expect(title).toHaveFocus());
+    expect(title).toHaveValue(POST.title + ' changed');
+    expect(title).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.queryByText('secret internal validation text')).not.toBeInTheDocument();
+  });
+
+  it('preserves unsaved input across a background refresh and reopens from the latest server values', async () => {
+    servePost();
+    const { client } = renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    const title = screen.getByLabelText(/^Title/);
+    await userEvent.type(title, ' local');
+    servePost({ title: 'Changed elsewhere', content: 'Latest body' });
+    await act(async () => {
+      await client.invalidateQueries({ queryKey: ['/forum/posts/hello'] });
+    });
+    expect(title).toHaveValue(POST.title + ' local');
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(screen.getByRole('button', { name: 'Edit post' }));
+    expect(screen.getByLabelText(/^Title/)).toHaveValue('Changed elsewhere');
+    expect(screen.getByLabelText(/^Body/)).toHaveValue('Latest body');
+  });
+
+  it('rechecks a forbidden save without calling it a lock, and retains editable input', async () => {
+    servePost();
+    mock.onPatch('/forum/posts/hello').reply(403, { detail: 'sensitive server text' });
+    renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    await userEvent.type(screen.getByLabelText(/^Title/), ' local');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(
+      await screen.findByText('This change was not allowed. Check your access and try again.')
+    ).toBeVisible();
+    expect(screen.getByLabelText(/^Title/)).toHaveValue(POST.title + ' local');
+    await waitFor(() =>
+      expect(
+        mock.history.get.filter((call) => call.url === '/forum/posts/hello').length
+      ).toBeGreaterThan(1)
+    );
+    expect(mock.history.patch).toHaveLength(1);
+  });
+
+  it('removes inaccessible content after the server rejects a deleted post', async () => {
+    servePost();
+    mock.onPatch('/forum/posts/hello').reply(404, {});
+    renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    await userEvent.type(screen.getByLabelText(/^Title/), ' local');
+    mock.onGet('/forum/posts/hello').reply(404, {});
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(await screen.findByRole('heading', { name: 'Post not found' })).toBeVisible();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
+  });
+
+  it('discards the open draft when the signed-in account changes', async () => {
+    servePost();
+    const { client } = renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    await userEvent.type(screen.getByLabelText(/^Title/), ' private');
+    await act(async () => {
+      signInUser(client, { ...POST.author, id: 99 });
+    });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(mock.history.patch).toHaveLength(0);
+  });
+
+  it('opens a labelled editor and saves only the changed title, without recording an opening', async () => {
+    servePost();
+    mock.onPatch('/forum/posts/hello').reply(200, { ...POST, title: 'Corrected title' });
+    renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit post' });
+    const title = within(dialog).getByLabelText(/^Title/);
+    expect(title).toHaveFocus();
+    await userEvent.clear(title);
+    await userEvent.type(title, 'Corrected title');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(await screen.findByRole('heading', { level: 1, name: 'Corrected title' })).toBeVisible();
+    expect(mock.history.patch).toHaveLength(1);
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ title: 'Corrected title' });
+    expect(mock.history.post).toHaveLength(0);
+    expect(mock.history.patch[0].headers?.['X-CSRF-TOKEN']).toBe('csrf');
+    expect(screen.getByRole('button', { name: 'Edit post' })).toHaveFocus();
+  });
+
+  it('discards on Cancel and reopens with saved values', async () => {
+    servePost();
+    renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    await userEvent.type(screen.getByLabelText(/^Title/), ' unsaved');
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Edit post' }));
+    expect(screen.getByLabelText(/^Title/)).toHaveValue(POST.title);
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
+    expect(mock.history.patch).toHaveLength(0);
+  });
+
+  it('keeps input after a failed save and sends exact Markdown on explicit retry', async () => {
+    servePost();
+    const content = '  **corrected**  \n\nMarkdown\n';
+    mock.onPatch('/forum/posts/hello').replyOnce(500, { detail: 'private server details' });
+    mock.onPatch('/forum/posts/hello').reply(200, { ...POST, content });
+    renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    const body = screen.getByLabelText(/^Body/);
+    await userEvent.clear(body);
+    await userEvent.type(body, content);
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(await within(screen.getByRole('dialog')).findByRole('alert')).not.toHaveTextContent(
+      'private server details'
+    );
+    expect(body).toHaveValue(content);
+    expect(mock.history.patch).toHaveLength(1);
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(JSON.parse(mock.history.patch[1].data)).toEqual({ content });
+  });
+
+  it('uses project limits but does not reject an unchanged long body', async () => {
+    servePost({ content: 'x'.repeat(6000) });
+    mock.onPatch('/forum/posts/hello').reply(200, { ...POST, title: 'Short correction' });
+    renderPage(true);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit post' }));
+    const title = screen.getByLabelText(/^Title/);
+    await userEvent.clear(title);
+    await userEvent.type(title, 'x'.repeat(121));
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(await screen.findByText('Title must be at most 120 characters')).toBeVisible();
+    expect(mock.history.patch).toHaveLength(0);
+    await userEvent.clear(title);
+    await userEvent.type(title, 'Short correction');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ title: 'Short correction' });
+  });
+
+  it.each(['guest', 'other author', 'locked'])('does not offer editing to %s', async (kind) => {
+    servePost(kind === 'locked' ? { status: 'LOCKED' } : {});
+    const { client } = renderPage(kind === 'locked');
+    if (kind === 'other author') signInUser(client, { ...POST.author, id: 99 });
+    await screen.findByRole('article');
+    expect(screen.queryByRole('button', { name: 'Edit post' })).not.toBeInTheDocument();
+  });
 });
 
 afterEach(() => mock.restore());

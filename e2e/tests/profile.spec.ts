@@ -72,7 +72,9 @@ test("the profile lists the user's own posts and the sidebar shows real counts",
 
   // The sidebar card shows the user's real post count and no invented figures.
   const card = page.getByRole('complementary');
-  await expect(card.getByText('11', { exact: true })).toBeVisible();
+  // Scope the count to the user's card; community activity can legitimately equal 11 too.
+  const userCard = card.getByRole('navigation', { name: 'Your account' }).locator('..');
+  await expect(userCard.getByText('11', { exact: true })).toBeVisible();
   await expect(card).not.toContainText('Followers');
   await expect(card).not.toContainText('Following');
 

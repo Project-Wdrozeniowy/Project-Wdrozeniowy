@@ -22657,6 +22657,173 @@
           "Public and author summaries verified: 376 backend tests and JaCoCo gates; 26 managed HTTP/browser cases, root checks/build, JS coverage, contract/codegen and infrastructure checks passed. See pwdrz-167-execution.md. Jira status unchanged."
         ]
       }
+    },
+    {
+      "id": "10552",
+      "key": "PWDRZ-190",
+      "fields": {
+        "statuscategorychangedate": "2026-11-24T16:37:20.767+0100",
+        "issuetype": {
+          "id": "10076",
+          "name": "Task",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "10204",
+          "key": "PWDRZ-54",
+          "fields": {
+            "summary": "Forum Core Functionality",
+            "status": {
+              "name": "To Do",
+              "statusCategory": {
+                "key": "new"
+              }
+            },
+            "priority": {
+              "name": "High"
+            },
+            "issuetype": {
+              "name": "Epic"
+            }
+          }
+        },
+        "project": {
+          "id": "10066",
+          "key": "PWDRZ",
+          "name": "ProjectWdrz",
+          "projectTypeKey": "software"
+        },
+        "fixVersions": [],
+        "watches": {
+          "watchCount": 1,
+          "isWatching": true
+        },
+        "lastViewed": "2026-11-24T17:49:06.604+0100",
+        "created": "2026-11-10T12:13:33.338+0100",
+        "priority": {
+          "name": "High",
+          "id": "2"
+        },
+        "labels": [],
+        "versions": [],
+        "issuelinks": [
+          {
+            "id": "10236",
+            "type": {
+              "id": "10000",
+              "name": "Blocks",
+              "inward": "is blocked by",
+              "outward": "blocks"
+            },
+            "inwardIssue": {
+              "id": "10526",
+              "key": "PWDRZ-164",
+              "fields": {
+                "summary": "Implement the readable post detail and discussion page [FE]",
+                "status": {
+                  "name": "Done",
+                  "statusCategory": {
+                    "key": "done"
+                  }
+                },
+                "priority": {
+                  "name": "Highest"
+                },
+                "issuetype": {
+                  "name": "Task"
+                }
+              }
+            }
+          },
+          {
+            "id": "10252",
+            "type": {
+              "id": "10003",
+              "name": "Relates",
+              "inward": "relates to",
+              "outward": "relates to"
+            },
+            "outwardIssue": {
+              "id": "10221",
+              "key": "PWDRZ-65",
+              "fields": {
+                "summary": "Implement forum posts CRUD API [BE]",
+                "status": {
+                  "name": "Done",
+                  "statusCategory": {
+                    "key": "done"
+                  }
+                },
+                "priority": {
+                  "name": "Medium"
+                },
+                "issuetype": {
+                  "name": "Task"
+                }
+              }
+            }
+          }
+        ],
+        "assignee": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "displayName": "Ruslan 82179"
+        },
+        "updated": "2026-11-24T16:37:20.767+0100",
+        "status": {
+          "name": "In Progress",
+          "id": "10077",
+          "statusCategory": {
+            "key": "indeterminate",
+            "name": "In Progress"
+          }
+        },
+        "components": [],
+        "description": "## Goal\n\nLet authors correct title and body of an existing post.\n\n## Context\n\nApproved Sprint 8 implementation plan, closed synthetic demonstration. Current application is a Vite/React Router SPA served by Express with relative /api, Spring JDBC sessions/CSRF and PostgreSQL. Reuse published contracts and existing feature code.\n\n## Owner\n\nRuslan 82179.\n\n## Scope\n\nAdd own-post edit flow to readable detail using existing PATCH contract and shared form presentation. Preserve unchanged fields, handle pending/save/cancel, field errors, locked/inaccessible post and update relevant detail/feed caches. Broader moderation remains separate.\n\n## Acceptance criteria\n\n* Author saves title/body and sees persisted values after reload. Cancel changes nothing. Guest/other author receives no misleading edit controls and server rejection is safely shown. Failed save preserves input. Editing itself creates zero openings.\n* Record concrete input, expected and observed output, tested source revision and affected checks. FE implementation runs typecheck, lint, format checks and relevant tests. BE changes update OpenAPI/generated bindings as applicable and verify real-schema behavior on migrated PostgreSQL. Existing quality gates remain applicable.\n* New controls, states and values are usable by keyboard and assistive technology. Public data excludes private content and reader identities.\n\n## Dependencies / coordination\n\nTechnical acceptance dependencies: PWDRZ-164. Contract examples allow parallel implementation. Feature ownership and dependency links determine integration readiness; no fixed work dates or mandatory serial schedule are introduced.",
+        "summary": "Implement editing of own publication [FE]",
+        "reporter": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "displayName": "Ruslan 82179"
+        },
+        "comment": {
+          "total": 0
+        },
+        "customFields": {
+          "Sprint": {
+            "id": "customfield_10020",
+            "value": [
+              {
+                "id": 205,
+                "name": "PWDRZ Sprint 8",
+                "state": "active",
+                "boardId": 67,
+                "goal": "On the closed synthetic demo, a reader opens a post from the feed, votes and comments; its author inspects engagement and daily openings. Guests explore real platform activity across periods and categories, verify values in accessible tables, and open the underlying publications.",
+                "startDate": "2026-11-08T23:00:25.137Z",
+                "endDate": "2026-11-22T23:00:00.000Z"
+              }
+            ]
+          },
+          "Rank": {
+            "id": "customfield_10019",
+            "value": "0|i001ay:"
+          },
+          "Development": {
+            "id": "customfield_10000",
+            "value": "{}"
+          }
+        }
+      },
+      "localTracking": {
+        "status": "done",
+        "owner": "Codex (Ruslan 82179)",
+        "updatedAt": "2026-11-24T17:53:07.802Z",
+        "notes": [
+          "User approved the implementation plan: design-style modal; title/body limits 120/5000; existing PATCH only. Working branch PWDRZ-190-edit-own-publication; source base 3fb937d4. Evidence: pwdrz-190-execution.md.",
+          "Editor implemented: 1370 frontend tests/coverage, root checks, build, contract/codegen passed. Full managed E2E 60/62; final scoped editing/profile run 4/4 passed. Full gate remains blocked by existing 320px overflow in unchanged CommentItem author/date header; awaiting approval for this separate discussion-layout fix. See pwdrz-190-execution.md. No commits or external updates.",
+          "User approved the bounded CommentItem author/date wrapping fix on 24 November 2026; resuming final verification.",
+          "Completed locally after the approved CommentItem wrapping correction: final 1370 frontend tests and all coverage gates, root checks, production build, API drift and full real-stack E2E 62/62 passed. E2E run 1795542238804-e5af17e9 cleaned up with exit 0. Source manifest 5db087f6b916d04d543271eda519b666c40a2fee5955130cfa7851ba51f99850. See pwdrz-190-execution.md; index unchanged, no commit/push/Jira/Figma updates.",
+          "User explicitly authorized logical commits, normal branch push and correct upstream setup, without co-author trailers. Source grouped into shared presentation, own-post editing/tests, comment-header regression fix and documentation/evidence. Runtime implementation and tested source manifest unchanged."
+        ]
+      }
     }
   ]
 }

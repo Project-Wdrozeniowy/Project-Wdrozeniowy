@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { EditPostButton } from '@/features/edit-post/EditPostButton';
 import { fullDate, postBadges } from '@/pages/post/lib/postView';
 import ActionButton from '@/features/post-interactions/ActionButton';
 import ActionLink from '@/features/post-interactions/ActionLink';
@@ -90,6 +91,7 @@ export default function PostArticle({ post }: PostArticleProps) {
             title={ACTION_UNAVAILABLE_HINT}
           />
           <ActionButton icon={<SaveIcon />} label="Save" disabled title={ACTION_UNAVAILABLE_HINT} />
+          <EditPostButton post={post} />
         </div>
       </div>
     </article>

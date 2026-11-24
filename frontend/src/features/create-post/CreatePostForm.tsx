@@ -12,8 +12,6 @@ import {
   CREATE_POST_FIELDS,
   CATEGORIES_EMPTY_MESSAGE,
   CATEGORIES_ERROR_MESSAGE,
-  CONTENT_MAX_LENGTH,
-  TITLE_MAX_LENGTH,
 } from '@/features/create-post/createPost.const';
 import type { CreatePostField } from '@/features/create-post/createPost.const';
 import { createPostSchema } from '@/features/create-post/createPost.schema';
@@ -27,6 +25,7 @@ import { cn } from '@/shared/lib/cn';
 import { getLoadPhase } from '@/shared/lib/loadPhase';
 import { getFieldControlProps } from '@/shared/ui/fieldA11y';
 import FormField from '@/shared/ui/FormField';
+import PostTextField from '@/shared/ui/PostTextField';
 import RetryButton from '@/shared/ui/RetryButton';
 import RetryStatus from '@/shared/ui/RetryStatus';
 
@@ -191,26 +190,14 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
         </div>
       )}
 
-      <FormField
-        label="Title"
+      <PostTextField
+        kind="title"
         id={ids.title}
-        required
-        counter={{ used: title.trim().length, max: TITLE_MAX_LENGTH }}
+        registration={register('title')}
+        used={title.trim().length}
         error={errors.title?.message}
-      >
-        <input
-          {...register('title')}
-          {...getFieldControlProps({
-            id: ids.title,
-            hasError: Boolean(errors.title?.message),
-            required: true,
-          })}
-          type="text"
-          placeholder="Give your post a clear title"
-          readOnly={isPending}
-          className={inputClass(Boolean(errors.title))}
-        />
-      </FormField>
+        readOnly={isPending}
+      />
 
       <FormField label="Category" id={ids.category} required error={categoryProblem}>
         <select
@@ -239,26 +226,14 @@ export function CreatePostForm({ onCancel, onViewPost, onPublished }: CreatePost
         {categoriesFailed && <RetryStatus retrying={categoriesRetrying} />}
       </FormField>
 
-      <FormField
-        label="Body"
+      <PostTextField
+        kind="content"
         id={ids.content}
-        required
-        counter={{ used: content.trim().length, max: CONTENT_MAX_LENGTH }}
+        registration={register('content')}
+        used={content.trim().length}
         error={errors.content?.message}
-      >
-        <textarea
-          {...register('content')}
-          {...getFieldControlProps({
-            id: ids.content,
-            hasError: Boolean(errors.content?.message),
-            required: true,
-          })}
-          rows={8}
-          placeholder="Share your thoughts…"
-          readOnly={isPending}
-          className={cn(inputClass(Boolean(errors.content)), 'resize-y')}
-        />
-      </FormField>
+        readOnly={isPending}
+      />
 
       <Controller
         control={control}

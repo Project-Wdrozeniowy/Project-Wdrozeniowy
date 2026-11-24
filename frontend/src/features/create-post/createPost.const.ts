@@ -1,6 +1,6 @@
 /** Limits of the create-post form. They follow the design and are stricter than the backend's. */
-export const TITLE_MAX_LENGTH = 120;
-export const CONTENT_MAX_LENGTH = 5000;
+import { TITLE_MAX_LENGTH, CONTENT_MAX_LENGTH } from '@/shared/constants/postText.const';
+export { TITLE_MAX_LENGTH, CONTENT_MAX_LENGTH };
 export const MAX_TAGS = 5;
 export const TAG_MAX_LENGTH = 20;
 
