@@ -327,6 +327,43 @@ never shown. The buttons show a busy state while a request runs.
 - **Tests.** The unit tests cover each rule above. `vote-consistency.spec.ts` runs the real stack:
   cast with a double click (one request), the post page and the feed agree, switch, reload, retract.
 
+## Editing an own publication (PWDRZ-190)
+
+The post page offers **Edit post** to the current author when the existing
+backend permits editing: published posts and own drafts, plus locked own posts
+for staff. It does not add moderation controls for other authors. The modal
+shares its presentation with creation, but has only title/body and Save/Cancel.
+
+- Title/body limits are 120/5000. Only changed fields are validated and sent to
+  the generated `PATCH /forum/posts/{slug}`; an unchanged longer historical
+  value does not prevent correcting another field. Text is not silently
+  truncated or trimmed, preserving Markdown whitespace.
+- Cancel, Escape, Close and a backdrop click discard this edit; reopening starts
+  from the latest loaded post. Pending saves cannot be closed or submitted
+  twice. A background refresh does not replace the open draft.
+- Ordinary failed saves keep input in the open form. Validation errors are
+  associated with fields; other failures use fixed messages. A 403/404 refreshes
+  the post's availability. Session/account transitions retain the existing
+  cache isolation; no persistent draft recovery or automatic mutation replay is
+  introduced.
+- Confirmed text updates detail/feed/profile/search/trending caches without
+  replacing newer engagement. Lists refetch their ordering and membership.
+  Editing updates the backend's last activity time and may move a post in an
+  activity-sorted feed. The current API does not detect two editors changing
+  the same field concurrently.
+- Editing sends no opening event. Opening delivery belongs to PWDRZ-166; the
+  E2E measurement separates the edit/save/cancel sequence from navigation and
+  deliberate reload.
+
+The tests cover partial PATCHes, limits, errors, background refresh, pending
+requests, account changes, cache races and real persistence/security/opening
+counts on the managed stack. Actual results and limitations are recorded in
+[PWDRZ-190 evidence](../../agent-task-backlog/pwdrz-190-execution.md).
+
+The adjacent comment header wraps author/date on narrow screens and breaks
+long unbroken names without truncation. The real-stack regression includes a
+100-character display name in root and nested comments at 320px.
+
 ## Settings page (PWDRZ-108)
 
 `/settings` is its own screen, separate from `/profile` (which only shows the profile). It uses the
