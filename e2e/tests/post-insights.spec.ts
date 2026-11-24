@@ -105,6 +105,16 @@ test('post insights follow persisted votes, replies, account changes and safe re
   const post = await createPost(request, account);
   const first = await reader();
   const second = await reader();
+  // PWDRZ-190 regression: a valid, unbroken display name must not push the comment date outside 320px.
+  const readerName = 'W'.repeat(100);
+  expect(
+    (
+      await first.context.patch(`${gatewayURL}/api/users/me`, {
+        headers: first.headers,
+        data: { displayName: readerName },
+      })
+    ).status()
+  ).toBe(200);
   const path = `${gatewayURL}/api/forum/posts/${post.slug}`;
   const publicURL = `${gatewayURL}/api/analytics/public/posts/${post.id}`;
   const ownerURL = `${gatewayURL}/api/analytics/me/posts/${post.id}`;
@@ -161,7 +171,7 @@ test('post insights follow persisted votes, replies, account changes and safe re
     await page.getByRole('button', { name: 'Post comment', exact: true }).click();
     await expect(metric(publicCard, 'Visible comments')).toHaveText('1');
     await page.getByRole('button', { name: 'Reply', exact: true }).click();
-    await page.getByLabel(`Reply to ${first.identity.username}`).fill('A visible nested reply');
+    await page.getByLabel(`Reply to ${readerName}`).fill('A visible nested reply');
     await page.getByRole('button', { name: 'Post reply' }).click();
     await expect(metric(publicCard, 'Visible comments')).toHaveText('2');
     await expect(page.getByRole('heading', { name: 'Comments (1 thread)' })).toBeVisible();

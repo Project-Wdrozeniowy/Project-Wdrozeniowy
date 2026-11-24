@@ -54,8 +54,10 @@ export function CommentItem({
           <p className="text-sm italic text-fg-subtle">[comment deleted]</p>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-fg-muted">{authorName}</span>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="max-w-full break-all text-xs font-semibold text-fg-muted">
+                {authorName}
+              </span>
               <time dateTime={comment.createdAt} className="text-xs text-fg-subtle">
                 {new Date(comment.createdAt).toLocaleDateString('en-US')}
               </time>
