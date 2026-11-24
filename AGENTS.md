@@ -50,6 +50,16 @@ ER diagrams live in `docs/db-schema*.mmd`.
   before using them. Consult repository instructions, developer guides, and
   architectural conventions for technical decisions, and reuse established
   project patterns and solutions where appropriate.
+- Follow [backend (entity) first](docs/guides/architecture.md#development-order-backend-entity-first)
+  and [test first for unit tests](docs/guides/testing.md#when-to-add-tests): establish
+  backend domain rules and entity/schema needs, write and observe failing unit tests,
+  then implement the backend and publish its OpenAPI contract. Generate frontend
+  types and bindings from that contract before implementing API-dependent UI;
+  write frontend unit tests before the corresponding implementation. Integration
+  and E2E tests may be written alongside or after implementation; their required
+  verification still applies. Do not duplicate wire DTOs by hand or expose JPA
+  entities as the frontend contract. Follow the
+  [API bindings workflow](docs/guides/api-bindings.md) for generation and checks.
 - Use Jira for task requirements, acceptance criteria, dependencies, and history.
   For returned tasks, inspect review comments and reasons for rejection. Local
   backlog exports are context and execution records, not a substitute for live

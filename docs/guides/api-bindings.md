@@ -6,6 +6,16 @@ frontend workspace and root lockfile, generates TanStack Query v5 bindings.
 Generated output is committed in `frontend/src/shared/api/generated/`. Never
 edit it manually or add application logic there.
 
+Follow the [backend (entity) first development order](architecture.md#development-order-backend-entity-first)
+and [test-first policy for unit tests](testing.md#when-to-add-tests): backend
+domain/entity design, failing unit tests, verified backend implementation and API
+DTOs, published OpenAPI, generated frontend types/bindings, then implementation
+of the consuming frontend with unit tests written first. Integration and E2E
+tests may be written alongside or after implementation; required checks still
+apply. JPA entities are not the public HTTP contract. Use the
+generated request/response models rather than handwritten copies; form schemas
+and view models retain their separate UI responsibilities.
+
 A scoped `.gitattributes` rule keeps generated files LF even when a Windows
 checkout uses `core.autocrlf=true`; drift comparison remains byte-for-byte.
 

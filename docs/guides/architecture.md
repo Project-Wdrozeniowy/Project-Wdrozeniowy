@@ -40,6 +40,41 @@ Browser → Express SPA host + /api proxy (:3000)
 > [capability snapshot](../codebase/ARCHITECTURE.md#capability-status)
 > identifies implemented, mocked, stubbed, and deferred paths.
 
+## Development order: backend (entity) first
+
+For new or changed API-backed features, follow **backend (entity) first** and
+**test first for unit tests**. Integration and E2E tests may be written alongside
+or after implementation; their required verification still applies. This is the
+development policy, not a claim that every existing feature was built in this order.
+
+1. Establish the required behaviour, backend domain rules, and entity
+   relationships. Identify necessary schema changes; reuse existing entities
+   when they fit. Entity first means the backend domain model drives the API,
+   not that every task needs a new entity or database table.
+2. For unit-testable backend behaviour, write a focused unit test before the
+   corresponding implementation and run it to observe the expected failure.
+   Implement the smallest cohesive backend
+   change that makes it pass, including entities, Flyway migrations, services,
+   authorization, controllers, and DTOs as needed. Schema-dependent behaviour
+   needs a migrated-schema test. See [test-first policy](testing.md#when-to-add-tests).
+3. Verify the implemented API and regenerate `backend/openapi.json` from the
+   backend. Then run root `npm run api:generate` and `npm run api:check` as
+   described in the [API bindings workflow](api-bindings.md).
+4. Build API-dependent frontend behaviour against those generated types,
+   operations, and Query bindings. For unit-tested frontend behaviour, write and
+   run the relevant failing unit tests before the corresponding implementation.
+   Handwritten form schemas
+   and view models may compose generated types; do not duplicate wire DTOs or
+   edit generated files manually.
+5. Verify the completed path across the affected services, including real-stack
+   browser evidence for changed UI flows and the applicable service gates.
+
+JPA entities remain backend persistence models. Explicit request/response DTOs
+define the public API; frontend types come from OpenAPI, not directly from JPA
+entities. UI exploration may happen earlier, but provisional mocks are not proof
+of an implemented contract or a completed integration. A frontend-only change
+using an existing API does not require unrelated backend work.
+
 ## Backend: extend a cohesive domain
 
 **Place a new capability in the package that owns its domain responsibility.**
@@ -170,6 +205,42 @@ application behavior; hidden `501` API contracts remain provisional. See the
 > интеграции сервера и клиента нет. Это не доказательство работающих real-time
 > notifications. [Карта возможностей](../codebase/ARCHITECTURE.md#capability-status)
 > различает реализованные, mock, stub и отложенные пути.
+
+### Порядок разработки: backend (entity) first
+
+Для новых и изменяемых функций, использующих API, следуйте **backend (entity)
+first** и **test first для unit-тестов**. Integration и E2E тесты можно писать
+параллельно с реализацией или после неё; обязательные проверки сохраняются.
+Это правило разработки, а не утверждение, что весь существующий код создавался
+в таком порядке.
+
+1. Определите требуемое поведение, доменные правила backend и связи сущностей.
+   Выясните, нужны ли изменения схемы; используйте существующие entities, когда
+   они подходят. Entity first означает, что доменная модель backend определяет
+   API, а не что каждой задаче нужны новая entity или таблица.
+2. Для backend-поведения, проверяемого unit-тестами, напишите целевой unit-тест
+   до соответствующей реализации и запустите его, подтвердив ожидаемое падение.
+   Реализуйте минимальное связное изменение,
+   необходимое для прохождения теста: entities, Flyway-миграции, services,
+   авторизацию, controllers и DTO по необходимости. Зависимость от реальной схемы
+   проверяйте migrated-schema тестом. См. [test-first policy](testing.md#when-to-add-tests).
+3. Проверьте реализованный API и перегенерируйте `backend/openapi.json` из
+   backend. Затем выполните корневые `npm run api:generate` и `npm run api:check`
+   по [инструкции генерации bindings](api-bindings.md).
+4. Разрабатывайте frontend-поведение, использующее API, на основе этих
+   сгенерированных типов, операций и Query bindings. Для frontend-поведения,
+   проверяемого unit-тестами, напишите соответствующие unit-тесты до реализации
+   и подтвердите их ожидаемое падение.
+   Ручные form schemas и view models могут компоновать generated types;
+   не дублируйте wire DTO и не редактируйте generated files вручную.
+5. Проверьте завершённый путь через затронутые сервисы, включая браузерную
+   проверку изменённых UI flows на реальном стенде и применимые service gates.
+
+JPA entities остаются внутренними persistence-моделями backend. Публичный API
+определяют явные request/response DTO; frontend-типы получаются из OpenAPI,
+а не напрямую из JPA entities. Исследование UI возможно раньше, но provisional
+mocks не доказывают реализацию контракта или завершённую интеграцию.
+Frontend-only изменение на существующем API не требует посторонних backend-правок.
 
 ### Backend: расширяйте связный домен
 

@@ -260,14 +260,24 @@ for evidence and limitations.
 
 ## When to add tests
 
-- Add a test for new observable behaviour at the closest useful boundary.
+- **Apply test first to unit tests for new observable behaviour and behavioural
+  bug fixes.** Write the unit test before the corresponding
+  production change, run it, and confirm it fails for the expected behavioural
+  reason rather than an unrelated environment or setup failure. Implement the
+  smallest change that makes it pass, then refactor while keeping tests green.
+  For API-backed features, follow the
+  [backend (entity) first development order](architecture.md#development-order-backend-entity-first).
+- **Integration, migrated-schema, and E2E tests do not have to be written first.**
+  They may be developed alongside or after implementation. This changes the
+  writing order only, not the required verification or service gates.
+  Test new behaviour at the closest useful boundary.
   For a cross-service feature, also provide reproducible integration evidence;
   for a changed UI path, provide browser evidence. See the
   [Definition of Done](README.md#definition-of-done).
 - A reproducible behavioural bug needs a regression test. If no automated
   test is feasible, explain the exception and the verification performed in
-  the PR. Test-first is allowed, but the order of writing code and test is not
-  a team requirement.
+  the PR. For unit tests, do not describe an unobserved failing test or a test
+  written after implementation as evidence that test first was followed.
 - Refactors without behaviour change can rely on the existing suite unless
   the refactor exposes an unprotected contract. The applicable coverage gate
   still must pass.
@@ -489,13 +499,23 @@ check в GitHub — в [PWDRZ-117 execution](../agent-task-backlog/pwdrz-117-exe
 
 ### Когда добавлять тесты
 
-- Новое наблюдаемое поведение проверяйте на ближайшей полезной границе.
+- **Применяйте test first к unit-тестам нового наблюдаемого поведения и
+  исправлений поведенческих ошибок.** До соответствующей production-правки
+  напишите unit-тест, запустите его и подтвердите падение по ожидаемой
+  поведенческой причине, а не из-за посторонней проблемы окружения или setup.
+  Реализуйте минимальное изменение для прохождения теста, затем выполняйте
+  рефакторинг, сохраняя тесты зелёными. Для функций с API соблюдайте
+  [порядок backend (entity) first](architecture.md#development-order-backend-entity-first).
+- **Integration, migrated-schema и E2E тесты не требуется писать первыми.**
+  Их можно разрабатывать параллельно с реализацией или после неё. Это уточняет
+  только порядок написания, сохраняя обязательные проверки и service gates.
+  Новое поведение проверяйте на ближайшей полезной границе.
   Для межсервисной функции нужно также воспроизводимое integration evidence;
   для изменённого UI-пути — браузерное. См. [Definition of Done](README.md#definition-of-done).
 - Воспроизводимый поведенческий bug требует regression test. Если
   автоматизировать его невозможно, объясните исключение и выполненную
-  проверку в PR. Писать тест до кода можно, но порядок не является
-  обязательным правилом команды.
+  проверку в PR. Unit-тест без подтверждённого ожидаемого падения или unit-тест,
+  написанный после реализации, не доказывает соблюдение test first.
 - Рефакторинг без изменения поведения может опираться на имеющийся suite,
   если не обнаружен незащищённый контракт. Применимый coverage gate всё
   равно должен пройти.
