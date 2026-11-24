@@ -1,61 +1,31 @@
-import {
-  activitySeries,
-  categorySeries,
-  chartSummary,
-  dayLabel,
-  isEmptySeries,
-} from '@/pages/dashboard/lib/dashboardView';
+import { activityMetrics, categorySeries, chartSummary } from '@/pages/dashboard/lib/dashboardView';
 import { makeActivity, makeCategories } from '@/test/fakeAnalyticsServer';
 
-describe('dayLabel', () => {
-  it('names the UTC day', () => {
-    expect(dayLabel('2026-11-17')).toBe('Tue 17');
-    expect(dayLabel('2026-11-01')).toBe('Sun 1');
-  });
-
-  it('shows anything that is not a day as it is', () => {
-    expect(dayLabel('soon')).toBe('soon');
-  });
-});
-
-describe('activitySeries', () => {
-  it('labels every day of a week', () => {
-    const series = activitySeries(
+describe('activityMetrics', () => {
+  it('offers posts and comments per UTC day, oldest first, as the API gives them', () => {
+    const metrics = activityMetrics(
       makeActivity([
         ['2026-11-16', 2, 5],
-        ['2026-11-17', 3, 8],
+        ['2026-11-17', 0, 8],
       ])
     );
 
-    expect(series.days).toEqual(['Mon 16', 'Tue 17']);
-    expect(series.labels).toEqual(['Mon 16', 'Tue 17']);
-    expect(series.posts).toEqual([2, 3]);
-    expect(series.comments).toEqual([5, 8]);
-  });
-
-  it('labels only every fifth day of a month, but keeps every day for the text alternative', () => {
-    const days: Array<[string, number, number]> = Array.from({ length: 30 }, (_, i) => [
-      `2026-10-${String(i + 1).padStart(2, '0')}`,
-      i,
-      i,
+    expect(metrics.map((metric) => metric.id)).toEqual(['posts', 'comments']);
+    expect(metrics[0].points).toEqual([
+      { date: '2026-11-16', value: 2 },
+      { date: '2026-11-17', value: 0 },
     ]);
-
-    const series = activitySeries(makeActivity(days, '30d'));
-
-    expect(series.days).toHaveLength(30);
-    expect(series.labels.filter(Boolean)).toHaveLength(6);
-    expect(series.labels[0]).toBe('Thu 1');
-    expect(series.labels[1]).toBe('');
-    expect(series.labels[5]).toBe('Tue 6');
+    expect(metrics[1].points).toEqual([
+      { date: '2026-11-16', value: 5 },
+      { date: '2026-11-17', value: 8 },
+    ]);
   });
 
-  it('copes with no days at all', () => {
-    expect(activitySeries({ ...makeActivity([]), days: [] })).toEqual({
-      days: [],
-      labels: [],
-      posts: [],
-      comments: [],
-    });
+  it('keeps the metrics, with no points, while there is no answer yet', () => {
+    const metrics = activityMetrics(undefined);
+
+    expect(metrics.map((metric) => metric.name)).toEqual(['Posts', 'Comments']);
+    expect(metrics.every((metric) => metric.points.length === 0)).toBe(true);
   });
 });
 
@@ -110,15 +80,5 @@ describe('chartSummary', () => {
 
   it('numbers a bar that has no label', () => {
     expect(chartSummary('Posts', ['', ''], [1, 2])).toBe('Posts. 1: 1, 2: 2');
-  });
-});
-
-describe('isEmptySeries', () => {
-  it.each([
-    [[], true],
-    [[0, 0], true],
-    [[0, 1], false],
-  ])('%j -> %s', (values, empty) => {
-    expect(isEmptySeries(values)).toBe(empty);
   });
 });

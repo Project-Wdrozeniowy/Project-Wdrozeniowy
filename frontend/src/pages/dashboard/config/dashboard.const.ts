@@ -2,6 +2,8 @@ export const DASHBOARD_TITLE = 'Analytics Dashboard';
 export const DASHBOARD_SUBTITLE = 'Public activity of the community, from the platform data.';
 export const PERIOD_SWITCH_LABEL = 'Time window';
 
+export const ACTIVITY_CHART_TITLE = 'Activity per day';
+export const ACTIVITY_CHART_DESCRIPTION = 'Public posts and comments per UTC day.';
 export const NO_ACTIVITY_TEXT = 'No public posts or comments in this window yet.';
 export const NO_TOP_POSTS_TEXT = 'No post has had activity in this window yet.';
 export const NO_EARLIER_DATA_TEXT = 'No earlier data to compare';
