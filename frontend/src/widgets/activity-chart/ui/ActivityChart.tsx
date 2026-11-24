@@ -1,9 +1,14 @@
 import { useId, useState } from 'react';
+import type { ReactNode } from 'react';
+import { cn } from '@/shared/lib/cn';
 import type { LoadPhase } from '@/shared/lib/loadPhase';
+import ChoiceSwitch from '@/shared/ui/ChoiceSwitch';
 import PanelError from '@/shared/ui/PanelError';
 import { PANEL_ERROR_TEXT } from '@/shared/ui/panelError.const';
 import {
+  METRIC_GROUP_LABEL,
   DEFAULT_CHART_COLOR,
+  MISSING_NOTE_TITLE,
   MISSING_VALUE_TEXT,
   NOTHING_MEASURED_TEXT,
   TABLE_TOGGLE_LABEL,
@@ -13,6 +18,7 @@ import {
 import {
   chartSummary,
   hasMissingDay,
+  hasPartialDay,
   measuredValues,
   seriesTitle,
   type ActivityMetric,
@@ -21,7 +27,6 @@ import ActivityChartSkeleton from './ActivityChartSkeleton';
 import ActivityGraph from './ActivityGraph';
 import ActivityLegend from './ActivityLegend';
 import ActivityTable from './ActivityTable';
-import MetricSwitch from './MetricSwitch';
 
 interface ActivityChartProps {
   /** The card's heading. */
@@ -44,6 +49,15 @@ interface ActivityChartProps {
   errorText?: string;
   /** A line of dots (the dashboard's look, the default) or one bar per day. */
   kind?: ChartKind;
+  /**
+   * Said when some day has no value, for example since when the figures are collected. Without it
+   * a missing day is still marked in the graph, the table and the text alternative.
+   */
+  missingNote?: string;
+  /** Controls the screen owns, such as the choice of the window, shown beside the heading. */
+  actions?: ReactNode;
+  /** Inside a card of the screen: no frame or padding of its own, and a smaller heading. */
+  embedded?: boolean;
 }
 
 /**
@@ -64,6 +78,9 @@ export default function ActivityChart({
   emptyText,
   errorText = PANEL_ERROR_TEXT,
   kind = 'line',
+  missingNote,
+  actions,
+  embedded = false,
 }: ActivityChartProps) {
   const headingId = useId();
   const tableId = useId();
@@ -71,12 +88,8 @@ export default function ActivityChart({
   const metric = metrics.find((candidate) => candidate.id === metricId) ?? metrics[0];
 
   const measured = metric ? measuredValues(metric.points) : [];
-  const note =
-    measured.length === 0
-      ? NOTHING_MEASURED_TEXT
-      : measured.every((value) => value === 0)
-        ? `No ${metric?.name.toLowerCase()} recorded in this period.`
-        : null;
+  const someMissing = metric ? hasMissingDay(metric.points) : false;
+  const allZero = measured.length > 0 && measured.every((value) => value === 0);
 
   let body;
   if (phase === 'failed' || phase === 'retrying') {
@@ -90,7 +103,23 @@ export default function ActivityChart({
     const tableTitle = seriesTitle(metric, periodLabel);
     body = (
       <>
-        {note && <p className="text-sm text-fg bg-raised rounded-lg px-3 py-2">{note}</p>}
+        {someMissing && missingNote ? (
+          <div className="text-sm text-fg bg-raised rounded-lg px-3 py-2">
+            <p className="font-semibold">{MISSING_NOTE_TITLE}</p>
+            <p>{missingNote}</p>
+          </div>
+        ) : (
+          measured.length === 0 && (
+            <p className="text-sm text-fg bg-raised rounded-lg px-3 py-2">
+              {NOTHING_MEASURED_TEXT}
+            </p>
+          )
+        )}
+        {allZero && (
+          <p className="text-sm text-fg bg-raised rounded-lg px-3 py-2">
+            {`No ${metric.name.toLowerCase()} recorded in this period.`}
+          </p>
+        )}
         <ActivityGraph
           metric={metric}
           kind={kind}
@@ -99,7 +128,8 @@ export default function ActivityChart({
         />
         <ActivityLegend
           metric={metric}
-          hasMissing={hasMissingDay(metric.points)}
+          hasMissing={someMissing}
+          hasPartial={hasPartialDay(metric.points)}
           color={metric.color ?? DEFAULT_CHART_COLOR}
         />
         <p className="text-xs text-fg-subtle">{UTC_NOTE}</p>
@@ -119,19 +149,34 @@ export default function ActivityChart({
     );
   }
 
+  const Heading = embedded ? 'h3' : 'h2';
   return (
     <section
       aria-labelledby={headingId}
-      className="bg-surface rounded-xl p-5 flex flex-col gap-4 border border-line"
+      className={cn(
+        'flex flex-col gap-4',
+        !embedded && 'bg-surface rounded-xl p-5 border border-line'
+      )}
     >
-      <div>
-        <h2 id={headingId} className="text-fg font-semibold text-xl">
-          {title}
-        </h2>
-        {description && <p className="text-fg-subtle text-sm mt-1">{description}</p>}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Heading
+            id={headingId}
+            className={cn('text-fg font-semibold', embedded ? 'text-base' : 'text-xl')}
+          >
+            {title}
+          </Heading>
+          {description && <p className="text-fg-subtle text-sm mt-1">{description}</p>}
+        </div>
+        {actions}
       </div>
       {metrics.length > 1 && (
-        <MetricSwitch metrics={metrics} activeId={metric?.id ?? ''} onChange={onMetricChange} />
+        <ChoiceSwitch
+          legend={METRIC_GROUP_LABEL}
+          options={metrics.map((candidate) => ({ id: candidate.id, label: candidate.name }))}
+          value={metric?.id ?? ''}
+          onChange={onMetricChange}
+        />
       )}
       {body}
     </section>

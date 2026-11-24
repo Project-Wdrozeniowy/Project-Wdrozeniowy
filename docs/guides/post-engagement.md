@@ -96,8 +96,24 @@ Retry remains mounted while running and on another failure. A successful keyboar
 retry returns focus to Details (public) or Refresh insights (author), provided the
 reader has not moved outside the card. Refresh/loading statuses are announced.
 
-PWDRZ-171 owns daily charts, compact trend bars, 7/30-day selection and daily tables.
-The summary does not display nonfunctional controls for that work. PWDRZ-166 owns
+### Author daily openings (PWDRZ-171)
+
+The author's card also shows **Daily openings** from `GET /analytics/me/posts/{id}/openings`: one
+bar per UTC day with a data table of the same days (the shared `widgets/activity-chart`), and a
+7 or 30 day choice. Only the author's card reads it; the public summary and other accounts never
+request it, and its query key carries the account, so nothing is reused across accounts (the whole
+cache is also cleared when the session changes).
+
+- A day before collection began has `measured: false` and no value: it is shown as **Not measured**
+  with the note "Openings were not collected before … UTC. Those days are not zero." A measured
+  day without openings is a real `0`.
+- The last day is the current UTC day and still counts up: the bar is outlined and the table says
+  "(today, partial)".
+- Loading, a fixed error message with a retry, and a failed refresh that keeps the old days with a
+  notice are handled in the chart area; a failed series never replaces the totals. Refresh insights
+  reads it again with the totals.
+
+The public summary does not display nonfunctional controls. PWDRZ-166 owns
 navigation/reload opening delivery: no summary read, disclosure or refresh records
 an opening. See the [approved implementation plan](../agent-task-backlog/pwdrz-169-implementation-plan.md)
 and [PWDRZ-169 execution evidence](../agent-task-backlog/pwdrz-169-execution.md).

@@ -2,6 +2,9 @@
 export const MISSING_VALUE_TEXT = 'Not measured';
 
 export const METRIC_GROUP_LABEL = 'Metric';
+/** Said for a day that is not over yet, in the table, the legend and the text alternative. */
+export const PARTIAL_DAY_TEXT = 'today, partial';
+export const MISSING_NOTE_TITLE = 'Not measured';
 export const TABLE_TOGGLE_LABEL = 'Data table';
 export const DATE_COLUMN_LABEL = 'Date (UTC)';
 export const UTC_NOTE = 'Days are UTC days.';

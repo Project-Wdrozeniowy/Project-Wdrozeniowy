@@ -2,8 +2,10 @@ import {
   axisDay,
   axisLabelIndexes,
   chartSummary,
+  dayText,
   fullDay,
   hasMissingDay,
+  hasPartialDay,
   measuredValues,
   monotonePath,
   seriesTitle,
@@ -144,5 +146,30 @@ describe('hasMissingDay', () => {
   it('tells a day without a value from a measured zero', () => {
     expect(hasMissingDay(posts.points)).toBe(true);
     expect(hasMissingDay([{ date: '2026-11-17', value: 0 }])).toBe(false);
+  });
+});
+
+describe('partial day', () => {
+  it('adds "today, partial" to a day that is not over, and only to it', () => {
+    expect(dayText({ date: '2026-11-17', value: 1, partial: true })).toBe(
+      'Nov 17, 2026 (today, partial)'
+    );
+    expect(dayText({ date: '2026-11-17', value: 1 })).toBe('Nov 17, 2026');
+  });
+
+  it('says it in the text alternative', () => {
+    const metric: ActivityMetric = {
+      ...posts,
+      points: [{ date: '2026-11-17', value: 3, partial: true }],
+    };
+
+    expect(chartSummary(metric, 'Last day', 'Not measured')).toBe(
+      'Posts per day, Last day, UTC. Nov 17, 2026 (today, partial): 3 posts'
+    );
+  });
+
+  it('tells whether any day is partial', () => {
+    expect(hasPartialDay(posts.points)).toBe(false);
+    expect(hasPartialDay([{ date: '2026-11-17', value: 1, partial: true }])).toBe(true);
   });
 });

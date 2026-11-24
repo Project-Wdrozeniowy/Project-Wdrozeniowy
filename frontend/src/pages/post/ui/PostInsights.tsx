@@ -1,7 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import AuthorOpeningsTrend from '@/pages/post/ui/AuthorOpeningsTrend';
 import { collectionDate, insightsError, insightsNumber } from '@/pages/post/lib/postInsights';
+import {
+  DEFAULT_ANALYTICS_PERIOD,
+  type AnalyticsPeriod,
+} from '@/shared/api/analytics/analytics.const';
 import { usePostEngagement } from '@/shared/api/analytics/usePostEngagement';
+import { usePostOpenings } from '@/shared/api/analytics/usePostOpenings';
 import { apiErrorStatus } from '@/shared/api/client/apiError';
 import { getGetPostQueryKey } from '@/shared/api/generated/orbita.api';
 import type { PostDto } from '@/shared/api/generated/models/postDto.dto';
@@ -40,6 +46,8 @@ interface InsightsCardProps extends PostInsightsProps {
 
 function InsightsCard({ post, accountId, onRefreshPost }: InsightsCardProps) {
   const query = usePostEngagement(post.id, accountId);
+  const [period, setPeriod] = useState<AnalyticsPeriod>(DEFAULT_ANALYTICS_PERIOD);
+  const trend = usePostOpenings(post.id, accountId, period);
   const client = useQueryClient();
   const titleId = useId();
   const detailsId = useId();
@@ -83,7 +91,13 @@ function InsightsCard({ post, accountId, onRefreshPost }: InsightsCardProps) {
     setRetryingFailure(recovering);
     setRefreshing(true);
     try {
-      const [summary, article] = await Promise.all([query.refetch(), onRefreshPost()]);
+      // The daily openings answer for themselves (their own error and retry): a failed read of
+      // them must not turn the totals into a failure.
+      const [summary, article] = await Promise.all([
+        query.refetch(),
+        onRefreshPost(),
+        owner ? trend.refetch() : undefined,
+      ]);
       setPostFailed(article.isError);
       restoreFocus.current =
         recovering &&
@@ -225,6 +239,11 @@ function InsightsCard({ post, accountId, onRefreshPost }: InsightsCardProps) {
                 Openings are counted since {collectionDate(data.collectedFrom)} UTC. They are not
                 unique readers.
               </p>
+            )}
+            {owner && (
+              <div className="mt-4 border-t border-line pt-4">
+                <AuthorOpeningsTrend trend={trend} period={period} onPeriodChange={setPeriod} />
+              </div>
             )}
           </>
         ) : null}

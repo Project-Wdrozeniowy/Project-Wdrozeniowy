@@ -98,10 +98,19 @@ export async function expectSignedIn(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
 }
 
-/** Signs out through the account menu. */
+/**
+ * Signs out through the account menu and waits for the server's answer, so a navigation that
+ * follows cannot cancel the sign-out request and leave the session alive.
+ */
 export async function signOutThroughMenu(page: Page): Promise<void> {
+  const answered = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === '/api/auth/logout' &&
+      response.request().method() === 'POST'
+  );
   await page.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await answered;
 }
 
 export { expect };

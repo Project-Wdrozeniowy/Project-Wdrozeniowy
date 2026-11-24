@@ -1,6 +1,7 @@
 import {
   MAX_AXIS_LABELS,
   MAX_Y_INTERVALS,
+  PARTIAL_DAY_TEXT,
 } from '@/widgets/activity-chart/config/activityChart.const';
 
 /** One UTC day. `null` is "no value" (not collected); `0` is a measured zero. */
@@ -8,6 +9,8 @@ export interface ActivityPoint {
   /** The UTC day, `YYYY-MM-DD`. */
   date: string;
   value: number | null;
+  /** The day is not over yet (today): its value can still grow. */
+  partial?: boolean;
 }
 
 /** One thing that is counted per day: posts, comments, openings. */
@@ -57,6 +60,11 @@ export function axisLabelIndexes(count: number): Set<number> {
   return indexes;
 }
 
+/** "Nov 17, 2026", and "Nov 17, 2026 (today, partial)" for a day that is not over yet. */
+export function dayText(point: ActivityPoint): string {
+  return point.partial ? `${fullDay(point.date)} (${PARTIAL_DAY_TEXT})` : fullDay(point.date);
+}
+
 export function unitText(metric: ActivityMetric, value: number): string {
   return `${value} ${value === 1 ? metric.unit.one : metric.unit.other}`;
 }
@@ -64,6 +72,11 @@ export function unitText(metric: ActivityMetric, value: number): string {
 /** The measured values only; a missing day is not a value. */
 export function measuredValues(points: ActivityPoint[]): number[] {
   return points.flatMap((point) => (point.value === null ? [] : [point.value]));
+}
+
+/** True when some day is not over yet. */
+export function hasPartialDay(points: ActivityPoint[]): boolean {
+  return points.some((point) => point.partial);
 }
 
 /** True when some day has no value. */
@@ -84,7 +97,7 @@ export function chartSummary(
 ): string {
   const days = metric.points.map(
     (point) =>
-      `${fullDay(point.date)}: ${point.value === null ? missingText.toLowerCase() : unitText(metric, point.value)}`
+      `${dayText(point)}: ${point.value === null ? missingText.toLowerCase() : unitText(metric, point.value)}`
   );
   return `${seriesTitle(metric, periodLabel)}. ${days.join(', ')}`;
 }

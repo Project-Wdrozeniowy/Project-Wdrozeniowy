@@ -12,7 +12,7 @@ import {
 import {
   axisDay,
   axisLabelIndexes,
-  fullDay,
+  dayText,
   measuredValues,
   monotonePath,
   unitText,
@@ -154,7 +154,7 @@ export default function ActivityGraph({ metric, kind, summary, missingText }: Ac
           <g key={point.date}>
             {point.value === null ? (
               <>
-                <title>{`${fullDay(point.date)}: ${missingText.toLowerCase()}`}</title>
+                <title>{`${dayText(point)}: ${missingText.toLowerCase()}`}</title>
                 <line
                   data-point="missing"
                   x1={kind === 'bar' ? x - (slot * BAR_WIDTH_SHARE) / 2 : x}
@@ -168,21 +168,33 @@ export default function ActivityGraph({ metric, kind, summary, missingText }: Ac
               </>
             ) : kind === 'bar' ? (
               <>
-                <title>{`${fullDay(point.date)}: ${unitText(metric, point.value)}`}</title>
+                <title>{`${dayText(point)}: ${unitText(metric, point.value)}`}</title>
                 <rect
                   data-point="measured"
                   x={x - (slot * BAR_WIDTH_SHARE) / 2}
                   y={baseline - barHeight(point.value, top, ch)}
                   width={slot * BAR_WIDTH_SHARE}
                   height={barHeight(point.value, top, ch)}
-                  fill={color}
+                  fill={point.partial ? undefined : color}
+                  className={point.partial ? 'fill-surface' : undefined}
+                  stroke={point.partial ? color : undefined}
+                  strokeWidth={point.partial ? 1.5 : undefined}
                   rx="2"
                 />
               </>
             ) : (
               <>
-                <title>{`${fullDay(point.date)}: ${unitText(metric, point.value)}`}</title>
-                <circle data-point="measured" cx={x} cy={yOf(point.value)} r="3" fill={color} />
+                <title>{`${dayText(point)}: ${unitText(metric, point.value)}`}</title>
+                <circle
+                  data-point="measured"
+                  cx={x}
+                  cy={yOf(point.value)}
+                  r="3"
+                  fill={point.partial ? undefined : color}
+                  className={point.partial ? 'fill-surface' : undefined}
+                  stroke={point.partial ? color : undefined}
+                  strokeWidth={point.partial ? 1.5 : undefined}
+                />
               </>
             )}
             {labelled.has(index) && (
