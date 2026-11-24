@@ -3,8 +3,8 @@ import type { AddressInfo } from 'net';
 import express from 'express';
 import request from 'supertest';
 
-// Transport boundary only. STOMP authentication/delivery remains provisional
-// under PWDRZ-104; this test does not certify a live messaging contract.
+// Transport boundary only. Managed PWDRZ-104 scenarios separately certify
+// real STOMP authentication/delivery; this outage regression alone does not.
 it('terminates an HTTP/SockJS request with 502 when the upstream is unavailable', async () => {
   const server = http.createServer();
   const port = await new Promise<number>((resolve) => {
@@ -34,8 +34,8 @@ it('terminates an HTTP/SockJS request with 502 when the upstream is unavailable'
     const response = await request(app).get('/ws/info').timeout(3000);
 
     expect(response.status).toBe(502);
-    expect(response.headers['content-type']).toContain('application/json');
-    expect(response.body).toEqual({ error: 'Backend unavailable' });
+    expect(response.headers['content-type']).toContain('application/problem+json');
+    expect(response.body).toMatchObject({ status: 502, detail: 'Backend unavailable' });
     expect(consoleError).toHaveBeenCalled();
 
     expect((await request(app).get('/ws')).status).toBe(502);

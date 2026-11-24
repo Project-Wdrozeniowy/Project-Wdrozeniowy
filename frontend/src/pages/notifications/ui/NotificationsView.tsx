@@ -24,7 +24,7 @@ import NotificationsSkeleton from './NotificationsSkeleton';
 /**
  * The signed-in user's notifications. What is shown is what the server returned: every change
  * (mark read, mark all read, delete) is followed by a reload of the list and the unread count.
- * There is no live update; the list refreshes when the page opens or the window gets the focus.
+ * The notification stream also refreshes this list/count after creation and reconnect.
  */
 export default function NotificationsView() {
   const [searchParams] = useSearchParams();

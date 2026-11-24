@@ -56,7 +56,7 @@ backend/src/main/java/com/devpulse/
   <domain>/          ← controller, service, repository, entity, dto, filter
   config/            ← SecurityConfig, OpenApiConfig
   exception/         ← AppException, GlobalExceptionHandler
-  security/          ← WsTokenVerifier (legacy WS-only compatibility)
+  websocket/         ← SESSION/CSRF notification transport
 ```
 
 Tests live in `__tests__/` subdirectories next to the module (frontend/gateway) or mirror the source tree (backend).
@@ -148,7 +148,7 @@ npm run lint     # eslint src (--fix for gateway)
 ## Architecture Decisions
 
 - **Spring owns REST sessions and authorization.** Gateway has no JWT allowlist or signing key.
-- **JWT_SECRET is backend-only provisional WS compatibility** pending PWDRZ-104.
+- **Notification transports use SESSION/CSRF (PWDRZ-104)**; no JWT signing secret is required.
 - **Session and CSRF access matrix:** see [HTTP sessions](../docs/guides/sessions.md); unsafe auth operations require CSRF.
 - **Forum posts API exists**, but the forum feed still uses mock data through `usePosts.ts`. Keep API and UI integration work scoped to their tasks.
 

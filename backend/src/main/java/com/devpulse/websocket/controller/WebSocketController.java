@@ -7,64 +7,16 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
 /**
- * STOMP WebSocket controller.
- *
- * <p>Clients connect to {@code /ws} (or {@code /ws} with SockJS fallback) and
- * authenticate by passing the JWT in the STOMP {@code CONNECT} frame:
- * <pre>
- *   CONNECT
- *   Authorization: Bearer &lt;accessToken&gt;
- * </pre>
- *
- * <h2>Subscribable topics (server → client broadcasts)</h2>
- * <table border="1">
- *   <tr><th>Destination</th><th>Payload</th><th>Description</th></tr>
- *   <tr>
- *     <td>{@code /topic/posts/{postId}/comments}</td>
- *     <td>{@link com.devpulse.websocket.dto.NewCommentEvent}</td>
- *     <td>New comment added to a post thread</td>
- *   </tr>
- *   <tr>
- *     <td>{@code /topic/posts/{postId}/votes}</td>
- *     <td>{@link com.devpulse.websocket.dto.VoteScoreEvent}</td>
- *     <td>Vote score updated on a post or its comment</td>
- *   </tr>
- *   <tr>
- *     <td>{@code /topic/activity}</td>
- *     <td>{@code Map<String,Object>}</td>
- *     <td>Platform-wide activity feed (admin dashboard)</td>
- *   </tr>
- *   <tr>
- *     <td>{@code /user/queue/notifications}</td>
- *     <td>{@link com.devpulse.notification.dto.NotificationDto}</td>
- *     <td>Personal notification for the connected user (unicast)</td>
- *   </tr>
- * </table>
- *
- * <h2>Application destinations (client → server)</h2>
- * <table border="1">
- *   <tr><th>Destination</th><th>Payload</th><th>Description</th></tr>
- *   <tr>
- *     <td>{@code /app/subscribe-post/{postId}}</td>
- *     <td>{@link PostSubscriptionRequest}</td>
- *     <td>Signal intent to receive updates for a post thread; persists subscription in DB</td>
- *   </tr>
- *   <tr>
- *     <td>{@code /app/unsubscribe-post/{postId}}</td>
- *     <td>{@link PostSubscriptionRequest}</td>
- *     <td>Stop receiving updates for a post thread; removes DB subscription</td>
- *   </tr>
- * </table>
+ * Inactive historical post-broadcast scaffolding (PWDRZ-35).
+ * PWDRZ-104 denies all client SEND destinations. Persisted post subscriptions use REST.
+ * These handlers and adjacent broadcast DTOs require a separately approved live-thread contract.
  */
 @Controller
 public class WebSocketController {
 
     /**
-     * Handles a client request to subscribe to a post thread.
-     *
-     * <p>Records a {@code post_subscriptions} row for the authenticated user so
-     * that future comment and vote events for this post are broadcast to
-     * {@code /topic/posts/{postId}/comments} and {@code /topic/posts/{postId}/votes}.
+     * Historical future post-broadcast hook. Currently denied by message authorization;
+     * it does not persist subscriptions or publish comment/vote events.
      *
      * @param postId  the post ID extracted from the destination path
      * @param request message payload (may carry additional metadata in the future)
@@ -73,11 +25,11 @@ public class WebSocketController {
     public void subscribeToPost(
             @DestinationVariable Long postId,
             @Payload PostSubscriptionRequest request) {
-        // TODO: persist subscription; validate that the authenticated principal matches
+        // PWDRZ-35: intentionally unreachable; REST owns persisted subscriptions.
     }
 
     /**
-     * Handles a client request to unsubscribe from a post thread.
+     * Historical future post-broadcast hook, currently denied by message authorization.
      *
      * @param postId  the post ID extracted from the destination path
      * @param request message payload
@@ -86,6 +38,6 @@ public class WebSocketController {
     public void unsubscribeFromPost(
             @DestinationVariable Long postId,
             @Payload PostSubscriptionRequest request) {
-        // TODO: remove subscription
+        // PWDRZ-35: intentionally unreachable; REST owns persisted subscriptions.
     }
 }

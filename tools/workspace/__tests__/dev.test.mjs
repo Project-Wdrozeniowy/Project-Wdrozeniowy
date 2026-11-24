@@ -22,7 +22,7 @@ for (const [key, value, expected] of [
       }
       fs.mkdirSync(path.join(fixture, 'gateway'));
       fs.mkdirSync(path.join(fixture, 'frontend'));
-      fs.writeFileSync(path.join(fixture, '.env'), 'POSTGRES_PASSWORD=test\nJWT_SECRET=test\n');
+      fs.writeFileSync(path.join(fixture, '.env'), 'POSTGRES_PASSWORD=test\n');
       fs.writeFileSync(
         path.join(fixture, 'gateway/.env'),
         'PORT=3000\nBACKEND_URL=http://localhost:8080\n'
@@ -39,7 +39,6 @@ for (const [key, value, expected] of [
           ...process.env,
           PORT: '3000',
           BACKEND_URL: 'http://localhost:8080',
-          JWT_SECRET: 'test',
           POSTGRES_PASSWORD: 'test',
           NEXT_PUBLIC_API_URL: 'http://localhost:3000/api',
           [key]: value,

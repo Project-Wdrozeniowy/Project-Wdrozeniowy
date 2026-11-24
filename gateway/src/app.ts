@@ -42,7 +42,8 @@ export function createApp(spaDirectory?: string): express.Express {
   app.use('/api', (req, res) => {
     sendError(res, req, 404, 'Not found');
   });
-  // WebSocket (STOMP) — auth handled inside the STOMP CONNECT frame
+  // Spring owns SESSION and CONNECT CSRF; bound SockJS POST bodies before forwarding.
+  app.use('/ws', boundedBody);
   app.use(wsProxyMiddleware);
   if (spaDirectory) {
     app.use(...spaMiddleware(spaDirectory));

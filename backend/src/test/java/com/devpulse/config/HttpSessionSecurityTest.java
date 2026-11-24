@@ -143,6 +143,12 @@ class HttpSessionSecurityTest {
         @Bean com.devpulse.websocket.interceptor.WebSocketAuthInterceptor wsAuthentication() {
             return mock(com.devpulse.websocket.interceptor.WebSocketAuthInterceptor.class);
         }
+        @Bean com.devpulse.websocket.NotificationConnections notificationConnections() {
+            return mock(com.devpulse.websocket.NotificationConnections.class);
+        }
+        @Bean com.devpulse.websocket.security.WsHandshake wsHandshake() {
+            return mock(com.devpulse.websocket.security.WsHandshake.class);
+        }
         @Bean Clock clock() { return Clock.fixed(NOW, ZoneOffset.UTC); }
         @Bean UserDetailsService userDetails() { return username -> org.springframework.security.core.userdetails.User
                 .withUsername(username).password("unused").roles("USER").build(); }

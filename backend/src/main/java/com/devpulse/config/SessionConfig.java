@@ -21,6 +21,32 @@ import java.time.Duration;
 @EnableSpringHttpSession
 public class SessionConfig {
     @Bean
+    public org.springframework.session.web.http.HttpSessionIdResolver httpSessionIdResolver(CookieSerializer cookies) {
+        var delegate = new org.springframework.session.web.http.CookieHttpSessionIdResolver();
+        delegate.setCookieSerializer(cookies);
+        return new org.springframework.session.web.http.HttpSessionIdResolver() {
+            private boolean transport(jakarta.servlet.http.HttpServletRequest request) {
+                String path = request.getRequestURI().substring(request.getContextPath().length());
+                return path.equals("/ws") || path.startsWith("/ws/");
+            }
+            @Override public java.util.List<String> resolveSessionIds(jakarta.servlet.http.HttpServletRequest request) {
+                // FrameworkServlet also reads getSession(false) for its handled-event metadata.
+                // Keep the standard mutable HttpSession wrapper unaware of transport cookies;
+                // WsSessionAccess reads the same serializer/repository independently, without saving.
+                return transport(request) ? java.util.List.of() : delegate.resolveSessionIds(request);
+            }
+            @Override public void setSessionId(jakarta.servlet.http.HttpServletRequest request,
+                    jakarta.servlet.http.HttpServletResponse response, String id) {
+                if (transport(request)) throw new IllegalStateException("Notification transport cannot create sessions");
+                delegate.setSessionId(request, response, id);
+            }
+            @Override public void expireSession(jakarta.servlet.http.HttpServletRequest request,
+                    jakarta.servlet.http.HttpServletResponse response) {
+                if (!transport(request)) delegate.expireSession(request, response);
+            }
+        };
+    }
+    @Bean
     public JdbcIndexedSessionRepository sessionRepository(DataSource dataSource,
                                                           PlatformTransactionManager transactionManager,
                                                           @Value("${app.session-cleanup-cron:0 * * * * *}") String cleanupCron) {

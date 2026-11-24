@@ -134,18 +134,15 @@ the migrated-schema/session acceptance checks before exposing it. V9 permanently
 removes old refresh credentials. No rollback to the JWT backend is promised.
 Keep the deployment's normal database backup/recovery procedure; do not delete
 users, hashes or product data. Clear `refreshToken` using `COOKIE_PATH` (the old
-path, default `/api/auth`). Existing users sign in again. Gateway no longer needs
-`JWT_SECRET`; backend temporarily retains it solely for the isolated WS verifier.
+path, default `/api/auth`). Existing users sign in again. Neither Gateway nor backend requires `JWT_SECRET` after PWDRZ-104.
 
 ## Ownership and extension points
 
-PWDRZ-104 owns session-principal handshake integration, origin/CONNECT CSRF,
-destination/recipient checks and expiry/logout for established connections.
-The HTTP `/ws` and `/ws/**` boundary explicitly requires authentication: SockJS
-uses a separate HandlerMapping and must not fall through the MVC unknown-path rule.
-`WsTokenVerifier` is isolated legacy compatibility, with no REST issuer or SPA
-token consumer. Existing provisional WS behavior is not a completed secure WS
-flow, and this change does not claim PWDRZ-104 unblocked.
+PWDRZ-104 implements the [notification transport](realtime-notifications.md): SESSION principal,
+CONNECT CSRF, exact origins, recipient authorization and established-connection expiry/revocation.
+SockJS uses a separate authenticated HTTP security chain. Its read-only JDBC access and session-ID
+resolver keep framework metadata, heartbeats and polling from extending HTTP inactivity.
+The legacy WS JWT verifier is retired; private delivery uses the same current account/session policy.
 
 PWDRZ-161 may evaluate Spring RememberMeServices with a separate, revocable
 persistent credential. Successful restoration must call the same establishment

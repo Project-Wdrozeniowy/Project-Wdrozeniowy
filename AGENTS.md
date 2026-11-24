@@ -35,7 +35,7 @@ No separate frontend server is needed.
 
 - **Frontend** (`frontend/`) — Vite 7 / React Router 7, React 19, TypeScript 5, Tailwind CSS 4, Zustand, React Query, Axios, Zod, React Hook Form
 - **Gateway** (`gateway/`) — Node.js, Express 5, TypeScript 6; performs rate limiting, CORS and bounded HTTP forwarding, and reverse-proxies all `/api/*` traffic to the backend
-- **Backend** (`backend/`) — Java 17, Spring Boot 4, Spring Security, Spring Data JPA, PostgreSQL, Flyway migrations, Spring Session JDBC; jjwt is WS-only compatibility
+- **Backend** (`backend/`) — Java 17, Spring Boot 4, Spring Security, Spring Data JPA, PostgreSQL, Flyway migrations, Spring Session JDBC
 - **Infra** — PostgreSQL 16 + Redis 7 (via Docker Compose); Redis is provisioned but not yet wired in application code
 
 Database schema is managed by Flyway (V1–V12: users, forum, notifications, analytics, refresh-token rotation, the default forum categories, audit timestamps, JDBC sessions, HTTP refresh retirement, intentional post openings, analytics collection starts and the index of identifiable openings).
@@ -50,6 +50,16 @@ ER diagrams live in `docs/db-schema*.mmd`.
   before using them. Consult repository instructions, developer guides, and
   architectural conventions for technical decisions, and reuse established
   project patterns and solutions where appropriate.
+- Follow [backend (entity) first](docs/guides/architecture.md#development-order-backend-entity-first)
+  and [test first for unit tests](docs/guides/testing.md#when-to-add-tests): establish
+  backend domain rules and entity/schema needs, write and observe failing unit tests,
+  then implement the backend and publish its OpenAPI contract. Generate frontend
+  types and bindings from that contract before implementing API-dependent UI;
+  write frontend unit tests before the corresponding implementation. Integration
+  and E2E tests may be written alongside or after implementation; their required
+  verification still applies. Do not duplicate wire DTOs by hand or expose JPA
+  entities as the frontend contract. Follow the
+  [API bindings workflow](docs/guides/api-bindings.md) for generation and checks.
 - Use Jira for task requirements, acceptance criteria, dependencies, and history.
   For returned tasks, inspect review comments and reasons for rejection. Local
   backlog exports are context and execution records, not a substitute for live
@@ -90,7 +100,7 @@ vision, not merely completed Jira tickets.
 ### 1. Copy environment files
 
 ```bash
-# Root-level secrets (PostgreSQL, JWT, Redis)
+# Root-level secrets (PostgreSQL, Redis)
 cp .env.example .env
 
 # Gateway environment
@@ -101,12 +111,10 @@ cp frontend/.env.example frontend/.env
 
 # Edit .env — the only required change before running locally:
 # POSTGRES_PASSWORD=<any password>
-# JWT_SECRET=<base64-encoded string, at least 32 bytes>
-#   Generate: openssl rand -base64 64 | tr -d '\n'
 ```
 
-> `JWT_SECRET` is backend-only for provisional WS compatibility (PWDRZ-104).
-> Gateway needs no signing key. REST uses [server sessions](docs/guides/sessions.md).
+> HTTP and notification transports use SESSION/CSRF; no JWT signing key is required.
+> See [sessions](docs/guides/sessions.md) and [real-time notifications](docs/guides/realtime-notifications.md).
 
 ### 2. Start the database and backend via Docker Compose
 
@@ -170,7 +178,7 @@ The backend is included in Docker Compose and runs at `localhost:8080`. For loca
 
 ```bash
 cd backend
-# Requires running PostgreSQL and exported POSTGRES_*/JWT_SECRET values;
+# Requires running PostgreSQL and exported POSTGRES_* values;
 # the root .env is read by Compose, not automatically by Maven.
 # Use docker compose up -d postgres redis, without the backend container.
 ./mvnw spring-boot:run
@@ -355,7 +363,7 @@ backend/src/main/java/com/devpulse/
   auth/            ← controller, service, repository, entity, dto, session
   config/          ← SecurityConfig, OpenApiConfig
   exception/       ← AppException, GlobalExceptionHandler
-  security/        ← WsTokenVerifier (legacy WS-only verification)
+  websocket/       ← SESSION/CSRF STOMP notification delivery
 
 backend/src/main/resources/
   application.properties
@@ -531,7 +539,7 @@ is not a passed gate. Selective CI and wider branch-rule changes remain PWDRZ-13
 ## Common Gotchas
 
 - **API unavailable** → start Express :3000 and Spring :8080; Vite proxies `/api`. No public API URL is required.
-- **Protected API 401** → missing, expired or revoked server session; sign in again. JWT_SECRET is backend-only WS compatibility, not an HTTP authentication setting.
+- **Protected API 401** → missing, expired or revoked server session; sign in again. Notification transports use the same SESSION/CSRF policy.
 - **Flyway migration failure** → inspect the migration error and database state first. `docker compose down -v` deletes local PostgreSQL data; use it only when that data is disposable and a reset is intended.
 - **`@/*` alias not resolving in tests** → Vitest resolves aliases via `resolve.alias` in `vitest.config.ts`. Do not use `tsconfig.json` paths alone — they must be mirrored in the vitest config.
 - **Port conflicts** → Vite owns 3001, Express owns 3000. Do not run source and Compose Gateway together.
