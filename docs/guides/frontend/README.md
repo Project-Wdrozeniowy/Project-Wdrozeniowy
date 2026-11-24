@@ -19,6 +19,7 @@ preserves the original comparison and route-organization evidence.
 | `app/providers/`, `app/config/`, `app/styles/` | Application-wide providers, validation setup and CSS                                   |
 | `pages/<screen>/`                              | Screen composition and screen-private UI, helpers and display constants                |
 | `widgets/post-feed/`                           | Reused post cards, view mapping and feed error/loading presentation                    |
+| `widgets/activity-chart/`                      | Reusable daily-count chart with a matching table, metric choice and load/error states  |
 | `widgets/header/`, `widgets/sidebar/`          | Existing reusable site regions                                                         |
 | `features/`                                    | Existing sign-in/up, profile/password editing, publishing, comments and voting actions |
 | `shared/api/`, `shared/auth/`                  | Existing API/Query/Orval and memory-token/session infrastructure                       |
@@ -74,6 +75,11 @@ src/
     ... other implemented screens
   widgets/
     post-feed/
+      index.ts
+      ui/
+      lib/
+      config/
+    activity-chart/
       index.ts
       ui/
       lib/

@@ -49,7 +49,12 @@ beforeEach(() => {
 
 afterEach(() => mock.restore());
 
-const card = (label: string) => screen.getByText(label).closest('div')!.parentElement!;
+// "Posts" and "Comments" are also the names of the chart's metric choice: look for the figure cards.
+const card = (label: string) =>
+  screen
+    .getAllByText(label)
+    .find((node) => !node.closest('fieldset'))!
+    .closest('div')!.parentElement!;
 
 describe('showing the real figures', () => {
   it("shows the public figures with their change, and the user's own", async () => {
@@ -69,18 +74,13 @@ describe('showing the real figures', () => {
     expect(screen.getAllByText('All time')).toHaveLength(2);
   });
 
-  it('draws the charts with a text alternative of the values', async () => {
+  it('draws the activity chart and the category chart with a text alternative of the values', async () => {
     fakeAnalyticsServer(mock);
     renderPage();
 
     expect(
       await screen.findByRole('img', {
-        name: 'Posts per day, last 7 days. Mon 16: 2, Tue 17: 3, Wed 18: 1',
-      })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('img', {
-        name: 'Comments per day, last 7 days. Mon 16: 5, Tue 17: 8, Wed 18: 2',
+        name: 'Posts per day, Last 7 days, UTC. Nov 16, 2026: 2 posts, Nov 17, 2026: 3 posts, Nov 18, 2026: 1 post',
       })
     ).toBeInTheDocument();
     expect(
@@ -88,6 +88,26 @@ describe('showing the real figures', () => {
         name: 'Posts by category, last 7 days. AI / Tech: 40, Gaming: 20, No category: 5',
       })
     ).toBeInTheDocument();
+  });
+
+  it('switches the activity chart between posts and comments, and lists the days in a table', async () => {
+    fakeAnalyticsServer(mock);
+    renderPage();
+    await screen.findByRole('img', { name: /^Posts per day/ });
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Comments' }));
+
+    expect(
+      screen.getByRole('img', {
+        name: 'Comments per day, Last 7 days, UTC. Nov 16, 2026: 5 comments, Nov 17, 2026: 8 comments, Nov 18, 2026: 2 comments',
+      })
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Data table' }));
+    const table = screen.getByRole('table');
+    expect(within(table).getByRole('columnheader', { name: 'Comments' })).toBeInTheDocument();
+    expect(within(table).getByRole('rowheader', { name: 'Nov 17, 2026' })).toBeInTheDocument();
+    expect(within(table).getByRole('cell', { name: '8' })).toBeInTheDocument();
   });
 
   it('lists the most active posts as the server ranks them, each with a link', async () => {
@@ -157,7 +177,10 @@ describe('when there is nothing or something fails', () => {
     expect(
       await screen.findByText('No post has had activity in this window yet.')
     ).toBeInTheDocument();
-    expect(screen.getAllByText('No public posts or comments in this window yet.')).toHaveLength(3);
+    // The days are there and are zero: the activity chart says so, and lists them. The category
+    // chart has no categories at all.
+    expect(screen.getByText('No posts recorded in this period.')).toBeInTheDocument();
+    expect(screen.getAllByText('No public posts or comments in this window yet.')).toHaveLength(1);
   });
 
   it('shows "Not available" for a figure that failed, with no toast and no server text', async () => {
@@ -187,14 +210,14 @@ describe('when there is nothing or something fails', () => {
     renderPage();
 
     const alerts = await screen.findAllByRole('alert');
-    expect(alerts).toHaveLength(2);
+    expect(alerts).toHaveLength(1);
     expect(alerts[0]).toHaveTextContent('We could not load this. Please try again.');
     expect(document.body).not.toHaveTextContent('stack trace');
 
     await userEvent.click(within(alerts[0]).getByRole('button', { name: 'Try again' }));
 
     expect(
-      await screen.findByRole('img', { name: /Posts per day, last 7 days/ })
+      await screen.findByRole('img', { name: /Posts per day, Last 7 days/ })
     ).toBeInTheDocument();
   });
 
@@ -226,8 +249,8 @@ describe('when there is nothing or something fails', () => {
     renderPage();
 
     await screen.findByText('60');
-    expect(screen.getByText('Posts')).toBeInTheDocument();
-    expect(screen.getByText('Comments')).toBeInTheDocument();
+    expect(card('Posts')).toBeInTheDocument();
+    expect(card('Comments')).toBeInTheDocument();
     expect(screen.queryByText('Your posts')).not.toBeInTheDocument();
     expect(screen.queryByText('Upvotes you received')).not.toBeInTheDocument();
     expect(screen.queryByText('Not available')).not.toBeInTheDocument();
