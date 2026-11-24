@@ -1,6 +1,7 @@
 import {
   DATE_COLUMN_LABEL,
   MISSING_VALUE_TEXT,
+  PARTIAL_DAY_TEXT,
 } from '@/widgets/activity-chart/config/activityChart.const';
 import { fullDay, type ActivityMetric } from '@/widgets/activity-chart/lib/activityView';
 
@@ -35,6 +36,7 @@ export default function ActivityTable({ metric, title }: ActivityTableProps) {
             <tr key={point.date} className="border-b border-line last:border-b-0">
               <th scope="row" className="text-left font-normal py-1.5 pr-4">
                 <time dateTime={point.date}>{fullDay(point.date)}</time>
+                {point.partial && ` (${PARTIAL_DAY_TEXT})`}
               </th>
               <td className="text-right py-1.5 tabular-nums">
                 {point.value === null ? (

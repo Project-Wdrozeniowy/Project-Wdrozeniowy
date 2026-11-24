@@ -42,6 +42,9 @@ interface Overrides {
   onRetry?: () => unknown;
   kind?: 'line' | 'bar';
   description?: string;
+  missingNote?: string;
+  actions?: React.ReactNode;
+  embedded?: boolean;
 }
 
 function renderChart({
@@ -52,6 +55,9 @@ function renderChart({
   onRetry = vi.fn(),
   kind,
   description,
+  missingNote,
+  actions,
+  embedded,
 }: Overrides = {}) {
   return render(
     <ActivityChart
@@ -65,6 +71,9 @@ function renderChart({
       emptyText="Nothing to show for this window."
       kind={kind}
       description={description}
+      missingNote={missingNote}
+      actions={actions}
+      embedded={embedded}
     />
   );
 }
@@ -241,6 +250,92 @@ describe('ActivityChart kinds', () => {
       .map((node) => node.textContent ?? '')
       .filter((text) => /^\d+$/.test(text));
     expect(labels).toEqual(['0', '1', '2', '3']);
+  });
+});
+
+describe('ActivityChart partial day', () => {
+  const partial: ActivityMetric = {
+    ...COMMENTS,
+    points: COMMENTS.points.map((point, i) => ({ ...point, partial: i === 3 })),
+  };
+
+  it('marks a day that is not over in the graph, the table, the legend and the text alternative', async () => {
+    const { container } = renderChart({ metrics: [partial], metricId: 'comments', kind: 'bar' });
+    await openTable();
+
+    const bars = container.querySelectorAll('rect[data-point="measured"]');
+    expect(bars[3]).toHaveAttribute('stroke');
+    expect(bars[3]).not.toHaveAttribute('fill');
+    expect(bars[2]).not.toHaveAttribute('stroke');
+    expect(screen.getByRole('rowheader', { name: 'Nov 13, 2026 (today, partial)' })).toBeVisible();
+    expect(screen.getByRole('img')).toHaveAccessibleName(
+      /Nov 13, 2026 \(today, partial\): 9 comments$/
+    );
+    expect(container.querySelector('svg title:last-of-type')).toBeTruthy();
+    expect(screen.getByText('today, partial').closest('p')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('draws a partial dot hollow in the line', () => {
+    const { container } = renderChart({ metrics: [partial], metricId: 'comments' });
+
+    const dots = container.querySelectorAll('circle[data-point="measured"]');
+    expect(dots[3]).toHaveAttribute('stroke');
+    expect(dots[0]).not.toHaveAttribute('stroke');
+  });
+
+  it('says nothing about a partial day when no day is partial', () => {
+    renderChart();
+
+    expect(screen.queryByText('today, partial')).not.toBeInTheDocument();
+  });
+});
+
+describe('ActivityChart note for days without a value', () => {
+  it('says why a day has no value, in a titled note, when the screen gives the reason', () => {
+    renderChart({ missingNote: 'Collection began on Nov 12.' });
+
+    expect(screen.getByText('Not measured', { selector: 'p' })).toBeVisible();
+    expect(screen.getByText('Collection began on Nov 12.')).toBeVisible();
+  });
+
+  it('shows no note when every day has a value', () => {
+    const complete: ActivityMetric = {
+      ...POSTS,
+      points: POSTS.points.map((point) => ({ ...point, value: point.value ?? 1 })),
+    };
+    renderChart({ metrics: [complete], missingNote: 'Collection began on Nov 12.' });
+
+    expect(screen.queryByText('Collection began on Nov 12.')).not.toBeInTheDocument();
+  });
+
+  it('gives the reason instead of the general text when nothing was measured', () => {
+    const none: ActivityMetric = {
+      ...POSTS,
+      points: POSTS.points.map((point) => ({ ...point, value: null })),
+    };
+    renderChart({ metrics: [none], missingNote: 'Collection began later.' });
+
+    expect(screen.getByText('Collection began later.')).toBeVisible();
+    expect(screen.queryByText('Nothing was measured in this period.')).not.toBeInTheDocument();
+  });
+});
+
+describe('ActivityChart placement', () => {
+  it('shows controls the screen owns beside the heading', () => {
+    renderChart({ actions: <button type="button">Window</button> });
+
+    expect(screen.getByRole('button', { name: 'Window' })).toBeInTheDocument();
+  });
+
+  it('is a card with a level-two heading, or embedded in a card with a level-three heading', () => {
+    const card = renderChart();
+    expect(screen.getByRole('heading', { level: 2, name: 'Activity per day' })).toBeVisible();
+    expect(card.container.querySelector('section')?.className).toContain('border');
+    card.unmount();
+
+    const embedded = renderChart({ embedded: true });
+    expect(screen.getByRole('heading', { level: 3, name: 'Activity per day' })).toBeVisible();
+    expect(embedded.container.querySelector('section')?.className).not.toContain('border');
   });
 });
 
