@@ -29,7 +29,7 @@ settings, notifications and admin. The post page shows the real post
 (`GET /forum/posts/{slug}`) with its comments below it, and the feed links to it; opening a post
 records no "opening" (that has its own rules, PWDRZ-186). The notification
 page is reached from the header bell, which shows the unread count of the notification API;
-there is no real-time update until PWDRZ-104. The profile lists the user's own published posts
+PWDRZ-104 updates these queries through the [notification stream](../realtime-notifications.md). The profile lists the user's own published posts
 (`GET /forum/posts?author=`, a page at a time); its sections without an API (comments, saved,
 activity) are shown as not available yet, and the sidebar card shows only counts the platform has
 (no followers yet). Screen-specific code

@@ -212,7 +212,7 @@ Focus areas:
 Run each line independently from the repository root:
 
 ```bash
-# Backend (requires PostgreSQL; export matching POSTGRES_* and JWT_SECRET values)
+# Backend (requires PostgreSQL; export matching POSTGRES_* values)
 cd backend && ./mvnw verify
 
 # Frontend (single run; Vitest does not watch in the configured test script)
@@ -443,7 +443,7 @@ bootstrap config (ошибка при отсутствии обязательн�
 Каждую строку запускайте независимо из корня репозитория:
 
 ```bash
-# Backend: нужен PostgreSQL и согласованные POSTGRES_* / JWT_SECRET
+# Backend: нужен PostgreSQL и согласованные POSTGRES_*
 cd backend && ./mvnw verify
 
 # Frontend: configured script запускает Vitest один раз, без watch

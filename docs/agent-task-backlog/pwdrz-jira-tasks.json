@@ -18462,10 +18462,10 @@
       },
       "webUrl": "https://project-wdrz.atlassian.net/browse/PWDRZ-104",
       "localTracking": {
-        "status": "pending",
-        "updatedAt": null,
-        "owner": null,
-        "notes": ""
+        "status": "done",
+        "updatedAt": "2026-11-24T00:35:54.179Z",
+        "owner": "Ruslan / Codex PWDRZ-104",
+        "notes": "Approved SESSION/CSRF STOMP + SockJS notification delivery implemented. Local service/coverage/contract/build checks and 59 managed E2E cases pass; controlled failure probe rejects and cleans up. See pwdrz-104-execution.md. User subsequently authorized logical commits and branch publication; remote CI and final-SHA CI acceptance remain unverified. No Jira transition."
       }
     },
     {

@@ -8,8 +8,7 @@
 [![Tests](https://img.shields.io/github/actions/workflow/status/Project-Wdrozeniowy/Project-Wdrozeniowy/test.yml?style=flat-square&label=Tests)](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions)
 
 A full-stack community forum platform in development. Authentication, user-profile APIs,
-forum feed and post creation use real APIs. Post details, comments and real-time
-notifications retain task-specific limitations.
+forum feed and post creation use real APIs. See [real-time notifications](docs/guides/realtime-notifications.md) for delivery and recovery limits.
 
 ## Architecture
 
@@ -45,7 +44,7 @@ PostgreSQL 16               port 5432
 ### 1. Configure environment
 
 ```bash
-# Root secrets — PostgreSQL credentials, backend-only legacy WS key, Redis config
+# Root secrets — PostgreSQL credentials and Redis config
 cp .env.example .env
 
 # Gateway environment
@@ -60,14 +59,11 @@ Edit `.env` and set at minimum:
 ```bash
 POSTGRES_PASSWORD=your_password
 
-# Generate a strong secret:
-# openssl rand -base64 64 | tr -d '\n'
-JWT_SECRET=your_base64_secret
 ```
 
 > [!IMPORTANT]
-> `JWT_SECRET` is backend-only compatibility for provisional WS (PWDRZ-104).
-> Gateway does not require a signing key. REST uses [server sessions](docs/guides/sessions.md).
+> HTTP and notification transports use [server sessions](docs/guides/sessions.md).
+> Configure exact `WS_ALLOWED_ORIGINS` for deployment; no JWT signing key is required.
 
 ### 2. Install the workspace
 
@@ -159,7 +155,6 @@ Terminal 3, from the repository root (backend on `http://localhost:8080`):
 export POSTGRES_DB=devpulse
 export POSTGRES_USER=devpulse
 export POSTGRES_PASSWORD='your_password_from_root_env'
-export JWT_SECRET='your_base64_secret_from_root_env'
 export COOKIE_SECURE=false
 cd backend
 ./mvnw spring-boot:run
@@ -178,7 +173,6 @@ On Windows PowerShell, Terminal 3 uses the same values from the root `.env`:
 $env:POSTGRES_DB = 'devpulse'
 $env:POSTGRES_USER = 'devpulse'
 $env:POSTGRES_PASSWORD = 'your_password_from_root_env'
-$env:JWT_SECRET = 'your_base64_secret_from_root_env'
 $env:COOKIE_SECURE = 'false'
 cd backend
 .\mvnw.cmd spring-boot:run
@@ -279,7 +273,7 @@ backend/src/main/java/com/devpulse/
   auth/                ← controller, service, repository, entity, dto, session
   config/              ← SecurityConfig, OpenApiConfig
   exception/           ← GlobalExceptionHandler (RFC 9457 ProblemDetail)
-  security/            ← WsTokenVerifier (legacy WS only)
+  websocket/           ← SESSION/CSRF STOMP notification delivery
 
 backend/src/main/resources/db/migration/
   V1__create_users.sql

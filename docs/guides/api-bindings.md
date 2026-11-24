@@ -112,7 +112,7 @@ positional analytics signatures. Notification PATCH operations take no request b
 empty 204 results resolve to `undefined` through the shared transport.
 
 The notification center (PWDRZ-152) uses the generated notification operations through
-`shared/api/notifications/`; real-time delivery stays PWDRZ-104. Provisional recommendations remain in
+`shared/api/notifications/`; PWDRZ-104 invalidates these queries from the [notification stream](realtime-notifications.md). Provisional recommendations remain in
 `shared/api/recommendation/recommendationClient.ts`, with their own DTO and the
 preserved default/custom-limit tests. Both recommendation endpoints are still hidden
 501 stubs owned by PWDRZ-146. Provisional adapters cannot be certified by mocked

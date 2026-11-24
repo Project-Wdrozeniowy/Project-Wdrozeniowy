@@ -59,7 +59,7 @@ are not copied into snapshots or loaded by Compose.
 | API prefix               | Same browser origin, `/api`                                                                                                                  |
 | Backend readiness        | `http://127.0.0.1:8180/api/forum/categories`                                                                                                 |
 | Database                 | Fresh `orbita_e2e` database in a unique Compose project, tmpfs storage, no host DB port                                                      |
-| DB password / JWT secret | Generated per run; the Base64 legacy WS key is supplied only to backend                                                                      |
+| DB password              | Generated per run for the disposable database; no JWT secret is required                                                                     |
 | CORS                     | Exact frontend origin                                                                                                                        |
 | Cookies                  | `COOKIE_SECURE=false` on this HTTP-only local stack; HttpOnly/SameSite/path behavior stays real                                              |
 | Migrations               | Flyway applies the full migration history, including V8/V9 for sessions, with Hibernate validation                                           |
@@ -149,3 +149,14 @@ No screenshot/trace or `artifacts/` output belongs in Git.
 ## PWDRZ-160 migration acceptance
 
 The launcher builds the SPA into the gateway image from a secret-free source snapshot. Production requires no Next/Vite process or host `dist`. `spa.spec.ts` adds direct route/reload, query pagination/history, guest/user/admin guards, cookie attributes, asset MIME/cache/fallback boundaries, browser/CSP errors and desktop/mobile screenshots. All original browser and HTTP assertions remain. See the [spike evidence](../docs/spikes/pwdrz-160-vite-spa/results.md) for actual results; definitions alone are not proof of a passing gate.
+
+## PWDRZ-104 notification acceptance
+
+`realtime-notifications.spec.ts` drives an already-open center over WebSocket, XHR streaming and
+XHR polling, using actual persisted replies. `notification-lifecycle.spec.ts` covers recipient
+isolation, rejected destinations/CSRF/origins, reconnect recovery, account switching and established
+session revocation. Transport fault injection supplies no mocked successful response.
+
+For local diagnosis, set `E2E_TEST_GREP=realtime:` before the normal managed `npm test`.
+Startup, synthetic data and teardown remain launcher-owned. Unset it for the complete local/CI gate;
+a filtered run never substitutes for the full gate. See [transport policy](../docs/guides/realtime-notifications.md).

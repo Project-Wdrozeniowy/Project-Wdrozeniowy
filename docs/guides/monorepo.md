@@ -31,7 +31,7 @@ npm run bootstrap
 This includes the locked install and Java/Compose checks. If prerequisites are
 already checked, use `npm ci` as the install-only alternative rather than running both.
 
-Configure root `.env` and `gateway/.env`; frontend `.env` is optional. The backend-only JWT_SECRET remains for provisional WS; Gateway has no REST signing key. Root dev expects frontend 3001, gateway 3000, backend 8080 with Vite forwarding relative `/api` to Express.
+Configure root `.env` and `gateway/.env`; frontend `.env` is optional. HTTP and notification transports use SESSION/CSRF; no JWT signing key is required. Root dev expects frontend 3001, gateway 3000, backend 8080 with Vite forwarding relative `/api` to Express.
 
 Exported environment variables take precedence over `.env`, as in the service
 launchers. For example, PowerShell `$env:PORT = '3000'` overrides a different
@@ -152,7 +152,7 @@ npm run bootstrap
 Это locked install и проверки Java/Compose. Если prerequisites уже проверены,
 используйте `npm ci` как альтернативу только для установки; обе команды подряд не нужны.
 
-Настройте `.env` и `gateway/.env`; frontend `.env` необязателен. JWT_SECRET нужен только backend для временного WS verifier; Gateway не требует REST signing key. Root dev ожидает frontend 3001, gateway 3000, backend 8080 ; Vite проксирует относительный `/api` в Express.
+Настройте `.env` и `gateway/.env`; frontend `.env` необязателен. HTTP и уведомления используют SESSION/CSRF; JWT signing key не нужен. Root dev ожидает frontend 3001, gateway 3000, backend 8080 ; Vite проксирует относительный `/api` в Express.
 
 Экспортированные переменные окружения имеют приоритет над `.env`, как и при
 прямом запуске сервисов. Например, PowerShell `$env:PORT = '3000'` переопределяет

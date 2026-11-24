@@ -26,6 +26,7 @@ are expected to follow. Its focused companions are the
 [architecture and extension guide](guides/architecture.md),
 [monorepo workflows](guides/monorepo.md),
 [HTTP session policy and endpoint matrix](guides/sessions.md),
+[real-time notifications](guides/realtime-notifications.md),
 [frontend architecture](guides/frontend/README.md),
 [naming conventions](guides/naming-conventions.md),
 [Git workflow](guides/git-workflow.md), [PR guide](guides/pr-guidelines.md),
