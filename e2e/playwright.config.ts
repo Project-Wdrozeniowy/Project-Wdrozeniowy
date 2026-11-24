@@ -10,6 +10,8 @@ export default defineConfig({
   testMatch: process.env.E2E_FAILURE_PROBE === '1' ? '**/*.probe.ts' : '**/*.spec.ts',
   fullyParallel: false,
   workers: 1,
+  // Optional local diagnostic selection; normal local/CI gates still run every scenario.
+  grep: process.env.E2E_TEST_GREP ? new RegExp(process.env.E2E_TEST_GREP) : undefined,
   retries: 0,
   forbidOnly: true,
   failOnFlakyTests: true,
