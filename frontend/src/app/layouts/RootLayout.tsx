@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Outlet, ScrollRestoration, useLocation } from 'react-router';
 import AuthProvider from '@/app/providers/AuthProvider';
+import NotificationProvider from '@/app/providers/NotificationProvider';
 import QueryProvider from '@/app/providers/QueryProvider';
 import ThemeProvider from '@/app/providers/ThemeProvider';
 import { ConsentBanner } from '@/widgets/consent-banner';
@@ -21,6 +22,7 @@ export default function RootLayout() {
     <QueryProvider>
       <ConsentBanner />
       <AuthProvider>
+        <NotificationProvider />
         <Outlet />
       </AuthProvider>
       <ThemeProvider />

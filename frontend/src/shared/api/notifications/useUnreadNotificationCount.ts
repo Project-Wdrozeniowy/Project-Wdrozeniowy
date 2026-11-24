@@ -7,7 +7,7 @@ import { useStore } from '@/store';
  *
  * Nothing is requested for a guest: the notifications are private. It is read when the app opens,
  * when the window gets the focus again and after every notification change (those invalidate the
- * `/notifications` keys). There is no polling and no real-time update: that is PWDRZ-104. While
+ * `/notifications` keys). The PWDRZ-104 stream invalidates these queries on notification creation and reconnect. While
  * the count is unknown or the request failed, `data` is undefined and no number is shown.
  */
 export function useUnreadNotificationCount() {

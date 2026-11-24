@@ -9,6 +9,10 @@ import { useStore } from '@/store';
 import type { MyProfileDto } from '@/shared/api/generated/models/myProfileDto.dto';
 
 vi.unmock('react-router');
+// Routing owns navigation/guards; live transport has separate unit and managed real-stack acceptance.
+vi.mock('@/shared/api/websocket/notificationStream', () => ({
+  startNotificationStream: () => () => {},
+}));
 vi.mock('@/shared/api/client/api', () => ({
   apiClient: { clearCsrf: vi.fn(), setUnauthorizedHandler: vi.fn() },
 }));
