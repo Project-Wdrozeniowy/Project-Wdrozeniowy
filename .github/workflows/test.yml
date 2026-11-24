@@ -107,7 +107,6 @@ jobs:
           POSTGRES_DB: devpulse
           POSTGRES_USER: devpulse
           POSTGRES_PASSWORD: devpulse
-          JWT_SECRET: ci-test-secret-key-that-is-long-enough-for-hmac-sha256
         run: npx nx run backend:coverage:ci
 
   workspace-tooling:

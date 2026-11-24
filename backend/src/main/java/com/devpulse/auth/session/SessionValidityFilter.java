@@ -28,21 +28,27 @@ public class SessionValidityFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof SessionPrincipal principal) {
-            var user = users.findById(principal.userId()).orElse(null);
-            boolean valid = user != null && user.getStatus() == UserStatus.ACTIVE
-                    && user.getAuthVersion() == principal.authVersion()
-                    && principal.authenticatedAt() != null
-                    && clock.instant().isBefore(principal.authenticatedAt().plus(Duration.ofHours(12)));
-            if (!valid) {
+            var authenticationNow = currentAuthentication(principal, users, clock);
+            if (authenticationNow == null) {
                 if (request.getSession(false) != null) request.getSession(false).invalidate();
                 SecurityContextHolder.clearContext();
             } else {
                 var current = SecurityContextHolder.createEmptyContext();
-                current.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(principal, null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))));
+                current.setAuthentication(authenticationNow);
                 SecurityContextHolder.setContext(current);
             }
         }
         chain.doFilter(request, response);
+    }
+
+    /** Shared HTTP/WS account policy. Reading it does not extend a session's idle deadline. */
+    public static org.springframework.security.core.Authentication currentAuthentication(
+            SessionPrincipal principal, UserRepository users, Clock clock) {
+        var user = users.findById(principal.userId()).orElse(null);
+        if (user == null || user.getStatus() != UserStatus.ACTIVE || user.getAuthVersion() != principal.authVersion()
+                || principal.authenticatedAt() == null
+                || !clock.instant().isBefore(principal.authenticatedAt().plus(Duration.ofHours(12)))) return null;
+        return UsernamePasswordAuthenticationToken.authenticated(principal, null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
     }
 }

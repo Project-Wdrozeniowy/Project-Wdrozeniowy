@@ -25,8 +25,8 @@ function freePort(port) {
 await lifecycle(async (signal) => {
   const root = readEnv('.env');
   const gateway = readEnv('gateway/.env');
-  if (!root.POSTGRES_PASSWORD || !root.JWT_SECRET) {
-    throw new Error('Configure POSTGRES_PASSWORD and backend-only legacy WS JWT_SECRET in .env.');
+  if (!root.POSTGRES_PASSWORD) {
+    throw new Error('Configure POSTGRES_PASSWORD in .env.');
   }
   if (
     (gateway.PORT || '3000') !== '3000' ||

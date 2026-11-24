@@ -42,7 +42,7 @@ import static com.devpulse.forum.security.ForumAuthorities.isUser;
  * <p>Every operation works on the caller's own notifications only; another
  * user's notification answers 403. The features that cause notifications
  * decide whom to notify and store them with {@link #send} (comments under
- * PWDRZ-142); real-time delivery is PWDRZ-104.
+ * PWDRZ-142); after-commit real-time invalidation is PWDRZ-104.
  *
  * <p>{@code COMMENT_ON_POST} and {@code REPLY_TO_COMMENT} notifications relate
  * to a comment and carry the discussion they lead to, checked against what the
@@ -67,6 +67,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final CommentRepository commentRepository;
     private final AuthenticatedUserResolver currentUser;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     /**
      * Stores one unread notification per recipient. Joins the caller's
@@ -81,7 +82,7 @@ public class NotificationService {
     @Transactional
     public void send(Collection<Long> recipientIds, User sender, NotificationType type,
                      String entityType, Long entityId, String message) {
-        notificationRepository.saveAll(recipientIds.stream()
+        var saved = notificationRepository.saveAll(recipientIds.stream()
                 .map(recipientId -> Notification.builder()
                         .recipientId(recipientId)
                         .sender(sender)
@@ -91,6 +92,8 @@ public class NotificationService {
                         .message(message)
                         .build())
                 .toList());
+        saved.forEach(notification -> events.publishEvent(new NotificationPublication.Created(
+                notification.getRecipientId(), notification.getId())));
     }
 
     /**

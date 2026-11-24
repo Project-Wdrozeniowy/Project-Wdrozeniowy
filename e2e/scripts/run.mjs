@@ -31,7 +31,6 @@ const env = {
   E2E_GATEWAY_PORT: String(ports.GATEWAY),
   E2E_BACKEND_PORT: String(ports.BACKEND),
   E2E_DB_PASSWORD: randomBytes(24).toString('hex'),
-  E2E_JWT_SECRET: randomBytes(48).toString('base64'),
   E2E_MANAGED_RUN: '1',
   E2E_BASE_URL: `http://127.0.0.1:${ports.GATEWAY}`,
   E2E_GATEWAY_URL: `http://127.0.0.1:${ports.GATEWAY}`,
