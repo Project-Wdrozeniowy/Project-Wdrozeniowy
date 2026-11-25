@@ -89,7 +89,13 @@ function renderPage(owner = false) {
 function servePost(post: Partial<PostDto> = {}) {
   mock.onGet('/forum/posts/hello').reply(200, { ...POST, ...post });
   mock.onGet('/forum/posts/hello/comments').reply(200, EMPTY_COMMENTS);
+  mock.onPost('/forum/posts/hello/openings').reply(204);
 }
+
+/** Opening the page records its opening (PostOpening.integration.test.tsx); these are the rest. */
+const isOpening = (request: { url?: string }) => request.url?.endsWith('/openings') ?? false;
+const openingsSent = () => mock.history.post.filter(isOpening);
+const postsSent = () => mock.history.post.filter((request) => !isOpening(request));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -240,7 +246,7 @@ describe('editing an own publication (PWDRZ-190)', () => {
     expect(mock.history.patch).toHaveLength(0);
   });
 
-  it('opens a labelled editor and saves only the changed title, without recording an opening', async () => {
+  it('opens a labelled editor and saves only the changed title, and saving records no further opening', async () => {
     servePost();
     mock.onPatch('/forum/posts/hello').reply(200, { ...POST, title: 'Corrected title' });
     renderPage(true);
@@ -255,7 +261,8 @@ describe('editing an own publication (PWDRZ-190)', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Corrected title' })).toBeVisible();
     expect(mock.history.patch).toHaveLength(1);
     expect(JSON.parse(mock.history.patch[0].data)).toEqual({ title: 'Corrected title' });
-    expect(mock.history.post).toHaveLength(0);
+    expect(postsSent()).toHaveLength(0);
+    expect(openingsSent()).toHaveLength(1);
     expect(mock.history.patch[0].headers?.['X-CSRF-TOKEN']).toBe('csrf');
     expect(screen.getByRole('button', { name: 'Edit post' })).toHaveFocus();
   });
@@ -521,7 +528,7 @@ describe('voting on the post page', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Upvote' }));
 
     expect(navigate).toHaveBeenCalledWith('/login');
-    expect(mock.history.post).toHaveLength(0);
+    expect(postsSent()).toHaveLength(0);
   });
 
   it('shows the score the server answers with, on this page', async () => {
@@ -542,7 +549,7 @@ describe('voting on the post page', () => {
     await waitFor(() =>
       expect(within(screen.getByRole('article')).getByText('4')).toBeInTheDocument()
     );
-    expect(JSON.parse(mock.history.post[0].data)).toEqual({
+    expect(JSON.parse(postsSent()[0].data)).toEqual({
       entityType: 'POST',
       entityId: 5,
       voteType: 'UP',

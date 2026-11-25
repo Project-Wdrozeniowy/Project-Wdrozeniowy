@@ -4,6 +4,7 @@ import { POST_ERROR_TEXT } from '@/pages/post/config/post.const';
 import { isPostNotFound } from '@/pages/post/lib/postView';
 import { useScrollToComments } from '@/pages/post/lib/useScrollToComments';
 import { usePost } from '@/shared/api/forum/usePost';
+import { useRecordPostOpening } from '@/shared/api/forum/useRecordPostOpening';
 import PanelError from '@/shared/ui/PanelError';
 import PostArticle from './PostArticle';
 import PostInsights from './PostInsights';
@@ -19,6 +20,9 @@ export default function PostPage() {
   // browser's own scroll to a fragment has already come and gone by then, so scroll here, and keep
   // the comments in place while what loads above them (the insights) changes the page's height.
   useScrollToComments('comments', hash === '#comments' ? (query.data?.id ?? null) : null);
+
+  // The reader opened this post: the platform counts it once, when it is on screen.
+  useRecordPostOpening(slug, query.data !== undefined);
 
   if (slug === '') return <PostNotFound />;
 

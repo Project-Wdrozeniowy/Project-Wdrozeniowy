@@ -79,9 +79,12 @@ test('the post page shows the real post, and the feed leads to it', async ({
     body: [...new Set(calls)].join('\n'),
     contentType: 'text/plain',
   });
-  for (const entry of calls) {
+  // Only the post this test opens is opened (PWDRZ-166).
+  for (const entry of calls.filter((call) => call !== `POST /api/forum/posts/${slug}/openings`)) {
     expect(entry).toMatch(
       /^(GET \/api\/forum\/(posts|categories)(\/[\w-]+(\/comments)?)?|POST \/api\/forum\/votes|DELETE \/api\/forum\/votes\/\d+)$/
     );
   }
+  // The post that does not exist is not an opening (PWDRZ-166).
+  expect(calls).not.toContain('POST /api/forum/posts/no-such-post-at-all/openings');
 });
