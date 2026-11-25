@@ -54,6 +54,11 @@ interface ActivityChartProps {
    * a missing day is still marked in the graph, the table and the text alternative.
    */
   missingNote?: string;
+  /**
+   * What the screen knows about the figures and shows with them, such as the window, the read
+   * time and a failed refresh. Shown only while there are points; the widget does not read it.
+   */
+  meta?: ReactNode;
   /** Controls the screen owns, such as the choice of the window, shown beside the heading. */
   actions?: ReactNode;
   /** Inside a card of the screen: no frame or padding of its own, and a smaller heading. */
@@ -79,6 +84,7 @@ export default function ActivityChart({
   errorText = PANEL_ERROR_TEXT,
   kind = 'line',
   missingNote,
+  meta,
   actions,
   embedded = false,
 }: ActivityChartProps) {
@@ -103,6 +109,7 @@ export default function ActivityChart({
     const tableTitle = seriesTitle(metric, periodLabel);
     body = (
       <>
+        {meta && <div className="text-sm text-fg-subtle space-y-1">{meta}</div>}
         {someMissing && missingNote ? (
           <div className="text-sm text-fg bg-raised rounded-lg px-3 py-2">
             <p className="font-semibold">{MISSING_NOTE_TITLE}</p>

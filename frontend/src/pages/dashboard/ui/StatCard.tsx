@@ -1,10 +1,12 @@
 import { NO_EARLIER_DATA_TEXT, UNAVAILABLE_TEXT } from '@/pages/dashboard/config/dashboard.const';
 import { formatChange } from '@/shared/lib/formatChange';
-import { ChartBarIcon } from '@/shared/ui/icons';
 import { cn } from '@/shared/lib/cn';
+import type { ReactNode } from 'react';
 
 interface StatCardProps {
   label: string;
+  /** The picture of what the card counts; decorative, the label names the card. */
+  icon: ReactNode;
   /** What the number counts, e.g. "Last 7 days". */
   caption: string;
   value: number | undefined;
@@ -23,6 +25,7 @@ const TONE_CLASS = {
 
 export default function StatCard({
   label,
+  icon,
   caption,
   value,
   change,
@@ -57,7 +60,7 @@ export default function StatCard({
         aria-hidden="true"
         className="w-12 h-12 rounded-xl bg-blue-500/15 text-accent flex items-center justify-center shrink-0"
       >
-        <ChartBarIcon />
+        {icon}
       </div>
     </div>
   );

@@ -44,3 +44,8 @@ export function categorySeries(distribution: PublicCategoryDistributionDto): Cat
     barPercent: max === 0 ? 0 : (row.posts / max) * 100,
   }));
 }
+
+/** "1 post", "31 posts": the figure with its noun, grouped as the rest of the dashboard does. */
+export function countLabel(count: number, one: string, other: string): string {
+  return `${count.toLocaleString('en-US')} ${count === 1 ? one : other}`;
+}

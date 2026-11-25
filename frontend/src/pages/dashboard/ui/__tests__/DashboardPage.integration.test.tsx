@@ -137,6 +137,127 @@ describe('showing the real figures', () => {
   });
 });
 
+describe('what each card says about its figures', () => {
+  it('names the UTC window, the read time and that today may grow, on every card', async () => {
+    fakeAnalyticsServer(mock);
+    useStore.setState({ isAuthenticated: false });
+    renderPage();
+
+    const figures = await screen.findByRole('region', { name: 'Key figures' });
+    await within(figures).findByText('60');
+    expect(figures).toHaveTextContent(
+      'Counted from Nov 12, 2026, 00:00 UTC up to the read time. Updated Nov 18, 2026, 10:00 UTC. Counts for today may grow.'
+    );
+
+    const chart = screen.getByRole('region', { name: 'Posts and comments by day' });
+    await within(chart).findByRole('img');
+    expect(chart).toHaveTextContent('60 public posts and 100 comments in this window');
+    expect(chart).toHaveTextContent('Nov 12, 2026 – Nov 19, 2026 (end exclusive), UTC');
+    expect(chart).toHaveTextContent('Updated Nov 18, 2026, 10:00 UTC');
+    expect(chart).toHaveTextContent('Counts for today may grow.');
+    expect(within(chart).getByText('Nov 18, 2026, 10:00 UTC').tagName).toBe('TIME');
+    expect(within(chart).getByText('Nov 18, 2026, 10:00 UTC')).toHaveAttribute(
+      'datetime',
+      '2026-11-18T10:00:00Z'
+    );
+
+    const categories = screen.getByRole('region', { name: 'Posts by category' });
+    await within(categories).findByText('60 public posts');
+    expect(categories).toHaveTextContent('Counts for today may grow.');
+  });
+
+  it('draws the activity as one bar per day, as in the design, and not as a line', async () => {
+    fakeAnalyticsServer(mock);
+    renderPage();
+    const chart = screen.getByRole('region', { name: 'Posts and comments by day' });
+    await within(chart).findByRole('img');
+
+    expect(chart.querySelectorAll('rect[data-point="measured"]')).toHaveLength(
+      DEFAULT_ANALYTICS.activity('7d').days.length
+    );
+    expect(chart.querySelectorAll('circle[data-point]')).toHaveLength(0);
+    await userEvent.click(screen.getByRole('button', { name: 'Last 30 days' }));
+    await waitFor(() =>
+      expect(chart.querySelectorAll('rect[data-point="measured"]')).toHaveLength(
+        DEFAULT_ANALYTICS.activity('30d').days.length
+      )
+    );
+  });
+
+  it('gives the posts and the comments card their own picture', async () => {
+    fakeAnalyticsServer(mock);
+    renderPage();
+    await screen.findByText('60');
+
+    const picture = (label: string) => card(label).querySelector('svg')?.innerHTML ?? '';
+    expect(picture('Posts')).not.toBe('');
+    expect(picture('Posts')).not.toBe(picture('Comments'));
+    expect(picture('Your posts')).not.toBe(picture('Upvotes you received'));
+  });
+
+  it('shows the key figures note after every card, and no empty row while loading', async () => {
+    fakeAnalyticsServer(mock);
+    renderPage();
+    const figures = screen.getByRole('region', { name: 'Key figures' });
+    // Loading: the cards are there, no note row yet.
+    // The four cards and nothing else: an empty row would leave a gap that then jumps.
+    expect(figures.children).toHaveLength(4);
+
+    await screen.findByText('Your posts');
+    const note = await within(figures).findByText(/Counted from/);
+    const lastCard = card('Upvotes you received');
+    expect(lastCard.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('makes no claim of live data anywhere on the page', async () => {
+    fakeAnalyticsServer(mock);
+    useStore.setState({ isAuthenticated: false });
+    renderPage();
+    await screen.findByRole('img', { name: /Posts per day/ });
+
+    // The cards the page words itself; the top posts are users' titles.
+    for (const name of ['Key figures', 'Posts and comments by day', 'Posts by category']) {
+      const region = screen.getByRole('region', { name });
+      expect(region.textContent).not.toMatch(/real-time|realtime|\blive\b|right now/i);
+    }
+    expect(screen.getByRole('heading', { level: 1 }).parentElement?.textContent).not.toMatch(
+      /real-time|realtime|\blive\b|right now/i
+    );
+  });
+
+  it('shows the same totals in the key figures, the chart and the categories, in both windows', async () => {
+    fakeAnalyticsServer(mock);
+    useStore.setState({ isAuthenticated: false });
+    renderPage();
+    const figures = await screen.findByRole('region', { name: 'Key figures' });
+    const chart = screen.getByRole('region', { name: 'Posts and comments by day' });
+    const categories = screen.getByRole('region', { name: 'Posts by category' });
+
+    for (const period of ['7d', '30d'] as const) {
+      if (period === '30d')
+        await userEvent.click(screen.getByRole('button', { name: 'Last 30 days' }));
+      const { posts, comments } = DEFAULT_ANALYTICS.comparison(period);
+      await within(chart).findByText(
+        new RegExp(`^${posts.current} public posts and ${comments.current} comments`)
+      );
+      await within(categories).findByText(`${posts.current} public posts`);
+      expect(within(figures).getByText(String(posts.current))).toBeInTheDocument();
+      expect(within(figures).getByText(String(comments.current))).toBeInTheDocument();
+    }
+  });
+
+  it('shows the totals of an empty window as zeros, not as a missing figure', async () => {
+    fakeAnalyticsServer(mock, {
+      activity: () => makeActivity([['2026-11-18', 0, 0]]),
+    });
+    useStore.setState({ isAuthenticated: false });
+    renderPage();
+
+    const chart = screen.getByRole('region', { name: 'Posts and comments by day' });
+    expect(await within(chart).findByText(/^0 public posts and 0 comments/)).toBeInTheDocument();
+  });
+});
+
 describe('the time window', () => {
   it('asks every endpoint again for 30 days and shows the answers', async () => {
     fakeAnalyticsServer(mock);
@@ -229,19 +350,42 @@ describe('when there is nothing or something fails', () => {
     expect(await screen.findAllByText('-100% vs the window before')).toHaveLength(1);
   });
 
-  it('keeps the last figures when a refresh fails, instead of "Not available"', async () => {
+  it('keeps the last figures and says so, with a retry, when a refresh fails', async () => {
     fakeAnalyticsServer(mock);
     const { client } = renderPage();
-    expect(await screen.findByText('60')).toBeInTheDocument();
+    const figures = await screen.findByRole('region', { name: 'Key figures' });
+    expect(await within(figures).findByText('60')).toBeInTheDocument();
 
-    mock.onGet('/analytics/public/comparison').reply(500);
+    // The first handler that matches answers, so the failing one replaces the stand-ins.
+    mock.resetHandlers();
+    mock.onGet('/analytics/public/comparison').reply(500, { detail: 'PSQLException' });
+    mock.onGet('/analytics/public/activity').reply(500, { detail: 'PSQLException' });
     await client.invalidateQueries({ queryKey: ['/analytics/public/comparison'] });
+    await client.invalidateQueries({ queryKey: ['/analytics/public/activity'] });
 
-    await waitFor(() =>
-      expect(requestsTo(mock, '/analytics/public/comparison').length).toBeGreaterThan(1)
+    const keyAlert = await within(figures).findByRole('alert');
+    expect(keyAlert).toHaveTextContent(
+      'Could not update the key figures. Showing the last loaded data.'
     );
-    expect(screen.getByText('60')).toBeInTheDocument();
+    const chart = screen.getByRole('region', { name: 'Posts and comments by day' });
+    const chartAlert = await within(chart).findByRole('alert');
+    expect(chartAlert).toHaveTextContent('Could not update the activity chart.');
+    // The values stay, no figure turns into "Not available", and no server text or toast appears.
+    expect(within(figures).getByText('60')).toBeInTheDocument();
+    expect(
+      within(chart).getByRole('img', { name: /Posts per day, Last 7 days/ })
+    ).toBeInTheDocument();
     expect(screen.queryByText('Not available')).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('PSQLException');
+    expect(toast.error).not.toHaveBeenCalled();
+
+    // Retry asks again, and the notices go once the answers are good.
+    mock.resetHandlers();
+    fakeAnalyticsServer(mock);
+    await userEvent.click(within(keyAlert).getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(within(figures).queryByRole('alert')).not.toBeInTheDocument());
+    await userEvent.click(within(chartAlert).getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(within(chart).queryByRole('alert')).not.toBeInTheDocument());
   });
 
   it('offers a guest the public figures only: no own totals, no request for them, nothing broken', async () => {

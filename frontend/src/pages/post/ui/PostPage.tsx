@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router';
 import { CommentSection } from '@/features/post-comments/CommentSection';
 import { POST_ERROR_TEXT } from '@/pages/post/config/post.const';
 import { isPostNotFound } from '@/pages/post/lib/postView';
+import { useScrollToComments } from '@/pages/post/lib/useScrollToComments';
 import { usePost } from '@/shared/api/forum/usePost';
 import PanelError from '@/shared/ui/PanelError';
 import PostArticle from './PostArticle';
@@ -16,13 +16,9 @@ export default function PostPage() {
   const { hash } = useLocation();
 
   // The "N Comments" links point at #comments, which exists only once the post has loaded: the
-  // browser's own scroll to a fragment has already come and gone by then, so scroll here.
-  const loadedId = query.data?.id;
-  useEffect(() => {
-    if (loadedId !== undefined && hash === '#comments') {
-      document.getElementById('comments')?.scrollIntoView();
-    }
-  }, [loadedId, hash]);
+  // browser's own scroll to a fragment has already come and gone by then, so scroll here, and keep
+  // the comments in place while what loads above them (the insights) changes the page's height.
+  useScrollToComments('comments', hash === '#comments' ? (query.data?.id ?? null) : null);
 
   if (slug === '') return <PostNotFound />;
 
