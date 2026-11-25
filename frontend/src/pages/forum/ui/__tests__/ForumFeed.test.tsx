@@ -708,6 +708,20 @@ describe('ForumFeed – tag filter', () => {
 });
 
 describe('ForumFeed – analytics selection cache', () => {
+  it('hides cached unfiltered pagination when a later URL has an invalid publication filter', async () => {
+    list.mockResolvedValue(
+      pageOf([10, 9, 8, 7, 6, 5, 4, 3, 2, 1], { totalPages: 2, totalElements: 12 })
+    );
+    const { rerenderFeed } = renderFeed(60_000);
+    await screen.findByText('Post 8');
+    expect(screen.getByRole('navigation', { name: 'Pagination' })).toBeInTheDocument();
+    search = 'createdFrom=bad';
+    rerenderFeed();
+    expect(screen.getByRole('alert')).toHaveTextContent('This publication filter is invalid');
+    expect(screen.queryByRole('navigation', { name: 'Pagination' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Post 8')).not.toBeInTheDocument();
+    expect(list).toHaveBeenCalledTimes(1);
+  });
   it('revalidates a reopened analytics selection even inside the application cache freshness window', async () => {
     search = 'createdFrom=2026-10-01T00:00:00Z';
     list.mockResolvedValueOnce(pageOf([8, 7]));

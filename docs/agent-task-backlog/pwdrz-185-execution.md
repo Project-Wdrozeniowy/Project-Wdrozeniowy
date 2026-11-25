@@ -84,3 +84,8 @@ Implementation and final acceptance checks are in progress. No completion claim 
   Replaced forced clicks with real keyboard arrow selection plus awaited checked-state assertions,
   and explicitly asserted retained activityTable/metric URL values after reload. No application
   behaviour, metric/count assertions, timeout, retry or quality gate was relaxed.
+
+- Final scoped review found that a disabled invalid-filter query could still read a cached ordinary
+  feed and expose its pagination (posts were already hidden). Added a failing cache-backed unit
+  case, gated pagination on valid filters, then observed all 64 feed tests pass. This bounded
+  correction remains inside PWDRZ-185's invalid-link/cache behaviour; final checks follow it.

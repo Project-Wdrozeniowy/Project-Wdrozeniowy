@@ -102,6 +102,7 @@ export default function ForumFeed() {
   // content changes between the posts and the loading state. That keeps keyboard focus on it.
   const loadingAnotherPage = !failed && !loadingFirst && isPlaceholderData;
   const showPagination =
+    publication.valid &&
     !failed &&
     !loadingFirst &&
     (loadingAnotherPage || (data.content.length > 0 && !isPlaceholderData));
