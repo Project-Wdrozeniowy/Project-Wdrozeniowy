@@ -67,11 +67,15 @@ export default function useDashboardScroll() {
     };
     const interrupt = () => {
       if (pending) stop();
+      else remember();
     };
     window.addEventListener('scroll', remember, { passive: true });
     window.addEventListener('pagehide', pageHide);
-    const inputs = ['wheel', 'pointerdown', 'touchstart', 'keydown'] as const;
-    inputs.forEach((event) => window.addEventListener(event, interrupt, { passive: true }));
+    const inputs = ['wheel', 'pointerdown', 'touchstart', 'keydown', 'click'] as const;
+    // Capture before a link's React handler can unmount this screen, even if scroll is still queued.
+    inputs.forEach((event) =>
+      window.addEventListener(event, interrupt, { passive: true, capture: true })
+    );
     if (pending) {
       if (typeof ResizeObserver !== 'undefined' && ref.current) {
         observer = new ResizeObserver(schedule);
@@ -95,7 +99,7 @@ export default function useDashboardScroll() {
       window.cancelAnimationFrame(frame);
       window.removeEventListener('scroll', remember);
       window.removeEventListener('pagehide', pageHide);
-      inputs.forEach((event) => window.removeEventListener(event, interrupt));
+      inputs.forEach((event) => window.removeEventListener(event, interrupt, true));
     };
   }, [key, navigationType]);
   return ref;

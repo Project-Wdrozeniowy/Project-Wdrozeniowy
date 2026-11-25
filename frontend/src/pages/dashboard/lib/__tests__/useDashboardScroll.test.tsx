@@ -72,6 +72,22 @@ it('restores the saved history entry after asynchronous content grows enough', (
   expect(window.scrollY).toBe(900);
 });
 
+it.each(['keydown', 'pointerdown', 'click'])(
+  'captures the departure position on %s before a queued scroll event arrives',
+  (event) => {
+    height = 2000;
+    const view = render(<Screen />);
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 900, writable: true });
+    // Browser can deliver the scroll event after navigation has already unmounted the old screen.
+    window.dispatchEvent(new Event(event));
+    view.unmount();
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 0, writable: true });
+    render(<Screen />);
+    act(() => vi.advanceTimersByTime(30));
+    expect(window.scrollY).toBe(900);
+  }
+);
+
 it.each(['wheel', 'pointerdown', 'touchstart', 'keydown'])(
   'stops delayed restoration on user %s',
   (event) => {

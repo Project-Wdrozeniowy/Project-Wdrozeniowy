@@ -89,3 +89,15 @@ Implementation and final acceptance checks are in progress. No completion claim 
   feed and expose its pagination (posts were already hidden). Added a failing cache-backed unit
   case, gated pagination on valid filters, then observed all 64 feed tests pass. This bounded
   correction remains inside PWDRZ-185's invalid-link/cache behaviour; final checks follow it.
+
+- Full run `1795642073411-f1aaa97a` at `05a0729`: 70/70 passed, exit 0 and cleanup confirmed.
+- Run `1795642268990-0cad6d98` at `ff3905e`: 69/70 passed; repeated real navigation exposed
+  an intermittent departure-scroll race (Y difference 1415). A queued browser scroll event could
+  arrive after the dashboard unmounted. Added three deterministic unit cases (keydown/pointer/click
+  before queued scroll): all failed with stored Y=0 instead of 900, then passed after capturing
+  position before link handlers/navigation. Scope/timeouts/retries/8px assertion are unchanged.
+  Focused managed run `1795642607348-e7cf03e8` then passed both scenarios, exit 0 and cleanup.
+  Test-only attachments now record the entry key/Y/position map to make failures diagnosable.
+- At ff3905e, frontend coverage passed 1550 tests/134 files, all four gates; root check 10/10
+  (6 cached), production build passed. These precede the final scroll-event correction; final
+  implementation checks and CI are recorded below after completion.

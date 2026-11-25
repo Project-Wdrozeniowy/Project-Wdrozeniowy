@@ -111,6 +111,16 @@ test('analytics drill-down preserves exact windows, pagination, reload, Back and
     await categoryLink.scrollIntoViewIfNeeded();
     await categoryLink.focus();
     const sourceY = await page.evaluate(() => window.scrollY);
+    await testInfo.attach('scroll-departure.json', {
+      body: JSON.stringify(
+        await page.evaluate(() => ({
+          y: scrollY,
+          key: history.state?.key,
+          positions: sessionStorage.getItem('orbita.dashboard.positions'),
+        }))
+      ),
+      contentType: 'application/json',
+    });
     const dashboardUrl = page.url();
     let answered = feedResponse(page);
     await categoryLink.press('Enter');
@@ -157,6 +167,16 @@ test('analytics drill-down preserves exact windows, pagination, reload, Back and
       'aria-pressed',
       'true'
     );
+    await testInfo.attach('scroll-return.json', {
+      body: JSON.stringify(
+        await page.evaluate(() => ({
+          y: scrollY,
+          key: history.state?.key,
+          positions: sessionStorage.getItem('orbita.dashboard.positions'),
+        }))
+      ),
+      contentType: 'application/json',
+    });
     await expect
       .poll(async () => Math.abs((await page.evaluate(() => window.scrollY)) - sourceY))
       .toBeLessThan(8);
