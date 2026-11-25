@@ -154,7 +154,7 @@ test('a guest opens the dashboard directly and after a reload, and sees what the
     answerOf(page, 'categories', '7d'),
   ];
   await page.goto('/dashboard');
-  await expect(page).toHaveURL(/\/dashboard$/);
+  expect(new URL(page.url()).pathname).toBe('/dashboard');
   await expect(page.getByRole('heading', { name: 'Analytics Dashboard', level: 1 })).toBeVisible();
   const week = await checkWindow('7d', await Promise.all(answered), 'Last 7 days');
 
@@ -240,7 +240,7 @@ test('a failing analytics backend shows fixed failure states and never a success
   await expect(figures.getByText('Not available')).toHaveCount(2);
   await expect(figures.getByText(/^\d[\d,]*$/)).toHaveCount(0);
   await expect(chart.getByRole('alert')).toContainText('We could not load this. Please try again.');
-  await expect(chart.getByRole('img')).toHaveCount(0);
+  await expect(chart.getByRole('group', { name: /^Posts per day,/ })).toHaveCount(0);
   await expect(page.locator('body')).not.toContainText('PSQLException');
   await expect(page.locator('body')).not.toContainText('secret-host');
 
@@ -254,6 +254,6 @@ test('a failing analytics backend shows fixed failure states and never a success
   const answered = answerOf(page, 'activity', '7d');
   await chart.getByRole('button', { name: 'Try again' }).click();
   expect((await answered).status()).toBe(200);
-  await expect(chart.getByRole('img')).toBeVisible();
+  await expect(chart.getByRole('group', { name: /^Posts per day,/ })).toBeVisible();
   await expect(chart.getByRole('alert')).toHaveCount(0);
 });

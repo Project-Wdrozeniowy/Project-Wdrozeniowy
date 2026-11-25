@@ -23057,6 +23057,210 @@
           "Implemented horizontal distribution and full accessible table from existing API, all rows/IDs/shares preserved. FE 1458 tests and coverage gates; root check 10/10; build/API drift passed. Managed full suite 66/66, exit 0 and cleanup confirmed, run 1795612617194-eff3e4e9 at e465b1b. See pwdrz-179-execution.md. No Jira/Figma mutation or PR."
         ]
       }
+    },
+    {
+      "id": "10547",
+      "key": "PWDRZ-185",
+      "fields": {
+        "statuscategorychangedate": "2026-11-24T16:37:25.862+0100",
+        "issuetype": {
+          "id": "10076",
+          "name": "Task",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "10524",
+          "key": "PWDRZ-162",
+          "fields": {
+            "summary": "Public platform analytics",
+            "status": {
+              "name": "To Do",
+              "statusCategory": {
+                "key": "new"
+              }
+            },
+            "priority": {
+              "name": "High"
+            },
+            "issuetype": {
+              "name": "Epic"
+            }
+          }
+        },
+        "project": {
+          "id": "10066",
+          "key": "PWDRZ",
+          "name": "ProjectWdrz",
+          "projectTypeKey": "software"
+        },
+        "fixVersions": [],
+        "watches": {
+          "watchCount": 1,
+          "isWatching": true
+        },
+        "lastViewed": "2026-11-25T21:25:37.743+0100",
+        "created": "2026-11-10T12:13:21.759+0100",
+        "priority": {
+          "name": "High",
+          "id": "2"
+        },
+        "labels": [],
+        "versions": [],
+        "issuelinks": [
+          {
+            "id": "10231",
+            "type": {
+              "id": "10000",
+              "name": "Blocks",
+              "inward": "is blocked by",
+              "outward": "blocks"
+            },
+            "inwardIssue": {
+              "id": "10536",
+              "key": "PWDRZ-174",
+              "fields": {
+                "summary": "Integrate the guest analytics dashboard [FE]",
+                "status": {
+                  "name": "Done",
+                  "statusCategory": {
+                    "key": "done"
+                  }
+                },
+                "priority": {
+                  "name": "Highest"
+                },
+                "issuetype": {
+                  "name": "Task"
+                }
+              }
+            }
+          },
+          {
+            "id": "10232",
+            "type": {
+              "id": "10000",
+              "name": "Blocks",
+              "inward": "is blocked by",
+              "outward": "blocks"
+            },
+            "inwardIssue": {
+              "id": "10541",
+              "key": "PWDRZ-179",
+              "fields": {
+                "summary": "Show category distribution on the dashboard [FE]",
+                "status": {
+                  "name": "In testing",
+                  "statusCategory": {
+                    "key": "indeterminate"
+                  }
+                },
+                "priority": {
+                  "name": "High"
+                },
+                "issuetype": {
+                  "name": "Task"
+                }
+              }
+            }
+          },
+          {
+            "id": "10233",
+            "type": {
+              "id": "10000",
+              "name": "Blocks",
+              "inward": "is blocked by",
+              "outward": "blocks"
+            },
+            "inwardIssue": {
+              "id": "10546",
+              "key": "PWDRZ-184",
+              "fields": {
+                "summary": "Filter public publications by analytics date and category [BE]",
+                "status": {
+                  "name": "In testing",
+                  "statusCategory": {
+                    "key": "indeterminate"
+                  }
+                },
+                "priority": {
+                  "name": "High"
+                },
+                "issuetype": {
+                  "name": "Task"
+                }
+              }
+            }
+          }
+        ],
+        "assignee": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "displayName": "Ruslan 82179"
+        },
+        "updated": "2026-11-25T21:25:59.768+0100",
+        "status": {
+          "name": "In Progress",
+          "id": "10077",
+          "statusCategory": {
+            "key": "indeterminate",
+            "name": "In Progress"
+          }
+        },
+        "components": [],
+        "description": "## Goal\n\nLet a visitor inspect posts represented by a day or category count.\n\n## Context\n\nApproved Sprint 8 implementation plan, closed synthetic demonstration. Current application is a Vite/React Router SPA served by Express with relative /api, Spring JDBC sessions/CSRF and PostgreSQL. Reuse published contracts and existing feature code.\n\n## Owner\n\nRuslan 82179.\n\n## Scope\n\nAdd keyboard-operable publication-day/category actions to dashboard. Encode date/category filter in forum URL, integrate existing query/pagination and show readable active-filter labels with clear action. Comment counts remain informational. Preserve reload and Back.\n\n## Acceptance criteria\n\n* Clicking publication bucket opens matching API-backed posts. Link can be reloaded and shared with the same filter. Pagination carries bounds/category. Returning restores analytics context. Current visibility may change results and is explained rather than silently fabricating a match.\n* Record concrete input, expected and observed output, tested source revision and affected checks. FE implementation runs typecheck, lint, format checks and relevant tests. BE changes update OpenAPI/generated bindings as applicable and verify real-schema behavior on migrated PostgreSQL. Existing quality gates remain applicable.\n* New controls, states and values are usable by keyboard and assistive technology. Public data excludes private content and reader identities.\n\n## Dependencies / coordination\n\nTechnical acceptance dependencies: PWDRZ-174, PWDRZ-179, PWDRZ-184. Contract examples allow parallel implementation. Feature ownership and dependency links determine integration readiness; no fixed work dates or mandatory serial schedule are introduced.",
+        "summary": "Open matching publications from analytics [FE]",
+        "reporter": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "displayName": "Ruslan 82179"
+        },
+        "comment": {
+          "comments": [
+            {
+              "id": "10265",
+              "author": {
+                "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+                "displayName": "Ruslan 82179"
+              },
+              "body": "Dependency readiness review — 25 November 2026\n\nReviewed live Jira requirements/links and the available develop source at `1fc9313cd25034d50fa4844cd12608e8d4f4c191`. This distinguishes starting implementation from final acceptance; it does not close any prerequisite or establish current remote CI results.\n\nThe dependency list is only a partial implementation blocker.\n\n* PWDRZ-184: the backend filter contract is delivered. GET /forum/posts and generated ListPostsParams already support createdFrom (inclusive), createdTo (exclusive), categoryId and uncategorized.\n* PWDRZ-174: guest dashboard, selected window, daily chart/table and public responses already exist. Waiting for all remaining dashboard metadata/feedback work is not necessary to implement the day-to-feed path.\n* PWDRZ-179: coordination remains relevant for the completed category interaction. The current categorySeries output loses stable IDs and can collapse rows into Other; the finished category table is not delivered. Backend/raw-response category IDs exist, so this is a category-presentation integration dependency, not a reason to block all URL/filter/day work.\n\nActionable work now: wire day actions to UTC date bounds, parse/validate those URL filters in the forum, pass them through useForumPosts and retain them across pagination/reload/Back. These frontend capabilities are currently absent; adding them is this task's implementation, not an unresolved backend prerequisite.\n\nKeep final category actions aligned with PWDRZ-179's rows and category/uncategorized identity rather than creating a competing category table. Explicitly verify restoration of the selected analytics context: DashboardPage currently keeps period in local state, so Back restoration is not already guaranteed by the presence of a period switch. This task is not declared fully unblocked/completed.\n\nEvidence: [backend-generated filters](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/blob/1fc9313cd25034d50fa4844cd12608e8d4f4c191/frontend/src/shared/api/generated/models/listPostsParams.dto.ts), [current restricted feed query](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/blob/1fc9313cd25034d50fa4844cd12608e8d4f4c191/frontend/src/shared/api/forum/useForumPosts.ts), [forum URL handling](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/blob/1fc9313cd25034d50fa4844cd12608e8d4f4c191/frontend/src/pages/forum/ui/ForumFeed.tsx), [category identity loss](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/blob/1fc9313cd25034d50fa4844cd12608e8d4f4c191/frontend/src/pages/dashboard/lib/dashboardView.ts).\n\nVerification: the existing dashboard/activity-chart suite was rerun on this revision: 81 tests in 5 files passed. This is component/transport-integration evidence, not a new full managed-stack E2E or backend verification run. Issue status, dependency links and acceptance criteria are unchanged.",
+              "created": "2026-11-25T13:38:18.454+0100"
+            }
+          ],
+          "maxResults": 1,
+          "total": 1,
+          "startAt": 0
+        },
+        "customFields": {
+          "Sprint": {
+            "id": "customfield_10020",
+            "value": [
+              {
+                "id": 205,
+                "name": "PWDRZ Sprint 8",
+                "state": "active",
+                "boardId": 67,
+                "goal": "On the closed synthetic demo, a reader opens a post from the feed, votes and comments; its author inspects engagement and daily openings. Guests explore real platform activity across periods and categories, verify values in accessible tables, and open the underlying publications.",
+                "startDate": "2026-11-08T23:00:25.137Z",
+                "endDate": "2026-11-22T23:00:00.000Z"
+              }
+            ]
+          },
+          "Rank": {
+            "id": "customfield_10019",
+            "value": "0|i00187:"
+          },
+          "Development": {
+            "id": "customfield_10000",
+            "value": "{pullrequest={dataType=pullrequest, state=MERGED, stateCount=1}, json={\"cachedValue\":{\"errors\":[],\"summary\":{\"pullrequest\":{\"overall\":{\"count\":1,\"lastUpdated\":\"2026-11-25T14:28:51.000+0100\",\"stateCount\":1,\"state\":\"MERGED\",\"dataType\":\"pullrequest\",\"open\":false},\"byInstanceType\":{\"oAuth-com.github.integration.production\":{\"count\":1,\"name\":\"GitHub\"}}}}},\"isStale\":true}}"
+          }
+        }
+      },
+      "localTracking": {
+        "status": "in_progress",
+        "owner": "Codex / Ruslan 82179",
+        "updatedAt": "2026-11-25T21:01:18.450Z",
+        "notes": [
+          "Approved implementation plan; branch PWDRZ-185-analytics-publication-drilldown published with upstream at f58ea58c4b4762d1c13dbaeeb67334af55c49233. See pwdrz-185-execution.md."
+        ]
+      }
     }
   ]
 }

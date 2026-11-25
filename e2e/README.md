@@ -94,6 +94,12 @@ never use real account credentials. CI artifact retention is seven days.
 
 ## Scenario boundaries
 
+PWDRZ-185 adds `analytics-drilldown.spec.ts`: real dashboard-to-feed day/category/uncategorized
+links, exact UTC edges, pagination, copied URL/reload/Back and scroll, current visibility changes,
+zero/invalid/error recovery, keyboard, both themes and 320/390px. Historical and unlisted-category
+fixtures are restricted to the launcher's disposable migrated database and cleaned in `finally`.
+Browser reads do not create post-opening events. No success API response is fabricated.
+
 1. Browser registration → HTTP 201/profile 200 → authenticated UI.
 2. Browser login → reload with actual server-session bootstrap → logout 204 → reload remains guest.
 3. Wrong password or unknown username returns 401 and keeps the guest form visible.
