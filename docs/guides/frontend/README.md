@@ -498,6 +498,41 @@ values. Separately fetched activity and category responses need not be the same 
 Links, forum URL filters and analytics history restoration remain that task's responsibility.
 PWDRZ-174 retains the dashboard-wide metadata/feedback work; this card does not redesign other blocks.
 
+## Post page: the comments link keeps its place (PWDRZ-174)
+
+A "N Comments" link opens the post at `#comments`. The post, then its insights card, load after the
+first paint, and the card grows when its figures and chart arrive, which used to push the comments
+out of view after the one scroll. `useScrollToComments` scrolls to the comments when the post is
+shown and again when the comments themselves have moved (only then: their own growth never pulls the
+reader back). It lets go as soon as the page is not where it left it (a scrollbar drag, find in
+page), at the reader's first scroll, tap, click or key, and after five seconds, so it never fights the
+reader. Another post runs it again.
+
+## Dashboard for guests: window, read time and failed refresh (PWDRZ-174)
+
+`/dashboard` is public and a reload on it works for a guest; only `/admin` keeps its role guard. Every
+card that counts public activity says, from its own response, which UTC days it covers, when the
+platform read it and that today's count may grow (`WindowMeta`; the key figures give the start and say the count runs up to the read time). No card claims to be live, and the three sources (key figures, activity chart,
+categories) are separate requests, so each card keeps its own read time. The activity chart also
+shows its total posts and comments (`totalPosts`, `totalComments`), the same numbers as the key figures
+and the category total for that window; an empty window shows zeros, never a missing figure.
+
+A failed background refresh keeps the last values and adds a fixed message with Try again
+(`RefreshFailedNotice`, used by the key figures, the activity chart and the categories); a first
+load that fails shows "Not available" or the panel error. Never the server's text, never a toast, never
+a fixed number. `ActivityChart` takes the screen's notes through its `meta` slot and shows them only
+with figures. The time formats live in `pages/dashboard/lib/utcTime.ts`.
+
+The activity card follows Figma Dashboard `25:1715`: one bar per UTC day ("Posts and comments by
+day"; the data table and the metric switch stay), and each key figure has its own picture (posts,
+comments). Figma's other blocks (active users, views, quick stats, hourly activity, engagement
+breakdown) are sample data the platform cannot count, so they are not drawn.
+
+Checks: `e2e/tests/dashboard-guest.spec.ts` opens the dashboard as a guest on the real stack (direct,
+reload, 30 days by keyboard), compares totals, table rows and read times with the API's own answers,
+checks that a draft and the author's identity are not in the public responses, and fails the
+analytics endpoints to see the fixed failure states. Ranking of the top posts has its own owner.
+
 ## References
 
 The concrete tree is a project choice following

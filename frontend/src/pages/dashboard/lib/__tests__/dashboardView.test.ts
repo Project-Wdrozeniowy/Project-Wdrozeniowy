@@ -1,4 +1,4 @@
-import { activityMetrics, categorySeries } from '@/pages/dashboard/lib/dashboardView';
+import { activityMetrics, categorySeries, countLabel } from '@/pages/dashboard/lib/dashboardView';
 import { makeActivity, makeCategories } from '@/test/fakeAnalyticsServer';
 
 describe('activityMetrics', () => {
@@ -99,5 +99,17 @@ describe('categorySeries', () => {
       { label: 'Quiet', posts: 0, share: null, barPercent: 0 },
       { label: 'No category', posts: 0, share: null, barPercent: 0 },
     ]);
+  });
+});
+
+describe('countLabel', () => {
+  it('uses the singular for exactly one and the plural for zero and many', () => {
+    expect(countLabel(1, 'post', 'posts')).toBe('1 post');
+    expect(countLabel(0, 'post', 'posts')).toBe('0 posts');
+    expect(countLabel(2, 'post', 'posts')).toBe('2 posts');
+  });
+
+  it('groups thousands as the rest of the dashboard does', () => {
+    expect(countLabel(12345, 'comment', 'comments')).toBe('12,345 comments');
   });
 });

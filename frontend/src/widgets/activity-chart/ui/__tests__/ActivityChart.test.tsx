@@ -44,6 +44,7 @@ interface Overrides {
   description?: string;
   missingNote?: string;
   actions?: React.ReactNode;
+  meta?: React.ReactNode;
   embedded?: boolean;
 }
 
@@ -57,6 +58,7 @@ function renderChart({
   description,
   missingNote,
   actions,
+  meta,
   embedded,
 }: Overrides = {}) {
   return render(
@@ -73,6 +75,7 @@ function renderChart({
       description={description}
       missingNote={missingNote}
       actions={actions}
+      meta={meta}
       embedded={embedded}
     />
   );
@@ -558,5 +561,32 @@ describe('ActivityChart states', () => {
     );
 
     expect(screen.getByRole('alert')).toHaveTextContent('Activity could not be loaded.');
+  });
+});
+
+describe("the screen's notes about the figures", () => {
+  it('shows them with the figures the screen passed in', () => {
+    renderChart({ meta: <p>Updated 10:00 UTC</p> });
+
+    expect(screen.getByText('Updated 10:00 UTC')).toBeInTheDocument();
+  });
+
+  it.each<LoadPhase>(['loading', 'failed', 'retrying'])(
+    'does not show them while the figures are %s',
+    (phase) => {
+      renderChart({ phase, meta: <p>Updated 10:00 UTC</p> });
+
+      expect(screen.queryByText('Updated 10:00 UTC')).not.toBeInTheDocument();
+    }
+  );
+
+  it('does not show them for a window with no days', () => {
+    renderChart({
+      metrics: [{ ...POSTS, points: [] }],
+      meta: <p>Updated 10:00 UTC</p>,
+    });
+
+    expect(screen.queryByText('Updated 10:00 UTC')).not.toBeInTheDocument();
+    expect(screen.getByText('Nothing to show for this window.')).toBeInTheDocument();
   });
 });

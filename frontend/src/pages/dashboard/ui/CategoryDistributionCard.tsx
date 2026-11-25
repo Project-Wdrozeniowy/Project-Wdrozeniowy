@@ -3,34 +3,19 @@ import {
   CATEGORY_CHART_TITLE,
   NO_CATEGORY_POSTS_TEXT,
 } from '@/pages/dashboard/config/dashboard.const';
-import { categorySeries } from '@/pages/dashboard/lib/dashboardView';
+import { categorySeries, countLabel } from '@/pages/dashboard/lib/dashboardView';
 import {
   ANALYTICS_PERIOD_LABELS,
   type AnalyticsPeriod,
 } from '@/shared/api/analytics/analytics.const';
 import { usePublicCategoryDistribution } from '@/shared/api/analytics/usePublicCategoryDistribution';
 import QueryState from '@/shared/ui/QueryState';
-import PanelError from '@/shared/ui/PanelError';
+import RefreshFailedNotice from './RefreshFailedNotice';
+import WindowMeta from './WindowMeta';
 import CategoryDistributionChart from './CategoryDistributionChart';
 import CategoryDistributionTable from './CategoryDistributionTable';
 import ChartCard from './ChartCard';
 import ChartSkeleton from './ChartSkeleton';
-
-const dayFormat = new Intl.DateTimeFormat('en-US', {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric',
-  timeZone: 'UTC',
-});
-const readTimeFormat = new Intl.DateTimeFormat('en-US', {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-  timeZone: 'UTC',
-});
 
 interface CategoryDistributionCardProps {
   period: AnalyticsPeriod;
@@ -53,28 +38,19 @@ export default function CategoryDistributionCard({ period }: CategoryDistributio
           <>
             <div className="text-sm text-fg-subtle space-y-1">
               <p className="font-medium text-fg">{label}</p>
-              <p>
-                {data.totalPosts.toLocaleString('en-US')} public{' '}
-                {data.totalPosts === 1 ? 'post' : 'posts'}
-              </p>
-              <p>
-                {dayFormat.format(new Date(data.windowStart))} –{' '}
-                {dayFormat.format(new Date(data.windowEnd))} (end exclusive), UTC
-              </p>
-              <p>
-                Updated{' '}
-                <time dateTime={data.generatedAt}>
-                  {readTimeFormat.format(new Date(data.generatedAt))} UTC
-                </time>
-                . Counts for today may grow.
-              </p>
+              <p>{countLabel(data.totalPosts, 'public post', 'public posts')}</p>
+              <WindowMeta
+                windowStart={data.windowStart}
+                windowEnd={data.windowEnd}
+                generatedAt={data.generatedAt}
+              />
             </div>
             <p role="status" className="text-xs text-fg-subtle" aria-live="polite">
               {query.isFetching && !query.isRefetchError ? 'Updating categories…' : ''}
             </p>
             {query.isRefetchError && (
-              <PanelError
-                message="Could not update categories. Showing the last loaded data."
+              <RefreshFailedNotice
+                what="categories"
                 retrying={query.isFetching}
                 onRetry={() => query.refetch()}
               />
