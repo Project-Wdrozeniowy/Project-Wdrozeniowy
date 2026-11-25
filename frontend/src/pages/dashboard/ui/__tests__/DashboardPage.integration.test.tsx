@@ -12,6 +12,8 @@ import {
   fakeAnalyticsServer,
   makeActivity,
   makeComparison,
+  makeCategories,
+  DEFAULT_ANALYTICS,
   requestsTo,
 } from '@/test/fakeAnalyticsServer';
 
@@ -80,12 +82,12 @@ describe('showing the real figures', () => {
 
     expect(
       await screen.findByRole('img', {
-        name: 'Posts per day, Last 7 days, UTC. Nov 16, 2026: 2 posts, Nov 17, 2026: 3 posts, Nov 18, 2026: 1 post',
+        name: 'Posts per day, Last 7 days, UTC. Nov 16, 2026: 20 posts, Nov 17, 2026: 30 posts, Nov 18, 2026: 10 posts',
       })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('img', {
-        name: 'Posts by category, last 7 days. AI / Tech: 40, Gaming: 20, No category: 5',
+        name: 'Posts by category, Last 7 days, UTC. AI / Tech: 35, Gaming: 20, No category: 5',
       })
     ).toBeInTheDocument();
   });
@@ -99,7 +101,7 @@ describe('showing the real figures', () => {
 
     expect(
       screen.getByRole('img', {
-        name: 'Comments per day, Last 7 days, UTC. Nov 16, 2026: 5 comments, Nov 17, 2026: 8 comments, Nov 18, 2026: 2 comments',
+        name: 'Comments per day, Last 7 days, UTC. Nov 16, 2026: 50 comments, Nov 17, 2026: 30 comments, Nov 18, 2026: 20 comments',
       })
     ).toBeInTheDocument();
 
@@ -107,7 +109,7 @@ describe('showing the real figures', () => {
     const table = screen.getByRole('table');
     expect(within(table).getByRole('columnheader', { name: 'Comments' })).toBeInTheDocument();
     expect(within(table).getByRole('rowheader', { name: 'Nov 17, 2026' })).toBeInTheDocument();
-    expect(within(table).getByRole('cell', { name: '8' })).toBeInTheDocument();
+    expect(within(table).getByRole('cell', { name: '30' })).toBeInTheDocument();
   });
 
   it('lists the most active posts as the server ranks them, each with a link', async () => {
@@ -169,7 +171,7 @@ describe('when there is nothing or something fails', () => {
   it('says so for a window with no activity, and for no active post', async () => {
     fakeAnalyticsServer(mock, {
       activity: () => makeActivity([['2026-11-18', 0, 0]]),
-      categories: () => ({ ...makeActivity([]), categories: [] }) as never,
+      categories: () => makeCategories([['Quiet', 0]]),
       trending: () => [],
     });
     renderPage();
@@ -177,10 +179,9 @@ describe('when there is nothing or something fails', () => {
     expect(
       await screen.findByText('No post has had activity in this window yet.')
     ).toBeInTheDocument();
-    // The days are there and are zero: the activity chart says so, and lists them. The category
-    // chart has no categories at all.
+    // Both endpoints return rows with real zero counts, not missing rows.
     expect(screen.getByText('No posts recorded in this period.')).toBeInTheDocument();
-    expect(screen.getAllByText('No public posts or comments in this window yet.')).toHaveLength(1);
+    expect(screen.getByText('No public posts in this window yet.')).toBeInTheDocument();
   });
 
   it('shows "Not available" for a figure that failed, with no toast and no server text', async () => {
@@ -255,5 +256,49 @@ describe('when there is nothing or something fails', () => {
     expect(screen.queryByText('Upvotes you received')).not.toBeInTheDocument();
     expect(screen.queryByText('Not available')).not.toBeInTheDocument();
     expect(requestsTo(mock, '/analytics/me')).toHaveLength(0);
+  });
+});
+
+describe('category distribution integration', () => {
+  it('keeps public totals, API shares, the graph and the table consistent for both windows', async () => {
+    fakeAnalyticsServer(mock);
+    useStore.setState({ isAuthenticated: false });
+    renderPage();
+    const categories = screen.getByRole('region', { name: 'Posts by category' });
+    for (const period of ['7d', '30d'] as const) {
+      if (period === '30d')
+        await userEvent.click(screen.getByRole('button', { name: 'Last 30 days' }));
+      const expected = DEFAULT_ANALYTICS.categories(period);
+      await within(categories).findByText(`${expected.totalPosts} public posts`);
+      expect(expected.totalPosts).toBe(DEFAULT_ANALYTICS.activity(period).totalPosts);
+      expect(expected.totalPosts).toBe(DEFAULT_ANALYTICS.comparison(period).posts.current);
+      const toggle = within(categories).getByRole('button', { name: 'Category data table' });
+      if (toggle.getAttribute('aria-expanded') === 'false') await userEvent.click(toggle);
+      const table = within(categories).getByRole('table');
+      for (const row of expected.categories) {
+        const header = within(table).getByRole('rowheader', {
+          name: row.category?.name ?? 'No category',
+        });
+        expect(header.parentElement).toHaveTextContent(String(row.posts));
+      }
+      expect(
+        requestsTo(mock, '/analytics/public/categories').filter(
+          (request) => request.params.period === period
+        )
+      ).toHaveLength(1);
+    }
+    expect(requestsTo(mock, '/analytics/me')).toHaveLength(0);
+    expect(mock.history.post).toHaveLength(0);
+  });
+
+  it('isolates a category failure from activity and the other dashboard sections', async () => {
+    fakeAnalyticsServer(mock);
+    mock.onGet('/analytics/public/categories').reply(500);
+    renderPage();
+    expect(await screen.findByRole('img', { name: /^Posts per day/ })).toBeInTheDocument();
+    const categories = screen.getByRole('region', { name: 'Posts by category' });
+    expect(await within(categories).findByRole('alert')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Hot this week' })).toBeInTheDocument();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

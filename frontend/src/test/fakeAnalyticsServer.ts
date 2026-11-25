@@ -16,30 +16,37 @@ export interface AnalyticsData {
   me: UserActivitySummaryDto;
 }
 
-const WINDOW = { start: '2026-11-11T00:00:00Z', end: '2026-11-18T00:00:00Z' };
+const GENERATED_AT = '2026-11-18T10:00:00Z';
+const windowStart = (period: Period) =>
+  period === '7d' ? '2026-11-12T00:00:00Z' : '2026-10-20T00:00:00Z';
 
 export function makeComparison(posts: number, comments: number, period: Period = '7d') {
   return {
     period,
-    generatedAt: '2026-11-18T10:00:00Z',
+    generatedAt: GENERATED_AT,
     posts: {
       current: posts,
       previous: 40,
       change: posts - 40,
-      changePercent: posts === 0 ? -100 : 50,
+      changePercent: ((posts - 40) / 40) * 100,
     },
     comments: { current: comments, previous: 0, change: comments, changePercent: null },
-    current: { posts, comments, ...WINDOW },
-    previous: { posts: 40, comments: 0, ...WINDOW },
-  } as PublicActivityComparisonDto;
+    current: { posts, comments, start: windowStart(period), end: GENERATED_AT },
+    previous: {
+      posts: 40,
+      comments: 0,
+      end: windowStart(period),
+      start: new Date(2 * Date.parse(windowStart(period)) - Date.parse(GENERATED_AT)).toISOString(),
+    },
+  } satisfies PublicActivityComparisonDto;
 }
 
 export function makeActivity(days: Array<[string, number, number]>, period: Period = '7d') {
   return {
     period,
     generatedAt: '2026-11-18T10:00:00Z',
-    windowStart: days[0]?.[0] ?? '2026-11-12',
-    windowEnd: days[days.length - 1]?.[0] ?? '2026-11-18',
+    windowStart: windowStart(period),
+    windowEnd: '2026-11-19T00:00:00Z',
     totalPosts: days.reduce((sum, day) => sum + day[1], 0),
     totalComments: days.reduce((sum, day) => sum + day[2], 0),
     days: days.map(([date, posts, comments]) => ({ date, posts, comments })),
@@ -49,16 +56,18 @@ export function makeActivity(days: Array<[string, number, number]>, period: Peri
 export function makeCategories(
   rows: Array<[string | null, number, string?]>,
   period: Period = '7d'
-) {
+): PublicCategoryDistributionDto {
+  const allRows: typeof rows = rows.some(([name]) => name === null) ? rows : [...rows, [null, 0]];
+  const totalPosts = allRows.reduce((sum, row) => sum + row[1], 0);
   return {
     period,
     generatedAt: '2026-11-18T10:00:00Z',
-    windowStart: '2026-11-12',
-    windowEnd: '2026-11-18',
-    totalPosts: rows.reduce((sum, row) => sum + row[1], 0),
-    categories: rows.map(([name, posts, slug], index) => ({
+    windowStart: windowStart(period),
+    windowEnd: '2026-11-19T00:00:00Z',
+    totalPosts,
+    categories: allRows.map(([name, posts, slug], index) => ({
       posts,
-      share: null,
+      share: totalPosts === 0 ? null : Math.round((posts / totalPosts) * 10_000) / 10_000,
       category: name
         ? {
             id: index + 1,
@@ -68,7 +77,7 @@ export function makeCategories(
           }
         : null,
     })),
-  } as PublicCategoryDistributionDto;
+  } satisfies PublicCategoryDistributionDto;
 }
 
 export function makePost(id: number, title: string, overrides: Partial<PostSummaryDto> = {}) {
@@ -98,13 +107,13 @@ export const DEFAULT_ANALYTICS: AnalyticsData = {
     makeActivity(
       period === '7d'
         ? [
-            ['2026-11-16', 2, 5],
-            ['2026-11-17', 3, 8],
-            ['2026-11-18', 1, 2],
+            ['2026-11-16', 20, 50],
+            ['2026-11-17', 30, 30],
+            ['2026-11-18', 10, 20],
           ]
         : [
-            ['2026-10-20', 1, 1],
-            ['2026-11-18', 4, 9],
+            ['2026-10-20', 80, 100],
+            ['2026-11-18', 130, 300],
           ],
       period
     ),
@@ -112,11 +121,14 @@ export const DEFAULT_ANALYTICS: AnalyticsData = {
     makeCategories(
       period === '7d'
         ? [
-            ['AI / Tech', 40],
+            ['AI / Tech', 35, 'ai'],
             ['Gaming', 20],
             [null, 5],
           ]
-        : [['Science', 90]],
+        : [
+            ['Science', 90],
+            ['Gaming', 120],
+          ],
       period
     ),
   trending: (period) => [

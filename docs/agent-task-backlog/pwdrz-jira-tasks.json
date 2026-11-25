@@ -22824,6 +22824,238 @@
           "User explicitly authorized logical commits, normal branch push and correct upstream setup, without co-author trailers. Source grouped into shared presentation, own-post editing/tests, comment-header regression fix and documentation/evidence. Runtime implementation and tested source manifest unchanged."
         ]
       }
+    },
+    {
+      "id": "10541",
+      "key": "PWDRZ-179",
+      "fields": {
+        "statuscategorychangedate": "2026-11-23T19:16:17.435+0100",
+        "issuetype": {
+          "id": "10076",
+          "name": "Task",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "10524",
+          "key": "PWDRZ-162",
+          "fields": {
+            "summary": "Public platform analytics",
+            "status": {
+              "name": "To Do",
+              "statusCategory": {
+                "key": "new"
+              }
+            },
+            "priority": {
+              "name": "High"
+            },
+            "issuetype": {
+              "name": "Epic"
+            }
+          }
+        },
+        "project": {
+          "id": "10066",
+          "key": "PWDRZ",
+          "name": "ProjectWdrz",
+          "projectTypeKey": "software"
+        },
+        "fixVersions": [],
+        "watches": {
+          "watchCount": 1,
+          "isWatching": true
+        },
+        "lastViewed": "2026-11-25T13:42:24.986+0100",
+        "created": "2026-11-10T12:13:09.041+0100",
+        "priority": {
+          "name": "High",
+          "id": "2"
+        },
+        "labels": [],
+        "versions": [],
+        "issuelinks": [
+          {
+            "id": "10223",
+            "type": {
+              "id": "10000",
+              "name": "Blocks",
+              "inward": "is blocked by",
+              "outward": "blocks"
+            },
+            "inwardIssue": {
+              "id": "10535",
+              "key": "PWDRZ-173",
+              "fields": {
+                "summary": "Build an accessible activity chart and data table [FE]",
+                "status": {
+                  "name": "In testing",
+                  "statusCategory": {
+                    "key": "indeterminate"
+                  }
+                },
+                "priority": {
+                  "name": "Highest"
+                },
+                "issuetype": {
+                  "name": "Task"
+                }
+              }
+            }
+          },
+          {
+            "id": "10224",
+            "type": {
+              "id": "10000",
+              "name": "Blocks",
+              "inward": "is blocked by",
+              "outward": "blocks"
+            },
+            "inwardIssue": {
+              "id": "10536",
+              "key": "PWDRZ-174",
+              "fields": {
+                "summary": "Integrate the guest analytics dashboard [FE]",
+                "status": {
+                  "name": "Ready",
+                  "statusCategory": {
+                    "key": "indeterminate"
+                  }
+                },
+                "priority": {
+                  "name": "Highest"
+                },
+                "issuetype": {
+                  "name": "Task"
+                }
+              }
+            }
+          },
+          {
+            "id": "10225",
+            "type": {
+              "id": "10000",
+              "name": "Blocks",
+              "inward": "is blocked by",
+              "outward": "blocks"
+            },
+            "inwardIssue": {
+              "id": "10540",
+              "key": "PWDRZ-178",
+              "fields": {
+                "summary": "Provide public post distribution by category [BE]",
+                "status": {
+                  "name": "In testing",
+                  "statusCategory": {
+                    "key": "indeterminate"
+                  }
+                },
+                "priority": {
+                  "name": "High"
+                },
+                "issuetype": {
+                  "name": "Task"
+                }
+              }
+            }
+          },
+          {
+            "id": "10232",
+            "type": {
+              "id": "10000",
+              "name": "Blocks",
+              "inward": "is blocked by",
+              "outward": "blocks"
+            },
+            "outwardIssue": {
+              "id": "10547",
+              "key": "PWDRZ-185",
+              "fields": {
+                "summary": "Open matching publications from analytics [FE]",
+                "status": {
+                  "name": "Blocked",
+                  "statusCategory": {
+                    "key": "indeterminate"
+                  }
+                },
+                "priority": {
+                  "name": "High"
+                },
+                "issuetype": {
+                  "name": "Task"
+                }
+              }
+            }
+          }
+        ],
+        "assignee": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "displayName": "Ruslan 82179"
+        },
+        "updated": "2026-11-25T13:41:46.221+0100",
+        "status": {
+          "name": "Ready",
+          "id": "10079",
+          "statusCategory": {
+            "key": "indeterminate",
+            "name": "In Progress"
+          }
+        },
+        "components": [],
+        "description": "## Goal\n\nLet visitors compare publication categories within the chosen period.\n\n## Context\n\nApproved Sprint 8 implementation plan, closed synthetic demonstration. Current application is a Vite/React Router SPA served by Express with relative /api, Spring JDBC sessions/CSRF and PostgreSQL. Reuse published contracts and existing feature code.\n\n## Owner\n\nRuslan 82179.\n\n## Scope\n\nIntegrate category API using existing chart/table patterns. Render count, share, category labels and uncategorized with accessible empty/error states. Reuse dashboard window state. Linkable category identity coordinates with publication drill-down.\n\n## Acceptance criteria\n\n* Changing window updates distribution. Table/counts agree with API and public total. Color is supplemented by labels. Zero data has truthful text. Keyboard and narrow-screen viewing work; unsupported categories never receive fictional counts.\n* Record concrete input, expected and observed output, tested source revision and affected checks. FE implementation runs typecheck, lint, format checks and relevant tests. BE changes update OpenAPI/generated bindings as applicable and verify real-schema behavior on migrated PostgreSQL. Existing quality gates remain applicable.\n* New controls, states and values are usable by keyboard and assistive technology. Public data excludes private content and reader identities.\n\n## Dependencies / coordination\n\nTechnical acceptance dependencies: PWDRZ-173, PWDRZ-174, PWDRZ-178. Contract examples allow parallel implementation. Feature ownership and dependency links determine integration readiness; no fixed work dates or mandatory serial schedule are introduced.",
+        "summary": "Show category distribution on the dashboard [FE]",
+        "reporter": {
+          "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+          "displayName": "Ruslan 82179"
+        },
+        "comment": {
+          "comments": [
+            {
+              "id": "10261",
+              "author": {
+                "accountId": "712020:84947036-efc1-4ca6-abad-7699fec567cd",
+                "displayName": "Ruslan 82179"
+              },
+              "body": "Dependency readiness review — 25 November 2026\n\nReviewed live Jira requirements/links and the available develop source at `1fc9313cd25034d50fa4844cd12608e8d4f4c191`. This distinguishes starting implementation from final acceptance; it does not close any prerequisite or establish current remote CI results.\n\nThe listed dependencies are not a complete implementation blocker on this revision.\n\n* PWDRZ-174: the required integration point already exists. The guest dashboard owns the 7d/30d period and passes it to ChartsSection; the category request and chart are already mounted. Completing all of PWDRZ-174 is not necessary before implementing this category block.\n* PWDRZ-178: the implemented public category endpoint and generated binding provide category identity, posts, share, totalPosts and window metadata. No new backend contract is needed for this scope.\n* PWDRZ-173: the shared activity chart/table and feedback patterns are delivered. Its table is specifically date-based, so it is not a ready-made category/count/share table. The category presentation remains work under PWDRZ-179, rather than missing work to demand from PWDRZ-173.\n\nActionable work now: build the category/count/share table and truthful zero/error states from the existing response, verify totals, preserve uncategorized semantics and stable category identity for PWDRZ-185. Current categorySeries reduces rows to labels/values and may group them as Other; it must not be mistaken for the complete category table.\n\nCoordinate changes to ChartsSection with the PWDRZ-174 owner, but file overlap alone is not a hard technical dependency. PWDRZ-174's remaining dashboard metadata/refresh-feedback work stays with its owner; it need not be completed or duplicated here.\n\nEvidence: [dashboard composition](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/blob/1fc9313cd25034d50fa4844cd12608e8d4f4c191/frontend/src/pages/dashboard/ui/DashboardPage.tsx), [existing category integration](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/blob/1fc9313cd25034d50fa4844cd12608e8d4f4c191/frontend/src/pages/dashboard/ui/ChartsSection.tsx), [category mapping](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/blob/1fc9313cd25034d50fa4844cd12608e8d4f4c191/frontend/src/pages/dashboard/lib/dashboardView.ts), [published response](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/blob/1fc9313cd25034d50fa4844cd12608e8d4f4c191/frontend/src/shared/api/generated/models/publicCategoryDistributionDto.dto.ts).\n\nVerification: the existing dashboard/activity-chart suite was rerun on this revision: 81 tests in 5 files passed. This is component/transport-integration evidence, not a new full managed-stack E2E or backend verification run. Issue status, dependency links and acceptance criteria are unchanged.",
+              "created": "2026-11-25T13:38:10.838+0100"
+            }
+          ],
+          "maxResults": 1,
+          "total": 1,
+          "startAt": 0
+        },
+        "customFields": {
+          "Sprint": {
+            "id": "customfield_10020",
+            "value": [
+              {
+                "id": 205,
+                "name": "PWDRZ Sprint 8",
+                "state": "active",
+                "boardId": 67,
+                "goal": "On the closed synthetic demo, a reader opens a post from the feed, votes and comments; its author inspects engagement and daily openings. Guests explore real platform activity across periods and categories, verify values in accessible tables, and open the underlying publications.",
+                "startDate": "2026-11-08T23:00:25.137Z",
+                "endDate": "2026-11-22T23:00:00.000Z"
+              }
+            ]
+          },
+          "Rank": {
+            "id": "customfield_10019",
+            "value": "0|i00185:"
+          },
+          "Development": {
+            "id": "customfield_10000",
+            "value": "{pullrequest={dataType=pullrequest, state=MERGED, stateCount=1}, json={\"cachedValue\":{\"errors\":[],\"summary\":{\"pullrequest\":{\"overall\":{\"count\":1,\"lastUpdated\":\"2026-11-12T07:17:14.000+0100\",\"stateCount\":1,\"state\":\"MERGED\",\"dataType\":\"pullrequest\",\"open\":false},\"byInstanceType\":{\"oAuth-com.github.integration.production\":{\"count\":1,\"name\":\"GitHub\"}}}}},\"isStale\":true}}"
+          }
+        }
+      },
+      "localTracking": {
+        "status": "in_progress",
+        "owner": "Codex / Ruslan 82179",
+        "updatedAt": "2026-11-25T12:59:51.292Z",
+        "notes": [
+          "Implementation authorized after approved plan. Base 1fc9313cd25034d50fa4844cd12608e8d4f4c191. Local and origin task branch created with upstream. No Jira/Figma writes or PR. See pwdrz-179-execution.md."
+        ]
+      }
     }
   ]
 }
