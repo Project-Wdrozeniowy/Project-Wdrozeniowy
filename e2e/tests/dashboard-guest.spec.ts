@@ -130,13 +130,17 @@ test('a guest opens the dashboard directly and after a reload, and sees what the
     await expect(table.getByRole('row')).toHaveCount(activity.days.length + 1);
     const posts = await table.locator('tbody td').allTextContents();
     expect(posts.map(Number).reduce((sum, value) => sum + value, 0)).toBe(activity.totalPosts);
-    await chart.getByRole('radio', { name: 'Comments' }).check({ force: true });
+    await chart.getByRole('radio', { name: 'Posts' }).focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(chart.getByRole('radio', { name: 'Comments' })).toBeChecked();
     await expect(table.getByRole('columnheader', { name: 'Comments' })).toBeVisible();
     const comments = await table.locator('tbody td').allTextContents();
     expect(comments.map(Number).reduce((sum, value) => sum + value, 0)).toBe(
       activity.totalComments
     );
-    await chart.getByRole('radio', { name: 'Posts' }).check({ force: true });
+    await chart.getByRole('radio', { name: 'Comments' }).focus();
+    await page.keyboard.press('ArrowLeft');
+    await expect(chart.getByRole('radio', { name: 'Posts' })).toBeChecked();
 
     // Public data only: no draft, no reader or author identity.
     for (const body of bodies) {
@@ -184,7 +188,9 @@ test('a guest opens the dashboard directly and after a reload, and sees what the
     answerOf(page, 'categories', '7d'),
   ];
   await page.reload();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  expect(new URL(page.url()).pathname).toBe('/dashboard');
+  expect(new URL(page.url()).searchParams.get('activityTable')).toBe('1');
+  expect(new URL(page.url()).searchParams.get('metric')).toBe('posts');
   const reloaded = await checkWindow('7d', await Promise.all(answered), 'Last 7 days');
   expect(reloaded.totalPosts).toBe(week.totalPosts);
 

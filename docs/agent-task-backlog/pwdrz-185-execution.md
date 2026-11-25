@@ -77,3 +77,10 @@ Implementation and final acceptance checks are in progress. No completion claim 
 - Local commits: `4bdbaec` (URL filters/forum), `99fd814` (analytics actions/context/cache follow-up).
   The second full frontend run passed 1548 tests/134 files before the final cache-revalidation
   case; final full coverage and managed E2E must be rerun on the completed implementation.
+
+- Full managed run `1795641819691-d2479ef5` at `637d265`: 69 passed / 1 failed, exit 1,
+  zero retries, cleanup completed. Both new drill-down scenarios passed. Existing guest-dashboard
+  test used force-check on a hidden controlled radio and asserted a queryless reload URL.
+  Replaced forced clicks with real keyboard arrow selection plus awaited checked-state assertions,
+  and explicitly asserted retained activityTable/metric URL values after reload. No application
+  behaviour, metric/count assertions, timeout, retry or quality gate was relaxed.
