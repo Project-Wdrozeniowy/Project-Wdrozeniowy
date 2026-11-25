@@ -34,6 +34,8 @@ export function useForumPosts(
       { request: { skipErrorToast: true } }
     ),
     enabled,
+    // A repeated analytics link must revalidate current visibility even within the app's 60s cache.
+    ...(Object.keys(filters).length > 0 ? { staleTime: 0 } : {}),
     // Never carry another topic's, tag's or order's result over: it has a different number of pages,
     // or the same posts in another order that would look like the new one.
     placeholderData: (previous, previousQuery) => {

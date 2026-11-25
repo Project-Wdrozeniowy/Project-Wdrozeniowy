@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { AxiosInstance } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { vi } from 'vitest';
+import { useState } from 'react';
 import DashboardPage from '@/pages/dashboard/ui/DashboardPage';
 import { apiClient } from '@/shared/api/client/api';
 import { toast } from '@/shared/lib/toast';
@@ -16,6 +17,12 @@ import {
   DEFAULT_ANALYTICS,
   requestsTo,
 } from '@/test/fakeAnalyticsServer';
+
+vi.mock('react-router', async () =>
+  (await import('@/test/routerMock')).routerMock({
+    useSearchParams: () => useState(() => new URLSearchParams()),
+  })
+);
 
 /**
  * DashboardPage -> hooks -> generated operations -> the real ApiClient (axios, interceptors).
@@ -43,13 +50,17 @@ function renderPage() {
 }
 
 beforeEach(() => {
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
   vi.clearAllMocks();
   mock = new MockAdapter(axiosInstance);
   apiClient.clearCsrf();
   useStore.setState({ isAuthenticated: true });
 });
 
-afterEach(() => mock.restore());
+afterEach(() => {
+  mock.restore();
+  vi.restoreAllMocks();
+});
 
 // "Posts" and "Comments" are also the names of the chart's metric choice: look for the figure cards.
 const card = (label: string) =>
@@ -81,12 +92,12 @@ describe('showing the real figures', () => {
     renderPage();
 
     expect(
-      await screen.findByRole('img', {
+      await screen.findByRole('group', {
         name: 'Posts per day, Last 7 days, UTC. Nov 16, 2026: 20 posts, Nov 17, 2026: 30 posts, Nov 18, 2026: 10 posts',
       })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('img', {
+      screen.getByRole('group', {
         name: 'Posts by category, Last 7 days, UTC. AI / Tech: 35, Gaming: 20, No category: 5',
       })
     ).toBeInTheDocument();
@@ -95,7 +106,7 @@ describe('showing the real figures', () => {
   it('switches the activity chart between posts and comments, and lists the days in a table', async () => {
     fakeAnalyticsServer(mock);
     renderPage();
-    await screen.findByRole('img', { name: /^Posts per day/ });
+    await screen.findByRole('group', { name: /^Posts per day/ });
 
     await userEvent.click(screen.getByRole('radio', { name: 'Comments' }));
 
@@ -150,7 +161,7 @@ describe('what each card says about its figures', () => {
     );
 
     const chart = screen.getByRole('region', { name: 'Posts and comments by day' });
-    await within(chart).findByRole('img');
+    await within(chart).findByRole('group', { name: /^Posts per day/ });
     expect(chart).toHaveTextContent('60 public posts and 100 comments in this window');
     expect(chart).toHaveTextContent('Nov 12, 2026 – Nov 19, 2026 (end exclusive), UTC');
     expect(chart).toHaveTextContent('Updated Nov 18, 2026, 10:00 UTC');
@@ -170,7 +181,7 @@ describe('what each card says about its figures', () => {
     fakeAnalyticsServer(mock);
     renderPage();
     const chart = screen.getByRole('region', { name: 'Posts and comments by day' });
-    await within(chart).findByRole('img');
+    await within(chart).findByRole('group', { name: /^Posts per day/ });
 
     expect(chart.querySelectorAll('rect[data-point="measured"]')).toHaveLength(
       DEFAULT_ANALYTICS.activity('7d').days.length
@@ -213,7 +224,7 @@ describe('what each card says about its figures', () => {
     fakeAnalyticsServer(mock);
     useStore.setState({ isAuthenticated: false });
     renderPage();
-    await screen.findByRole('img', { name: /Posts per day/ });
+    await screen.findByRole('group', { name: /Posts per day/ });
 
     // The cards the page words itself; the top posts are users' titles.
     for (const name of ['Key figures', 'Posts and comments by day', 'Posts by category']) {
@@ -339,7 +350,7 @@ describe('when there is nothing or something fails', () => {
     await userEvent.click(within(alerts[0]).getByRole('button', { name: 'Try again' }));
 
     expect(
-      await screen.findByRole('img', { name: /Posts per day, Last 7 days/ })
+      await screen.findByRole('group', { name: /Posts per day, Last 7 days/ })
     ).toBeInTheDocument();
   });
 
@@ -373,7 +384,7 @@ describe('when there is nothing or something fails', () => {
     // The values stay, no figure turns into "Not available", and no server text or toast appears.
     expect(within(figures).getByText('60')).toBeInTheDocument();
     expect(
-      within(chart).getByRole('img', { name: /Posts per day, Last 7 days/ })
+      within(chart).getByRole('group', { name: /Posts per day, Last 7 days/ })
     ).toBeInTheDocument();
     expect(screen.queryByText('Not available')).not.toBeInTheDocument();
     expect(document.body).not.toHaveTextContent('PSQLException');
@@ -439,7 +450,7 @@ describe('category distribution integration', () => {
     fakeAnalyticsServer(mock);
     mock.onGet('/analytics/public/categories').reply(500);
     renderPage();
-    expect(await screen.findByRole('img', { name: /^Posts per day/ })).toBeInTheDocument();
+    expect(await screen.findByRole('group', { name: /^Posts per day/ })).toBeInTheDocument();
     const categories = screen.getByRole('region', { name: 'Posts by category' });
     expect(await within(categories).findByRole('alert')).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Hot this week' })).toBeInTheDocument();

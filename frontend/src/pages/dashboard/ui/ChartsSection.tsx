@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { dayPublicationsHref } from '@/features/publication-drilldown';
 import {
   ACTIVITY_CHART_DESCRIPTION,
   ACTIVITY_CHART_TITLE,
@@ -18,11 +18,24 @@ import WindowMeta from './WindowMeta';
 
 interface ChartsSectionProps {
   period: AnalyticsPeriod;
+  metricId: string;
+  onMetricChange: (metric: string) => void;
+  activityTableOpen: boolean;
+  onActivityTableOpenChange: (open: boolean) => void;
+  categoryTableOpen: boolean;
+  onCategoryTableOpenChange: (open: boolean) => void;
 }
 
-export default function ChartsSection({ period }: ChartsSectionProps) {
+export default function ChartsSection({
+  period,
+  metricId,
+  onMetricChange,
+  activityTableOpen,
+  onActivityTableOpenChange,
+  categoryTableOpen,
+  onCategoryTableOpenChange,
+}: ChartsSectionProps) {
   const activity = usePublicActivity(period);
-  const [metricId, setMetricId] = useState('posts');
   const data = activity.data;
 
   return (
@@ -33,7 +46,22 @@ export default function ChartsSection({ period }: ChartsSectionProps) {
         metrics={activityMetrics(data)}
         kind="bar"
         metricId={metricId}
-        onMetricChange={setMetricId}
+        onMetricChange={onMetricChange}
+        tableOpen={activityTableOpen}
+        onTableOpenChange={onActivityTableOpenChange}
+        pointLinks={
+          metricId === 'posts' && data
+            ? Object.fromEntries(
+                data.days.map((day) => [
+                  day.date,
+                  {
+                    href: dayPublicationsHref(day.date),
+                    label: `Open ${countLabel(day.posts, 'post', 'posts')} on ${new Date(`${day.date}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}, UTC`,
+                  },
+                ])
+              )
+            : undefined
+        }
         periodLabel={ANALYTICS_PERIOD_LABELS[period]}
         phase={getLoadPhase(activity)}
         onRetry={() => activity.refetch()}
@@ -61,7 +89,11 @@ export default function ChartsSection({ period }: ChartsSectionProps) {
           )
         }
       />
-      <CategoryDistributionCard period={period} />
+      <CategoryDistributionCard
+        period={period}
+        tableOpen={categoryTableOpen}
+        onTableOpenChange={onCategoryTableOpenChange}
+      />
     </div>
   );
 }

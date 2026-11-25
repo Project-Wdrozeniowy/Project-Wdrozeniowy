@@ -80,7 +80,7 @@ export default function ActivePublicationFilters({ params, posts }: ActivePublic
       )}
       {hasCategory && (
         <div className="flex gap-3 flex-wrap">
-          <p>Category: {filters.uncategorized ? 'No category' : `${label} · ID ${categoryId}`}</p>
+          <p>Category: {filters.uncategorized ? 'No category' : label}</p>
           <Link to={href('category')} className={linkClass}>
             Clear category
           </Link>

@@ -33,7 +33,7 @@ export interface CategoryRow extends PublicCategoryShareDto {
 
 /**
  * Every API row, including zero and uncategorized, in server order. Identity and shares stay
- * intact for the table and PWDRZ-185. Only the bar length is derived, relative to the largest count.
+ * intact for the table and publication links. Only bar length is derived, relative to the largest count.
  */
 export function categorySeries(distribution: PublicCategoryDistributionDto): CategoryRow[] {
   const max = distribution.categories.reduce((largest, row) => Math.max(largest, row.posts), 0);

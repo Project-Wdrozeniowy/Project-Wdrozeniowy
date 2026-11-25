@@ -43,7 +43,7 @@ it('shows every API category, full labels, counts and shares with a semantic tab
   data.categories[2].category!.visible = false;
   mock.onGet(url).reply(200, data);
   mount();
-  const graph = await screen.findByRole('img', { name: /Posts by category, Last 7 days/ });
+  const graph = await screen.findByRole('group', { name: /Posts by category, Last 7 days/ });
   expect(graph).toHaveAccessibleName(new RegExp(`${longName}: 2`));
   const bars = within(graph).getAllByTestId('category-bar');
   expect(bars.map((bar) => bar.style.width)).toEqual(['100%', '0%', '50%', '0%']);
@@ -61,13 +61,17 @@ it('shows every API category, full labels, counts and shares with a semantic tab
   expect(within(table).getByRole('cell', { name: '33.33%' })).toBeInTheDocument();
   expect(within(table).getAllByRole('cell', { name: '0%' })).toHaveLength(2);
   expect(requestsTo(mock, url)).toHaveLength(1);
-  expect(screen.queryByRole('link')).not.toBeInTheDocument(); // PWDRZ-185 owns actions.
+  const actions = screen.getAllByRole('link');
+  expect(actions).toHaveLength(data.categories.length * 2);
+  const zero = screen.getAllByRole('link', { name: /Open 0 posts in Quiet/ });
+  expect(zero[0].getAttribute('href')).toBe(zero[1].getAttribute('href'));
+  expect(actions.every((link) => !link.closest('[role="img"], [aria-hidden="true"]'))).toBe(true);
 });
 
 it('keeps more than eight categories, duplicate names and uncategorized separately', async () => {
   mock.onGet(url).reply(200, makeCategories(Array.from({ length: 10 }, () => ['Same', 1])));
   mount();
-  await screen.findByRole('img');
+  await screen.findByRole('group');
   const table = await openTable();
   expect(within(table).getAllByRole('rowheader', { name: 'Same' })).toHaveLength(10);
   expect(within(table).getAllByRole('rowheader')).toHaveLength(11);
@@ -201,7 +205,11 @@ it('does not label a cached period as a new one or let a late previous-period re
 it('keeps the table toggle in the keyboard path', async () => {
   mock.onGet(url).reply(200, makeCategories([['Only', 1]]));
   mount();
-  await screen.findByRole('img');
+  await screen.findByRole('group');
+  await userEvent.tab();
+  expect(screen.getByRole('link', { name: /Open 1 post in Only/ })).toHaveFocus();
+  await userEvent.tab();
+  expect(screen.getByRole('link', { name: /Open 0 posts in No category/ })).toHaveFocus();
   await userEvent.tab();
   expect(screen.getByRole('button', { name: 'Category data table' })).toHaveFocus();
   await userEvent.keyboard(' ');

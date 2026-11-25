@@ -22,6 +22,7 @@ import {
   measuredValues,
   seriesTitle,
   type ActivityMetric,
+  type ActivityPointLink,
 } from '@/widgets/activity-chart/lib/activityView';
 import ActivityChartSkeleton from './ActivityChartSkeleton';
 import ActivityGraph from './ActivityGraph';
@@ -29,6 +30,9 @@ import ActivityLegend from './ActivityLegend';
 import ActivityTable from './ActivityTable';
 
 interface ActivityChartProps {
+  pointLinks?: Readonly<Record<string, ActivityPointLink>>;
+  tableOpen?: boolean;
+  onTableOpenChange?: (open: boolean) => void;
   /** The card's heading. */
   title: string;
   /** A line under the heading saying what the card shows. */
@@ -87,10 +91,14 @@ export default function ActivityChart({
   meta,
   actions,
   embedded = false,
+  pointLinks,
+  tableOpen: controlledTableOpen,
+  onTableOpenChange,
 }: ActivityChartProps) {
   const headingId = useId();
   const tableId = useId();
-  const [tableOpen, setTableOpen] = useState(false);
+  const [localTableOpen, setLocalTableOpen] = useState(false);
+  const tableOpen = controlledTableOpen ?? localTableOpen;
   const metric = metrics.find((candidate) => candidate.id === metricId) ?? metrics[0];
 
   const measured = metric ? measuredValues(metric.points) : [];
@@ -132,6 +140,7 @@ export default function ActivityChart({
           kind={kind}
           summary={chartSummary(metric, periodLabel, MISSING_VALUE_TEXT)}
           missingText={MISSING_VALUE_TEXT}
+          pointLinks={pointLinks}
         />
         <ActivityLegend
           metric={metric}
@@ -142,7 +151,9 @@ export default function ActivityChart({
         <p className="text-xs text-fg-subtle">{UTC_NOTE}</p>
         <button
           type="button"
-          onClick={() => setTableOpen((open) => !open)}
+          onClick={() =>
+            onTableOpenChange ? onTableOpenChange(!tableOpen) : setLocalTableOpen(!tableOpen)
+          }
           aria-expanded={tableOpen}
           aria-controls={tableId}
           className="self-start rounded border border-line-strong px-3 py-1.5 text-sm font-semibold text-fg hover:bg-raised focus-visible:outline-2 focus-visible:outline-blue-500"
@@ -150,7 +161,7 @@ export default function ActivityChart({
           {TABLE_TOGGLE_LABEL}
         </button>
         <div id={tableId} hidden={!tableOpen}>
-          <ActivityTable metric={metric} title={tableTitle} />
+          <ActivityTable metric={metric} title={tableTitle} pointLinks={pointLinks} />
         </div>
       </>
     );

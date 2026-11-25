@@ -13,6 +13,12 @@ export interface ActivityPoint {
   partial?: boolean;
 }
 
+/** Optional screen-owned destinations. The chart never interprets their query parameters. */
+export interface ActivityPointLink {
+  href: string;
+  label: string;
+}
+
 /** One thing that is counted per day: posts, comments, openings. */
 export interface ActivityMetric {
   id: string;

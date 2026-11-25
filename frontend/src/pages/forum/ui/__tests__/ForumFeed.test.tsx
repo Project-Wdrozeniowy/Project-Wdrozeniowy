@@ -82,9 +82,9 @@ function pageOf(
   };
 }
 
-function renderFeed() {
+function renderFeed(staleTime?: number) {
   // One client for the whole test, like the real app: a rerender keeps the query cache.
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime } } });
   // A new element each time, otherwise React skips the re-render.
   const ui = () => (
     <QueryClientProvider client={client}>
@@ -708,6 +708,22 @@ describe('ForumFeed – tag filter', () => {
 });
 
 describe('ForumFeed – analytics selection cache', () => {
+  it('revalidates a reopened analytics selection even inside the application cache freshness window', async () => {
+    search = 'createdFrom=2026-10-01T00:00:00Z';
+    list.mockResolvedValueOnce(pageOf([8, 7]));
+    const { client, unmount } = renderFeed(60_000);
+    await screen.findByText('Post 8');
+    unmount();
+    list.mockResolvedValueOnce(pageOf([7]));
+    render(
+      <QueryClientProvider client={client}>
+        <ForumFeed />
+      </QueryClientProvider>
+    );
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByText('Post 8')).not.toBeInTheDocument());
+    expect(screen.getByText('Post 7')).toBeInTheDocument();
+  });
   it.each([
     ['createdFrom=2026-10-01T00:00:00Z', 'createdFrom=2026-10-02T00:00:00Z'],
     ['createdTo=2026-10-02T00:00:00Z', 'createdTo=2026-10-03T00:00:00Z'],
