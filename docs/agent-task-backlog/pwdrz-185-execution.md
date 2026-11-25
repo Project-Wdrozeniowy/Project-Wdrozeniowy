@@ -41,9 +41,9 @@ Category names are display metadata; only stable ID/uncategorized determines the
 - An initial command used root vitest path; dependency is workspace-local. Corrected command ran
   from `frontend` with its config. That command error is not behavioural red evidence.
 
-## Verification
+## Intermediate verification
 
-Implementation and final acceptance checks are in progress. No completion claim yet.
+These entries preserve intermediate attempts; final acceptance is recorded below.
 
 - Focused helper/forum/dashboard/activity suite: 240/240 passed. Two new chart unit expectations
   failed before implementation; actual-router journey expectations also failed before wiring.
@@ -101,3 +101,82 @@ Implementation and final acceptance checks are in progress. No completion claim 
 - At ff3905e, frontend coverage passed 1550 tests/134 files, all four gates; root check 10/10
   (6 cached), production build passed. These precede the final scroll-event correction; final
   implementation checks and CI are recorded below after completion.
+
+## Final acceptance
+
+Tested implementation: `30c6a0aad2f78e717274e5c6c01edb88d530f8e9`, clean working tree at final
+gate start. Node 24.15.0, bundled npm 11.12.1 (shell default npm was not changed), Docker Engine
+29.4.3. The completion commit updates only this record and PWDRZ-185 local tracking.
+No backend, gateway, database schema, OpenAPI, generated binding, dependency, launcher or CI
+configuration changes. No PR, Jira/Figma content update or message to another owner.
+
+| Check                                 | Observed result                                                                                                        |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Frontend coverage                     | 1553/1553 tests, 134 files, exit 0; statements 98.38%, branches 94.59%, functions 98.19%, lines 99.05%; all gates pass |
+| Root check                            | 10/10 tasks succeeded, 4 cached; typecheck, lint and formatting retain their configured gates                          |
+| Frontend production build             | Passed; existing dependency-annotation/chunk-size warnings remain                                                      |
+| API bindings                          | 102 generated files match the validated contract; no contract change                                                   |
+| E2E tooling                           | Typecheck/format passed through root check; infrastructure 3/3 passed                                                  |
+| Complete managed browser + HTTP suite | **70/70 passed**, zero retries, exit 0; run `1795642744065-98964270`                                                   |
+| Cleanup                               | Runtime absent; exact final Compose project has no containers or network; owned images/network removal recorded        |
+| GitHub CI                             | **10/10 jobs passed** across six manually dispatched workflows, all on the tested implementation SHA                   |
+
+Local evidence: `e2e/artifacts/1795642744065-98964270/{run.json,result.json,browser-tests.log,stack-cleanup.log,report/index.html}`.
+Final local command logs: root ignored `pwdrz185-final-{coverage,stack,source-check,source-build}.log`.
+All previous owned run projects were also inspected after Docker became ready: no residual
+containers, networks or runtime directories. Generated screenshots/reports/logs remain ignored.
+
+### Concrete controls and observed behaviour
+
+The fixture creates a dedicated category and 19 API-backed posts, then gives only its own rows
+controlled historical timestamps/statuses/null association in the migrated disposable database.
+The browser is a guest; authenticated API setup is a separate request context with real CSRF.
+
+| Input / expected output                                                                        | Observed                                                                                                                                   |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Category row for the displayed 30d UTC window, using its returned ID and exact response bounds | Row and feed total 16; all returned posts have that category ID                                                                            |
+| Page size 10, second page of that selection                                                    | Six remaining posts, no overlap with page one; dates/category retained                                                                     |
+| Reload and copied second-page URL in another page                                              | Same filters, page 2 and total 16                                                                                                          |
+| Back after feed reload                                                                         | 30d/posts, both tables open, exact source dashboard URL and Y position restored within the unchanged 8px assertion                         |
+| Day `2026-11-23`, from `00:00:00Z` inclusive to `2026-11-24T00:00:00Z` exclusive               | Graph and table have identical destinations; feed total equals the day's API aggregate                                                     |
+| Same day restricted to the controlled category                                                 | Exactly 13: twelve public posts including both UTC edges, plus one locked post; before/after/draft/deleted/null-category controls excluded |
+| Delete one selected public post after reading analytics                                        | Reopening revalidates the cached selection and returns 15; current-visibility explanation stays visible                                    |
+| No category row                                                                                | `uncategorized=true`, every returned post has null category and total matches the API row                                                  |
+| Quiet category, then failed real feed transport and keyboard retry                             | Zero and truthful empty selection; fixed error; retry reads the actual server and recovers                                                 |
+| Invalid date/category conflict                                                                 | Invalid-filter state, no feed request; clear action recovers. Cached ordinary pagination is also hidden (deterministic unit case)          |
+| Both themes at 320/390px                                                                       | No document overflow; daily chart targets at least 24px; categories, table and filtered forum readable                                     |
+| Read-only navigation                                                                           | Browser API calls are GET; no own-analytics call; fixture opening counters unchanged                                                       |
+
+Visual QA inspected the dark 320px category table and filtered forum, including wrapped UTC bounds,
+clear actions, category labels, zero values and normally wrapped "Not applicable" shares.
+Keyboard link, toggle, retry and metric interactions are checked; this is not a claim of a complete
+WCAG audit. Counts follow current public visibility and are not an immutable snapshot.
+
+### GitHub CI evidence
+
+| Workflow       | Result / run                                                                                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend Build | [Build Frontend passed](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45706173657)                                        |
+| Gateway Build  | [Build Gateway passed](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45706186650)                                         |
+| Backend Build  | [Build Backend passed](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45706198702)                                         |
+| Lint           | [Frontend and gateway lint/format passed](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45706208825)                      |
+| Tests          | [All three service coverage jobs and Workspace Tooling passed](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45706219103) |
+| E2E            | [E2E (Chromium) passed](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45706233260)                                        |
+
+The branch's push does not automatically trigger these main/develop/PR workflows. Existing
+workflow_dispatch was used; CI configuration and branch rules were not modified. These results
+refer to the implementation SHA above, before the documentation-only completion commit.
+
+### Targeted provisional-functionality review
+
+Reviewed PWDRZ-185 and the matching task branch, affected dashboard/forum/chart/query source,
+adjacent tests, E2E and relevant guide/instruction references. Updated the current-ticket
+no-links/default-reload expectations and ownership markers together with implementation. All API
+rows/IDs/null semantics and comment-only metric behaviour are preserved. No new feature flag,
+stub, artificial guard or unsupported success fixture was introduced; no unticketed TODO resolved.
+Historical execution records and unrelated owners' provisional features were preserved.
+No additional downstream task was established as newly unblocked, and no owner was messaged.
+
+Current limits: changed visibility/categories/new posts can change counts; offset pagination can
+shift under concurrent writes; blocked session storage falls back to ordinary router restoration
+and cannot guarantee persisted Y after a full reload. Dashboard URL settings remain shareable.

@@ -23254,11 +23254,12 @@
         }
       },
       "localTracking": {
-        "status": "in_progress",
+        "status": "done",
         "owner": "Codex / Ruslan 82179",
-        "updatedAt": "2026-11-25T21:01:18.450Z",
+        "updatedAt": "2026-11-25T21:47:34.841Z",
         "notes": [
-          "Approved implementation plan; branch PWDRZ-185-analytics-publication-drilldown published with upstream at f58ea58c4b4762d1c13dbaeeb67334af55c49233. See pwdrz-185-execution.md."
+          "Approved implementation plan; branch PWDRZ-185-analytics-publication-drilldown published with upstream at f58ea58c4b4762d1c13dbaeeb67334af55c49233. See pwdrz-185-execution.md.",
+          "Completed on tested implementation 30c6a0aad2f78e717274e5c6c01edb88d530f8e9: shareable UTC/category filters, accessible graph/table links, pagination and dashboard URL/scroll restoration. Frontend 1553 tests and all coverage gates; root check 10/10; build/API drift/infra passed; full managed E2E 70/70, exit 0 and cleanup, run 1795642744065-98964270. GitHub CI 10/10 jobs passed. No API/schema/Jira/Figma changes or PR. See pwdrz-185-execution.md."
         ]
       }
     }
