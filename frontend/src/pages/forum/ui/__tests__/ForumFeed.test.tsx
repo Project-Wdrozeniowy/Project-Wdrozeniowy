@@ -707,6 +707,25 @@ describe('ForumFeed – tag filter', () => {
   });
 });
 
+describe('ForumFeed – analytics selection cache', () => {
+  it.each([
+    ['createdFrom=2026-10-01T00:00:00Z', 'createdFrom=2026-10-02T00:00:00Z'],
+    ['createdTo=2026-10-02T00:00:00Z', 'createdTo=2026-10-03T00:00:00Z'],
+    ['categoryId=1', 'categoryId=2'],
+    ['', 'uncategorized=true'],
+  ])('does not carry old posts from %s into %s', async (previous, next) => {
+    search = previous;
+    list.mockResolvedValueOnce(pageOf([8, 7]));
+    const { rerenderFeed } = renderFeed();
+    await screen.findByText('Post 8');
+    search = next;
+    list.mockReturnValueOnce(new Promise(() => {}));
+    rerenderFeed();
+    expect(await screen.findByRole('status', { name: 'Loading posts…' })).toBeInTheDocument();
+    expect(screen.queryByText('Post 8')).not.toBeInTheDocument();
+  });
+});
+
 describe('ForumFeed – the order from the home page', () => {
   it.each([
     ['new', 'createdAt'],

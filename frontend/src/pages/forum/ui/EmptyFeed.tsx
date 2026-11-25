@@ -7,9 +7,16 @@ interface EmptyFeedProps {
   /** The page number is past the last page although posts exist. */
   pageOutOfRange: boolean;
   onFirstPage: () => void;
+  publicationFiltered?: boolean;
 }
 
-export default function EmptyFeed({ topic, tag, pageOutOfRange, onFirstPage }: EmptyFeedProps) {
+export default function EmptyFeed({
+  topic,
+  tag,
+  pageOutOfRange,
+  onFirstPage,
+  publicationFiltered,
+}: EmptyFeedProps) {
   if (pageOutOfRange) {
     return (
       <div className="flex flex-col items-start gap-3">
@@ -24,6 +31,8 @@ export default function EmptyFeed({ topic, tag, pageOutOfRange, onFirstPage }: E
       </div>
     );
   }
+  if (publicationFiltered)
+    return <p className="text-fg-subtle text-sm">No public posts match these filters.</p>;
   if (tag) {
     return (
       <p className="text-fg-subtle text-sm">
