@@ -1,4 +1,4 @@
-import { activityMetrics, categorySeries, chartSummary } from '@/pages/dashboard/lib/dashboardView';
+import { activityMetrics, categorySeries } from '@/pages/dashboard/lib/dashboardView';
 import { makeActivity, makeCategories } from '@/test/fakeAnalyticsServer';
 
 describe('activityMetrics', () => {
@@ -39,20 +39,29 @@ describe('categorySeries', () => {
       ])
     );
 
-    expect(series.labels).toEqual(['AI / Tech', 'Gaming', 'No category']);
-    expect(series.values).toEqual([40, 20, 5]);
+    expect(series).toMatchObject([
+      { key: 'category-1', label: 'AI / Tech', posts: 40, share: 0.6154, barPercent: 100 },
+      { key: 'category-2', label: 'Gaming', posts: 20, share: 0.3077, barPercent: 50 },
+      {
+        key: 'uncategorized',
+        category: null,
+        label: 'No category',
+        posts: 5,
+        share: 0.0769,
+        barPercent: 12.5,
+      },
+    ]);
   });
 
-  it('keeps up to eight bars as they are', () => {
+  it('keeps eight categories and the zero uncategorized row', () => {
     const rows: Array<[string, number]> = Array.from({ length: 8 }, (_, i) => [`C${i}`, 8 - i]);
 
     const series = categorySeries(makeCategories(rows));
 
-    expect(series.labels).toHaveLength(8);
-    expect(series.labels).not.toContain('Other');
+    expect(series).toHaveLength(9);
   });
 
-  it('adds up the rest as "Other" beyond eight, so the bars still sum to the total', () => {
+  it('keeps every category and the separate uncategorized row beyond eight', () => {
     const rows: Array<[string | null, number]> = [
       ...Array.from({ length: 9 }, (_, i): [string, number] => [`C${i}`, 10 - i]),
       [null, 4],
@@ -60,25 +69,35 @@ describe('categorySeries', () => {
 
     const series = categorySeries(makeCategories(rows));
 
-    expect(series.labels).toHaveLength(8);
-    expect(series.labels.slice(0, 7)).toEqual(['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6']);
-    expect(series.labels[7]).toBe('Other');
-    // C7 (3) + C8 (2) + the post without a category (4)
-    expect(series.values[7]).toBe(3 + 2 + 4);
-    expect(series.values.reduce((sum, value) => sum + value, 0)).toBe(
-      rows.reduce((sum, row) => sum + row[1], 0)
-    );
-  });
-});
-
-describe('chartSummary', () => {
-  it('says the values in words', () => {
-    expect(chartSummary('Posts per day', ['Mon 16', 'Tue 17'], [2, 3])).toBe(
-      'Posts per day. Mon 16: 2, Tue 17: 3'
+    expect(series).toMatchObject(
+      rows.map(([name, posts], index) => ({
+        key: name === null ? 'uncategorized' : `category-${index + 1}`,
+        label: name ?? 'No category',
+        posts,
+      }))
     );
   });
 
-  it('numbers a bar that has no label', () => {
-    expect(chartSummary('Posts', ['', ''], [1, 2])).toBe('Posts. 1: 1, 2: 2');
+  it('preserves identities, hidden categories and API shares without renormalizing', () => {
+    const distribution = makeCategories([
+      ['Same', 1],
+      ['Same', 2],
+      [null, 0],
+    ]);
+    distribution.categories[0].category!.id = 42;
+    distribution.categories[0].category!.visible = false;
+    distribution.categories[0].share = 0.3333;
+    expect(categorySeries(distribution)).toMatchObject([
+      { key: 'category-42', category: { id: 42, visible: false }, share: 0.3333 },
+      { key: 'category-2', category: { id: 2 }, share: 0.6667 },
+      { key: 'uncategorized', category: null, share: 0 },
+    ]);
+  });
+
+  it('keeps zero counts and undefined shares without invalid bar widths', () => {
+    expect(categorySeries(makeCategories([['Quiet', 0]]))).toMatchObject([
+      { label: 'Quiet', posts: 0, share: null, barPercent: 0 },
+      { label: 'No category', posts: 0, share: null, barPercent: 0 },
+    ]);
   });
 });

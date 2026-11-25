@@ -477,6 +477,27 @@ Run root check, frontend coverage/build and managed real-stack E2E after a
 routing refactor. Never replace actual backend/browser acceptance with mocked
 planned feature success. Product placeholders and their owners stay unchanged.
 
+## Dashboard category distribution (PWDRZ-179)
+
+The screen-private `CategoryDistributionCard` reads the existing generated public category operation
+through `usePublicCategoryDistribution`, using the dashboard's shared 7d/30d selection. Its horizontal
+bars follow Figma Dashboard `25:1715`, card `143:1931`; category colours reuse the forum's theme tokens.
+Every API row is preserved in server order, including zero categories, returned hidden categories and
+the final `category: null` row ("No category", also including deleted associations). Nothing is grouped
+into "Other" or filled from the static topic list. Bars compare counts against the largest count;
+the expandable semantic table shows each row's API count and share of `totalPosts`.
+
+An empty window has a truthful message, zero counts and "Not applicable" shares. Other shares are
+formatted as percentages with up to two decimals; rounding is not redistributed to force 100%.
+Window bounds and update time come from the category response in UTC; the end is explicitly exclusive.
+Initial failure uses the shared retry presentation. A failed background refresh retains the last
+values and timestamp with a recoverable notice. Another period never borrows the previous period's
+values. Separately fetched activity and category responses need not be the same database snapshot.
+
+`CategoryRow` retains the API category object/ID and the distinct uncategorized identity for PWDRZ-185.
+Links, forum URL filters and analytics history restoration remain that task's responsibility.
+PWDRZ-174 retains the dashboard-wide metadata/feedback work; this card does not redesign other blocks.
+
 ## References
 
 The concrete tree is a project choice following

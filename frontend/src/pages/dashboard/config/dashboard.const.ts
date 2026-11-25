@@ -13,11 +13,8 @@ export const UNAVAILABLE_TEXT = 'Not available';
 export const CHART_COLORS = {
   posts: '#2563eb',
   comments: '#10b981',
-  categories: '#8b5cf6',
 } as const;
 
-/** The most category bars shown; the chart stays readable and the server order is kept. Any
- * further categories are added up in one "Other" bar. */
-export const MAX_CATEGORY_BARS = 8;
 export const NO_CATEGORY_LABEL = 'No category';
-export const OTHER_CATEGORIES_LABEL = 'Other';
+export const CATEGORY_CHART_TITLE = 'Posts by category';
+export const NO_CATEGORY_POSTS_TEXT = 'No public posts in this window yet.';

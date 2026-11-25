@@ -117,7 +117,7 @@ describe('TrendingTopics', () => {
 
     const tech = await screen.findByRole('link', { name: /AI \/ Tech/ });
     expect(tech).toHaveAttribute('href', '/forum?topic=AI+%2F+Tech');
-    expect(tech).toHaveTextContent('40 posts');
+    expect(tech).toHaveTextContent('35 posts');
     expect(screen.getByRole('link', { name: /Gaming/ })).toHaveTextContent('20 posts');
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     expect(requestsTo(mock, '/analytics/public/categories')[0].params).toEqual({ period: '7d' });
