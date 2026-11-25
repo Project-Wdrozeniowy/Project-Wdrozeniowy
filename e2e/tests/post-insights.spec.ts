@@ -179,10 +179,16 @@ test('post insights follow persisted votes, replies, account changes and safe re
     expect((await first.context.get(ownerURL)).status()).toBe(404);
     await signOutThroughMenu(page);
     await signIn(page, account);
+    // The author's own visit records its opening (PWDRZ-166): wait for it, so the refreshes below
+    // are compared with the stored state after it.
+    const recorded = page.waitForResponse(
+      (r) => r.url() === `${path}/openings` && r.request().method() === 'POST'
+    );
     await page.goto(`/forum/${post.slug}`);
     const authorCard = page.getByRole('region', { name: 'Author insights' });
     await expect(authorCard.getByText('2 upvotes · 1 downvote')).toBeVisible();
     await expect(metric(authorCard, 'Visible comments')).toHaveText('2');
+    expect((await recorded).status()).toBe(204);
     const before = storedOpenings(post.id);
     expect(before[0]).toBeGreaterThanOrEqual(2);
     expect(before[1]).toBeGreaterThanOrEqual(2);

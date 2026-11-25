@@ -113,7 +113,7 @@ cache is also cleared when the session changes).
   notice are handled in the chart area; a failed series never replaces the totals. Refresh insights
   reads it again with the totals.
 
-The public summary does not display nonfunctional controls. PWDRZ-166 owns
-navigation/reload opening delivery: no summary read, disclosure or refresh records
-an opening. See the [approved implementation plan](../agent-task-backlog/pwdrz-169-implementation-plan.md)
+The public summary does not display nonfunctional controls. Opening delivery
+belongs to the post page (PWDRZ-166, see the frontend guide): no summary read,
+disclosure or refresh records an opening. See the [approved implementation plan](../agent-task-backlog/pwdrz-169-implementation-plan.md)
 and [PWDRZ-169 execution evidence](../agent-task-backlog/pwdrz-169-execution.md).

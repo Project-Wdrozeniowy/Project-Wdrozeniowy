@@ -79,11 +79,25 @@ test('the author reads the daily openings of a post, and nobody else sees them',
     const firstRead = page.waitForResponse(
       (r) => r.url() === `${trendURL}?period=7d` && r.request().method() === 'GET'
     );
+    // The author's own visit records its opening (PWDRZ-166), a third one for today.
+    const recorded = page.waitForResponse(
+      (r) =>
+        r.url() === `${gatewayURL}/api/forum/posts/${slug}/openings` &&
+        r.request().method() === 'POST'
+    );
     await page.goto(`/forum/${slug}`);
     expect((await firstRead).status()).toBe(200);
+    expect((await recorded).status()).toBe(204);
     const card = page.getByRole('region', { name: 'Author insights' });
     const trendSection = card.getByRole('region', { name: 'Daily openings' });
     await expect(trendSection).toBeVisible();
+    // The first read may have come before that opening was counted: read the chart again, so the
+    // table below shows what the API answers now.
+    const reread = page.waitForResponse(
+      (r) => r.url() === `${trendURL}?period=7d` && r.request().method() === 'GET'
+    );
+    await card.getByRole('button', { name: 'Refresh insights' }).click();
+    expect((await reread).status()).toBe(200);
 
     // The table lists exactly the days the API answers: a measured zero as 0, a day before
     // collection as "Not measured", the current day marked partial.
