@@ -50,6 +50,16 @@ beforeEach(() => {
   http.onGet('/users/me').reply(200, { id: 1, username: 'alice' });
   http.onGet('/auth/csrf').reply(200, { token: 'csrf', headerName: 'X-CSRF-TOKEN' });
   http.onPost('/auth/logout').reply(204);
+  http.onGet('/analytics/me/posts/5/openings').reply(200, {
+    postId: 5,
+    period: '7d',
+    totalOpenings: 2,
+    collectedFrom: summary.collectedFrom,
+    windowStart: '2026-11-01T00:00:00Z',
+    windowEnd: '2026-11-08T00:00:00Z',
+    generatedAt: '2026-11-07T12:00:00Z',
+    days: [{ date: '2026-11-07', measured: true, openings: 2 }],
+  });
   http.onGet('/analytics/public/posts/5').reply(200, {
     postId: 5,
     viewCount: 2,

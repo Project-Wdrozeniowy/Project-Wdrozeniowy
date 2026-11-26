@@ -12,16 +12,18 @@ import { CommentIcon, SaveIcon, ShareIcon } from '@/shared/ui/icons';
 import Markdown from '@/shared/ui/Markdown';
 import { formatTimeAgo } from '@/utils/format';
 import { ACTION_UNAVAILABLE_HINT, PostTagLinks, commentsLabel } from '@/widgets/post-feed';
+import AnalyticsButton from './AnalyticsButton';
 
 interface PostArticleProps {
   post: Post;
+  analytics?: { available: boolean; open: boolean; targetId: string; onToggle: () => void };
 }
 
 /**
  * The post of the thread page. The text is user content written in Markdown (the API says so), shown
  * by `Markdown`, which allows no raw HTML, no script and no remote images.
  */
-export default function PostArticle({ post }: PostArticleProps) {
+export default function PostArticle({ post, analytics }: PostArticleProps) {
   const titleId = useId();
   const name = authorName(post.author);
   const badges = postBadges(post);
@@ -92,6 +94,7 @@ export default function PostArticle({ post }: PostArticleProps) {
           />
           <ActionButton icon={<SaveIcon />} label="Save" disabled title={ACTION_UNAVAILABLE_HINT} />
           <EditPostButton post={post} />
+          {analytics && <AnalyticsButton {...analytics} />}
         </div>
       </div>
     </article>

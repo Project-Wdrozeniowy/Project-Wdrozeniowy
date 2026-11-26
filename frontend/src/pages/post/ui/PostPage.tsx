@@ -1,4 +1,7 @@
+import { useId, useState } from 'react';
 import { useLocation, useParams } from 'react-router';
+import { useCurrentUser } from '@/shared/api/profile/currentUser';
+import { canReadInsights } from '@/pages/post/lib/insightsAccess';
 import { CommentSection } from '@/features/post-comments/CommentSection';
 import { POST_ERROR_TEXT } from '@/pages/post/config/post.const';
 import { isPostNotFound } from '@/pages/post/lib/postView';
@@ -15,6 +18,15 @@ export default function PostPage() {
   const { slug = '' } = useParams();
   const query = usePost(slug);
   const { hash } = useLocation();
+  const viewer = useCurrentUser();
+  const identity = `${query.data?.id ?? slug}:${viewer?.id ?? 'guest'}`;
+  const [visibility, setVisibility] = useState({ identity, open: false, denied: false });
+  if (visibility.identity !== identity) setVisibility({ identity, open: false, denied: false });
+  const analyticsId = useId();
+  const available =
+    Boolean(query.data && canReadInsights(query.data, viewer?.id)) &&
+    !(visibility.identity === identity && visibility.denied);
+  const analyticsOpen = available && visibility.identity === identity && visibility.open;
 
   // The "N Comments" links point at #comments, which exists only once the post has loaded: the
   // browser's own scroll to a fragment has already come and gone by then, so scroll here, and keep
@@ -32,8 +44,26 @@ export default function PostPage() {
   if (query.data) {
     return (
       <div className="flex flex-col gap-6">
-        <PostArticle post={query.data} />
-        <PostInsights post={query.data} onRefreshPost={() => query.refetch()} />
+        <PostArticle
+          post={query.data}
+          analytics={{
+            available,
+            open: analyticsOpen,
+            targetId: analyticsId,
+            onToggle: () => setVisibility({ identity, open: !analyticsOpen, denied: false }),
+          }}
+        />
+        <div id={analyticsId} hidden={!analyticsOpen}>
+          {analyticsOpen && (
+            <PostInsights
+              post={query.data}
+              onRefreshPost={() => query.refetch()}
+              onUnavailable={() => {
+                setVisibility({ identity, open: false, denied: true });
+              }}
+            />
+          )}
+        </div>
         {/* The target of the "N Comments" links. */}
         <div id="comments">
           <CommentSection slug={slug} postId={query.data.id} />

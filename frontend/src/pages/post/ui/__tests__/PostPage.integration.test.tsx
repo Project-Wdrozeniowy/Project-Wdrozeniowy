@@ -463,6 +463,90 @@ describe('showing the post', () => {
   });
 });
 
+describe('on-demand analytics', () => {
+  it('resets visibility between non-owner accounts but keeps it for the same account', async () => {
+    servePost();
+    mock.onGet('/analytics/public/posts/5').reply(200, {
+      postId: 5,
+      viewCount: 10,
+      commentCount: 4,
+      voteScore: 3,
+      collectedFrom: '2026-11-08T00:00:00Z',
+    });
+    const { client } = renderPage();
+    await screen.findByRole('button', { name: 'Analytics' });
+    await act(async () => {
+      signInUser(client, { id: 2, username: 'bob' });
+    });
+    const button = screen.getByRole('button', { name: 'Analytics' });
+    await userEvent.click(button);
+    await screen.findByRole('region', { name: 'Post insights' });
+    await act(async () => {
+      signInUser(client, { id: 2, username: 'bob' });
+    });
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    await act(async () => {
+      signInUser(client, { id: 3, username: 'carol' });
+    });
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('region', { name: 'Post insights' })).not.toBeInTheDocument();
+  });
+
+  it('preserves an unsent comment while closing and reopening analytics', async () => {
+    servePost();
+    mock.onGet('/analytics/me/posts/5').reply(500);
+    mock.onGet('/analytics/me/posts/5/openings').reply(500);
+    renderPage(true);
+    const input = await screen.findByRole('textbox', { name: 'Add a comment' });
+    await userEvent.type(input, 'An unsent reply');
+    const button = screen.getByRole('button', { name: 'Analytics' });
+    await userEvent.click(button);
+    await screen.findByRole('alert');
+    await userEvent.click(button);
+    await userEvent.click(button);
+    expect(input).toHaveValue('An unsent reply');
+    expect(screen.getByRole('textbox', { name: 'Add a comment' })).toBe(input);
+  });
+
+  it('requests no analytics until opened and preserves the discussion while toggling', async () => {
+    servePost();
+    mock.onGet('/analytics/public/posts/5').reply(200, {
+      postId: 5,
+      viewCount: 10,
+      commentCount: 4,
+      voteScore: 3,
+      collectedFrom: '2026-11-08T00:00:00Z',
+    });
+    const { container } = renderPage();
+    const toggle = await screen.findByRole('button', { name: 'Analytics' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('region', { name: 'Post insights' })).not.toBeInTheDocument();
+    expect(mock.history.get.some((request) => request.url?.startsWith('/analytics/'))).toBe(false);
+    const comments = container.querySelector('#comments');
+    await userEvent.click(toggle);
+    expect(await screen.findByRole('region', { name: 'Post insights' })).toBeVisible();
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).toHaveFocus();
+    await userEvent.click(toggle);
+    expect(screen.queryByRole('region', { name: 'Post insights' })).not.toBeInTheDocument();
+    expect(container.querySelector('#comments')).toBe(comments);
+    expect(openingsSent()).toHaveLength(1);
+  });
+
+  it('keeps an unavailable Analytics button visible and explains it without requesting data', async () => {
+    servePost({ status: 'DELETED' });
+    renderPage();
+    const toggle = await screen.findByRole('button', { name: 'Analytics' });
+    expect(toggle).toHaveAttribute('aria-disabled', 'true');
+    expect(toggle).toHaveAccessibleDescription('Analytics are unavailable for this post.');
+    toggle.focus();
+    await userEvent.keyboard('{Enter} ');
+    await userEvent.click(toggle);
+    expect(screen.queryByRole('region', { name: /insights/i })).not.toBeInTheDocument();
+    expect(mock.history.get.some((request) => request.url?.startsWith('/analytics/'))).toBe(false);
+  });
+});
+
 describe('when there is no post to show', () => {
   it('says so for a post that does not exist, and offers the way back', async () => {
     mock.onGet('/forum/posts/hello').reply(404, { status: 404 });

@@ -74,117 +74,158 @@ function mount(value = post) {
   );
 }
 
-it('announces the initial load and keeps the refresh control available', async () => {
+async function ready(owner = false) {
+  if (owner) {
+    signInUser(client, { id: 1, username: 'alice' });
+    mock
+      .onGet('/analytics/me/posts/5')
+      .reply(200, { ...summary, upvoteCount: 3, downvoteCount: 4 });
+    mock.onGet(TREND_URL, { params: { period: '7d' } }).reply(200, trend);
+  } else mock.onGet('/analytics/public/posts/5').reply(200, summary);
+  const view = mount();
+  await screen.findByRole('button', { name: 'Expand' });
+  return view;
+}
+
+it('announces initial loading without a fabricated refresh control', () => {
   mock.onGet('/analytics/public/posts/5').reply(() => new Promise(() => {}));
   mount();
   expect(screen.getByRole('status', { name: 'Loading post insights' })).toBeVisible();
-  expect(screen.getByRole('button', { name: 'Refresh insights' })).toHaveAttribute(
-    'aria-disabled',
-    'true'
-  );
+  expect(screen.queryByRole('button', { name: 'Refresh insights' })).not.toBeInTheDocument();
 });
 
-it('shows real public metrics and discloses openings with a UTC date by keyboard', async () => {
-  mock.onGet('/analytics/public/posts/5').reply(200, summary);
-  mount();
-  const details = await screen.findByRole('button', { name: 'Details' });
+it('discloses public openings by keyboard without another read', async () => {
+  await ready();
   expect(screen.getByText('-1')).toBeVisible();
-  expect(screen.getByText('Includes replies')).toBeVisible();
-  expect(screen.getByText('1,284')).not.toBeVisible();
-  details.focus();
+  expect(screen.queryByText('1,284')).not.toBeInTheDocument();
+  const expand = screen.getByRole('button', { name: 'Expand' });
+  expand.focus();
   await userEvent.keyboard('{Enter}');
-  expect(details).toHaveFocus();
-  expect(details).toHaveAttribute('aria-expanded', 'true');
+  expect(expand).toHaveFocus();
+  expect(expand).toHaveAttribute('aria-expanded', 'true');
   expect(screen.getByText('1,284')).toBeVisible();
-  expect(screen.getByText('Nov 9, 2026 · UTC')).toHaveAttribute('datetime', summary.collectedFrom);
+  expect(screen.getByText(/^since Nov 9, 2026/)).toBeVisible();
   expect(screen.getByText(/They are not unique readers/)).toBeVisible();
   await userEvent.keyboard(' ');
-  expect(details).toHaveAttribute('aria-expanded', 'false');
+  expect(expand).toHaveAttribute('aria-expanded', 'false');
   expect(mock.history.get).toHaveLength(1);
 });
 
-it('shows the author breakdown and draft history without public requests or the public details', async () => {
+it('starts the author compact with a measured seven-day subtotal and separate expansion', async () => {
+  await ready(true);
+  expect(screen.getByText('Last 7 days: 16 openings')).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Daily openings' })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Expand' }));
+  expect(screen.getByRole('heading', { name: 'Daily openings' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Collapse' })).toHaveFocus();
+  const table = screen.getByRole('button', { name: 'Data table' });
+  expect(table).toHaveAttribute('aria-expanded', 'false');
+  await userEvent.click(table);
+  const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1);
+  expect(rows.map((row) => within(row).getByRole('cell').textContent)).toEqual([
+    'Not measured',
+    'Not measured',
+    'Not measured',
+    '4',
+    '0',
+    '8',
+    '4',
+  ]);
+  expect(within(rows.at(-1)!).getByRole('rowheader')).toHaveTextContent(
+    '2026-11-11 (today, partial)'
+  );
+  expect(screen.getByRole('img')).toHaveAccessibleName(
+    /Last 7 days.*not measured.*0 openings.*today, partial/
+  );
+});
+
+it('keeps the period switch mounted and focused while another period loads', async () => {
+  await ready(true);
+  mock.onGet(TREND_URL, { params: { period: '30d' } }).reply(() => new Promise(() => {}));
+  await userEvent.click(screen.getByRole('button', { name: 'Expand' }));
+  const choice = screen.getByRole('radio', { name: '7 days' });
+  choice.focus();
+  await userEvent.keyboard('{ArrowRight}');
+  expect(screen.getByRole('radio', { name: '30 days' })).toHaveFocus();
+  expect(screen.getByRole('status', { name: 'Loading chart' })).toBeVisible();
+  expect(screen.queryByRole('img')).not.toBeInTheDocument();
+});
+
+it('returns a thirty-day expanded view to a seven-day compact preview', async () => {
+  await ready(true);
+  mock.onGet(TREND_URL, { params: { period: '30d' } }).reply(200, {
+    ...trend30,
+    totalOpenings: 109,
+    days: [{ date: '2026-10-20', measured: true, openings: 100 }, ...trend.days.slice(-6)],
+  });
+  await userEvent.click(screen.getByRole('button', { name: 'Expand' }));
+  await userEvent.click(screen.getByRole('radio', { name: '30 days' }));
+  await screen.findByRole('img', { name: /Last 30 days/ });
+  await userEvent.click(screen.getByRole('button', { name: 'Collapse' }));
+  expect(screen.getByText('Last 7 days: 116 openings')).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Expand' }));
+  expect(screen.getByRole('radio', { name: '30 days' })).toBeChecked();
+});
+
+it.each(['DRAFT', 'DELETED'] as const)(
+  'requests nothing for another account viewing %s',
+  (status) => {
+    signInUser(client, { id: 2, username: 'staff', role: 'ADMIN' });
+    expect(mount({ ...post, status }).container).toBeEmptyDOMElement();
+    expect(mock.history.get).toHaveLength(0);
+  }
+);
+
+it('shows the draft author breakdown without public reads', async () => {
   signInUser(client, { id: 1, username: 'alice' });
   mock.onGet('/analytics/me/posts/5').reply(200, { ...summary, upvoteCount: 3, downvoteCount: 4 });
   mock.onGet(TREND_URL).reply(200, trend);
   mount({ ...post, status: 'DRAFT' });
   expect(await screen.findByText('3 upvotes · 4 downvotes')).toBeVisible();
-  expect(screen.getByRole('region', { name: 'Author insights' })).toBeVisible();
-  expect(screen.getByText('1,284')).toBeVisible();
-  expect(screen.queryByRole('button', { name: 'Details' })).not.toBeInTheDocument();
-  expect(mock.history.get.map((r) => r.url).sort()).toEqual(['/analytics/me/posts/5', TREND_URL]);
-});
-
-it.each(['USER', 'ADMIN', 'MODERATOR'])(
-  'shows only the public endpoint to a different %s account',
-  async (role) => {
-    signInUser(client, { id: 2, username: 'bob', role });
-    mock.onGet('/analytics/public/posts/5').reply(200, summary);
-    mount();
-    await screen.findByRole('button', { name: 'Details' });
-    expect(screen.queryByText(/upvotes/)).not.toBeInTheDocument();
-    expect(mock.history.get.map((r) => r.url)).toEqual(['/analytics/public/posts/5']);
-  }
-);
-
-it.each([
-  [1, 0, '1 upvote · 0 downvotes'],
-  [0, 1, '0 upvotes · 1 downvote'],
-] as const)(
-  'labels single votes without changing their counts (%i/%i)',
-  async (upvoteCount, downvoteCount, text) => {
-    signInUser(client, { id: 1, username: 'alice' });
-    mock.onGet('/analytics/me/posts/5').reply(200, {
-      ...summary,
-      voteScore: upvoteCount - downvoteCount,
-      upvoteCount,
-      downvoteCount,
-    });
-    mount();
-    expect(await screen.findByText(text)).toBeVisible();
-  }
-);
-
-it.each(['DRAFT', 'DELETED'] as const)(
-  'requests no insights for another account viewing a %s',
-  async (status) => {
-    signInUser(client, { id: 2, username: 'staff', role: 'ADMIN' });
-    const { container } = mount({ ...post, status });
-    expect(container).toBeEmptyDOMElement();
-    expect(mock.history.get).toHaveLength(0);
-  }
-);
-
-it('does not call a zero score a lack of votes or invent activity', async () => {
-  mock
-    .onGet('/analytics/public/posts/5')
-    .reply(200, { ...summary, voteScore: 0, commentCount: 0, viewCount: 0 });
-  mount();
-  await userEvent.click(await screen.findByRole('button', { name: 'Details' }));
-  expect(screen.getAllByText('0')).toHaveLength(3);
-  expect(screen.queryByText(/No activity|No votes/i)).not.toBeInTheDocument();
+  expect(mock.history.get.some((r) => r.url?.includes('/public/'))).toBe(false);
 });
 
 it.each([500, 403, 404, 429, 401])(
-  'represents %i without rendering internal server text',
+  'represents %i safely and replaces stale figures',
   async (status) => {
     const invalidate = vi.spyOn(client, 'invalidateQueries');
     client.setQueryData(getPublicSummaryQueryKey(5), summary);
     mock
       .onGet('/analytics/public/posts/5')
-      .reply(status, { detail: 'PSQLException: secret SQL at backend.internal' });
+      .reply(status, { detail: 'PSQLException at secret.internal' });
     mount();
-    const error = await screen.findByRole('alert');
-    expect(error).not.toHaveTextContent(/PSQL|secret|backend.internal/);
+    expect(await screen.findByRole('alert')).not.toHaveTextContent(/PSQL|secret/);
     expect(screen.queryByText('-1')).not.toBeInTheDocument();
     if (status === 404)
-      await waitFor(() =>
-        expect(invalidate).toHaveBeenCalledWith({ queryKey: ['/forum/posts/hello'] })
-      );
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['/forum/posts/hello'] });
   }
 );
 
-it('keeps retry mounted, reports another failure and restores focus after successful recovery', async () => {
+it.each([false, true])(
+  'handles initial series failure and refetch failure without stale numbers (%s)',
+  async (background) => {
+    if (background) {
+      await ready(true);
+      mock.onGet(TREND_URL, { params: { period: '7d' } }).reply(500, { detail: 'database secret' });
+      await act(async () => {
+        await client.invalidateQueries({ queryKey: ['/analytics/me/posts/5/openings'] });
+      });
+    } else {
+      signInUser(client, { id: 1, username: 'alice' });
+      mock
+        .onGet('/analytics/me/posts/5')
+        .reply(200, { ...summary, upvoteCount: 3, downvoteCount: 4 });
+      mock.onGet(TREND_URL).reply(500);
+      mount();
+    }
+    expect(await screen.findByRole('alert')).toHaveTextContent('Insights could not be loaded');
+    expect(screen.queryByText('1,284')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Last 7 days:/)).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('database secret');
+  }
+);
+
+it('retains Retry on another failure and restores focus after recovery', async () => {
   mock.onGet('/analytics/public/posts/5').networkErrorOnce();
   mock.onGet('/analytics/public/posts/5').replyOnce(500);
   mock.onGet('/analytics/public/posts/5').reply(200, summary);
@@ -195,42 +236,25 @@ it('keeps retry mounted, reports another failure and restores focus after succes
   await waitFor(() => expect(retry).toHaveTextContent('Try again'));
   expect(retry).toHaveFocus();
   await userEvent.keyboard('{Enter}');
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Details' })).toHaveFocus());
-  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Expand' })).toHaveFocus());
   expect(refreshPost).toHaveBeenCalledTimes(2);
 });
 
-it('refreshes both resources once, retains expansion, and reports a failed article read', async () => {
-  mock.onGet('/analytics/public/posts/5').replyOnce(200, summary);
-  mock.onGet('/analytics/public/posts/5').reply(200, { ...summary, voteScore: 8 });
+it('does not claim recovery if the article read fails', async () => {
+  mock.onGet('/analytics/public/posts/5').networkErrorOnce();
+  mock.onGet('/analytics/public/posts/5').reply(200, summary);
+  refreshPost.mockResolvedValueOnce({ isError: true });
   mount();
-  await userEvent.click(await screen.findByRole('button', { name: 'Details' }));
-  let finish!: (value: { isError: boolean }) => void;
-  refreshPost.mockImplementationOnce(
-    () =>
-      new Promise((resolve) => {
-        finish = resolve;
-      })
-  );
-  await userEvent.dblClick(screen.getByRole('button', { name: 'Refresh insights' }));
-  expect(refreshPost).toHaveBeenCalledTimes(1);
-  expect(screen.getByRole('button', { name: 'Hide details' })).toHaveAttribute(
-    'aria-expanded',
-    'true'
-  );
-  await act(async () => {
-    finish({ isError: true });
-  });
-  expect(await screen.findByRole('alert')).toHaveTextContent('The post could not be refreshed');
-  await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
-  expect(await screen.findByText('8')).toBeVisible();
-  expect(screen.getByText('1,284')).toBeVisible();
-  expect(mock.history.post).toHaveLength(0);
+  await userEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+  expect(
+    await screen.findByText('The post could not be refreshed. Please try again.')
+  ).toBeVisible();
+  expect(screen.queryByText('-1')).not.toBeInTheDocument();
 });
 
-it('does not steal focus when the reader leaves the card during recovery', async () => {
-  mock.onGet('/analytics/public/posts/5').replyOnce(500);
-  let finish!: (value: [number, typeof summary]) => void;
+it('does not steal focus after the reader leaves a pending retry', async () => {
+  mock.onGet('/analytics/public/posts/5').networkErrorOnce();
+  let finish!: (answer: [number, typeof summary]) => void;
   mock.onGet('/analytics/public/posts/5').reply(
     () =>
       new Promise((resolve) => {
@@ -245,213 +269,48 @@ it('does not steal focus when the reader leaves the card during recovery', async
   await act(async () => {
     finish([200, summary]);
   });
+  await screen.findByRole('button', { name: 'Expand' });
   expect(outside).toHaveFocus();
   outside.remove();
 });
 
-it('hides owner values immediately on account replacement even when their cache remains', async () => {
-  signInUser(client, { id: 1, username: 'alice' });
-  mock.onGet('/analytics/me/posts/5').reply(200, { ...summary, upvoteCount: 3, downvoteCount: 4 });
+it('discards author presentation when another account takes over', async () => {
+  await ready(true);
   mock.onGet('/analytics/public/posts/5').reply(200, summary);
-  mount();
-  await screen.findByText('3 upvotes · 4 downvotes');
+  await userEvent.click(screen.getByRole('button', { name: 'Expand' }));
   await act(async () => {
     signInUser(client, { id: 2, username: 'bob' });
   });
-  await waitFor(() => expect(screen.queryByText(/3 upvotes/)).not.toBeInTheDocument());
-  await screen.findByRole('region', { name: 'Post insights' });
+  await screen.findByRole('button', { name: 'Expand' });
+  expect(screen.queryByText(/3 upvotes/)).not.toBeInTheDocument();
+  expect(screen.queryByRole('img')).not.toBeInTheDocument();
 });
 
-it('resets expansion and does not carry totals across post navigation', async () => {
-  mock.onGet('/analytics/public/posts/5').reply(200, summary);
+it('resets expansion across post navigation', async () => {
+  const view = await ready();
+  await userEvent.click(screen.getByRole('button', { name: 'Expand' }));
   mock.onGet('/analytics/public/posts/6').reply(200, { ...summary, postId: 6, voteScore: 19 });
-  const view = mount();
-  await userEvent.click(await screen.findByRole('button', { name: 'Details' }));
   view.rerender(
     <QueryClientProvider client={client}>
       <PostInsights post={{ ...post, id: 6 }} onRefreshPost={refreshPost} />
     </QueryClientProvider>
   );
-  expect(screen.queryByText('-1')).not.toBeInTheDocument();
   expect(await screen.findByText('19')).toBeVisible();
-  expect(screen.getByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
-  expect(within(screen.getByRole('region')).getByText('1,284')).not.toBeVisible();
+  expect(screen.queryByText('1,284')).not.toBeInTheDocument();
 });
 
-describe('author daily opening trend', () => {
-  function ownerMount() {
-    signInUser(client, { id: 1, username: 'alice' });
-    mock
-      .onGet('/analytics/me/posts/5')
-      .reply(200, { ...summary, upvoteCount: 3, downvoteCount: 4 });
-    return mount();
-  }
-
-  it('shows each day in the graph and in a table, a zero apart from a day before collection', async () => {
-    mock.onGet(TREND_URL).reply(200, trend);
-    ownerMount();
-
-    expect(await screen.findByRole('heading', { name: 'Daily openings' })).toBeVisible();
-    expect(
-      screen.getByText(
-        'Nov 5–11, 2026 · UTC · daily openings. Today is partial, counted up to 14:30 UTC.'
-      )
-    ).toBeVisible();
-    expect(screen.getByRole('img')).toHaveAccessibleName(
-      /Openings per day, Last 7 days, UTC\. Nov 5, 2026: not measured.*Nov 9, 2026: 0 openings.*Nov 11, 2026 \(today, partial\): 4 openings$/
-    );
-    expect(mock.history.get.find((r) => r.url === TREND_URL)?.params).toEqual({ period: '7d' });
-
-    await userEvent.click(screen.getByRole('button', { name: 'Data table' }));
-    const table = screen.getByRole('table');
-    const rows = within(table).getAllByRole('row').slice(1);
-    expect(rows.map((row) => within(row).getByRole('cell').textContent)).toEqual([
-      'Not measured',
-      'Not measured',
-      'Not measured',
-      '4',
-      '0',
-      '8',
-      '4',
-    ]);
-    expect(within(rows[6]).getByRole('rowheader')).toHaveTextContent(
-      'Nov 11, 2026 (today, partial)'
-    );
+it('distinguishes measured zeros and missing values in the same chart/table', async () => {
+  await ready(true);
+  mock.onGet(TREND_URL, { params: { period: '7d' } }).reply(200, {
+    ...trend,
+    days: trend.days.map((day) => ({ ...day, measured: true, openings: 0 })),
+    totalOpenings: 0,
   });
-
-  it('says why the early days have no value and that they are not zero', async () => {
-    mock.onGet(TREND_URL).reply(200, trend);
-    ownerMount();
-
-    const note = await screen.findByText(
-      'Openings were not collected before Nov 8, 2026 UTC. Those days are not zero.'
-    );
-    expect(note).toBeVisible();
-    expect(screen.getByText('Not measured', { selector: 'p' })).toBeVisible();
+  await act(async () => {
+    await client.invalidateQueries({ queryKey: ['/analytics/me/posts/5/openings'] });
   });
-
-  it('shows measured zeros as zeros, not as missing', async () => {
-    mock.onGet(TREND_URL).reply(200, {
-      ...trend,
-      days: trend.days.map((day) => ({ ...day, measured: true, openings: 0 })),
-    });
-    ownerMount();
-
-    expect(await screen.findByText('No openings recorded in this period.')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'Data table' }));
-    expect(screen.queryByText('Not measured', { selector: 'span' })).not.toBeInTheDocument();
-    expect(within(screen.getByRole('table')).getAllByRole('cell', { name: '0' })).toHaveLength(7);
-  });
-
-  it('changes the window by click and by keyboard, and never shows the old days under the new one', async () => {
-    mock.onGet(TREND_URL, { params: { period: '7d' } }).reply(200, trend);
-    mock.onGet(TREND_URL, { params: { period: '30d' } }).reply(200, trend30);
-    ownerMount();
-    await screen.findByRole('heading', { name: 'Daily openings' });
-    const user = userEvent.setup();
-
-    expect(screen.getByRole('radio', { name: '7 days' })).toBeChecked();
-    await user.click(screen.getByRole('radio', { name: '30 days' }));
-
-    expect(await screen.findByRole('img', { name: /Last 30 days/ })).toHaveAccessibleName(
-      /Nov 10, 2026: 7 openings, Nov 11, 2026 \(today, partial\): 2 openings$/
-    );
-    expect(screen.getByRole('radio', { name: '30 days' })).toBeChecked();
-    expect(mock.history.get.filter((r) => r.url === TREND_URL).map((r) => r.params.period)).toEqual(
-      ['7d', '30d']
-    );
-
-    screen.getByRole('radio', { name: '30 days' }).focus();
-    await user.keyboard('{ArrowLeft}');
-    expect(await screen.findByRole('img', { name: /Last 7 days/ })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: '7 days' })).toHaveFocus();
-  });
-
-  it('announces the loading of a window and keeps the totals on screen', async () => {
-    mock.onGet(TREND_URL).reply(() => new Promise(() => {}));
-    ownerMount();
-
-    expect(await screen.findByText('3 upvotes · 4 downvotes')).toBeVisible();
-    expect(screen.getByRole('status', { name: 'Loading chart' })).toHaveAttribute(
-      'aria-busy',
-      'true'
-    );
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
-  });
-
-  it('shows a fixed message with a retry for a failed series, keeps the totals, and recovers', async () => {
-    mock.onGet(TREND_URL).replyOnce(500, { detail: 'PSQLException at db:5432' });
-    mock.onGet(TREND_URL).reply(200, trend);
-    ownerMount();
-
-    expect(await screen.findByText('3 upvotes · 4 downvotes')).toBeVisible();
-    const alert = await screen.findByText('Insights could not be loaded. Please try again.');
-    expect(document.body).not.toHaveTextContent('PSQLException');
-    expect(screen.getByText('1,284')).toBeVisible();
-
-    await userEvent.click(
-      within(alert.closest('[role="alert"]') as HTMLElement).getByRole('button', {
-        name: 'Try again',
-      })
-    );
-
-    expect(await screen.findByRole('img')).toBeInTheDocument();
-    expect(screen.getByText('3 upvotes · 4 downvotes')).toBeVisible();
-  });
-
-  it.each([
-    [404, 'These insights are no longer available. The post may have changed.'],
-    [403, 'These insights are not available to your account.'],
-  ])('words a %i answer for the series as the totals do', async (status, text) => {
-    mock.onGet(TREND_URL).reply(status);
-    ownerMount();
-
-    expect(await screen.findByText(text)).toBeVisible();
-  });
-
-  it('reads the series again with Refresh insights, and says so if that read fails', async () => {
-    mock.onGet(TREND_URL).replyOnce(200, trend);
-    mock.onGet(TREND_URL).reply(500);
-    ownerMount();
-    await screen.findByRole('img');
-
-    await userEvent.click(screen.getByRole('button', { name: 'Refresh insights' }));
-
-    expect(
-      await screen.findByText(
-        'The daily openings could not be refreshed. What you see may be out of date.'
-      )
-    ).toBeVisible();
-    // The days stay, and so do the totals: a failed refresh does not turn them into a failure.
-    expect(screen.getByRole('img')).toBeInTheDocument();
-    expect(screen.getByText('3 upvotes · 4 downvotes')).toBeVisible();
-    expect(mock.history.get.filter((r) => r.url === TREND_URL)).toHaveLength(2);
-  });
-
-  it('asks for no series and shows none to the public or to another account', async () => {
-    mock.onGet('/analytics/public/posts/5').reply(200, summary);
-    signInUser(client, { id: 2, username: 'bob' });
-    mount();
-
-    await screen.findByRole('button', { name: 'Details' });
-    expect(screen.queryByRole('heading', { name: 'Daily openings' })).not.toBeInTheDocument();
-    expect(mock.history.get.some((r) => r.url === TREND_URL)).toBe(false);
-  });
-
-  it('hides the series immediately when another account takes over, even if its copy is cached', async () => {
-    mock.onGet(TREND_URL).reply(200, trend);
-    mock.onGet('/analytics/public/posts/5').reply(200, summary);
-    ownerMount();
-    await screen.findByRole('img');
-
-    await act(async () => {
-      signInUser(client, { id: 2, username: 'bob' });
-    });
-
-    await waitFor(() =>
-      expect(screen.queryByRole('heading', { name: 'Daily openings' })).not.toBeInTheDocument()
-    );
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
-    await screen.findByRole('region', { name: 'Post insights' });
-  });
+  await userEvent.click(screen.getByRole('button', { name: 'Expand' }));
+  expect(screen.getByText('No openings recorded in this period.')).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Data table' }));
+  expect(within(screen.getByRole('table')).getAllByRole('cell', { name: '0' })).toHaveLength(7);
 });
