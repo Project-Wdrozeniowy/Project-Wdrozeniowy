@@ -498,6 +498,31 @@ values. Separately fetched activity and category responses need not be the same 
 Links, forum URL filters and analytics history restoration remain that task's responsibility.
 PWDRZ-174 retains the dashboard-wide metadata/feedback work; this card does not redesign other blocks.
 
+## Dashboard: the most active posts (PWDRZ-175)
+
+The "Most active posts" card leads the dashboard, under the choice of window, as in Figma Dashboard
+`25:1715`. It lists what `GET /analytics/trending-posts` returns for the shared 7/30-day window with
+`limit=5` (the contract allows 1-50), in the server's order; every title links to its post by slug
+(`postHref`), with its category chip and its totals. Another window shows its own loading state, never
+the previous window's posts. Empty, failed and failed-refresh states use fixed words and a retry, and
+never a sample post.
+
+What the card says is the contract's, kept in `dashboard.const.ts`:
+
+- the score is openings + 2 x votes cast (up or down) + 3 x visible comments made inside the window;
+- the window is the span of 168 or 720 hours before the request, **not** whole UTC days like the
+  charts and the key figures;
+- ties go to the higher vote score, then the more recent activity, then the newer post;
+- only published or locked posts with some activity are listed, so fewer than the five asked for can appear;
+- the response carries no score and no read time, so none is shown. The numbers under a title
+  (views, vote score, comments) are the post's totals **over all time** and are said to be (also to
+  assistive technology); they are not the ranking score. Figma's "engagement %" would be invented, so
+  it is not drawn.
+
+The rules are a native `<details>` ("How posts are ranked"), which the keyboard and screen readers
+operate without script. `e2e/tests/dashboard-top-posts.spec.ts` compares the list with the API's own
+answer on the real stack, opens a title by keyboard, and fails the endpoint.
+
 ## Post openings (PWDRZ-166)
 
 The SPA tells the platform when a reader opens a post (`POST /forum/posts/{slug}/openings`); reading

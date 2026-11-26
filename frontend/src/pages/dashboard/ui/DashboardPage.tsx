@@ -20,9 +20,10 @@ export default function DashboardPage() {
       </div>
 
       <PeriodSwitch value={period} onChange={setPeriod} />
+      {/* First under the window choice, as in the design. */}
+      <TopPostsCard period={period} />
       <StatsSection period={period} />
       <ChartsSection period={period} />
-      <TopPostsCard period={period} />
     </div>
   );
 }
