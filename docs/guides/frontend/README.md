@@ -311,7 +311,10 @@ menu and the sidebar card show the same name.
 The post page also composes public/author engagement under PWDRZ-169. Its query
 ownership, account isolation, refresh/error behavior and precise metric labels are
 documented in [post engagement](../post-engagement.md#post-page-insights-pwdrz-169).
-Summary refresh also reads the article; accepted votes and comment changes
+Analytics opens the initially hidden card from the post action row; unavailable
+analytics keep a disabled-looking button with an accessible explanation. The outer
+toggle is independent of the card's compact/expanded state. Retry also reads the
+article; there is no separate Refresh insights button. Accepted votes and comment changes
 invalidate the affected post's summaries. The author's daily openings (PWDRZ-171) sit in the
 same card; see [post engagement](../post-engagement.md#author-daily-openings-pwdrz-171).
 

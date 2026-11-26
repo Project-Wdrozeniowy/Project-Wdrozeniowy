@@ -64,14 +64,22 @@ provided. See [sessions](sessions.md), [API bindings](api-bindings.md) and the
 
 ## Post-page insights (PWDRZ-169)
 
-The post page places insights between the article and discussion. Guests and other
-members read the public summary. Details reveals accumulated openings and their
+The post action row has an **Analytics** toggle on its right. The card starts
+hidden and makes no analytics request before activation. It opens inline between
+the article and discussion; activating the same button closes it. The discussion
+is not remounted or height-limited. Unavailable analytics keep a grey, inactive
+button with an accessible explanation on hover, keyboard focus and touch. Local
+eligibility is presentation only; the server authorizes every read. A transport
+failure is recoverable through Retry, not a reason to declare analytics absent.
+
+Guests and other
+members read the public summary. Expand (Details on mobile) reveals accumulated openings and their
 UTC collection date without making another request. The current author reads the
 owner summary instead, including UP/DOWN counts and their own draft. A staff role
 does not grant access to another author's summary. No card is requested for deleted
 posts or a non-owner viewing a non-public post through staff article permissions.
 
-The card labels the aggregate **Visible comments**, including replies. The
+The design labels the aggregate **Comments**, including replies. The
 discussion heading separately counts root threads, and article/feed counts keep
 their existing semantics. A score of zero is not evidence that nobody voted.
 Opening totals start at the returned collectedFrom; they are not unique readers.
@@ -83,7 +91,9 @@ from reappearing after logout or account replacement. A check of the same sessio
 retains the card. An author 401 follows the shared session handler; 403 does not
 sign out the account. A summary 404 also revalidates the article.
 
-Refresh insights reads both the summary and article. It preserves the discussion
+There is no separate Refresh insights control. Closing/reopening reads the permitted
+summary again under its existing stale-time policy. Retry reads the summary,
+article and owner series and succeeds only if the required reads succeed. It preserves the discussion
 and its unsent draft, prevents duplicate activation, and does not report success
 if either read fails. These GETs are independent snapshots, not an atomic combined
 response. Accepted post votes and comment creation/reply/deletion cancel old
@@ -93,12 +103,14 @@ Inactive copies are marked stale; refetch failure does not undo an accepted writ
 Initial loading uses a named skeleton. Errors replace the figures with a fixed
 message and recovery control; raw server detail/transport messages are not shown.
 Retry remains mounted while running and on another failure. A successful keyboard
-retry returns focus to Details (public) or Refresh insights (author), provided the
+retry returns focus to the card's Expand/Collapse (Details on mobile), provided the
 reader has not moved outside the card. Refresh/loading statuses are announced.
 
 ### Author daily openings (PWDRZ-171)
 
-The author's card also shows **Daily openings** from `GET /analytics/me/posts/{id}/openings`: one
+The author's card starts compact, with seven measured UTC days represented by a
+mini-chart and subtotal. Its own Expand/Collapse is independent of the outer Analytics
+toggle. Expanded **Daily openings** use `GET /analytics/me/posts/{id}/openings`: one
 bar per UTC day with a data table of the same days (the shared `widgets/activity-chart`), and a
 7 or 30 day choice. Only the author's card reads it; the public summary and other accounts never
 request it, and its query key carries the account, so nothing is reused across accounts (the whole
@@ -109,9 +121,15 @@ cache is also cleared when the session changes).
   day without openings is a real `0`.
 - The last day is the current UTC day and still counts up: the bar is outlined and the table says
   "(today, partial)".
-- Loading, a fixed error message with a retry, and a failed refresh that keeps the old days with a
-  notice are handled in the chart area; a failed series never replaces the totals. Refresh insights
-  reads it again with the totals.
+- Initial loading uses the designed skeleton. Summary or series failure replaces
+  the figures with the designed error card and Retry; old numbers are not shown
+  as a successful result. Changing the period keeps its control mounted and focused
+  while loading the next graph, without showing old days under the new period.
+- Collapsing a 30-day expanded graph shows the last seven days and their measured
+  subtotal in compact; expanding again retains the selected 30-day period.
+- Closing the outer toggle unmounts analytics observers, not the article/comments.
+  Reopening starts compact. Another post/account resets outer visibility immediately;
+  a reconciliation of the same account preserves it. No polling was added.
 
 The public summary does not display nonfunctional controls. Opening delivery
 belongs to the post page (PWDRZ-166, see the frontend guide): no summary read,
