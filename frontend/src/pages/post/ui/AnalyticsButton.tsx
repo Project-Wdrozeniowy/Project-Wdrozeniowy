@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { ChartBarIcon } from '@/shared/ui/icons';
 
 interface AnalyticsButtonProps {
   available: boolean;
@@ -24,7 +25,7 @@ export default function AnalyticsButton({
         aria-controls={targetId}
         aria-disabled={!available || undefined}
         aria-describedby={!available ? descriptionId : undefined}
-        className="min-h-11 rounded-lg px-3 text-sm font-semibold text-fg hover:bg-raised focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent aria-disabled:text-fg-subtle aria-disabled:cursor-not-allowed"
+        className="flex items-center gap-2 min-h-11 rounded-lg px-3 text-sm font-semibold text-fg hover:bg-raised focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent aria-disabled:text-fg-subtle aria-disabled:cursor-not-allowed"
         onMouseEnter={() => setExplaining(true)}
         onFocus={() => setExplaining(true)}
         onBlur={() => setExplaining(false)}
@@ -36,6 +37,7 @@ export default function AnalyticsButton({
           else setExplaining(true);
         }}
       >
+        <ChartBarIcon />
         Analytics
       </button>
       {!available && (

@@ -488,7 +488,7 @@ describe('on-demand analytics', () => {
     await act(async () => {
       signInUser(client, { id: 3, username: 'carol' });
     });
-    expect(button).toHaveAttribute('aria-expanded', 'false');
+    await waitFor(() => expect(button).toHaveAttribute('aria-expanded', 'false'));
     expect(screen.queryByRole('region', { name: 'Post insights' })).not.toBeInTheDocument();
   });
 

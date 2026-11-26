@@ -96,6 +96,16 @@ that does not retroactively turn an unrun check into a pass.
 
 ## Targeted provisional review
 
+Follow-up requested by the user: added the existing decorative ChartBarIcon to
+the left of Analytics, using the same 8px icon/text gap as neighbouring post
+actions. Accessible name remains Analytics; disabled icon inherits the grey
+button colour. Checked enabled/disabled at 1280/320px in Chromium (including
+focus, explanation, activation and page overflow), and the four on-demand
+analytics integration scenarios passed. Format and file lint passed. An existing
+account-switch assertion now awaits TanStack's asynchronous notification before
+checking the same expected closed state. No further full test run was requested.
+Screenshots: `.workspace-artifacts/analytics-icon/`.
+
 Reviewed the post insights feature, adjacent analytics hooks/chart and guides for
 PWDRZ-169/171 markers and provisional mechanisms. Removed obsolete refresh-error
 constants/docs; no expired 169/171 feature guard was found. Comments acceptance
