@@ -34,6 +34,8 @@ export default function DashboardPage() {
       </div>
 
       <PeriodSwitch value={period} onChange={(value) => changeSetting('period', value)} />
+      {/* First under the window choice, as in the design. */}
+      <TopPostsCard period={period} />
       <StatsSection period={period} />
       <ChartsSection
         period={period}
@@ -44,7 +46,6 @@ export default function DashboardPage() {
         categoryTableOpen={params.get('categoryTable') === '1'}
         onCategoryTableOpenChange={(open) => changeSetting('categoryTable', open ? '1' : '0')}
       />
-      <TopPostsCard period={period} />
     </div>
   );
 }

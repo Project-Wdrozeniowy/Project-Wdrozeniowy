@@ -549,6 +549,57 @@ Verification lives in the adjacent helper/component/transport/router tests and
 `e2e/tests/analytics-drilldown.spec.ts` on the managed migrated stack. Execution evidence and source
 revisions are recorded in `docs/agent-task-backlog/pwdrz-185-execution.md`.
 
+## Dashboard: the most active posts (PWDRZ-175)
+
+The "Most active posts" card leads the dashboard, under the choice of window, as in Figma Dashboard
+`25:1715`. It lists what `GET /analytics/trending-posts` returns for the shared 7/30-day window with
+`limit=5` (the contract allows 1-50), in the server's order; every title links to its post by slug
+(`postHref`), with its category chip and its totals. Another window shows its own loading state, never
+the previous window's posts. Empty, failed and failed-refresh states use fixed words and a retry, and
+never a sample post.
+
+What the card says is the contract's, kept in `dashboard.const.ts`:
+
+- the score is openings + 2 x votes cast (up or down) + 3 x visible comments made inside the window;
+- the window is the span of 168 or 720 hours before the request, **not** whole UTC days like the
+  charts and the key figures;
+- ties go to the higher vote score, then the more recent activity, then the newer post;
+- only published or locked posts with some activity are listed, so fewer than the five asked for can appear;
+- the response carries no score and no read time, so none is shown. The numbers under a title
+  (views, vote score, comments) are the post's totals **over all time** and are said to be (also to
+  assistive technology); they are not the ranking score. Figma's "engagement %" would be invented, so
+  it is not drawn.
+
+The rules are a native `<details>` ("How posts are ranked"), which the keyboard and screen readers
+operate without script. `e2e/tests/dashboard-top-posts.spec.ts` compares the list with the API's own
+answer on the real stack, opens a title by keyboard, and fails the endpoint.
+
+## Post openings (PWDRZ-166)
+
+The SPA tells the platform when a reader opens a post (`POST /forum/posts/{slug}/openings`); reading
+the post or its statistics counts nothing by itself. `PostPage` calls `useRecordPostOpening(slug,
+shown)` (in `shared/api/forum`), and every way to a post (feed, search, tags, a typed address) ends
+there, so this is the only place that records.
+
+- **What counts as an opening:** the post is on screen for a slug the page was not showing before. A
+  direct entry, an explicit reload, a navigation from any list, and Back or Forward onto the post each
+  mount the page (or change its slug) and are one opening. Re-renders, the window's focus, a
+  background refetch of the post, a failed or missing post (404), the statistics and their refresh,
+  and a `#comments` link on the same page record nothing. The author's own openings count too, as the
+  backend accepts them.
+- **The id:** a new random UUID for each opening (`newOpeningId`), kept only in the hook and never
+  stored (not in storage, not between openings), so it names the opening and not the reader. A retry
+  reuses it, so a repeated delivery is counted once by the backend.
+- **Retry and failure:** a TanStack mutation with `networkMode: 'always'`, at most two retries (waits
+  of 1 s and 3 s), only for a lost connection, a 5xx or a 429, and for a first 403 (the client then fetches a new CSRF
+  token, and an opening is safe to repeat by its id); a second 403, a 400, a 404 or a request the
+  client cancelled because the session changed is not repeated. It is
+  silent (no toast, no unauthorized redirect, no state on the page) and a failed recording never
+  stops the post from being read or shows a message.
+- **Tests:** unit tests for the hook and the id, `PostOpening.integration.test.tsx` through the real
+  `ApiClient`, and `e2e/tests/post-opening-recording.spec.ts` on the real stack as a guest and a member
+  (the count is read from the API's `viewCount`).
+
 ## Post page: the comments link keeps its place (PWDRZ-174)
 
 A "N Comments" link opens the post at `#comments`. The post, then its insights card, load after the

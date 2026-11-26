@@ -204,3 +204,18 @@ Focused managed run `1795646050004-be4153b0` passed 2/2 scenarios, zero retries,
 cleanup completed. This includes the original reload/Back path plus all three added keyboard/pointer
 round trips. Resuming on 26 November: the previous PR-read approval request was not executed due
 to an approval-review usage limit; no approval check was bypassed. PR #126 targets develop.
+
+### Integration with current develop — 26 November 2026
+
+Correction commit `53875cb` reached the remote branch. GitHub reported PR #126 as conflicting,
+so it created no checks for this head. Fetched develop `a641d58` (PWDRZ-166 and PWDRZ-175).
+The only conflict is dashboard composition: preserve PWDRZ-175's top-posts-first order while
+retaining PWDRZ-185's URL-owned settings and scroll hook. No new product decision or CI change.
+The existing PWDRZ-175 section-order test covers the integrated composition.
+
+Before integration, root check passed 10/10, frontend build passed, API bindings matched 102
+files and E2E infrastructure passed 3/3. Full frontend coverage had 1553 passes / one timeout
+in the unrelated dynamic-post router test (5s); this is not a passing gate. Full local E2E
+run `1795687783800-72ba7f24` did not reach tests because Docker Desktop was stopped; both start
+and cleanup reported the unavailable engine. Docker Desktop was then started successfully.
+The combined source will be verified afresh without changing retries, assertions or timeouts.

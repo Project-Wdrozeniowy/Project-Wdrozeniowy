@@ -1,4 +1,11 @@
-import { CHART_COLORS, NO_CATEGORY_LABEL } from '@/pages/dashboard/config/dashboard.const';
+import {
+  CHART_COLORS,
+  NO_CATEGORY_LABEL,
+  TOP_POSTS_FORMULA,
+  TOP_POSTS_RULES,
+  TOP_POSTS_WINDOW_HOURS,
+} from '@/pages/dashboard/config/dashboard.const';
+import { TOP_POSTS_LIMIT, type AnalyticsPeriod } from '@/shared/api/analytics/analytics.const';
 import type { PublicActivityDto } from '@/shared/api/generated/models/publicActivityDto.dto';
 import type { ActivityMetric } from '@/widgets/activity-chart';
 import type { PublicCategoryDistributionDto } from '@/shared/api/generated/models/publicCategoryDistributionDto.dto';
@@ -48,4 +55,15 @@ export function categorySeries(distribution: PublicCategoryDistributionDto): Cat
 /** "1 post", "31 posts": the figure with its noun, grouped as the rest of the dashboard does. */
 export function countLabel(count: number, one: string, other: string): string {
   return `${count.toLocaleString('en-US')} ${count === 1 ? one : other}`;
+}
+
+/** What the top posts are ranked by, and over which span, in the contract's words. */
+export function topPostsSummary(period: AnalyticsPeriod): string {
+  const hours = TOP_POSTS_WINDOW_HOURS[period];
+  return `Ranked by ${TOP_POSTS_FORMULA}, counted over the ${hours / 24} days (${hours} hours) before now.`;
+}
+
+/** The rules of the ranking, with the size of the list taken from what the card asks for. */
+export function topPostsRules(): string[] {
+  return TOP_POSTS_RULES.map((rule) => rule.replace('{limit}', String(TOP_POSTS_LIMIT)));
 }

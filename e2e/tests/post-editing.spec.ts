@@ -119,8 +119,14 @@ test('own post editing persists exact title/body, preserves discussion and count
   // Load the profile's independent list before editing to exercise its cached copy.
   await page.goto('/profile');
   await expect(page.getByRole('link', { name: post.title, exact: true })).toBeVisible();
+  // Opening the page records its own opening (PWDRZ-166): wait for it, so what is compared below
+  // is the stored state after it, and only an edit could change it from here on.
+  const recorded = page.waitForResponse(
+    (r) => r.request().method() === 'POST' && r.url() === `${gatewayURL}${path}/openings`
+  );
   await page.goto(`/forum/${post.slug}`);
   await expect(page.getByRole('button', { name: 'Edit post', exact: true })).toBeVisible();
+  expect((await recorded).status()).toBe(204);
   const before = await (await request.get(path)).json();
   const openings = storedOpenings(post.id);
   const patches: object[] = [];
