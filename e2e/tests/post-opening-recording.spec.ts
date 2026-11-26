@@ -127,7 +127,7 @@ test('a guest opening counts once for direct entry, a reload, the feed and Back/
   expect(new Set(sent).size).toBe(4);
 });
 
-test('a member opening counts once, and the author refreshing the insights counts nothing', async ({
+test('a member opening counts once, and the author toggling insights counts nothing', async ({
   page,
   request,
   browser,
@@ -148,7 +148,7 @@ test('a member opening counts once, and the author refreshing the insights count
   expect(sent).toHaveLength(1);
 
   // The author opens it (their own opening counts, as the contract says) and refreshes the
-  // statistics: the refresh reads, it does not open.
+  // statistics: analytics reads do not open the post again.
   const author = await browser.newPage();
   await signIn(author, account);
   const authorSent = watchOpenings(author, slug);
@@ -162,8 +162,13 @@ test('a member opening counts once, and the author refreshing the insights count
     (response) =>
       response.request().method() === 'GET' && response.url().includes('/api/analytics/me/posts/')
   );
-  await author.getByRole('button', { name: 'Refresh insights' }).click();
+  const analytics = author.getByRole('button', { name: 'Analytics', exact: true });
+  await analytics.click();
   await refreshed;
+  await expect(author.getByRole('region', { name: 'Author insights' })).toBeVisible();
+  await analytics.click();
+  await analytics.click();
+  await expect(author.getByRole('region', { name: 'Author insights' })).toBeVisible();
   await quiet(author);
   expect(authorSent).toHaveLength(1);
   expect(await viewCount(request, slug)).toBe(2);

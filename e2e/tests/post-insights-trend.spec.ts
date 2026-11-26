@@ -86,17 +86,20 @@ test('the author reads the daily openings of a post, and nobody else sees them',
         r.request().method() === 'POST'
     );
     await page.goto(`/forum/${slug}`);
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
     expect((await firstRead).status()).toBe(200);
     expect((await recorded).status()).toBe(204);
     const card = page.getByRole('region', { name: 'Author insights' });
     const trendSection = card.getByRole('region', { name: 'Daily openings' });
-    await expect(trendSection).toBeVisible();
+    await expect(trendSection).toHaveCount(0);
     // The first read may have come before that opening was counted: read the chart again, so the
     // table below shows what the API answers now.
     const reread = page.waitForResponse(
       (r) => r.url() === `${trendURL}?period=7d` && r.request().method() === 'GET'
     );
-    await card.getByRole('button', { name: 'Refresh insights' }).click();
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
+    await card.getByRole('button', { name: 'Expand', exact: true }).click();
     expect((await reread).status()).toBe(200);
 
     // The table lists exactly the days the API answers: a measured zero as 0, a day before
@@ -165,6 +168,7 @@ test('the author reads the daily openings of a post, and nobody else sees them',
     // Another member sees the public summary only, asks for no series, and the API says 404.
     await signIn(page, outsider);
     await page.goto(`/forum/${slug}`);
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Post insights' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Daily openings' })).toHaveCount(0);
     expect(trendRequests.length).toBe(requestsBefore);
