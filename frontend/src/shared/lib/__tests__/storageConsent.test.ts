@@ -2,77 +2,65 @@ import {
   clearOptionalStorage,
   hasStorageConsent,
   readStorageConsent,
+  synchronizeStorageConsent,
   writeStorageConsent,
+  OPTIONAL_STORAGE_PURPOSES,
+  parseStorageConsent,
 } from '@/shared/lib/storageConsent';
-import {
-  CONSENT_STORAGE_KEY,
-  OPTIONAL_STORAGE_KEYS,
-  RECENT_SEARCHES_KEY,
-  THEME_STORAGE_KEY,
-} from '@/shared/lib/storageKeys.const';
-
-beforeEach(() => localStorage.clear());
+import { seedStorageConsent } from '@/test/storageConsent';
+beforeEach(() => {
+  vi.restoreAllMocks();
+  localStorage.clear();
+  seedStorageConsent(false);
+  localStorage.clear();
+});
 afterEach(() => vi.restoreAllMocks());
-
-describe('the answer', () => {
-  it('is null until the user answered', () => {
-    expect(readStorageConsent()).toBeNull();
-    expect(hasStorageConsent()).toBe(false);
+it('starts with no answer or permissions', () => {
+  expect(readStorageConsent()).toBeNull();
+  expect(hasStorageConsent('theme')).toBe(false);
+});
+it('clears optional data without clearing the necessary answer or unrelated keys', () => {
+  seedStorageConsent();
+  const answer = localStorage.getItem('orbita.consent');
+  localStorage.setItem('orbita.theme', 'dark');
+  localStorage.setItem('orbita.recentSearches', '["react"]');
+  localStorage.setItem('unrelated', 'keep');
+  expect(clearOptionalStorage()).toBe(true);
+  expect(localStorage.getItem('orbita.theme')).toBeNull();
+  expect(localStorage.getItem('orbita.recentSearches')).toBeNull();
+  expect(localStorage.getItem('orbita.consent')).toBe(answer);
+  expect(localStorage.getItem('unrelated')).toBe('keep');
+});
+it('reports blocked reads, writes and deletion without throwing', () => {
+  vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
+    throw new Error('blocked');
   });
-
-  it('round-trips', () => {
-    writeStorageConsent('granted');
-    expect(readStorageConsent()).toBe('granted');
-    expect(hasStorageConsent()).toBe(true);
-
-    writeStorageConsent('denied');
-    expect(readStorageConsent()).toBe('denied');
-    expect(hasStorageConsent()).toBe(false);
+  vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+    throw new Error('blocked');
   });
-
-  it('treats anything else as no answer', () => {
-    localStorage.setItem(CONSENT_STORAGE_KEY, 'yes');
-
-    expect(readStorageConsent()).toBeNull();
+  vi.spyOn(localStorage, 'removeItem').mockImplementation(() => {
+    throw new Error('blocked');
   });
-
-  it('is "no answer" and not an error where storage is blocked', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
-
-    expect(readStorageConsent()).toBeNull();
-    expect(() => writeStorageConsent('granted')).not.toThrow();
+  expect(readStorageConsent()).toBeNull();
+  expect(writeStorageConsent({ theme: true, recentSearches: true }).ok).toBe(false);
+  expect(synchronizeStorageConsent().ok).toBe(false);
+});
+it('registers exactly the two controllable purposes', () => {
+  expect(OPTIONAL_STORAGE_PURPOSES).toEqual({
+    theme: ['orbita.theme'],
+    recentSearches: ['orbita.recentSearches'],
   });
 });
-
-describe('clearOptionalStorage', () => {
-  it('deletes the optional items and keeps the answer', () => {
-    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
-    localStorage.setItem(RECENT_SEARCHES_KEY, '["react"]');
-    localStorage.setItem(CONSENT_STORAGE_KEY, 'granted');
-    localStorage.setItem('unrelated', 'keep');
-
-    clearOptionalStorage();
-
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
-    expect(localStorage.getItem(RECENT_SEARCHES_KEY)).toBeNull();
-    expect(localStorage.getItem(CONSENT_STORAGE_KEY)).toBe('granted');
-    expect(localStorage.getItem('unrelated')).toBe('keep');
-  });
-
-  it('lists exactly the optional items', () => {
-    expect([...OPTIONAL_STORAGE_KEYS].sort()).toEqual([RECENT_SEARCHES_KEY, THEME_STORAGE_KEY]);
-  });
-
-  it('does not throw where storage is blocked', () => {
-    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
-
-    expect(() => clearOptionalStorage()).not.toThrow();
-  });
+it.each([
+  { version: 3, decidedAt: Date.now(), permissions: { theme: true, recentSearches: true } },
+  {
+    version: 2,
+    decidedAt: Date.now() + 100000,
+    permissions: { theme: true, recentSearches: true },
+  },
+  { version: 2, decidedAt: 0, permissions: { theme: true, recentSearches: true } },
+  { version: 2, decidedAt: Date.now(), permissions: { theme: 'yes', recentSearches: true } },
+  { version: 2, decidedAt: Date.now(), permissions: { theme: true } },
+])('rejects an unsupported or invalid record', (value) => {
+  expect(parseStorageConsent(JSON.stringify(value))).toBeNull();
 });

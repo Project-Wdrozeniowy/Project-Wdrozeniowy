@@ -429,31 +429,87 @@ is needed.
 
 ## Browser storage and consent
 
-Spring's `SESSION` cookie is the only storage the app needs. Everything else the frontend writes
-is **optional** and exists only after the user accepted it in the banner at the top of the page
-(`widgets/consent-banner`, state in `store/slices/consentSlice.ts`):
+Storage preferences are local to this browser/origin, independent of the account and server-side
+authorization. Spring still owns SESSION/CSRF. There is no consent HTTP endpoint, database
+journal or cross-device synchronization for these two browser features.
 
-| Key (`shared/lib/storageKeys.const.ts`) | Holds                             | Optional                  |
-| --------------------------------------- | --------------------------------- | ------------------------- |
-| `orbita.consent`                        | `granted` or `denied`, the answer | no (remembers the answer) |
-| `orbita.theme`                          | `light` or `dark`                 | yes                       |
-| `orbita.recentSearches`                 | the last five search terms        | yes                       |
+The compact fixed bottom panel offers equally weighted **Accept all** / **Reject all** and
+**Customize**. The latter opens a native modal with independent theme/history switches.
+First-time switches are off. Footer **Storage settings** opens the modal directly on main,
+login and registration layouts. Close/Escape discard the draft; scrolling is never consent.
+The panel does not take focus. Its measured height reserves page space and scroll padding;
+mobile navigation and toast offsets use the same measurements. The modal contains keyboard
+focus and restores its opener, or main content when that opener disappeared.
 
-Rules for code that stores something in the browser:
+### Inventory and retention
 
-- Optional storage is read and written only through helpers that check `hasStorageConsent()`
-  (`shared/lib/storageConsent.ts`). Without a granted answer a theme choice and the search history
-  work for the current visit only and nothing is written. `theme-init.js` follows the same rule.
-- Rejecting or withdrawing deletes every key in `OPTIONAL_STORAGE_KEYS`. A new optional key goes
-  into that list, into the banner's list (`consentBanner.const.ts`) and into this table.
-- Never store credentials, tokens or personal data in browser storage.
-- Accepting and rejecting must look the same, the question must not hide a focused control (it is
-  part of the page flow), and the footer's "Storage settings" button reopens it at any time.
+| Mechanism / key                                | Purpose and retention                                                                                                                                                                                                                                                                         | Classification for this implementation           |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Spring `SESSION` cookie                        | Sign-in and CSRF/session protection. Host-only, HttpOnly, SameSite=Strict; Secure outside explicit HTTP development; no normal Max-Age/Expires. Server idle 60 minutes and absolute 12 hours are validity limits, not a guarantee of browser cookie deletion. See [sessions](../sessions.md). | Necessary; never controlled by optional switches |
+| localStorage `orbita.consent`                  | Versioned decision with a fixed 180-day lifetime from explicit Save/Accept/Reject                                                                                                                                                                                                             | Necessary to remember choices                    |
+| localStorage `orbita-session-change`           | Fallback when BroadcastChannel is unavailable: latest session-change notification, no credentials; retained until overwritten or browser storage is cleared                                                                                                                                   | Necessary to reconcile sign-in across tabs       |
+| sessionStorage `react-router-scroll-positions` | React Router navigation restoration within the tab session                                                                                                                                                                                                                                    | Necessary navigation state                       |
+| sessionStorage `orbita.dashboard.positions`    | Dashboard scroll restoration, at most 20 entries, within the tab session                                                                                                                                                                                                                      | Necessary navigation state                       |
+| localStorage `orbita.theme`                    | Explicit light/dark choice until revoked, expired, replaced or browser storage is cleared                                                                                                                                                                                                     | Optional: `theme`                                |
+| localStorage `orbita.recentSearches`           | Last five search terms until removed, revoked, expired, replaced or browser storage is cleared                                                                                                                                                                                                | Optional: `recentSearches`                       |
 
-**Unverified assumption.** The banner text and the split into "needed" and "optional" are an
-engineering reading of the ePrivacy storage rules (EDPB Guidelines 2/2023 cover local storage too),
-not a reviewed legal text or a compliance claim. The team should confirm it, and write a privacy
-notice, before any public deployment.
+Necessary mechanisms are grouped under plain-language “Secure session”, “Your choices” and
+“Navigation position” in the UI. Technical identifiers stay in source/developer documentation.
+Search terms can contain personal information; never describe them as inherently anonymous.
+Do not add credentials or tokens to browser storage.
+
+### Local contract and migration
+
+`shared/lib/storageConsent.ts` owns this record:
+
+```json
+{
+  "version": 2,
+  "decidedAt": 1795680000000,
+  "permissions": { "theme": true, "recentSearches": false }
+}
+```
+
+`decidedAt` is an integer UTC epoch timestamp in milliseconds. The agreed 180 days is a product
+decision, not a statutory default. Reads and visits never refresh it. Only an explicit saved
+decision creates a new date. Missing, malformed, future-dated, unsupported or expired records
+enable neither purpose and trigger the panel. Old `granted`/`denied` answers have no date or
+independent choices: discard them, remove optional data and request a new decision.
+
+Every optional read/write checks `hasStorageConsent('theme' | 'recentSearches')`, including the
+blocking CSP-compatible `public/theme-init.js` before first paint. Without permission, theme
+changes affect the current visit only and search history is neither read nor retained.
+An explicit theme chosen before answering is saved if permitted; the system default alone
+is not pinned. Revoking theme restores the system preference and deletes only that key.
+Revoking history clears its key and mounted suggestions without affecting an allowed theme.
+
+`StorageConsentProvider` revalidates at startup, native cross-tab storage events, focus,
+pageshow, visibility restoration and active-page expiry. Timers are bounded to the browser's
+32-bit delay limit. Closed/suspended pages clean expired data on their next execution; a web
+page cannot delete browser data while it is not running. An open draft resets to an externally
+changed answer with a visible notice.
+
+A failed save/cleanup is shown as an error with retry. Optional I/O is disabled for that
+document until a successful explicit save; this local safety lock does not erase a valid
+shared answer in other tabs. Cleanup is best effort when browser access is blocked, so do
+not claim data was deleted in that case. Ordinary theme/history value-write failures still
+leave the feature usable for the current visit, without promising persistence.
+
+For a new optional purpose, update the permission schema/policy version as appropriate,
+`OPTIONAL_STORAGE_KEYS`, `OPTIONAL_STORAGE_PURPOSES`, guarded consumers, early bootstrap,
+panel/dialog purpose descriptions, this inventory and migration/parity tests. A new key must
+not silently broaden a previous grant.
+
+### Boundaries and unverified classifications
+
+This UI controls browser persistence only. Reject all does **not** disable existing server-side
+post-opening recording or analytics; there is no analytics switch. Authentication/session
+policy and server collection/retention remain separate concerns. No external CMP is installed.
+
+The necessary/optional classification and copy are engineering decisions for the agreed
+local scope, not reviewed legal text or a compliance claim. Legal applicability, any wider
+privacy notice and deployment-specific review remain team decisions; no public launch is
+assumed by this implementation.
 
 ## Analytics figures
 

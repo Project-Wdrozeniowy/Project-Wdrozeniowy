@@ -13,6 +13,78 @@
   },
   "issues": [
     {
+      "id": "10581",
+      "key": "PWDRZ-219",
+      "fields": {
+        "summary": "Correct storage consent UX with a bottom panel and independent preference controls",
+        "issuetype": {
+          "id": "10080",
+          "description": "Subtasks track small pieces of work that are part of a larger task.",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10316?size=medium",
+          "name": "Subtask",
+          "subtask": true,
+          "avatarId": 10316,
+          "entityId": "591ecc93-9c42-4fcc-8ea2-0c5e26797e26",
+          "hierarchyLevel": -1
+        },
+        "description": "## Background\n\nPWDRZ-197 introduced a working browser-local gate for theme persistence and recent searches, but its description prescribed an oversized top-of-page, in-flow banner and one shared accept/reject answer without adequately defining the intended UX. It also exposed internal storage keys to users and contained inaccurate session wording.\n\nReplace that interface with a compact bottom consent panel and a separate preferences dialog, and let visitors control theme persistence and recent searches independently. This subtask records the agreed corrections to the parent requirements; preserve the original implementation history.\n\n## Scope and behaviour\n\n### 1. Bottom panel and preferences dialog\n\n* Show a compact, fixed bottom panel on all application layouts, including login and registration, when no current valid choice exists. It remains visible while scrolling. Adapt its height to content and viewport; do not impose a fixed one-third-screen height.\n* Provide three first-level actions: **Accept all**, **Reject all**, **Customize**. Accept and reject must have equal visual weight and be equally easy to operate.\n* Customize opens a centred modal preferences dialog. Show necessary mechanisms as informational, always active entries without editable toggles, and provide independent switches for **Remember theme** and **Recent searches**, plus **Save choices**.\n* On the first choice, both optional switches are off. On reopening, show the saved choices.\n* Closing the dialog by its Close control or Escape discards uncommitted edits. If no valid answer exists, return to the bottom panel with optional storage disabled. Otherwise retain the previous answer. Scrolling, closing and inactivity never grant permission.\n* A **Storage settings** control in the footer of main, login and registration layouts opens the preferences dialog directly at any time.\n\n### 2. User-facing information\n\nUse plain labels and purpose descriptions rather than storage identifiers, API names or implementation details. Keep technical names in developer documentation and source only.\n\nThe explanation must cover:\n\n* **Secure session** — supports sign-in and protection of actions on the site. Explain its technical purpose without claiming it is always created on every page or guaranteeing cookie deletion exactly when a server session expires.\n* **Your choices** — remembers the visitor's storage settings for later visits.\n* **Remember theme** — remembers the chosen light or dark theme on this device.\n* **Recent searches** — remembers the last five search terms on this device for reuse.\n\nRemove visible identifiers such as `orbita.theme`, `orbita.consent`, `orbita.recentSearches` and `SESSION` from this UI. Explain retention in plain language once the durations are agreed.\n\n### 3. Independent local permissions\n\n* Replace the shared granted/denied decision with independent permissions for theme persistence and search history. Accept all enables both; Reject all disables both; Save choices applies the selected combination.\n* Read and write each optional item only when its own permission is current and granted. This includes the theme script that runs before first paint.\n* Without permission, the theme toggle still changes the current visit's appearance without persistence, and no search history is retained.\n* If the visitor selected a theme before answering and then permits theme persistence, save that selection.\n* Disabling or withdrawing a permission deletes only its associated optional data. Revoking theme persistence restores the system theme. Keep the necessary record of the visitor's choice.\n* Store the choice locally with a schema/policy version and decision date. Explicitly define and document retention, expiry and when a new decision is requested; agree these values before implementation rather than inventing legal defaults.\n* Define and test migration from the old shared answer without silently broadening existing permissions. Missing, malformed, expired or unsupported records must not enable optional storage.\n* Apply saved choices and withdrawals across tabs. Handle blocked/unavailable browser storage without crashing or treating persistence failure as a remembered grant.\n\n### 4. Inventory and architecture boundary\n\n* Reconcile the inventory, consent helpers, user-facing explanations and frontend guide.\n* Include the existing session-change localStorage fallback and dashboard scroll-position sessionStorage in the inventory; establish and document their classification. Do not automatically call every non-cookie item optional or change authentication behaviour as a side effect.\n* This subtask manages browser storage. Spring continues to own SESSION/CSRF and resource authorization. No new backend endpoint or database table is required for the two local optional functions.\n* Existing post-opening recording and server-side analytics are not governed by the current browser consent flag. Do not add a nonfunctional analytics switch or imply that Reject all stops server processing. Any change to server collection, retention or authorization requires separate agreed scope and a backend contract.\n\n### 5. Design and accessibility\n\nBefore implementation, obtain/agree and attach exact Figma frame/component links for the bottom panel and preferences dialog, covering desktop/mobile, both themes, first/reopened states, mixed selections, focus and interaction states. No approved references are established in this subtask yet. Missing references prevent 1:1 acceptance.\n\n* The initial non-modal panel does not steal focus and must not hide keyboard-focused page controls.\n* The modal has an accessible name, initial focus inside it, contained keyboard navigation, Escape/Close behaviour and focus restoration to its opener. Return focus logically when the opener disappears after saving.\n* Follow the project's WCAG 2.2 AA target and mandatory paired design/implementation verification.\n\n## Acceptance criteria\n\n1. A first-time visitor sees the bottom panel on every required layout; optional data is neither read nor written before permission.\n2. Accept all, Reject all and Customize work; all four combinations of the two optional permissions persist correctly across reloads.\n3. Theme application before first paint respects only the theme permission. A theme selected before accepting is saved when permitted.\n4. Withdrawing one permission removes its data without deleting the other permitted item's data; theme withdrawal applies the system theme.\n5. Closing an unsaved dialog preserves the previous answer, or returns an unanswered visitor to the panel. Footer reopening and cross-tab changes behave consistently.\n6. Migration, version/expiry handling, invalid records and unavailable storage are verified. Retention and migration decisions are documented.\n7. User-facing copy contains understandable purposes and no internal storage keys; the inventory and guide match the actual implementation.\n8. Keyboard, screen-reader, focus and responsive behaviour pass. Paired 1:1 reference/implementation evidence is recorded for all required variants; missing designs or unresolved mismatches prevent completion.\n9. Frontend typecheck, lint, Prettier, unit/integration tests with existing coverage gates and production build pass. Update and run consent E2E on the managed real stack, covering first and returning visitors, mixed choices, withdrawal, migration and tab synchronisation. Existing E2E visitor setup remains compatible.\n10. Verify that session/authentication flows still work and that no unsupported promise about server-side analytics has been introduced.\n\n## Out of scope\n\nExternal CMP subscriptions/integration, server-side consent records or audit logs, account/device synchronisation, changes to server analytics collection, a new privacy-policy page and legal approval. Do not claim verified regulatory compliance or assume a planned public deployment. Material classification or legal questions must be recorded for the team.\n\n**Related:** PWDRZ-197 (parent), PWDRZ-196 (theme).",
+        "parent": {
+          "id": "10559",
+          "key": "PWDRZ-197",
+          "fields": {
+            "summary": "Add a storage consent banner and store optional browser data only after consent",
+            "status": {
+              "description": "",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+              "name": "Ready",
+              "id": "10079",
+              "statusCategory": {
+                "id": 4,
+                "key": "indeterminate",
+                "colorName": "yellow",
+                "name": "In Progress"
+              }
+            },
+            "priority": {
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "id": "10076",
+              "description": "A small, distinct piece of work.",
+              "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+              "name": "Task",
+              "subtask": false,
+              "avatarId": 10318,
+              "entityId": "2535984a-65c8-4602-a7a7-54815d407a6a",
+              "hierarchyLevel": 0
+            }
+          }
+        },
+        "status": {
+          "description": "",
+          "iconUrl": "https://jira-prod-eu-28-2.prod.atl-paas.net/",
+          "name": "To Do",
+          "id": "10076",
+          "statusCategory": {
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        }
+      },
+      "localTracking": {
+        "status": "done",
+        "owner": "Codex / PWDRZ-219",
+        "updatedAt": "2026-11-26T17:44:24.000Z",
+        "notes": [
+          "Implemented approved bottom panel/native dialog, independent local permissions, fixed 180-day expiry, migration, cross-tab updates and visible fail-closed persistence errors. Frontend 1637 tests and all coverage gates pass; typecheck/lint/format/build and unchanged API bindings pass. Full managed E2E 97/97, followed by final consent 24/24 including active expiry and eight independent reference pixel comparisons. See pwdrz-219-execution.md. User subsequently authorized a commit, upstream push and local worktree removal; Jira completion status remains unchanged."
+        ]
+      }
+    },
+    {
       "id": "10522",
       "key": "PWDRZ-160",
       "fields": {

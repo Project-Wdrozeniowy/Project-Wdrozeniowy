@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Orbita — storage preferences</title>
+    <style>
+      @font-face {
+        font-family: Inter;
+        src: url('/font.woff2');
+      }
+      * {
+        box-sizing: border-box;
+      }
+      :root {
+        font-family: Inter, Arial, sans-serif;
+        color-scheme: dark;
+        --page: #0f172a;
+        --surface: #1e293b;
+        --raised: #334155;
+        --line: #475569;
+        --fg: #f9fafb;
+        --muted: #cbd5e1;
+        --subtle: #94a3b8;
+        --accent: #60a5fa;
+        --nav: 0px;
+      }
+      :root[data-theme='light'] {
+        color-scheme: light;
+        --page: #f9fafb;
+        --surface: #fff;
+        --raised: #f3f4f6;
+        --line: #d1d5db;
+        --fg: #111827;
+        --muted: #4b5563;
+        --subtle: #6b7280;
+        --accent: #2563eb;
+      }
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--fg);
+        font-size: 14px;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        color: inherit;
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      header {
+        height: 64px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 32px;
+        padding: 0 max(24px, calc((100% - 1082px) / 2));
+      }
+      .brand {
+        font-size: 23px;
+        font-weight: 650;
+        letter-spacing: -0.7px;
+      }
+      header .orb {
+        color: var(--accent);
+      }
+      .theme {
+        margin-left: auto;
+      }
+      main {
+        max-width: 1130px;
+        margin: auto;
+        padding: 48px 24px 360px;
+      }
+      h1 {
+        font-size: 32px;
+        margin: 10px 0 12px;
+        letter-spacing: -1px;
+      }
+      .intro {
+        color: var(--subtle);
+        font-size: 16px;
+        margin-bottom: 32px;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 24px;
+      }
+      .card h2 {
+        font-size: 18px;
+        margin: 0 0 24px;
+      }
+      .chart {
+        height: 175px;
+        display: flex;
+        align-items: end;
+        gap: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .chart i {
+        flex: 1;
+        background: var(--accent);
+        border-radius: 5px 5px 0 0;
+        opacity: 0.7;
+      }
+      .figure {
+        font-size: 36px;
+        font-weight: 650;
+      }
+      .panel {
+        position: fixed;
+        inset: auto 0 var(--nav);
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        padding: 20px 24px;
+        box-shadow: 0 -8px 30px #00000012;
+      }
+      .panel-inner {
+        max-width: 1082px;
+        margin: auto;
+        display: flex;
+        align-items: center;
+        gap: 32px;
+      }
+      .panel-copy {
+        flex: 1;
+      }
+      .panel h2 {
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
+      .panel p {
+        color: var(--muted);
+        line-height: 1.55;
+        margin: 0;
+        max-width: 590px;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+      .action {
+        background: var(--raised);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        min-height: 44px;
+        padding: 10px 16px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .text-button {
+        color: var(--muted);
+        background: none;
+        border: 0;
+        padding: 10px 12px;
+        min-height: 44px;
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      dialog {
+        width: min(640px, calc(100% - 32px));
+        max-height: calc(100dvh - 32px);
+        margin: auto;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        color: var(--fg);
+        box-shadow: 0 24px 80px #0005;
+      }
+      dialog::backdrop {
+        background: #020617aa;
+      }
+      .dialog-body {
+        padding: 28px;
+      }
+      .dialog-header {
+        display: flex;
+        align-items: start;
+        gap: 16px;
+      }
+      .dialog-header h2 {
+        font-size: 22px;
+        letter-spacing: -0.6px;
+        margin: 0;
+      }
+      .close {
+        margin-left: auto;
+        background: transparent;
+        border: 0;
+        min-width: 40px;
+        min-height: 40px;
+        font-size: 24px;
+        color: var(--subtle);
+      }
+      .description {
+        color: var(--muted);
+        line-height: 1.6;
+        margin: 8px 0 24px;
+      }
+      .section-label {
+        font-size: 12px;
+        font-weight: 650;
+        color: var(--subtle);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 0 0 12px;
+      }
+      .necessary {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 4px 16px;
+      }
+      .entry {
+        padding: 13px 0;
+      }
+      .entry + .entry,
+      .option + .option {
+        border-top: 1px solid var(--line);
+      }
+      .entry-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        justify-content: space-between;
+        font-weight: 600;
+      }
+      .badge {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--subtle);
+        background: var(--raised);
+        padding: 4px 7px;
+        border-radius: 5px;
+        white-space: nowrap;
+      }
+      .entry p,
+      .option p {
+        color: var(--subtle);
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 5px 0 0;
+      }
+      .optional-title {
+        margin-top: 24px;
+      }
+      .option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 15px 0;
+      }
+      .option label {
+        font-weight: 600;
+      }
+      .switch {
+        appearance: none;
+        flex: none;
+        width: 40px;
+        height: 24px;
+        border-radius: 20px;
+        background: var(--raised);
+        border: 1px solid var(--subtle);
+        position: relative;
+        cursor: pointer;
+        margin: 0;
+      }
+      .switch:before {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--subtle);
+      }
+      .switch:checked {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .switch:checked:before {
+        background: var(--page);
+        transform: translateX(16px);
+      }
+      .dialog-footer {
+        border-top: 1px solid var(--line);
+        padding: 18px 28px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        justify-content: space-between;
+      }
+      .retention {
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--subtle);
+        max-width: 300px;
+      }
+      .save {
+        background: var(--accent);
+        color: var(--page);
+        border-color: transparent;
+      }
+      footer {
+        padding: 24px;
+        text-align: right;
+      }
+      .mobile-nav {
+        display: none;
+      }
+      .eyebrow {
+        color: var(--subtle);
+        font-size: 12px;
+      }
+      @media (max-width: 767px) {
+        :root {
+          --nav: 64px;
+        }
+        header {
+          padding: 0 16px;
+          gap: 18px;
+        }
+        .desktop-link {
+          display: none;
+        }
+        main {
+          padding: 32px 16px 430px;
+        }
+        h1 {
+          font-size: 27px;
+        }
+        .cards {
+          grid-template-columns: 1fr;
+        }
+        .cards .card:last-child {
+          display: none;
+        }
+        .panel {
+          padding: 16px;
+        }
+        .panel-inner {
+          display: block;
+        }
+        .panel p {
+          font-size: 13px;
+        }
+        .actions {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          margin-top: 14px;
+        }
+        .text-button {
+          grid-column: 1/-1;
+          min-height: 36px;
+        }
+        .action {
+          padding: 10px 12px;
+        }
+        .dialog-body {
+          padding: 20px;
+        }
+        .dialog-header h2 {
+          font-size: 20px;
+        }
+        .description {
+          font-size: 13px;
+          margin-bottom: 20px;
+        }
+        .dialog-footer {
+          padding: 16px 20px;
+          align-items: stretch;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .retention {
+          max-width: none;
+        }
+        .necessary {
+          padding: 2px 12px;
+        }
+        .entry-head {
+          font-size: 13px;
+        }
+        .entry p,
+        .option p {
+          font-size: 12px;
+        }
+        .entry {
+          padding: 11px 0;
+        }
+        .mobile-nav {
+          display: flex;
+          position: fixed;
+          inset: auto 0 0;
+          height: 64px;
+          background: var(--surface);
+          border-top: 1px solid var(--line);
+          justify-content: space-around;
+          align-items: center;
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="brand"><span class="orb">◉</span> Orbita</span
+      ><span class="desktop-link">Home</span><span class="desktop-link">Forum</span
+      ><span class="desktop-link">Analytics</span
+      ><button class="action theme" id="theme">Light / dark</button>
+    </header>
+    <main>
+      <div class="eyebrow">INTERFACE PREVIEW · PWDRZ-219</div>
+      <h1>Analytics Dashboard</h1>
+      <p class="intro">Public activity of the community, from the platform data.</p>
+      <div class="cards">
+        <section class="card">
+          <h2>Community activity</h2>
+          <div class="chart">
+            <i style="height: 38%"></i><i style="height: 65%"></i><i style="height: 47%"></i
+            ><i style="height: 85%"></i><i style="height: 58%"></i><i style="height: 73%"></i
+            ><i style="height: 49%"></i>
+          </div>
+        </section>
+        <section class="card">
+          <h2>Last 7 days</h2>
+          <p class="figure">128</p>
+          <p>public posts</p>
+        </section>
+      </div>
+      <footer><button class="text-button" id="settings">Storage settings</button></footer>
+    </main>
+    <section class="panel" id="panel" aria-labelledby="panel-title">
+      <div class="panel-inner">
+        <div class="panel-copy">
+          <h2 id="panel-title">Your storage preferences</h2>
+          <p>
+            Choose whether Orbita remembers your theme and recent searches on this device. Optional
+            storage stays off until you choose.
+          </p>
+        </div>
+        <div class="actions">
+          <button class="action" data-answer="accept">Accept all</button
+          ><button class="action" data-answer="reject">Reject all</button
+          ><button class="text-button" id="customize">Customize</button>
+        </div>
+      </div>
+    </section>
+    <nav class="mobile-nav" aria-label="Main navigation">
+      <span>⌂ Home</span><span>☷ Forum</span><span>▥ Analytics</span>
+    </nav>
+    <dialog aria-labelledby="dialog-title">
+      <div class="dialog-body">
+        <div class="dialog-header">
+          <h2 id="dialog-title" tabindex="-1">Storage settings</h2>
+          <button class="close" aria-label="Close">×</button>
+        </div>
+        <p class="description">
+          Control what Orbita remembers on this device. You can change your choices at any time.
+        </p>
+        <p class="section-label">Necessary</p>
+        <div class="necessary">
+          <div class="entry">
+            <div class="entry-head">Secure session<span class="badge">Always active</span></div>
+            <p>
+              Supports sign-in, protects actions and keeps sign-in status consistent across tabs.
+            </p>
+          </div>
+          <div class="entry">
+            <div class="entry-head">Your choices<span class="badge">Always active</span></div>
+            <p>Remembers these storage settings for 180 days.</p>
+          </div>
+          <div class="entry">
+            <div class="entry-head">
+              Navigation position<span class="badge">Always active</span>
+            </div>
+            <p>Restores your place when you return to a page or reload it, within this tab.</p>
+          </div>
+        </div>
+        <p class="section-label optional-title">Optional</p>
+        <div class="option">
+          <div>
+            <label for="remember-theme">Remember theme</label>
+            <p>Remembers your light or dark theme on this device.</p>
+          </div>
+          <input class="switch" id="remember-theme" type="checkbox" role="switch" />
+        </div>
+        <div class="option">
+          <div>
+            <label for="recent-searches">Recent searches</label>
+            <p>Remembers your last five searches on this device for reuse.</p>
+          </div>
+          <input class="switch" id="recent-searches" type="checkbox" role="switch" />
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <span class="retention"
+          >Choices expire after 180 days. Visits do not extend this period.</span
+        ><button class="action save" id="save">Save choices</button>
+      </div>
+    </dialog>
+    <script>
+      const dialog = document.querySelector('dialog'),
+        panel = document.querySelector('#panel');
+      let saved = null,
+        opener = null;
+      function openSettings(event) {
+        opener = event.currentTarget;
+        document.querySelector('#remember-theme').checked = saved?.theme ?? false;
+        document.querySelector('#recent-searches').checked = saved?.recentSearches ?? false;
+        dialog.showModal();
+        document.querySelector('#dialog-title').focus();
+      }
+      document.querySelector('#customize').onclick = openSettings;
+      document.querySelector('#settings').onclick = openSettings;
+      document.querySelector('.close').onclick = () => dialog.close();
+      dialog.onclose = () => opener?.focus();
+      document.querySelector('#save').onclick = () => {
+        saved = {
+          theme: document.querySelector('#remember-theme').checked,
+          recentSearches: document.querySelector('#recent-searches').checked,
+        };
+        panel.hidden = true;
+        dialog.close();
+        document.querySelector('#settings').focus();
+      };
+      document.querySelectorAll('[data-answer]').forEach(
+        (button) =>
+          (button.onclick = () => {
+            saved = {
+              theme: button.dataset.answer === 'accept',
+              recentSearches: button.dataset.answer === 'accept',
+            };
+            panel.hidden = true;
+          })
+      );
+      document.querySelector('#theme').onclick = () => {
+        document.documentElement.dataset.theme =
+          document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      };
+      const query = new URLSearchParams(location.search);
+      if (query.get('theme') === 'light') document.documentElement.dataset.theme = 'light';
+      if (query.get('view') === 'dialog') {
+        dialog.showModal();
+        document.querySelector('#dialog-title').focus();
+      }
+    </script>
+  </body>
+</html>

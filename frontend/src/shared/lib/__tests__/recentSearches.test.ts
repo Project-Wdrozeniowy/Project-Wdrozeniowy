@@ -1,3 +1,4 @@
+import { seedStorageConsent } from '@/test/storageConsent';
 import { vi } from 'vitest';
 import {
   RECENT_SEARCHES_KEY,
@@ -10,7 +11,7 @@ import {
 describe('recentSearches', () => {
   beforeEach(() => {
     localStorage.clear();
-    localStorage.setItem('orbita.consent', 'granted');
+    seedStorageConsent();
   });
 
   it('keeps the newest first and drops a repeat regardless of case', () => {
@@ -42,7 +43,7 @@ describe('recentSearches', () => {
   });
 
   it('still works when storage refuses to write', () => {
-    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
       throw new Error('blocked');
     });
     expect(addRecentSearch('react')).toEqual(['react']);
@@ -53,7 +54,7 @@ describe('recentSearches', () => {
 describe('recentSearches with edited storage', () => {
   beforeEach(() => {
     localStorage.clear();
-    localStorage.setItem('orbita.consent', 'granted');
+    seedStorageConsent();
   });
 
   it('drops blanks and repeats', () => {
@@ -78,7 +79,7 @@ describe('recentSearches without permission', () => {
 
   it('does not show terms that are already stored', () => {
     localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(['react']));
-    localStorage.setItem('orbita.consent', 'denied');
+    seedStorageConsent(false);
 
     expect(readRecentSearches()).toEqual([]);
   });

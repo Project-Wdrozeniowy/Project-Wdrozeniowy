@@ -94,6 +94,16 @@ never use real account credentials. CI artifact retention is seven days.
 
 ## Scenario boundaries
 
+PWDRZ-219 replaces the old shared storage decision. `consent.spec.ts` starts with fresh
+contexts and covers all four theme/history combinations, selective withdrawal, saved refusal,
+legacy/invalid/expired records, blocked-save retry, real cross-tab synchronization and native
+dialog keyboard/Close/Escape focus behaviour on main/login/register. Responsive light/dark
+screenshots at 1440/768/390/320px are attached to the report. The static reference approved for
+this task is `docs/design/storage-preferences-prototype.html`; screenshots are review evidence,
+not a self-generated visual baseline or a screen-reader conformance audit.
+Other browser specs use the shared returning-visitor fixture: a version-2 refusal is seeded
+only when no answer exists, without refreshing its decision date on reload.
+
 PWDRZ-185 adds `analytics-drilldown.spec.ts`: real dashboard-to-feed day/category/uncategorized
 links, exact UTC edges, pagination, copied URL/reload/Back and scroll, current visibility changes,
 zero/invalid/error recovery, keyboard, both themes and 320/390px. Historical and unlisted-category

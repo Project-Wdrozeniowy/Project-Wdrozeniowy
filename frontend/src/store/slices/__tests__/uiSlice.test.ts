@@ -1,3 +1,4 @@
+import { seedStorageConsent } from '@/test/storageConsent';
 import { createStore } from 'zustand';
 import { createUISlice, type UISlice } from '../uiSlice';
 
@@ -28,7 +29,7 @@ describe('uiSlice >-65', () => {
 describe('uiSlice theme', () => {
   beforeEach(() => {
     localStorage.clear();
-    localStorage.setItem('orbita.consent', 'granted');
+    seedStorageConsent();
     document.documentElement.setAttribute('data-theme', 'light');
   });
 

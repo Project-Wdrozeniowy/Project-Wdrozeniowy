@@ -1,3 +1,4 @@
+import { seedStorageConsent } from '@/test/storageConsent';
 import {
   THEME_STORAGE_KEY,
   applyTheme,
@@ -17,7 +18,7 @@ function prefersDark(matches: boolean) {
 
 beforeEach(() => {
   localStorage.clear();
-  localStorage.setItem('orbita.consent', 'granted');
+  seedStorageConsent();
   document.documentElement.removeAttribute('data-theme');
   prefersDark(false);
 });
@@ -46,10 +47,10 @@ describe('the stored choice', () => {
   });
 
   it('does not fail when storage is blocked', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+    vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
       throw new Error('blocked');
     });
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
       throw new Error('blocked');
     });
 
@@ -109,7 +110,7 @@ describe('the theme without permission', () => {
 
   it('ignores a stored theme', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'dark');
-    localStorage.setItem('orbita.consent', 'denied');
+    seedStorageConsent(false);
 
     expect(readStoredTheme()).toBeNull();
   });
