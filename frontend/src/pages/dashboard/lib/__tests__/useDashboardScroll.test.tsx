@@ -1,5 +1,6 @@
 import { act, render } from '@testing-library/react';
 import { vi } from 'vitest';
+import { useLayoutEffect } from 'react';
 import useDashboardScroll from '../useDashboardScroll';
 
 let key = 'dashboard-entry';
@@ -87,6 +88,27 @@ it.each(['keydown', 'pointerdown', 'click'])(
     expect(window.scrollY).toBe(900);
   }
 );
+
+it('preserves the departure position when the router resets scroll in a layout effect before passive cleanup', () => {
+  function RouterBoundary({ show }: { show: boolean }) {
+    useLayoutEffect(() => {
+      if (!show) {
+        window.scrollTo(0, 0);
+        window.dispatchEvent(new Event('scroll'));
+      }
+    }, [show]);
+    return show ? <Screen /> : <div>Forum route</div>;
+  }
+  height = 2000;
+  const view = render(<RouterBoundary show />);
+  Object.defineProperty(window, 'scrollY', { configurable: true, value: 900, writable: true });
+  window.dispatchEvent(new Event('keydown'));
+  view.rerender(<RouterBoundary show={false} />);
+  expect(window.scrollY).toBe(0);
+  view.rerender(<RouterBoundary show />);
+  act(() => vi.advanceTimersByTime(30));
+  expect(window.scrollY).toBe(900);
+});
 
 it.each(['wheel', 'pointerdown', 'touchstart', 'keydown'])(
   'stops delayed restoration on user %s',

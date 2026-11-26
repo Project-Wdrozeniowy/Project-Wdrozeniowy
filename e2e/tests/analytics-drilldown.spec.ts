@@ -181,6 +181,23 @@ test('analytics drill-down preserves exact windows, pagination, reload, Back and
       .poll(async () => Math.abs((await page.evaluate(() => window.scrollY)) - sourceY))
       .toBeLessThan(8);
 
+    // Exercise both keyboard and pointer departures repeatedly; every transition must pass.
+    for (const action of ['keyboard', 'pointer', 'keyboard'] as const) {
+      await categoryLink.scrollIntoViewIfNeeded();
+      await categoryLink.focus();
+      const departureY = await page.evaluate(() => scrollY);
+      answered = feedResponse(page);
+      if (action === 'keyboard') await categoryLink.press('Enter');
+      else await categoryLink.click();
+      expect((await (await answered).json()).totalElements).toBe(16);
+      await page.goBack();
+      await expect(table).toBeVisible();
+      await expect(chart.getByRole('table')).toBeVisible();
+      await expect
+        .poll(async () => Math.abs((await page.evaluate(() => scrollY)) - departureY))
+        .toBeLessThan(8);
+    }
+
     // Daily graph and semantic table encode the same UTC bounds, including both edges.
     const dayLabel = new Date(`${day}T00:00:00Z`).toLocaleDateString('en-US', {
       year: 'numeric',

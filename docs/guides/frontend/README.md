@@ -532,6 +532,8 @@ Dashboard settings live in its URL: `period=7d|30d`, `metric=posts|comments`, `a
 the history entry with `preventScrollReset`; publication links push a new entry. Reload, copied
 dashboard URLs and Back restore the settings. RootLayout still owns ordinary scroll restoration;
 `useDashboardScroll` completes a POP/reload restore when the asynchronous dashboard grows enough.
+Its listener teardown and position persistence run during layout cleanup, before Router resets
+scroll for the next route; passive cleanup can observe that reset and overwrite the departure Y.
 It keeps at most 20 entry-keyed Y positions in session storage, stores no figures or account data,
 stops after five seconds or on user input, and tolerates blocked storage. Data can refresh under
 the normal Query policy. No analytics snapshots or account data

@@ -102,7 +102,7 @@ These entries preserve intermediate attempts; final acceptance is recorded below
   (6 cached), production build passed. These precede the final scroll-event correction; final
   implementation checks and CI are recorded below after completion.
 
-## Final acceptance
+## Original acceptance (superseded by returned CI failure below)
 
 Tested implementation: `30c6a0aad2f78e717274e5c6c01edb88d530f8e9`, clean working tree at final
 gate start. Node 24.15.0, bundled npm 11.12.1 (shell default npm was not changed), Docker Engine
@@ -180,3 +180,27 @@ No additional downstream task was established as newly unblocked, and no owner w
 Current limits: changed visibility/categories/new posts can change counts; offset pagination can
 shift under concurrent writes; blocked session storage falls back to ordinary router restoration
 and cannot guarantee persisted Y after a full reload. Dashboard URL settings remain shareable.
+
+## Returned CI failure — 25 November 2026
+
+User supplied the red PR E2E gate. Downloaded [run 45712807923](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45712807923)
+at `bb0ac58`, managed run `1795645492088-4c10d1b4`: 69 passed / 1 failed, zero retries,
+exit 1, cleanup completed. The failure is again dashboard Back scroll, unchanged 8px assertion.
+Trace attachments prove departure Y=1415 with no stored position, then returned Y=0 with
+`{"default":0}` stored. Previous successful runs are retained above as history, not proof that
+this returned failure was resolved.
+
+Context map remains the approved dashboard hook, its adjacent unit test, and the drill-down E2E.
+A deterministic regression test now mounts a router boundary which resets scroll in a layout
+effect before the old screen's passive cleanup. It failed with restored 0 instead of 900.
+Moving the dashboard hook's persistence/listener cleanup to the layout phase makes this test
+pass before Router's new-route reset can overwrite the departure position (11/11 hook tests;
+14/14 with the real-router journey suite). Capture-phase navigation input alone was insufficient.
+Added three required keyboard/pointer round trips to the browser scenario; these are independent
+asserted transitions, not test retries. No timeout, tolerance, assertion or quality gate is relaxed.
+Final verification of the correction is in progress.
+
+Focused managed run `1795646050004-be4153b0` passed 2/2 scenarios, zero retries, exit 0 and
+cleanup completed. This includes the original reload/Back path plus all three added keyboard/pointer
+round trips. Resuming on 26 November: the previous PR-read approval request was not executed due
+to an approval-review usage limit; no approval check was bypassed. PR #126 targets develop.

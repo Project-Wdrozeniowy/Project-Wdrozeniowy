@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { useLocation, useNavigationType } from 'react-router';
 
 const storageKey = 'orbita.dashboard.positions';
@@ -19,7 +19,8 @@ export default function useDashboardScroll() {
   const ref = useRef<HTMLDivElement>(null);
   const { key } = useLocation();
   const navigationType = useNavigationType();
-  useEffect(() => {
+  // Detach/persist during layout cleanup, before Router resets the new route's scroll position.
+  useLayoutEffect(() => {
     const target = navigationType === 'POP' ? positions()[key] : undefined;
     let pending = target !== undefined;
     let lastY = target ?? window.scrollY;
