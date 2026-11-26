@@ -130,13 +130,17 @@ test('a guest opens the dashboard directly and after a reload, and sees what the
     await expect(table.getByRole('row')).toHaveCount(activity.days.length + 1);
     const posts = await table.locator('tbody td').allTextContents();
     expect(posts.map(Number).reduce((sum, value) => sum + value, 0)).toBe(activity.totalPosts);
-    await chart.getByRole('radio', { name: 'Comments' }).check({ force: true });
+    await chart.getByRole('radio', { name: 'Posts' }).focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(chart.getByRole('radio', { name: 'Comments' })).toBeChecked();
     await expect(table.getByRole('columnheader', { name: 'Comments' })).toBeVisible();
     const comments = await table.locator('tbody td').allTextContents();
     expect(comments.map(Number).reduce((sum, value) => sum + value, 0)).toBe(
       activity.totalComments
     );
-    await chart.getByRole('radio', { name: 'Posts' }).check({ force: true });
+    await chart.getByRole('radio', { name: 'Comments' }).focus();
+    await page.keyboard.press('ArrowLeft');
+    await expect(chart.getByRole('radio', { name: 'Posts' })).toBeChecked();
 
     // Public data only: no draft, no reader or author identity.
     for (const body of bodies) {
@@ -154,7 +158,7 @@ test('a guest opens the dashboard directly and after a reload, and sees what the
     answerOf(page, 'categories', '7d'),
   ];
   await page.goto('/dashboard');
-  await expect(page).toHaveURL(/\/dashboard$/);
+  expect(new URL(page.url()).pathname).toBe('/dashboard');
   await expect(page.getByRole('heading', { name: 'Analytics Dashboard', level: 1 })).toBeVisible();
   const week = await checkWindow('7d', await Promise.all(answered), 'Last 7 days');
 
@@ -184,7 +188,9 @@ test('a guest opens the dashboard directly and after a reload, and sees what the
     answerOf(page, 'categories', '7d'),
   ];
   await page.reload();
-  await expect(page).toHaveURL(/\/dashboard$/);
+  expect(new URL(page.url()).pathname).toBe('/dashboard');
+  expect(new URL(page.url()).searchParams.get('activityTable')).toBe('1');
+  expect(new URL(page.url()).searchParams.get('metric')).toBe('posts');
   const reloaded = await checkWindow('7d', await Promise.all(answered), 'Last 7 days');
   expect(reloaded.totalPosts).toBe(week.totalPosts);
 
@@ -240,7 +246,7 @@ test('a failing analytics backend shows fixed failure states and never a success
   await expect(figures.getByText('Not available')).toHaveCount(2);
   await expect(figures.getByText(/^\d[\d,]*$/)).toHaveCount(0);
   await expect(chart.getByRole('alert')).toContainText('We could not load this. Please try again.');
-  await expect(chart.getByRole('img')).toHaveCount(0);
+  await expect(chart.getByRole('group', { name: /^Posts per day,/ })).toHaveCount(0);
   await expect(page.locator('body')).not.toContainText('PSQLException');
   await expect(page.locator('body')).not.toContainText('secret-host');
 
@@ -254,6 +260,6 @@ test('a failing analytics backend shows fixed failure states and never a success
   const answered = answerOf(page, 'activity', '7d');
   await chart.getByRole('button', { name: 'Try again' }).click();
   expect((await answered).status()).toBe(200);
-  await expect(chart.getByRole('img')).toBeVisible();
+  await expect(chart.getByRole('group', { name: /^Posts per day,/ })).toBeVisible();
   await expect(chart.getByRole('alert')).toHaveCount(0);
 });

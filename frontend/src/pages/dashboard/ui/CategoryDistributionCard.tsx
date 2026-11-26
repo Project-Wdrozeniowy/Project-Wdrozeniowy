@@ -16,18 +16,37 @@ import CategoryDistributionChart from './CategoryDistributionChart';
 import CategoryDistributionTable from './CategoryDistributionTable';
 import ChartCard from './ChartCard';
 import ChartSkeleton from './ChartSkeleton';
+import { categoryPublicationsHref } from '@/features/publication-drilldown';
 
 interface CategoryDistributionCardProps {
   period: AnalyticsPeriod;
+  tableOpen?: boolean;
+  onTableOpenChange?: (open: boolean) => void;
 }
 
-/** The API response owns both presentations, their total and their timestamp. Actions: PWDRZ-185. */
-export default function CategoryDistributionCard({ period }: CategoryDistributionCardProps) {
+/** The displayed response owns the count, identity and exact window of every destination. */
+export default function CategoryDistributionCard({
+  period,
+  tableOpen: controlledTableOpen,
+  onTableOpenChange,
+}: CategoryDistributionCardProps) {
   const query = usePublicCategoryDistribution(period);
   const data = query.data;
   const rows = data ? categorySeries(data) : [];
   const tableId = useId();
-  const [tableOpen, setTableOpen] = useState(false);
+  const [localTableOpen, setLocalTableOpen] = useState(false);
+  const tableOpen = controlledTableOpen ?? localTableOpen;
+  const destinations = data
+    ? Object.fromEntries(
+        rows.map((row) => [
+          row.key,
+          {
+            href: categoryPublicationsHref(data, row.category),
+            label: `Open ${countLabel(row.posts, 'post', 'posts')} in ${row.label}, ${ANALYTICS_PERIOD_LABELS[data.period]}, UTC`,
+          },
+        ])
+      )
+    : {};
   const label = data ? ANALYTICS_PERIOD_LABELS[data.period] : ANALYTICS_PERIOD_LABELS[period];
   const title = `${CATEGORY_CHART_TITLE}, ${label}, UTC`;
 
@@ -58,7 +77,7 @@ export default function CategoryDistributionCard({ period }: CategoryDistributio
             {data.totalPosts === 0 && (
               <p className="text-sm text-fg-subtle">{NO_CATEGORY_POSTS_TEXT}</p>
             )}
-            <CategoryDistributionChart rows={rows} title={title} />
+            <CategoryDistributionChart rows={rows} title={title} destinations={destinations} />
             <p className="text-xs text-fg-subtle">
               Share is of all public posts in this window. Rounded percentages may not add up to
               100%.
@@ -67,13 +86,15 @@ export default function CategoryDistributionCard({ period }: CategoryDistributio
               type="button"
               aria-expanded={tableOpen}
               aria-controls={tableId}
-              onClick={() => setTableOpen((open) => !open)}
+              onClick={() =>
+                onTableOpenChange ? onTableOpenChange(!tableOpen) : setLocalTableOpen(!tableOpen)
+              }
               className="self-start rounded border border-line-strong px-3 py-1.5 text-sm font-semibold text-fg hover:bg-raised focus-visible:outline-2 focus-visible:outline-blue-500"
             >
               Category data table
             </button>
             <div id={tableId} hidden={!tableOpen}>
-              <CategoryDistributionTable rows={rows} title={title} />
+              <CategoryDistributionTable rows={rows} title={title} destinations={destinations} />
             </div>
           </>
         )}

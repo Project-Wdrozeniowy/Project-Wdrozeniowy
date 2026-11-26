@@ -82,9 +82,9 @@ function pageOf(
   };
 }
 
-function renderFeed() {
+function renderFeed(staleTime?: number) {
   // One client for the whole test, like the real app: a rerender keeps the query cache.
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime } } });
   // A new element each time, otherwise React skips the re-render.
   const ui = () => (
     <QueryClientProvider client={client}>
@@ -702,6 +702,55 @@ describe('ForumFeed – tag filter', () => {
     list.mockReturnValueOnce(new Promise(() => {}));
     rerenderFeed();
 
+    expect(await screen.findByRole('status', { name: 'Loading posts…' })).toBeInTheDocument();
+    expect(screen.queryByText('Post 8')).not.toBeInTheDocument();
+  });
+});
+
+describe('ForumFeed – analytics selection cache', () => {
+  it('hides cached unfiltered pagination when a later URL has an invalid publication filter', async () => {
+    list.mockResolvedValue(
+      pageOf([10, 9, 8, 7, 6, 5, 4, 3, 2, 1], { totalPages: 2, totalElements: 12 })
+    );
+    const { rerenderFeed } = renderFeed(60_000);
+    await screen.findByText('Post 8');
+    expect(screen.getByRole('navigation', { name: 'Pagination' })).toBeInTheDocument();
+    search = 'createdFrom=bad';
+    rerenderFeed();
+    expect(screen.getByRole('alert')).toHaveTextContent('This publication filter is invalid');
+    expect(screen.queryByRole('navigation', { name: 'Pagination' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Post 8')).not.toBeInTheDocument();
+    expect(list).toHaveBeenCalledTimes(1);
+  });
+  it('revalidates a reopened analytics selection even inside the application cache freshness window', async () => {
+    search = 'createdFrom=2026-10-01T00:00:00Z';
+    list.mockResolvedValueOnce(pageOf([8, 7]));
+    const { client, unmount } = renderFeed(60_000);
+    await screen.findByText('Post 8');
+    unmount();
+    list.mockResolvedValueOnce(pageOf([7]));
+    render(
+      <QueryClientProvider client={client}>
+        <ForumFeed />
+      </QueryClientProvider>
+    );
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByText('Post 8')).not.toBeInTheDocument());
+    expect(screen.getByText('Post 7')).toBeInTheDocument();
+  });
+  it.each([
+    ['createdFrom=2026-10-01T00:00:00Z', 'createdFrom=2026-10-02T00:00:00Z'],
+    ['createdTo=2026-10-02T00:00:00Z', 'createdTo=2026-10-03T00:00:00Z'],
+    ['categoryId=1', 'categoryId=2'],
+    ['', 'uncategorized=true'],
+  ])('does not carry old posts from %s into %s', async (previous, next) => {
+    search = previous;
+    list.mockResolvedValueOnce(pageOf([8, 7]));
+    const { rerenderFeed } = renderFeed();
+    await screen.findByText('Post 8');
+    search = next;
+    list.mockReturnValueOnce(new Promise(() => {}));
+    rerenderFeed();
     expect(await screen.findByRole('status', { name: 'Loading posts…' })).toBeInTheDocument();
     expect(screen.queryByText('Post 8')).not.toBeInTheDocument();
   });

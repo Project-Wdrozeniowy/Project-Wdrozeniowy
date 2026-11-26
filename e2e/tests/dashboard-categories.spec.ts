@@ -61,7 +61,7 @@ async function checkTable(card: Locator, data: PublicCategoryDistributionDto) {
     await expect(row.getByRole('cell').nth(0)).toHaveText(item.posts.toLocaleString('en-US'));
     await expect(row.getByRole('cell').nth(1)).toHaveText(formatShare(item.share));
   }
-  await expect(card.getByRole('img')).toHaveAccessibleName(
+  await expect(card.getByRole('group', { name: /^Posts by category,/ })).toHaveAccessibleName(
     `Posts by category, Last ${data.period === '7d' ? '7' : '30'} days, UTC. ${data.categories.map((row) => `${row.category?.name ?? 'No category'}: ${row.posts}`).join(', ')}`
   );
   expect(data.categories.reduce((sum, row) => sum + row.posts, 0)).toBe(data.totalPosts);
@@ -185,8 +185,9 @@ test('category distribution matches real public totals for guests, both windows,
     }
     await page.reload();
     const card = page.getByRole('region', { name: 'Posts by category' });
-    // Period remains screen-owned local state (PWDRZ-185 owns restoration); reload defaults to 7d.
-    await expect(card.getByText('Last 7 days', { exact: true })).toBeVisible();
+    // PWDRZ-185: reload retains the selected window and table disclosure.
+    await expect(card.getByText('Last 30 days', { exact: true })).toBeVisible();
+    await expect(card.getByRole('table')).toBeVisible();
     expect(requests).not.toContain('GET /api/analytics/me');
     expect(requests.every((entry) => entry.startsWith('GET '))).toBe(true);
     expect(
@@ -205,7 +206,7 @@ test('category transport failures recover through keyboard retry with real serve
 }) => {
   await page.goto('/dashboard');
   const card = page.getByRole('region', { name: 'Posts by category' });
-  await expect(card.getByRole('img')).toBeVisible();
+  await expect(card.getByRole('group', { name: /^Posts by category,/ })).toBeVisible();
   try {
     // Abort transport only; never fulfil a request with a fabricated API response.
     await page.route('**/api/analytics/public/categories?period=30d', (route) =>
@@ -214,12 +215,12 @@ test('category transport failures recover through keyboard retry with real serve
     await page.getByRole('button', { name: 'Last 30 days' }).click();
     const alert = card.getByRole('alert');
     await expect(alert).toContainText('We could not load this. Please try again.');
-    await expect(card.getByRole('img')).toHaveCount(0);
+    await expect(card.getByRole('group', { name: /^Posts by category,/ })).toHaveCount(0);
     await page.unroute('**/api/analytics/public/categories?period=30d');
     const retry = alert.getByRole('button', { name: 'Try again' });
     await retry.focus();
     await retry.press('Enter');
-    await expect(card.getByRole('img')).toBeVisible();
+    await expect(card.getByRole('group', { name: /^Posts by category,/ })).toBeVisible();
     await expect(card.getByText('Last 30 days', { exact: true })).toBeVisible();
   } finally {
     await page.unroute('**/api/analytics/public/categories?period=30d');

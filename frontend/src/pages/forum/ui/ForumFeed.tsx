@@ -5,6 +5,7 @@ import { FEED_SORT } from '@/shared/api/forum/feedQuery.const';
 import { FEED_SORTS, FEED_SORT_PARAM } from '@/shared/constants/feedSort.const';
 import { feedSortToApi, openFeedSort } from '@/shared/lib/feedSort';
 import { useForumPosts } from '@/shared/api/forum/useForumPosts';
+import { parsePublicationFilters } from '@/features/publication-drilldown';
 import { getLoadPhase } from '@/shared/lib/loadPhase';
 import { parsePageParam, parseTagParam, topicToCategorySlug } from '@/pages/forum/lib/forumFeed';
 import ActiveSortFilter from './ActiveSortFilter';
@@ -12,6 +13,7 @@ import ActiveTagFilter from './ActiveTagFilter';
 import CategoryFilter from './CategoryFilter';
 import EmptyFeed from './EmptyFeed';
 import PostPagination from './PostPagination';
+import ActivePublicationFilters from './ActivePublicationFilters';
 
 /**
  * Forum post list backed by `GET /forum/posts`.
@@ -34,7 +36,10 @@ export default function ForumFeed() {
   const sort = sortParam ? feedSortToApi(sortParam) : FEED_SORT;
   const categorySlug = activeTopic === ALL_TOPICS ? undefined : topicToCategorySlug(activeTopic);
 
-  const query = useForumPosts({ page, categorySlug, tag, sort });
+  const publication = parsePublicationFilters(searchParams);
+  const filters = publication.valid ? publication.filters : {};
+  const hasPublicationFilter = Object.keys(filters).length > 0;
+  const query = useForumPosts({ page, categorySlug, tag, sort, ...filters }, publication.valid);
   const { data, isRefetchError, isFetching, isPlaceholderData, refetch } = query;
   const phase = getLoadPhase(query);
   const failed = phase === 'failed' || phase === 'retrying';
@@ -54,6 +59,9 @@ export default function ForumFeed() {
 
   function handleSelectTopic(label: string) {
     updateLocation((params) => {
+      for (const key of ['categoryId', 'categoryName', 'uncategorized', 'topic', 'page']) {
+        params.delete(key);
+      }
       if (label === ALL_TOPICS) {
         params.delete('topic');
       } else {
@@ -94,13 +102,21 @@ export default function ForumFeed() {
   // content changes between the posts and the loading state. That keeps keyboard focus on it.
   const loadingAnotherPage = !failed && !loadingFirst && isPlaceholderData;
   const showPagination =
+    publication.valid &&
     !failed &&
     !loadingFirst &&
     (loadingAnotherPage || (data.content.length > 0 && !isPlaceholderData));
 
   return (
     <>
-      <CategoryFilter active={activeTopic} onSelect={handleSelectTopic} />
+      <CategoryFilter
+        active={filters.categoryId !== undefined || filters.uncategorized ? null : activeTopic}
+        onSelect={handleSelectTopic}
+      />
+      <ActivePublicationFilters
+        params={searchParams}
+        posts={isPlaceholderData ? [] : (data?.content ?? [])}
+      />
       {tag && <ActiveTagFilter tag={tag} clearHref={hrefWithoutTag()} />}
       {sortParam && (
         <ActiveSortFilter
@@ -108,7 +124,7 @@ export default function ForumFeed() {
           clearHref={hrefWithoutSort()}
         />
       )}
-      {failed ? (
+      {!publication.valid ? null : failed ? (
         // A retry keeps the error on screen, so the keyboard user keeps their place.
         <PostFeedError onRetry={() => refetch()} retrying={phase === 'retrying'} />
       ) : loadingFirst ? (
@@ -122,6 +138,7 @@ export default function ForumFeed() {
         <EmptyFeed
           topic={activeTopic}
           tag={tag}
+          publicationFiltered={hasPublicationFilter}
           pageOutOfRange={page > 0 && data.totalPages > 0}
           onFirstPage={() => handlePageChange(0)}
         />

@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import MockAdapter from 'axios-mock-adapter';
 import type { AxiosInstance } from 'axios';
 import { vi } from 'vitest';
@@ -14,12 +15,11 @@ import { toast } from '@/shared/lib/toast';
  */
 
 let search = '';
+const navigate = vi.fn();
 
 vi.mock('react-router', async () =>
   (await import('@/test/routerMock')).routerMock({
-    useNavigate:
-      () => (url: string, options?: { replace?: boolean; preventScrollReset?: boolean }) =>
-        options?.replace ? vi.fn()(url, options) : vi.fn()(url),
+    useNavigate: () => navigate,
     useLocation: () => ({ pathname: '/forum', search: '', hash: '', state: null, key: 'test' }),
     useSearchParams: () => [new URLSearchParams(search), vi.fn()],
   })
@@ -90,6 +90,73 @@ afterEach(() => {
 });
 
 describe('ForumFeed over the real API client', () => {
+  it('passes exact analytics bounds/category through the generated transport and shows their labels', async () => {
+    search =
+      'createdFrom=2026-10-10T00:00:00Z&createdTo=2026-10-11T00:00:00Z&categoryId=2&categoryName=Old&page=2';
+    mock.onGet('/forum/categories').reply(200, [REAL_PAGE.content[0].category]);
+    mock.onGet('/forum/posts').reply(200, { ...REAL_PAGE, page: 1 });
+    renderFeed();
+    await screen.findByText('Gaming post 3');
+    const filters = screen.getByRole('region', { name: 'Publication filters' });
+    expect(within(filters).getByText(/Gaming/)).toBeInTheDocument();
+    expect(within(filters).getByText(/UTC/)).toBeInTheDocument();
+    expect(mock.history.get.find((call) => call.url === '/forum/posts')?.params).toEqual({
+      page: 1,
+      size: 10,
+      sort: 'lastActivityAt',
+      createdFrom: '2026-10-10T00:00:00Z',
+      createdTo: '2026-10-11T00:00:00Z',
+      categoryId: 2,
+    });
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('does not fetch an unfiltered feed for an invalid link and offers to clear it', async () => {
+    search = 'createdFrom=2020-02-30T00:00:00Z&tag=java&page=2';
+    renderFeed();
+    expect(screen.getByRole('alert')).toHaveTextContent('This publication filter is invalid');
+    expect(screen.getByRole('link', { name: 'Clear publication filters' })).toHaveAttribute(
+      'href',
+      '/forum?tag=java'
+    );
+    expect(mock.history.get).toHaveLength(0);
+  });
+
+  it('keeps an unlisted category identity and source label when empty and its name lookup fails', async () => {
+    search = 'categoryId=42&categoryName=Former%20name&createdTo=2026-10-11T00:00:00Z';
+    mock.onGet('/forum/categories').networkError();
+    mock
+      .onGet('/forum/posts')
+      .reply(200, { ...REAL_PAGE, content: [], totalElements: 0, totalPages: 0 });
+    renderFeed();
+    await screen.findByText(/No public posts match/);
+    expect(screen.getByText(/Former name.*name from analytics/)).toBeInTheDocument();
+    expect(screen.getByText(/currently public/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Clear category' })).toHaveAttribute(
+      'href',
+      '/forum?createdTo=2026-10-11T00%3A00%3A00Z'
+    );
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('replaces the analytics category when choosing a topic, keeping dates and independent filters', async () => {
+    search =
+      'categoryId=42&uncategorized=false&categoryName=Old&createdFrom=2026-10-10T00:00:00Z&tag=java&sort=new&page=2';
+    mock.onGet('/forum/categories').reply(200, []);
+    mock.onGet('/forum/posts').reply(200, REAL_PAGE);
+    renderFeed();
+    await screen.findByText('Gaming post 3');
+    // URL mutation/history is also exercised with a real router in the drill-down journey suite.
+    await userEvent.click(screen.getByRole('button', { name: 'Gaming' }));
+    const url = new URL(navigate.mock.calls.at(-1)![0], 'https://orbita.example');
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      createdFrom: '2026-10-10T00:00:00Z',
+      tag: 'java',
+      sort: 'new',
+      topic: 'Gaming',
+    });
+  });
+
   it('sends the documented query string and renders the real response shape', async () => {
     mock.onGet('/forum/posts').reply(200, REAL_PAGE);
     renderFeed();

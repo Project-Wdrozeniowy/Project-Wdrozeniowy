@@ -3,9 +3,15 @@ import {
   MISSING_VALUE_TEXT,
   PARTIAL_DAY_TEXT,
 } from '@/widgets/activity-chart/config/activityChart.const';
-import { fullDay, type ActivityMetric } from '@/widgets/activity-chart/lib/activityView';
+import {
+  fullDay,
+  type ActivityMetric,
+  type ActivityPointLink,
+} from '@/widgets/activity-chart/lib/activityView';
+import { Link } from 'react-router';
 
 interface ActivityTableProps {
+  pointLinks?: Readonly<Record<string, ActivityPointLink>>;
   metric: ActivityMetric;
   /** What the table is about, as in the graph: metric, window and zone. */
   title: string;
@@ -16,7 +22,7 @@ interface ActivityTableProps {
  * header is the date, so a screen reader says "Nov 17, 2026, Posts, 3". A day without a value
  * says so in words, and a measured zero is a `0`.
  */
-export default function ActivityTable({ metric, title }: ActivityTableProps) {
+export default function ActivityTable({ metric, title, pointLinks }: ActivityTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm text-fg border-collapse">
@@ -41,6 +47,14 @@ export default function ActivityTable({ metric, title }: ActivityTableProps) {
               <td className="text-right py-1.5 tabular-nums">
                 {point.value === null ? (
                   <span className="italic text-fg-subtle">{MISSING_VALUE_TEXT}</span>
+                ) : pointLinks?.[point.date] ? (
+                  <Link
+                    to={pointLinks[point.date].href}
+                    aria-label={pointLinks[point.date].label}
+                    className="inline-block min-h-6 min-w-6 underline rounded focus-visible:outline-2 focus-visible:outline-blue-500"
+                  >
+                    {point.value}
+                  </Link>
                 ) : (
                   point.value
                 )}

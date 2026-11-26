@@ -46,6 +46,9 @@ interface Overrides {
   actions?: React.ReactNode;
   meta?: React.ReactNode;
   embedded?: boolean;
+  pointLinks?: Record<string, { href: string; label: string }>;
+  tableOpen?: boolean;
+  onTableOpenChange?: (open: boolean) => void;
 }
 
 function renderChart({
@@ -60,6 +63,9 @@ function renderChart({
   actions,
   meta,
   embedded,
+  pointLinks,
+  tableOpen,
+  onTableOpenChange,
 }: Overrides = {}) {
   return render(
     <ActivityChart
@@ -77,6 +83,9 @@ function renderChart({
       actions={actions}
       meta={meta}
       embedded={embedded}
+      pointLinks={pointLinks}
+      tableOpen={tableOpen}
+      onTableOpenChange={onTableOpenChange}
     />
   );
 }
@@ -88,6 +97,37 @@ async function openTable() {
 }
 
 describe('ActivityChart graph and table', () => {
+  it('exposes keyboard links for measured buckets including zero, outside image semantics', async () => {
+    renderChart({
+      kind: 'bar',
+      pointLinks: {
+        [day(0)]: { href: '/forum?day=10', label: 'Open 3 posts on Nov 10, UTC' },
+        [day(1)]: { href: '/forum?day=11', label: 'Open 0 posts on Nov 11, UTC' },
+        [day(2)]: { href: '/forum?day=12', label: 'Must not link missing data' },
+      },
+    });
+    const link = screen.getByRole('link', { name: 'Open 0 posts on Nov 11, UTC' });
+    expect(link).toHaveAttribute('href', '/forum?day=11');
+    expect(link.closest('[role="img"]')).toBeNull();
+    expect(
+      screen.queryByRole('link', { name: 'Must not link missing data' })
+    ).not.toBeInTheDocument();
+    link.focus();
+    expect(link).toHaveFocus();
+    await openTable();
+    expect(
+      within(screen.getByRole('table')).getByRole('link', { name: 'Open 3 posts on Nov 10, UTC' })
+    ).toHaveAttribute('href', '/forum?day=10');
+  });
+
+  it('can keep table disclosure owned by the screen', async () => {
+    const change = vi.fn();
+    renderChart({ tableOpen: true, onTableOpenChange: change });
+    expect(screen.getByRole('table')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Data table' }));
+    expect(change).toHaveBeenCalledWith(false);
+  });
+
   it('shows the same days and values in the graph, the table and the text alternative', async () => {
     const { container } = renderChart();
     await openTable();

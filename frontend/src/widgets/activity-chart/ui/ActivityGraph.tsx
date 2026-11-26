@@ -18,9 +18,12 @@ import {
   unitText,
   yAxis,
   type ActivityMetric,
+  type ActivityPointLink,
 } from '@/widgets/activity-chart/lib/activityView';
+import { Link } from 'react-router';
 
 interface ActivityGraphProps {
+  pointLinks?: Readonly<Record<string, ActivityPointLink>>;
   metric: ActivityMetric;
   kind: ChartKind;
   /** The graph in words: its text alternative. */
@@ -38,7 +41,13 @@ const pad = CHART_PADDING;
  * in its place, so the difference does not depend on colour. The table next to it lists the same
  * points.
  */
-export default function ActivityGraph({ metric, kind, summary, missingText }: ActivityGraphProps) {
+export default function ActivityGraph({
+  metric,
+  kind,
+  summary,
+  missingText,
+  pointLinks,
+}: ActivityGraphProps) {
   const color = metric.color ?? DEFAULT_CHART_COLOR;
   const cw = w - pad.left - pad.right;
   const ch = h - pad.top - pad.bottom;
@@ -67,151 +76,173 @@ export default function ActivityGraph({ metric, kind, summary, missingText }: Ac
   const path = runs.map(monotonePath).join(' ');
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" role="img" aria-label={summary}>
-      {ticks.map((tick) => (
-        <g key={tick}>
-          <line
-            x1={pad.left}
-            y1={yOf(tick)}
-            x2={pad.left + cw}
-            y2={yOf(tick)}
-            className="stroke-line"
-            strokeWidth="1"
-            strokeDasharray={GRID_DASH}
-          />
-          <line
-            x1={pad.left - TICK_LENGTH}
-            y1={yOf(tick)}
-            x2={pad.left}
-            y2={yOf(tick)}
-            className="stroke-line-strong"
-            strokeWidth="1"
-          />
-          <text
-            x={pad.left - TICK_LENGTH - 3}
-            y={yOf(tick) + 3}
-            textAnchor="end"
-            className="fill-fg-subtle"
-            fontSize="10"
-          >
-            {tick}
-          </text>
-        </g>
-      ))}
-      {metric.points.map(
-        (point, index) =>
-          labelled.has(index) && (
-            <g key={`grid-${point.date}`}>
-              <line
-                x1={xOf(index)}
-                y1={pad.top}
-                x2={xOf(index)}
-                y2={baseline}
-                className="stroke-line"
-                strokeWidth="1"
-                strokeDasharray={GRID_DASH}
-              />
-              <line
-                x1={xOf(index)}
-                y1={baseline}
-                x2={xOf(index)}
-                y2={baseline + TICK_LENGTH}
-                className="stroke-line-strong"
-                strokeWidth="1"
-              />
-            </g>
-          )
-      )}
-      <line
-        x1={pad.left}
-        y1={pad.top}
-        x2={pad.left}
-        y2={baseline}
-        className="stroke-line-strong"
-        strokeWidth="1"
-      />
-      <line
-        x1={pad.left}
-        y1={baseline}
-        x2={pad.left + cw}
-        y2={baseline}
-        className="stroke-line-strong"
-        strokeWidth="1"
-      />
-      {kind === 'line' && path && (
-        <path
-          d={path}
-          fill="none"
-          stroke={color}
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      )}
-      {metric.points.map((point, index) => {
-        const x = xOf(index);
-        return (
-          <g key={point.date}>
-            {point.value === null ? (
-              <>
-                <title>{`${dayText(point)}: ${missingText.toLowerCase()}`}</title>
+    <div className="overflow-x-auto min-w-0">
+      <svg
+        viewBox={`0 0 ${w} ${h}`}
+        className="w-full"
+        role={pointLinks ? 'group' : 'img'}
+        aria-label={summary}
+        style={pointLinks ? { minWidth: `${Math.ceil((24 * count * w) / cw)}px` } : undefined}
+      >
+        {ticks.map((tick) => (
+          <g key={tick}>
+            <line
+              x1={pad.left}
+              y1={yOf(tick)}
+              x2={pad.left + cw}
+              y2={yOf(tick)}
+              className="stroke-line"
+              strokeWidth="1"
+              strokeDasharray={GRID_DASH}
+            />
+            <line
+              x1={pad.left - TICK_LENGTH}
+              y1={yOf(tick)}
+              x2={pad.left}
+              y2={yOf(tick)}
+              className="stroke-line-strong"
+              strokeWidth="1"
+            />
+            <text
+              x={pad.left - TICK_LENGTH - 3}
+              y={yOf(tick) + 3}
+              textAnchor="end"
+              className="fill-fg-subtle"
+              fontSize="10"
+            >
+              {tick}
+            </text>
+          </g>
+        ))}
+        {metric.points.map(
+          (point, index) =>
+            labelled.has(index) && (
+              <g key={`grid-${point.date}`}>
                 <line
-                  data-point="missing"
-                  x1={kind === 'bar' ? x - (slot * BAR_WIDTH_SHARE) / 2 : x}
-                  y1={kind === 'bar' ? baseline : pad.top}
-                  x2={kind === 'bar' ? x + (slot * BAR_WIDTH_SHARE) / 2 : x}
+                  x1={xOf(index)}
+                  y1={pad.top}
+                  x2={xOf(index)}
                   y2={baseline}
-                  className="stroke-fg-subtle"
-                  strokeWidth="1.5"
+                  className="stroke-line"
+                  strokeWidth="1"
                   strokeDasharray={GRID_DASH}
                 />
-              </>
-            ) : kind === 'bar' ? (
-              <>
-                <title>{`${dayText(point)}: ${unitText(metric, point.value)}`}</title>
-                <rect
-                  data-point="measured"
-                  x={x - (slot * BAR_WIDTH_SHARE) / 2}
-                  y={baseline - barHeight(point.value, top, ch)}
-                  width={slot * BAR_WIDTH_SHARE}
-                  height={barHeight(point.value, top, ch)}
-                  fill={point.partial ? undefined : color}
-                  className={point.partial ? 'fill-surface' : undefined}
-                  stroke={point.partial ? color : undefined}
-                  strokeWidth={point.partial ? 1.5 : undefined}
-                  rx="2"
+                <line
+                  x1={xOf(index)}
+                  y1={baseline}
+                  x2={xOf(index)}
+                  y2={baseline + TICK_LENGTH}
+                  className="stroke-line-strong"
+                  strokeWidth="1"
                 />
-              </>
-            ) : (
-              <>
-                <title>{`${dayText(point)}: ${unitText(metric, point.value)}`}</title>
-                <circle
-                  data-point="measured"
-                  cx={x}
-                  cy={yOf(point.value)}
-                  r="3"
-                  fill={point.partial ? undefined : color}
-                  className={point.partial ? 'fill-surface' : undefined}
-                  stroke={point.partial ? color : undefined}
-                  strokeWidth={point.partial ? 1.5 : undefined}
-                />
-              </>
-            )}
-            {labelled.has(index) && (
-              <text
-                x={x}
-                y={baseline + TICK_LENGTH + 12}
-                textAnchor="middle"
-                className="fill-fg-subtle"
-                fontSize="10"
-              >
-                {axisDay(point.date)}
-              </text>
-            )}
-          </g>
-        );
-      })}
-    </svg>
+              </g>
+            )
+        )}
+        <line
+          x1={pad.left}
+          y1={pad.top}
+          x2={pad.left}
+          y2={baseline}
+          className="stroke-line-strong"
+          strokeWidth="1"
+        />
+        <line
+          x1={pad.left}
+          y1={baseline}
+          x2={pad.left + cw}
+          y2={baseline}
+          className="stroke-line-strong"
+          strokeWidth="1"
+        />
+        {kind === 'line' && path && (
+          <path
+            d={path}
+            fill="none"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        )}
+        {metric.points.map((point, index) => {
+          const x = xOf(index);
+          const link = point.value === null ? undefined : pointLinks?.[point.date];
+          return (
+            <g key={point.date}>
+              {point.value === null ? (
+                <>
+                  <title>{`${dayText(point)}: ${missingText.toLowerCase()}`}</title>
+                  <line
+                    data-point="missing"
+                    x1={kind === 'bar' ? x - (slot * BAR_WIDTH_SHARE) / 2 : x}
+                    y1={kind === 'bar' ? baseline : pad.top}
+                    x2={kind === 'bar' ? x + (slot * BAR_WIDTH_SHARE) / 2 : x}
+                    y2={baseline}
+                    className="stroke-fg-subtle"
+                    strokeWidth="1.5"
+                    strokeDasharray={GRID_DASH}
+                  />
+                </>
+              ) : kind === 'bar' ? (
+                <>
+                  <title>{`${dayText(point)}: ${unitText(metric, point.value)}`}</title>
+                  <rect
+                    data-point="measured"
+                    x={x - (slot * BAR_WIDTH_SHARE) / 2}
+                    y={baseline - barHeight(point.value, top, ch)}
+                    width={slot * BAR_WIDTH_SHARE}
+                    height={barHeight(point.value, top, ch)}
+                    fill={point.partial ? undefined : color}
+                    className={point.partial ? 'fill-surface' : undefined}
+                    stroke={point.partial ? color : undefined}
+                    strokeWidth={point.partial ? 1.5 : undefined}
+                    rx="2"
+                  />
+                </>
+              ) : (
+                <>
+                  <title>{`${dayText(point)}: ${unitText(metric, point.value)}`}</title>
+                  <circle
+                    data-point="measured"
+                    cx={x}
+                    cy={yOf(point.value)}
+                    r="3"
+                    fill={point.partial ? undefined : color}
+                    className={point.partial ? 'fill-surface' : undefined}
+                    stroke={point.partial ? color : undefined}
+                    strokeWidth={point.partial ? 1.5 : undefined}
+                  />
+                </>
+              )}
+              {labelled.has(index) && (
+                <text
+                  x={x}
+                  y={baseline + TICK_LENGTH + 12}
+                  textAnchor="middle"
+                  className="fill-fg-subtle"
+                  fontSize="10"
+                >
+                  {axisDay(point.date)}
+                </text>
+              )}
+              {link && (
+                <Link to={link.href} aria-label={link.label} className="group outline-none">
+                  <rect
+                    x={x - slot / 2}
+                    y={pad.top}
+                    width={slot}
+                    height={ch}
+                    fill="transparent"
+                    className="cursor-pointer group-focus-visible:stroke-fg group-hover:stroke-fg-subtle"
+                    strokeWidth="2"
+                  />
+                </Link>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
   );
 }
 

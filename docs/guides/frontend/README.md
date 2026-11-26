@@ -494,9 +494,60 @@ Initial failure uses the shared retry presentation. A failed background refresh 
 values and timestamp with a recoverable notice. Another period never borrows the previous period's
 values. Separately fetched activity and category responses need not be the same database snapshot.
 
-`CategoryRow` retains the API category object/ID and the distinct uncategorized identity for PWDRZ-185.
-Links, forum URL filters and analytics history restoration remain that task's responsibility.
-PWDRZ-174 retains the dashboard-wide metadata/feedback work; this card does not redesign other blocks.
+`CategoryRow` retains the API category object/ID and the distinct uncategorized identity used by
+publication links. Dashboard-wide metadata and refresh feedback are described below.
+
+## Open publications from public analytics (PWDRZ-185)
+
+The dashboard's post bars and category rows, and the equivalent semantic tables, link to `/forum`.
+Comments remain informational. Links preserve an explicit creation-time range: `createdFrom` is
+inclusive, `createdTo` exclusive. Day links use UTC midnights; category links copy the **displayed
+response's** `windowStart`/`windowEnd`, plus `categoryId` or `uncategorized=true`. Zero remains
+inspectable; missing measurements have no link. These are current public records (PUBLISHED/LOCKED),
+not a historical snapshot; new posts, visibility or category changes can change the count later.
+
+The small `features/publication-drilldown` module builds, parses and clears these URLs. Wire fields
+reuse generated types. Malformed dates, reversed/equal ranges, duplicate filter parameters or
+conflicting category selectors show an invalid-filter state without querying the unfiltered feed.
+Open bounds are supported. A correct but unknown category ID returns the real empty selection.
+Raw `status`/author/search API parameters are not exposed by this forum URL parser.
+
+Existing `topic`, `tag`, `sort` and 1-based `page` links retain their meanings. Selecting a topic
+replaces an ID/uncategorized selector and resets the page while keeping dates/tag/order. An ID is
+shown as an explicit filter rather than falsely selecting All in the static topic buttons.
+Clear dates/category/all resets the page, preserving independent tag/order filters. Pagination
+retains every bound. The generated query key and placeholder compatibility include all filters;
+only a page change in the same selection can keep placeholder data, never visible old posts.
+Analytics selections use zero stale time so reopening a cached link revalidates current visibility,
+including inside the application's normal 60-second freshness window.
+
+`categoryName` is optional source-label text, never a filter. Prefer a name from the category list
+or matching returned post. For an unlisted/missing category, display the source name explicitly as
+"name from analytics", or the numeric ID if no name is available. A failed category-name lookup
+does not block the feed or toast server text. The active filter says the actual UTC bounds and
+current-visibility semantics; empty results do not claim the platform has no posts.
+
+Dashboard settings live in its URL: `period=7d|30d`, `metric=posts|comments`, `activityTable=1` and
+`categoryTable=1` (0/missing closes a table). Defaults are 7d/posts/closed. Setting changes replace
+the history entry with `preventScrollReset`; publication links push a new entry. Reload, copied
+dashboard URLs and Back restore the settings. RootLayout still owns ordinary scroll restoration;
+`useDashboardScroll` completes a POP/reload restore when the asynchronous dashboard grows enough.
+Its listener teardown and position persistence run during layout cleanup, before Router resets
+scroll for the next route; passive cleanup can observe that reset and overwrite the departure Y.
+It keeps at most 20 entry-keyed Y positions in session storage, stores no figures or account data,
+stops after five seconds or on user input, and tolerates blocked storage. Data can refresh under
+the normal Query policy. No analytics snapshots or account data
+are stored in these settings.
+
+`ActivityChart` accepts optional per-day destinations and controlled table disclosure. Without
+them, author charts retain their original behaviour. Interactive charts use group semantics with
+named links instead of hiding controls inside `role="img"`/`aria-hidden`. Category rows have full
+hit areas. The daily chart can scroll inside its own container to keep 30-day targets at least
+24 CSS pixels wide; the whole page stays within the viewport. The table offers the same links.
+
+Verification lives in the adjacent helper/component/transport/router tests and
+`e2e/tests/analytics-drilldown.spec.ts` on the managed migrated stack. Execution evidence and source
+revisions are recorded in `docs/agent-task-backlog/pwdrz-185-execution.md`.
 
 ## Dashboard: the most active posts (PWDRZ-175)
 

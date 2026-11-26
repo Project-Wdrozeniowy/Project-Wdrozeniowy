@@ -1,29 +1,40 @@
 import type { CategoryRow } from '@/pages/dashboard/lib/dashboardView';
 import { getCategoryDotColor } from '@/shared/lib/categoryColor';
 import { cn } from '@/shared/lib/cn';
+import { Link } from 'react-router';
 
 interface CategoryDistributionChartProps {
   rows: CategoryRow[];
   title: string;
+  destinations: Record<string, { href: string; label: string }>;
 }
 
 /** Figma's horizontal count bars. Full names/counts remain readable above even the smallest bar. */
-export default function CategoryDistributionChart({ rows, title }: CategoryDistributionChartProps) {
+export default function CategoryDistributionChart({
+  rows,
+  title,
+  destinations,
+}: CategoryDistributionChartProps) {
   return (
     <div
-      role="img"
+      role="group"
       aria-label={`${title}. ${rows.map((row) => `${row.label}: ${row.posts}`).join(', ')}`}
     >
-      <div aria-hidden="true" className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         {rows.map((row) => (
-          <div key={row.key} className="min-w-0">
+          <Link
+            key={row.key}
+            to={destinations[row.key].href}
+            aria-label={destinations[row.key].label}
+            className="block min-w-0 rounded-md hover:underline focus-visible:outline-2 focus-visible:outline-blue-500"
+          >
             <div className="flex items-start justify-between gap-3 text-sm mb-1.5">
               <span className="min-w-0 wrap-anywhere font-medium">{row.label}</span>
               <span className="shrink-0 font-semibold tabular-nums">
                 {row.posts.toLocaleString('en-US')}
               </span>
             </div>
-            <div className="h-8 rounded-md bg-raised">
+            <div aria-hidden="true" className="h-8 rounded-md bg-raised">
               <div
                 data-testid="category-bar"
                 className={cn(
@@ -37,7 +48,7 @@ export default function CategoryDistributionChart({ rows, title }: CategoryDistr
                 </span>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
