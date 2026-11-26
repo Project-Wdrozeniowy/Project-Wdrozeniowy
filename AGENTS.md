@@ -66,6 +66,8 @@ ER diagrams live in `docs/db-schema*.mmd`.
   requirements.
 - Use Figma for existing designs and UI context; do not assume every design is
   final or fully implemented.
+- Every frontend task must pass the mandatory [1:1 design acceptance](#mandatory-frontend-design-acceptance-11)
+  before handoff. Functional tests alone do not establish that the task is complete.
 - Verify implementation against requirements. Neither Jira status nor
   documentation alone proves that functionality works. Distinguish verified
   facts, assumptions, and recommendations, and challenge questionable
@@ -199,6 +201,41 @@ Gateway has no REST public-route allowlist.
 ---
 
 ## Testing
+
+### Mandatory frontend design acceptance (1:1)
+
+For **every frontend task**, comparing the actual rendered implementation with
+the corresponding design **1:1 is a required testing and acceptance stage**.
+Do not mark the task done, report it as complete, or present it as ready for
+acceptance until this comparison has passed.
+
+- Identify and record the exact design file, frame/component links and required
+  variants before implementation. Cover affected public/author/member variants,
+  compact/expanded states, desktop/mobile layouts, themes, loading, zero, error,
+  retry, focus and interaction states where applicable.
+- Match composition, component order, sizes, spacing, typography, colours, icons,
+  assets, visible labels, controls and interactions. Do not replace the design
+  with an agent-invented arrangement or silently omit a state/control because
+  an API, reusable component, task boundary or implementation is inconvenient.
+  Surface conflicts with API semantics, accessibility or scope to the user before
+  implementing a deviation; never silently change either requirement.
+- Real API values and user content remain dynamic. Design sample numbers/dates
+  are fixtures, not permission to hardcode production data. Use equivalent
+  controlled content, viewport, fonts and rendering conditions for comparison.
+- Verify actual browser renders against the reference design, not only source
+  code, DOM assertions, functional E2E or screenshots viewed in isolation. Record
+  paired reference/implementation evidence and the result for every required
+  variant. A baseline generated from the current implementation does not itself
+  prove design fidelity. Do not hide discrepancies through broad masks, omitted
+  controls or permissive comparison thresholds.
+- If a required component or state has **no design**, the task is **incomplete**.
+  Explicitly tell the user what is missing and what cannot be accepted. Do not
+  invent the missing design and then report the task as finished. Obtain the
+  missing design or an explicit user decision changing the requirement first.
+- Report every unresolved mismatch, missing reference and unrun visual check in
+  the handoff. Passing typecheck, lint, coverage and functional/browser tests does
+  not waive this gate. Any explicitly user-approved deviation must be described
+  accurately; it must not be called an identical 1:1 implementation.
 
 ### Run all tests (CI mode)
 
