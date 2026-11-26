@@ -118,11 +118,31 @@ describe('showing the real figures', () => {
 
     const hot = await screen.findByRole('link', { name: 'Hot this week' });
     expect(hot).toHaveAttribute('href', '/forum/post-1');
-    const rows = within(screen.getByRole('list')).getAllByRole('listitem');
+    const rows = within(
+      within(screen.getByRole('region', { name: 'Most active posts' })).getByRole('list', {
+        name: /ranked/,
+      })
+    ).getAllByRole('listitem');
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toHaveTextContent('12 comments · 1,200 views');
-    expect(rows[0]).toHaveTextContent('42');
     expect(within(rows[1]).getByRole('link', { name: 'Second best' })).toBeInTheDocument();
+  });
+
+  it('shows the top posts first, under the window choice, then the figures and the charts', async () => {
+    fakeAnalyticsServer(mock);
+    renderPage();
+    await screen.findByRole('link', { name: 'Hot this week' });
+
+    const order = [
+      'Time window',
+      'Most active posts',
+      'Key figures',
+      'Posts and comments by day',
+    ].map((name) => screen.getByRole(name === 'Time window' ? 'group' : 'region', { name }));
+    order.slice(1).forEach((node, index) => {
+      expect(
+        order[index].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    });
   });
 
   it('asks for the five most active posts of the window', async () => {

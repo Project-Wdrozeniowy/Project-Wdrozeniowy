@@ -65,7 +65,7 @@ test('the dashboard and the sidebar show the public analytics of the API', async
   const trending = (await (
     await request.get(`${gatewayURL}/api/analytics/trending-posts?period=7d&limit=5`)
   ).json()) as TrendingPost[];
-  const topPosts = page.getByRole('region', { name: 'Top posts' });
+  const topPosts = page.getByRole('region', { name: 'Most active posts' });
   for (const post of trending) {
     await expect(topPosts.getByRole('link', { name: post.title })).toHaveAttribute(
       'href',
