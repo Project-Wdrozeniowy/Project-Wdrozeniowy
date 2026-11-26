@@ -33,9 +33,12 @@ test('SPA: the existing comment flow keeps working on the dynamic post route', a
   const saved = apiResponse(page, `/forum/posts/${post.slug}/comments`, 'POST');
   await page.getByRole('button', { name: 'Post comment', exact: true }).click();
   expect((await saved).status()).toBe(201);
-  await expect(page.getByText(content, { exact: true })).toBeVisible();
+  // The comment as shown in the thread. The form clears its box only after the save resolves, so
+  // for a moment the same words are also in the textarea: look at the paragraph, not at any text.
+  const shown = page.locator('p').getByText(content, { exact: true });
+  await expect(shown).toBeVisible();
   await page.reload();
-  await expect(page.getByText(content, { exact: true })).toBeVisible();
+  await expect(shown).toBeVisible();
 });
 
 test('SPA: production assets, fallback and API failures retain their boundaries', async ({
