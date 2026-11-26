@@ -210,13 +210,19 @@ describe('recording the opening of a post', () => {
     expect(openings()).toHaveLength(1);
   });
 
-  it('counts the statistics of the author, and a refresh of them, as nothing', async () => {
+  it('counts showing, hiding and reopening author analytics as nothing', async () => {
     servePost();
     renderPage({ member: true });
     await reading();
     await waitFor(() => expect(openings()).toHaveLength(1));
 
-    fireEvent.click(await screen.findByRole('button', { name: /Refresh insights/ }));
+    const analytics = await screen.findByRole('button', { name: 'Analytics' });
+    fireEvent.click(analytics);
+    await waitFor(() =>
+      expect(mock.history.get.some((request) => request.url === '/analytics/me/posts/5')).toBe(true)
+    );
+    fireEvent.click(analytics);
+    fireEvent.click(analytics);
     await waitFor(() =>
       expect(
         mock.history.get.filter((request) => request.url === '/analytics/me/posts/5').length

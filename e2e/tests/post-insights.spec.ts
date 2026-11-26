@@ -149,12 +149,13 @@ test('post insights follow persisted votes, replies, account changes and safe re
         openingRequests.push(call.url());
     });
     await page.goto(`/forum/${post.slug}`);
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
     const publicCard = page.getByRole('region', { name: 'Post insights' });
     await expect(metric(publicCard, 'Score')).toHaveText('0');
     expect(ownerRequests).toEqual([]);
-    await publicCard.getByRole('button', { name: 'Details', exact: true }).focus();
+    await publicCard.getByRole('button', { name: 'Expand', exact: true }).focus();
     await page.keyboard.press('Enter');
-    await expect(publicCard.getByRole('button', { name: 'Hide details' })).toBeFocused();
+    await expect(publicCard.getByRole('button', { name: 'Collapse' })).toBeFocused();
     await expect(publicCard.getByText(/They are not unique readers/)).toBeVisible();
     await testInfo.attach('insights-public-desktop.png', {
       body: await page.screenshot(),
@@ -163,17 +164,18 @@ test('post insights follow persisted votes, replies, account changes and safe re
 
     await signIn(page, first.identity);
     await page.goto(`/forum/${post.slug}`);
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
     const article = page.getByRole('article', { name: post.title });
     await article.getByRole('button', { name: 'Upvote' }).click();
     await expect(metric(publicCard, 'Score')).toHaveText('1');
     const rootText = `Root ${first.identity.username}`;
     await page.getByLabel('Add a comment').fill(rootText);
     await page.getByRole('button', { name: 'Post comment', exact: true }).click();
-    await expect(metric(publicCard, 'Visible comments')).toHaveText('1');
+    await expect(metric(publicCard, 'Comments')).toHaveText('1');
     await page.getByRole('button', { name: 'Reply', exact: true }).click();
     await page.getByLabel(`Reply to ${readerName}`).fill('A visible nested reply');
     await page.getByRole('button', { name: 'Post reply' }).click();
-    await expect(metric(publicCard, 'Visible comments')).toHaveText('2');
+    await expect(metric(publicCard, 'Comments')).toHaveText('2');
     await expect(page.getByRole('heading', { name: 'Comments (1 thread)' })).toBeVisible();
     expect(ownerRequests).toEqual([]);
     expect((await first.context.get(ownerURL)).status()).toBe(404);
@@ -185,9 +187,10 @@ test('post insights follow persisted votes, replies, account changes and safe re
       (r) => r.url() === `${path}/openings` && r.request().method() === 'POST'
     );
     await page.goto(`/forum/${post.slug}`);
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
     const authorCard = page.getByRole('region', { name: 'Author insights' });
     await expect(authorCard.getByText('2 upvotes · 1 downvote')).toBeVisible();
-    await expect(metric(authorCard, 'Visible comments')).toHaveText('2');
+    await expect(metric(authorCard, 'Comments')).toHaveText('2');
     expect((await recorded).status()).toBe(204);
     const before = storedOpenings(post.id);
     expect(before[0]).toBeGreaterThanOrEqual(2);
@@ -197,15 +200,10 @@ test('post insights follow persisted votes, replies, account changes and safe re
       const summaryRead = page.waitForResponse(
         (r) => r.url() === ownerURL && r.request().method() === 'GET'
       );
-      const postRead = page.waitForResponse(
-        (r) => r.url() === path && r.request().method() === 'GET'
-      );
-      await authorCard.getByRole('button', { name: 'Refresh insights' }).click();
+      await page.getByRole('button', { name: 'Analytics', exact: true }).click();
+      await page.getByRole('button', { name: 'Analytics', exact: true }).click();
       expect((await summaryRead).status()).toBe(200);
-      expect((await postRead).status()).toBe(200);
-      await expect(
-        authorCard.getByRole('button', { name: 'Refresh insights' })
-      ).not.toHaveAttribute('aria-disabled', 'true');
+      await expect(authorCard.getByRole('button', { name: 'Expand', exact: true })).toBeVisible();
     }
     const afterRefresh = storedOpenings(post.id);
     expect(afterRefresh).toEqual(before);
@@ -247,8 +245,8 @@ test('post insights follow persisted votes, replies, account changes and safe re
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
     const accessibleCard = await authorCard.ariaSnapshot();
     expect(accessibleCard).toContain('Author insights');
-    expect(accessibleCard).toContain('Refresh insights');
-    expect(accessibleCard).toContain('Visible comments');
+    expect(accessibleCard).toContain('Details');
+    expect(accessibleCard).toContain('Comments');
     await testInfo.attach('insights-accessibility.txt', {
       body: accessibleCard,
       contentType: 'text/plain',
@@ -260,15 +258,17 @@ test('post insights follow persisted votes, replies, account changes and safe re
       contentType: 'image/png',
     });
     await page.reload();
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
     await expect(authorCard.getByText('2 upvotes · 1 downvote')).toBeVisible();
     await signOutThroughMenu(page);
     await signIn(page, first.identity);
     await page.goto(`/forum/${post.slug}`);
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
     await expect(publicCard).toBeVisible();
     await expect(page.getByText('2 upvotes · 1 downvote')).toHaveCount(0);
     // Delete the root through UI: the visible nested reply still counts under its placeholder.
     await page.getByRole('button', { name: 'Delete', exact: true }).first().click();
-    await expect(metric(publicCard, 'Visible comments')).toHaveText('1');
+    await expect(metric(publicCard, 'Comments')).toHaveText('1');
     await expect(page.getByText('[comment deleted]')).toBeVisible();
     await expect(page.getByText('A visible nested reply')).toBeVisible();
     const persisted = await (await request.get(ownerURL)).json();
@@ -307,6 +307,7 @@ test('insights recover from a real failed request without replacing the post or 
   const ownerPath = `**/api/analytics/me/posts/${post.id}`;
   await page.route(ownerPath, (route) => route.abort('failed'));
   await page.goto(`/forum/${post.slug}`);
+  await page.getByRole('button', { name: 'Analytics', exact: true }).click();
   const card = page.getByRole('region', { name: 'Author insights' });
   await expect(card.getByRole('alert')).toContainText('Insights could not be loaded');
   await expect(page.getByRole('article', { name: post.title })).toBeVisible();
@@ -318,7 +319,7 @@ test('insights recover from a real failed request without replacing the post or 
   await page.unroute(ownerPath);
   await card.getByRole('button', { name: 'Try again' }).focus();
   await page.keyboard.press('Enter');
-  await expect(card.getByRole('button', { name: 'Refresh insights' })).toBeFocused();
+  await expect(card.getByRole('button', { name: 'Expand' })).toBeFocused();
   await expect(metric(card, 'Score')).toHaveText('0');
   await expect(page.getByLabel('Add a comment')).toHaveValue('Keep my unsent draft');
   // Change the persisted score from another session; one refresh updates both article and summary.
@@ -332,7 +333,12 @@ test('insights recover from a real failed request without replacing the post or 
         })
       ).status()
     ).toBe(201);
-    await card.getByRole('button', { name: 'Refresh insights' }).click();
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
+    await page.route(ownerPath, (route) => route.abort('failed'));
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
+    await expect(card.getByRole('alert')).toBeVisible();
+    await page.unroute(ownerPath);
+    await card.getByRole('button', { name: 'Try again' }).click();
     await expect(metric(card, 'Score')).toHaveText('1');
     await expect(
       page.getByRole('article', { name: post.title }).getByText('1', { exact: true })
@@ -349,7 +355,12 @@ test('insights recover from a real failed request without replacing the post or 
       })
     ).status()
   ).toBe(200);
-  await card.getByRole('button', { name: 'Refresh insights' }).click();
+  await page.getByRole('button', { name: 'Analytics', exact: true }).click();
+  await page.route(ownerPath, (route) => route.abort('failed'));
+  await page.getByRole('button', { name: 'Analytics', exact: true }).click();
+  await expect(card.getByRole('alert')).toBeVisible();
+  await page.unroute(ownerPath);
+  await card.getByRole('button', { name: 'Try again' }).click();
   await expect(card).toBeVisible();
   await expect(
     page.getByRole('article', { name: post.title }).getByText('draft', { exact: true })

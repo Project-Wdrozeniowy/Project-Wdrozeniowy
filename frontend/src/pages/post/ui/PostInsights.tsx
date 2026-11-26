@@ -1,7 +1,16 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import AuthorOpeningsTrend from '@/pages/post/ui/AuthorOpeningsTrend';
-import { collectionDate, insightsError, insightsNumber } from '@/pages/post/lib/postInsights';
+import AuthorOpeningsTrend from './AuthorOpeningsTrend';
+import InsightsIcon from './InsightsIcon';
+import { canReadInsights } from '@/pages/post/lib/insightsAccess';
+import { compactWindow } from '@/pages/post/lib/insightsChart';
+import {
+  collectionDate,
+  dayRange,
+  insightsError,
+  insightsNumber,
+  utcDay,
+} from '@/pages/post/lib/postInsights';
 import {
   DEFAULT_ANALYTICS_PERIOD,
   type AnalyticsPeriod,
@@ -12,30 +21,22 @@ import { apiErrorStatus } from '@/shared/api/client/apiError';
 import { getGetPostQueryKey } from '@/shared/api/generated/orbita.api';
 import type { PostDto } from '@/shared/api/generated/models/postDto.dto';
 import { useCurrentUser } from '@/shared/api/profile/currentUser';
-import { ChartBarIcon, ChevronRightIcon, EyeIcon } from '@/shared/ui/icons';
-import PanelError from '@/shared/ui/PanelError';
-import SkeletonStatus from '@/shared/ui/SkeletonStatus';
+import './postInsights.css';
 
 interface PostInsightsProps {
   post: PostDto;
   onRefreshPost: () => Promise<{ isError: boolean }>;
+  onUnavailable?: () => void;
 }
 
-const controlClass =
-  'rounded px-3 py-2 text-sm font-semibold text-fg hover:bg-raised aria-disabled:opacity-60 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent';
-
-/** The identity key also discards local expansion/error state and detaches old query observers. */
-export default function PostInsights({ post, onRefreshPost }: PostInsightsProps) {
+export default function PostInsights(props: PostInsightsProps) {
   const currentUser = useCurrentUser();
-  const accountId = currentUser?.id === post.author.id ? currentUser.id : undefined;
-  if (post.status === 'DELETED') return null;
-  if (accountId === undefined && !['PUBLISHED', 'LOCKED'].includes(post.status)) return null;
+  if (!canReadInsights(props.post, currentUser?.id)) return null;
   return (
     <InsightsCard
-      key={`${post.id}:${accountId ?? 'public'}`}
-      post={post}
-      accountId={accountId}
-      onRefreshPost={onRefreshPost}
+      key={`${props.post.id}:${currentUser?.id ?? 'guest'}`}
+      {...props}
+      accountId={currentUser?.id === props.post.author.id ? currentUser.id : undefined}
     />
   );
 }
@@ -44,7 +45,7 @@ interface InsightsCardProps extends PostInsightsProps {
   accountId?: number;
 }
 
-function InsightsCard({ post, accountId, onRefreshPost }: InsightsCardProps) {
+function InsightsCard({ post, accountId, onRefreshPost, onUnavailable }: InsightsCardProps) {
   const query = usePostEngagement(post.id, accountId);
   const [period, setPeriod] = useState<AnalyticsPeriod>(DEFAULT_ANALYTICS_PERIOD);
   const trend = usePostOpenings(post.id, accountId, period);
@@ -52,202 +53,304 @@ function InsightsCard({ post, accountId, onRefreshPost }: InsightsCardProps) {
   const titleId = useId();
   const detailsId = useId();
   const [expanded, setExpanded] = useState(false);
+  const [mobile, setMobile] = useState(
+    () => window.matchMedia?.('(max-width: 639px)').matches ?? false
+  );
   const [refreshing, setRefreshing] = useState(false);
   const [postFailed, setPostFailed] = useState(false);
-  const [retryingFailure, setRetryingFailure] = useState(false);
+  const [recovering, setRecovering] = useState(false);
   const inFlight = useRef(false);
-  const restoreFocus = useRef(false);
-  const section = useRef<HTMLElement>(null);
-  const refreshButton = useRef<HTMLButtonElement>(null);
+  const alive = useRef(true);
   const expandButton = useRef<HTMLButtonElement>(null);
-  const failed = query.isError || postFailed || retryingFailure;
   const owner = accountId !== undefined;
+  const failed = query.isError || (owner && trend.isError) || postFailed || recovering;
+  const loading = !failed && (query.isLoading || (owner && trend.isLoading && !expanded));
+  const deniedStatus = [query.error, owner ? trend.error : null]
+    .map(apiErrorStatus)
+    .find((s) => s === 403 || s === 404);
 
-  // A summary may discover withdrawal/deletion before the article does. Never keep its old totals.
-  const status = apiErrorStatus(query.error);
   useEffect(() => {
-    if (status === 404 && !query.isFetching) {
+    const media = window.matchMedia?.('(max-width: 639px)');
+    if (!media) return;
+    const update = () => setMobile(media.matches);
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (deniedStatus === undefined) return;
+    if (deniedStatus === 404)
       void client.invalidateQueries({ queryKey: getGetPostQueryKey(post.slug) });
-    }
-  }, [client, post.slug, status, query.errorUpdatedAt, query.isFetching]);
+    onUnavailable?.();
+  }, [client, post.slug, deniedStatus, onUnavailable]);
 
-  useEffect(() => {
-    if (!refreshing && !failed && restoreFocus.current) {
-      restoreFocus.current = false;
-      // Do not steal focus if the reader moved away while the request was in flight.
-      if (
-        document.activeElement === document.body ||
-        section.current?.contains(document.activeElement)
-      ) {
-        (expandButton.current ?? refreshButton.current)?.focus();
-      }
-    }
-  }, [refreshing, failed]);
-
-  async function refresh() {
-    if (inFlight.current || query.isLoading) return;
+  async function retry() {
+    if (inFlight.current) return;
     inFlight.current = true;
-    const recovering = failed;
-    setRetryingFailure(recovering);
+    setRecovering(true);
     setRefreshing(true);
+    const active = document.activeElement;
     try {
-      // The daily openings answer for themselves (their own error and retry): a failed read of
-      // them must not turn the totals into a failure.
-      const [summary, article] = await Promise.all([
+      const [summary, article, series] = await Promise.all([
         query.refetch(),
         onRefreshPost(),
         owner ? trend.refetch() : undefined,
       ]);
+      if (!alive.current) return;
       setPostFailed(article.isError);
-      restoreFocus.current =
-        recovering &&
-        !summary.isError &&
-        !article.isError &&
-        Boolean(section.current?.contains(document.activeElement));
+      const success = !summary.isError && !article.isError && !series?.isError;
+      setRecovering(!success);
+      if (
+        success &&
+        (document.activeElement === active || document.activeElement === document.body)
+      ) {
+        requestAnimationFrame(() => {
+          if (
+            alive.current &&
+            (document.activeElement === active || document.activeElement === document.body)
+          )
+            expandButton.current?.focus();
+        });
+      }
     } finally {
       inFlight.current = false;
-      setRetryingFailure(false);
-      setRefreshing(false);
+      if (alive.current) setRefreshing(false);
     }
   }
 
   const data = query.data;
-  const busy = refreshing || query.isFetching;
+  const mini = trend.data ? compactWindow(trend.data) : undefined;
+  const days = expanded ? trend.data?.days : mini?.days;
+  const range = days?.length ? dayRange(days[0].date, days[days.length - 1].date) : undefined;
+  const today = new Date();
+  const endDay = today.toISOString().slice(0, 10);
+  const startDay = new Date(
+    Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate() - (period === '7d' ? 6 : 29)
+    )
+  )
+    .toISOString()
+    .slice(0, 10);
+  const headerRange = range ?? dayRange(startDay, endDay);
+  const error = query.error ?? (owner ? trend.error : null);
+  const publicZero =
+    !owner && data?.viewCount === 0 && data.commentCount === 0 && data.voteScore === 0;
   const showOpenings = owner || expanded;
+  const ownerZero =
+    owner &&
+    expanded &&
+    trend.data?.days.some((day) => day.measured) &&
+    trend.data.days.every((day) => !day.measured || day.openings === 0);
+  const subtitle = owner ? 'Visible only to the post author' : 'Public summary · shown in UTC';
   return (
     <section
-      ref={section}
       aria-labelledby={titleId}
-      className="bg-surface rounded-xl border border-line overflow-hidden"
+      className={`post-insights ${owner ? 'insights-author' : 'insights-public'} ${!failed && !loading ? 'insights-ready' : ''}`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line p-4 sm:p-5">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-accent">
-              <ChartBarIcon />
-            </span>
-            <h2 id={titleId} className="font-semibold text-fg">
+      <header className="insights-header">
+        <div className="insights-heading">
+          <div className="insights-heading-row">
+            <h2 id={titleId}>
+              <InsightsIcon name="chart" />
               {owner ? 'Author insights' : 'Post insights'}
             </h2>
-            <span className="rounded border border-line px-2 py-0.5 text-xs font-medium text-fg-muted">
+            <span className={`insights-badge ${owner ? 'insights-private-badge' : ''}`}>
+              {owner && <InsightsIcon name="shield" />}
               {owner ? 'Author only' : 'Public'}
             </span>
           </div>
-          <p className="mt-1 text-xs text-fg-muted">
-            {owner ? 'Visible only to the post author' : 'Public summary'} · dates shown in UTC
+          <p className="insights-subtitle">
+            {owner ? (
+              <>
+                <span className="insights-desktop">
+                  {subtitle} · {headerRange} · UTC
+                </span>
+                <span className="insights-mobile">
+                  {headerRange} · UTC
+                  <br />
+                  {subtitle}
+                </span>
+              </>
+            ) : (
+              subtitle
+            )}
           </p>
         </div>
-        <div className="flex items-center gap-1 flex-wrap">
-          {!owner && !failed && !query.isLoading && data && (
-            <button
-              ref={expandButton}
-              type="button"
-              aria-expanded={expanded}
-              aria-controls={detailsId}
-              className={controlClass}
-              onClick={() => setExpanded((value) => !value)}
-            >
-              <span className="flex items-center gap-1">
-                {expanded ? 'Hide details' : 'Details'}
-                <span className={expanded ? '-rotate-90' : 'rotate-90'}>
-                  <ChevronRightIcon />
-                </span>
-              </span>
-            </button>
-          )}
+        {!failed && !loading && data && (
           <button
-            ref={refreshButton}
+            ref={expandButton}
             type="button"
-            aria-disabled={busy || undefined}
-            className={controlClass}
-            onClick={() => {
-              if (!busy) void refresh();
-            }}
+            aria-label={mobile ? 'Details' : expanded ? 'Collapse' : 'Expand'}
+            aria-expanded={expanded}
+            aria-controls={detailsId}
+            className="insights-expand"
+            onClick={() => setExpanded((value) => !value)}
           >
-            Refresh insights
+            <span className="insights-desktop">{expanded ? 'Collapse' : 'Expand'}</span>
+            <span className="insights-mobile">Details</span>
+            <InsightsIcon name="chevron" className={expanded ? 'insights-up' : ''} />
           </button>
-        </div>
-      </div>
-      <p role="status" className="sr-only">
-        {busy && !query.isLoading && !failed ? 'Updating post insights…' : ''}
-      </p>
-      <div className="p-4 sm:p-5">
+        )}
+      </header>
+      <div className="insights-body" aria-busy={loading || refreshing || undefined}>
         {failed ? (
-          <PanelError
-            message={
-              query.isError
-                ? insightsError(query.error)
-                : postFailed
-                  ? 'The post could not be refreshed. Please try again.'
-                  : 'Insights could not be loaded. Please try again.'
-            }
-            onRetry={refresh}
-            retrying={refreshing}
-          />
-        ) : query.isLoading ? (
-          <SkeletonStatus label="Loading post insights">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 animate-pulse">
-              {[0, 1, 2].map((index) => (
-                <div key={index} className="space-y-3">
-                  <div className="h-3 w-20 rounded bg-raised" />
-                  <div className="h-6 w-14 rounded bg-raised" />
+          <div className="insights-notice insights-error" role="alert">
+            <InsightsIcon name="alert" />
+            <div>
+              <h3>Insights could not be loaded</h3>
+              <p>
+                {apiErrorStatus(error) !== undefined && apiErrorStatus(error)! < 500
+                  ? insightsError(error)
+                  : postFailed
+                    ? 'The post could not be refreshed. Please try again.'
+                    : 'The post is still available. Try loading its statistics again.'}
+              </p>
+              <button
+                type="button"
+                className="insights-retry"
+                aria-disabled={refreshing || undefined}
+                onClick={() => {
+                  if (!refreshing) void retry();
+                }}
+              >
+                <InsightsIcon name="retry" />
+                {refreshing ? 'Trying again…' : 'Try again'}
+              </button>
+            </div>
+          </div>
+        ) : loading ? (
+          <div className="insights-loading" role="status" aria-label="Loading post insights">
+            <span className="sr-only">Loading post insights</span>
+            <div className="insights-loading-stats">
+              {[0, 1, 2].map((i) => (
+                <div key={i}>
+                  <span />
+                  <span />
                 </div>
               ))}
             </div>
-          </SkeletonStatus>
+            <div className="insights-loading-chart" />
+          </div>
         ) : data ? (
           <>
-            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-5 gap-y-4">
-              <div>
-                <dt className="text-xs text-fg-muted">Score</dt>
-                <dd className="mt-1 text-lg font-semibold text-fg tabular-nums">
-                  {insightsNumber(data.voteScore)}
-                </dd>
-                {owner && 'upvoteCount' in data && (
-                  <dd className="mt-1 text-xs text-fg-muted">
-                    {insightsNumber(data.upvoteCount)}{' '}
-                    {data.upvoteCount === 1 ? 'upvote' : 'upvotes'} ·{' '}
-                    {insightsNumber(data.downvoteCount)}{' '}
-                    {data.downvoteCount === 1 ? 'downvote' : 'downvotes'}
-                  </dd>
-                )}
-              </div>
-              <div>
-                <dt className="text-xs text-fg-muted">Visible comments</dt>
-                <dd className="mt-1 text-lg font-semibold text-fg tabular-nums">
-                  {insightsNumber(data.commentCount)}
-                </dd>
-                <dd className="mt-1 text-xs text-fg-muted">Includes replies</dd>
-              </div>
-              <div id={detailsId} hidden={!showOpenings} className="col-span-2 sm:col-span-1">
-                <dt className="flex items-center gap-1 text-xs text-fg-muted">
-                  <EyeIcon /> Openings
-                </dt>
-                <dd className="mt-1 text-lg font-semibold text-fg tabular-nums">
-                  {insightsNumber(data.viewCount)}
-                </dd>
-                <dd className="mt-1 text-xs text-fg-muted">
-                  since{' '}
-                  <time dateTime={data.collectedFrom}>
-                    {collectionDate(data.collectedFrom)} · UTC
-                  </time>
-                </dd>
-              </div>
+            <dl className={`insights-stats ${showOpenings ? 'insights-three-stats' : ''}`}>
+              {owner && (
+                <Metric
+                  label="Openings"
+                  icon="eye"
+                  value={data.viewCount}
+                  caption={`since ${collectionDate(data.collectedFrom)} · UTC`}
+                />
+              )}
+              <Metric
+                label="Score"
+                icon="score"
+                value={data.voteScore}
+                caption={
+                  owner && 'upvoteCount' in data
+                    ? `${insightsNumber(data.upvoteCount)} ${data.upvoteCount === 1 ? 'upvote' : 'upvotes'} · ${insightsNumber(data.downvoteCount)} ${data.downvoteCount === 1 ? 'downvote' : 'downvotes'}`
+                    : undefined
+                }
+              />
+              <Metric label="Comments" icon="comments" value={data.commentCount} />
+              {!owner && expanded && (
+                <Metric
+                  label="Openings"
+                  icon="eye"
+                  value={data.viewCount}
+                  caption={`since ${collectionDate(data.collectedFrom)} · UTC`}
+                />
+              )}
             </dl>
-            {showOpenings && (
-              <p className="mt-4 border-t border-line pt-3 text-xs leading-relaxed text-fg-muted">
-                Openings are counted since {collectionDate(data.collectedFrom)} UTC. They are not
-                unique readers.
-              </p>
-            )}
-            {owner && (
-              <div className="mt-4 border-t border-line pt-4">
-                <AuthorOpeningsTrend trend={trend} period={period} onPeriodChange={setPeriod} />
+            {publicZero && (
+              <div className="insights-zero">
+                <InsightsIcon name="zero" />
+                No activity recorded yet. The post may receive activity later.
               </div>
             )}
+            {ownerZero && (
+              <div className="insights-zero insights-owner-zero">
+                <InsightsIcon name="zero" />
+                No openings recorded in this period.
+              </div>
+            )}
+            <div id={detailsId}>
+              {!owner && expanded && (
+                <p className="insights-public-note">
+                  Openings are counted since {collectionDate(data.collectedFrom)} UTC. They are not
+                  unique readers.
+                </p>
+              )}
+              {owner &&
+                (expanded ? (
+                  <AuthorOpeningsTrend trend={trend} period={period} onPeriodChange={setPeriod} />
+                ) : (
+                  mini && (
+                    <div className="insights-compact">
+                      <div>
+                        <strong>7 days</strong>
+                        <p>{range} · UTC · daily openings</p>
+                      </div>
+                      <div className="insights-mini-summary">
+                        <div className="insights-mini-bars" aria-hidden="true">
+                          {mini.days.map((day) => {
+                            const max = Math.max(
+                              1,
+                              ...mini.days.map((d) => (d.measured ? (d.openings ?? 0) : 0))
+                            );
+                            const partial = day.date === utcDay(trend.data!.generatedAt);
+                            return (
+                              <span
+                                key={day.date}
+                                className={`${partial ? 'insights-partial' : ''} ${!day.measured ? 'insights-unmeasured' : ''}`}
+                                style={{
+                                  height: day.measured
+                                    ? Math.max(2, ((day.openings ?? 0) / max) * 30)
+                                    : 2,
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                        <p>Last 7 days: {insightsNumber(mini.total)} openings</p>
+                      </div>
+                    </div>
+                  )
+                ))}
+            </div>
           </>
         ) : null}
       </div>
+      <span className="sr-only" role="status">
+        {refreshing ? 'Updating post insights…' : ''}
+      </span>
     </section>
+  );
+}
+
+interface MetricProps {
+  label: string;
+  icon: string;
+  value: number;
+  caption?: string;
+}
+
+function Metric({ label, icon, value, caption }: MetricProps) {
+  return (
+    <div>
+      <dt>
+        <InsightsIcon name={icon} />
+        {label}
+      </dt>
+      <dd className="insights-value">{insightsNumber(value)}</dd>
+      {caption && <dd className="insights-caption">{caption}</dd>}
+    </div>
   );
 }
