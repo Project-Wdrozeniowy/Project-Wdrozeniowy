@@ -8,8 +8,11 @@ export default function ToastProvider() {
   return (
     <Toaster
       position="bottom-right"
+      offset={{
+        bottom: 'calc(var(--consent-panel-height, 0px) + var(--mobile-nav-height, 0px) + 16px)',
+      }}
       mobileOffset={{
-        bottom: 'calc(4rem + env(safe-area-inset-bottom) + 0.5rem)',
+        bottom: 'calc(var(--consent-panel-height, 0px) + var(--mobile-nav-height, 0px) + 8px)',
         left: 16,
         right: 16,
       }}

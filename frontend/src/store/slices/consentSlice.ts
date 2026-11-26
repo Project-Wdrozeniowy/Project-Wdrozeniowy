@@ -1,45 +1,111 @@
 import type { StateCreator } from 'zustand';
 import {
-  clearOptionalStorage,
+  blockOptionalStorage,
+  notifyStorageConsentChanged,
   readStorageConsent,
+  synchronizeStorageConsent,
   writeStorageConsent,
 } from '@/shared/lib/storageConsent';
-import type { StorageConsent } from '@/shared/lib/storageConsent';
-import { readAppliedTheme, storeTheme, systemTheme } from '@/shared/lib/theme';
+import type { StorageConsent, StoragePermissions } from '@/shared/lib/storageConsent';
+import { storeTheme } from '@/shared/lib/theme';
+import type { UISlice } from './uiSlice';
 
+export const STORAGE_SAVE_ERROR =
+  "We couldn't save your choices or remove optional data. Optional storage is off in this tab. Try saving again.";
 export interface ConsentSlice {
-  /** The user's answer about optional storage; `null` until they answered. */
   storageConsent: StorageConsent | null;
-  /** The question is on screen: before the first answer, and whenever the user reopens it. */
   consentPromptOpen: boolean;
+  consentDialogOpen: boolean;
+  storageConsentError: string | null;
+  consentRevision: number;
+  storageConsentNotice: string | null;
+  pendingStorageChoices: StoragePermissions | null;
+  saveStorageChoices: (permissions: StoragePermissions) => boolean;
   acceptStorage: () => void;
-  /** Rejecting, or withdrawing an earlier acceptance, also deletes what was stored. */
   rejectStorage: () => void;
   reopenConsentPrompt: () => void;
   closeConsentPrompt: () => void;
-  /** Another tab answered: show its answer here. */
   syncConsent: () => void;
 }
 
-export const createConsentSlice: StateCreator<ConsentSlice> = (set) => ({
-  storageConsent: readStorageConsent(),
-  consentPromptOpen: readStorageConsent() === null,
-  acceptStorage: () => {
-    writeStorageConsent('granted');
-    // A theme picked before answering was only on screen: remember it now. A theme equal to the
-    // system's is the default anyway, so nothing is stored for it.
-    if (readAppliedTheme() !== systemTheme()) storeTheme(readAppliedTheme());
-    set({ storageConsent: 'granted', consentPromptOpen: false });
-  },
-  rejectStorage: () => {
-    writeStorageConsent('denied');
-    clearOptionalStorage();
-    set({ storageConsent: 'denied', consentPromptOpen: false });
-  },
-  reopenConsentPrompt: () => set({ consentPromptOpen: true }),
-  closeConsentPrompt: () => set({ consentPromptOpen: false }),
-  syncConsent: () => {
-    const storageConsent = readStorageConsent();
-    set({ storageConsent, consentPromptOpen: storageConsent === null });
-  },
-});
+export const createConsentSlice: StateCreator<ConsentSlice & UISlice, [], [], ConsentSlice> = (
+  set,
+  get
+) => {
+  const initial = readStorageConsent();
+  return {
+    storageConsent: initial,
+    consentPromptOpen: initial === null,
+    consentDialogOpen: false,
+    storageConsentError: null,
+    consentRevision: 0,
+    storageConsentNotice: null,
+    pendingStorageChoices: null,
+    saveStorageChoices: (permissions) => {
+      const previous = get().storageConsent;
+      const selectedTheme = get().themeChoice;
+      const result = writeStorageConsent(permissions);
+      if (
+        !result.ok ||
+        !result.consent ||
+        (permissions.theme && selectedTheme !== null && !storeTheme(selectedTheme))
+      ) {
+        blockOptionalStorage();
+        set({
+          storageConsent: null,
+          consentPromptOpen: true,
+          consentDialogOpen: true,
+          storageConsentError: STORAGE_SAVE_ERROR,
+          pendingStorageChoices: { ...permissions },
+        });
+        notifyStorageConsentChanged();
+        return false;
+      }
+      if (previous?.permissions.theme && !permissions.theme) get().resetThemeChoice();
+      set({
+        storageConsent: result.consent,
+        consentPromptOpen: false,
+        consentDialogOpen: false,
+        storageConsentError: null,
+        consentRevision: get().consentRevision + 1,
+        storageConsentNotice: null,
+        pendingStorageChoices: null,
+      });
+      notifyStorageConsentChanged();
+      return true;
+    },
+    acceptStorage: () => {
+      get().saveStorageChoices({ theme: true, recentSearches: true });
+    },
+    rejectStorage: () => {
+      get().saveStorageChoices({ theme: false, recentSearches: false });
+    },
+    reopenConsentPrompt: () => {
+      get().syncConsent();
+      set({ consentDialogOpen: true, storageConsentNotice: null, pendingStorageChoices: null });
+    },
+    closeConsentPrompt: () => set({ consentDialogOpen: false }),
+    syncConsent: () => {
+      const previous = get().storageConsent;
+      const result = synchronizeStorageConsent();
+      const consent = result.consent;
+      if (previous?.permissions.theme && !consent?.permissions.theme) get().resetThemeChoice();
+      const changed = JSON.stringify(previous) !== JSON.stringify(consent);
+      set({
+        storageConsent: consent,
+        consentPromptOpen: consent === null,
+        ...(changed ? { consentRevision: get().consentRevision + 1 } : {}),
+        ...(changed && get().consentDialogOpen
+          ? {
+              storageConsentNotice: consent
+                ? 'Your choices changed in another tab. Review them before saving.'
+                : 'Your saved choices are no longer valid. Review them before saving.',
+              pendingStorageChoices: null,
+            }
+          : {}),
+        ...(!result.ok ? { storageConsentError: STORAGE_SAVE_ERROR } : {}),
+      });
+      notifyStorageConsentChanged();
+    },
+  };
+};

@@ -43,12 +43,19 @@ export function apiResponse(page: Page, route: string, method: string): Promise<
 
 export const test = base.extend<{ identity: Identity; account: Identity }>({
   // The storage banner has its own spec (consent.spec.ts). Every other spec runs as a returning
-  // visitor who already answered, so the banner does not sit above the page under test.
+  // visitor who already answered, so the fixed panel does not cover the page under test.
   page: async ({ page }, use) => {
     await page.addInitScript(() => {
       try {
         if (localStorage.getItem('orbita.consent') === null) {
-          localStorage.setItem('orbita.consent', 'denied');
+          localStorage.setItem(
+            'orbita.consent',
+            JSON.stringify({
+              version: 2,
+              decidedAt: Date.now(),
+              permissions: { theme: false, recentSearches: false },
+            })
+          );
         }
       } catch {
         // Storage blocked: the banner would show, which these specs tolerate.

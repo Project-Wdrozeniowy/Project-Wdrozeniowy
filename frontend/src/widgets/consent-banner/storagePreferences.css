@@ -1,0 +1,313 @@
+.storage-page-space {
+  padding-bottom: var(--consent-panel-height, 0px);
+}
+html {
+  scroll-padding-top: 80px;
+  scroll-padding-bottom: calc(
+    var(--consent-panel-height, 0px) + var(--mobile-nav-height, 0px) + 12px
+  );
+}
+.storage-panel {
+  position: fixed;
+  inset: auto 0 var(--mobile-nav-height, 0px);
+  z-index: 60;
+  max-height: calc(100dvh - var(--mobile-nav-height, 0px) - 80px);
+  overflow-y: auto;
+  background: var(--surface);
+  color: var(--fg);
+  border-top: 1px solid var(--line-strong);
+  padding: 20px 24px;
+  font-size: 14px;
+  box-shadow: 0 -8px 30px #00000012;
+}
+.storage-panel-inner {
+  max-width: 1082px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+.storage-panel-copy {
+  flex: 1;
+}
+.storage-panel h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  line-height: normal;
+}
+.storage-panel p {
+  color: var(--fg-muted);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 590px;
+}
+.storage-actions {
+  display: flex;
+  gap: 8px;
+}
+.storage-action,
+.storage-text-button,
+.storage-close {
+  cursor: pointer;
+  font-family: inherit;
+}
+.storage-action {
+  background: var(--raised);
+  color: var(--fg);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: normal;
+  white-space: nowrap;
+}
+.storage-action:hover {
+  background: var(--raised-hover);
+}
+.storage-text-button {
+  color: var(--fg-muted);
+  background: none;
+  border: 0;
+  padding: 10px 12px;
+  min-height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  line-height: normal;
+}
+.storage-dialog {
+  width: min(640px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 14px;
+  line-height: normal;
+  box-shadow: 0 24px 80px #0005;
+}
+.storage-dialog::backdrop {
+  background: #020617aa;
+}
+.storage-dialog-body {
+  padding: 28px;
+}
+.storage-dialog-header {
+  display: flex;
+  align-items: start;
+  gap: 16px;
+}
+.storage-dialog-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  margin: 0;
+  outline: none;
+}
+.storage-close {
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 24px;
+  color: var(--fg-subtle);
+}
+.storage-description {
+  color: var(--fg-muted);
+  line-height: 1.6;
+  margin: 8px 0 24px;
+}
+.storage-section-label {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 12px;
+}
+.storage-necessary {
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 4px 16px;
+}
+.storage-entry {
+  padding: 13px 0;
+}
+.storage-entry + .storage-entry,
+.storage-option + .storage-option {
+  border-top: 1px solid var(--line-strong);
+}
+.storage-entry-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  font-weight: 600;
+}
+.storage-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-subtle);
+  background: var(--raised);
+  padding: 4px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.storage-entry p,
+.storage-option p {
+  color: var(--fg-subtle);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 5px 0 0;
+}
+.storage-optional-title {
+  margin-top: 24px;
+}
+.storage-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 15px 0;
+}
+.storage-option label {
+  font-weight: 600;
+}
+.storage-switch {
+  appearance: none;
+  flex: none;
+  width: 40px;
+  height: 24px;
+  border-radius: 20px;
+  background: var(--raised);
+  border: 1px solid var(--fg-subtle);
+  position: relative;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+.storage-switch::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--fg-subtle);
+}
+.storage-switch:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.storage-switch:checked::before {
+  background: var(--page);
+  transform: translateX(16px);
+}
+.storage-dialog-footer {
+  border-top: 1px solid var(--line-strong);
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+.storage-retention {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg-subtle);
+  max-width: 300px;
+}
+.storage-save {
+  background: var(--accent);
+  color: var(--page);
+  border-color: transparent;
+}
+.storage-save:hover {
+  background: var(--accent-hover);
+}
+.storage-error,
+.storage-notice {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid currentColor;
+}
+.storage-error {
+  color: var(--danger);
+}
+.storage-notice {
+  color: var(--fg-muted);
+}
+.storage-action:focus-visible,
+.storage-text-button:focus-visible,
+.storage-close:focus-visible,
+.storage-switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+@media (max-width: 767px) {
+  .storage-panel {
+    padding: 16px;
+  }
+  .storage-panel-inner {
+    display: block;
+  }
+  .storage-panel p {
+    font-size: 13px;
+  }
+  .storage-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 14px;
+  }
+  .storage-text-button {
+    grid-column: 1 / -1;
+    min-height: 36px;
+  }
+  .storage-action {
+    padding: 10px 12px;
+  }
+  .storage-dialog-body {
+    padding: 20px;
+  }
+  .storage-dialog-header h2 {
+    font-size: 20px;
+  }
+  .storage-description {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .storage-dialog-footer {
+    padding: 16px 20px;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .storage-retention {
+    max-width: none;
+  }
+  .storage-necessary {
+    padding: 2px 12px;
+  }
+  .storage-entry-head {
+    font-size: 13px;
+  }
+  .storage-entry p,
+  .storage-option p {
+    font-size: 12px;
+  }
+  .storage-entry {
+    padding: 11px 0;
+  }
+}

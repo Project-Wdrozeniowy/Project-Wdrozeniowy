@@ -6,6 +6,7 @@ import QueryProvider from '@/app/providers/QueryProvider';
 import ThemeProvider from '@/app/providers/ThemeProvider';
 import { ConsentBanner } from '@/widgets/consent-banner';
 import ToastProvider from '@/app/providers/ToastProvider';
+import StorageConsentProvider from '@/app/providers/StorageConsentProvider';
 export default function RootLayout() {
   const { pathname } = useLocation();
   const previousPath = useRef(pathname);
@@ -21,10 +22,13 @@ export default function RootLayout() {
   return (
     <QueryProvider>
       <ConsentBanner />
-      <AuthProvider>
-        <NotificationProvider />
-        <Outlet />
-      </AuthProvider>
+      <StorageConsentProvider />
+      <div className="storage-page-space">
+        <AuthProvider>
+          <NotificationProvider />
+          <Outlet />
+        </AuthProvider>
+      </div>
       <ThemeProvider />
       <ToastProvider />
       <ScrollRestoration />

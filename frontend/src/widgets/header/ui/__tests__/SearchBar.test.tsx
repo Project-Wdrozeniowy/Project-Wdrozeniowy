@@ -1,3 +1,4 @@
+import { seedStorageConsent } from '@/test/storageConsent';
 import type { ApiRequestOptions } from '@/shared/api/client/orvalTransport';
 import type { AxiosRequestConfig } from 'axios';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -97,7 +98,7 @@ describe('SearchBar', () => {
     mockPush.mockReset();
     search.mockReset();
     localStorage.clear();
-    localStorage.setItem('orbita.consent', 'granted');
+    seedStorageConsent();
   });
 
   it('asks the API once, after the typing pauses, and shows every kind', async () => {

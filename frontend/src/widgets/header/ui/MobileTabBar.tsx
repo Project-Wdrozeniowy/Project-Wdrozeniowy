@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router';
+import { useLayoutEffect, useRef } from 'react';
 import { cn } from '@/shared/lib/cn';
 import { useStore } from '@/store';
 import { isActiveLink } from '@/shared/lib/isActiveLink';
@@ -7,12 +8,32 @@ import { PAGE_ICONS } from '@/shared/ui/pageIcons';
 
 /** The page links on small screens, where the top bar has none. Hidden from `md` up. */
 export default function MobileTabBar() {
+  const nav = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const element = nav.current;
+    const measure = () =>
+      document.documentElement.style.setProperty(
+        '--mobile-nav-height',
+        (element?.getBoundingClientRect().height ?? 0) + 'px'
+      );
+    measure();
+    const observer =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : undefined;
+    if (element) observer?.observe(element);
+    window.addEventListener('resize', measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+      document.documentElement.style.setProperty('--mobile-nav-height', '0px');
+    };
+  }, []);
   const pathname = useLocation().pathname;
   const isAuthenticated = useStore((state) => state.isAuthenticated);
   const tabs = isAuthenticated ? [...NAV_LINKS, MOBILE_PROFILE_LINK] : NAV_LINKS;
 
   return (
     <nav
+      ref={nav}
       aria-label={MOBILE_TABS_LABEL}
       className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-header border-t border-line pb-[env(safe-area-inset-bottom)]"
     >

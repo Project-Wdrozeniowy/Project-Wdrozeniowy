@@ -15,7 +15,7 @@ function isTheme(value: unknown): value is Theme {
  * storage. Storage can be missing or blocked, so every access is guarded and fails to "no choice".
  */
 export function readStoredTheme(): Theme | null {
-  if (!hasStorageConsent()) return null;
+  if (!hasStorageConsent('theme')) return null;
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
     return isTheme(stored) ? stored : null;
@@ -24,12 +24,14 @@ export function readStoredTheme(): Theme | null {
   }
 }
 
-export function storeTheme(theme: Theme): void {
-  if (!hasStorageConsent()) return;
+export function storeTheme(theme: Theme): boolean {
+  if (!hasStorageConsent('theme')) return false;
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
+    return true;
   } catch {
     // Not persisted; the theme still applies for this visit.
+    return false;
   }
 }
 

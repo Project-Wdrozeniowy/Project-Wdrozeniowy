@@ -1,21 +1,29 @@
-// Sets the colour theme before the first paint, so a dark-theme user never sees a white flash.
-// A plain script (the gateway's CSP allows no inline scripts). Keep in step with shared/lib/theme.ts.
+// Blocking, CSP-compatible bootstrap. Keep its validation identical to storageConsent.ts;
+// storageConsumers/themeInit tests run the actual script against the same permission matrix.
 (function () {
   var theme = 'light';
   try {
-    // A stored theme counts only if the user accepted optional storage (shared/lib/storageConsent.ts).
-    var stored =
-      localStorage.getItem('orbita.consent') === 'granted' ? localStorage.getItem('orbita.theme') : null;
-    if (stored === 'light' || stored === 'dark') {
-      theme = stored;
-    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      theme = 'dark';
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark';
+  } catch (_) { /* The light fallback remains usable. */ }
+  try {
+    var consent = null;
+    try { consent = JSON.parse(localStorage.getItem('orbita.consent') || 'null'); } catch (_) { /* Invalid answer. */ }
+    var now = Date.now();
+    var valid = consent && consent.version === 2 && Number.isSafeInteger(consent.decidedAt) &&
+      consent.decidedAt > 0 && consent.decidedAt <= now &&
+      now - consent.decidedAt < 180 * 24 * 60 * 60 * 1000 &&
+      consent.permissions && typeof consent.permissions.theme === 'boolean' &&
+      typeof consent.permissions.recentSearches === 'boolean';
+    if (!valid || !consent.permissions.theme) localStorage.removeItem('orbita.theme');
+    if (!valid || !consent.permissions.recentSearches) localStorage.removeItem('orbita.recentSearches');
+    if (!valid) localStorage.removeItem('orbita.consent');
+    if (valid && consent.permissions.theme) {
+      var stored = localStorage.getItem('orbita.theme');
+      if (stored === 'light' || stored === 'dark') theme = stored;
     }
-  } catch (error) {
-    // Storage blocked: the system preference above still applies.
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      theme = 'dark';
-    }
+  } catch (_) {
+    // The app cannot treat a failed cleanup as an effective grant.
+    document.documentElement.setAttribute('data-storage-unavailable', '');
   }
   document.documentElement.setAttribute('data-theme', theme);
 })();

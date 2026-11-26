@@ -5,12 +5,12 @@ export { RECENT_SEARCHES_KEY };
 export const RECENT_SEARCHES_LIMIT = 5;
 
 /**
- * Search terms the user typed before, newest first. Only plain terms are kept, never tokens or
- * user data, and only after the user accepted optional storage: without that there is no history.
+ * Search terms the user typed before, newest first. Terms may contain personal information;
+ * retain at most five locally, only with current permission for recent searches.
  * Storage can be missing or blocked, so every access is guarded and fails to "nothing".
  */
 export function readRecentSearches(): string[] {
-  if (!hasStorageConsent()) return [];
+  if (!hasStorageConsent('recentSearches')) return [];
   try {
     const parsed: unknown = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) ?? '[]');
     if (!Array.isArray(parsed)) return [];
@@ -25,7 +25,7 @@ export function readRecentSearches(): string[] {
 }
 
 function write(terms: string[]): string[] {
-  if (!hasStorageConsent()) return [];
+  if (!hasStorageConsent('recentSearches')) return [];
   try {
     localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(terms));
   } catch {

@@ -1,3 +1,4 @@
+import { seedStorageConsent } from '@/test/storageConsent';
 import { act, render } from '@testing-library/react';
 import { vi } from 'vitest';
 import ThemeProvider from '@/app/providers/ThemeProvider';
@@ -28,9 +29,9 @@ beforeEach(() => {
   listeners = [];
   systemDark = false;
   localStorage.clear();
-  localStorage.setItem('orbita.consent', 'granted');
+  seedStorageConsent();
   document.documentElement.removeAttribute('data-theme');
-  useStore.setState({ theme: 'light' });
+  useStore.setState({ theme: 'light', themeChoice: null });
   vi.stubGlobal('matchMedia', vi.fn().mockReturnValue(query));
 });
 
@@ -119,7 +120,7 @@ describe('ThemeProvider', () => {
     render(<ThemeProvider />);
     expect(shown()).toBe('dark');
 
-    localStorage.setItem('orbita.consent', 'denied');
+    seedStorageConsent(false);
     act(() => {
       window.dispatchEvent(new StorageEvent('storage', { key: 'orbita.consent' }));
     });

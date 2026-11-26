@@ -1,86 +1,82 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef } from 'react';
+import { useLocation } from 'react-router';
 import { useStore } from '@/store';
-import ConsentDetails from './ConsentDetails';
+import ConsentPreferencesDialog from './ConsentPreferencesDialog';
 import {
   CONSENT_ACCEPT_LABEL,
-  CONSENT_CLOSE_LABEL,
+  CONSENT_CUSTOMIZE_LABEL,
   CONSENT_REJECT_LABEL,
-  CONSENT_STATE_TEXT,
   CONSENT_TEXT,
   CONSENT_TITLE,
-  STORAGE_SETTINGS_ID,
 } from './consentBanner.const';
-import { CONSENT_STORAGE_KEY } from '@/shared/lib/storageKeys.const';
+import './storagePreferences.css';
 
-const BUTTON_CLASS =
-  'rounded border border-line-strong bg-raised hover:bg-raised-hover text-fg text-sm font-semibold px-4 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-blue-500';
-
-/**
- * Asks once whether the app may store optional things on this device. It sits in the page flow
- * (not over it), so it never hides a focused control. Accepting and rejecting look the same.
- */
 export default function ConsentBanner() {
-  const titleId = useId();
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const open = useStore((state) => state.consentPromptOpen);
-  const consent = useStore((state) => state.storageConsent);
+  const id = useId();
+  const panel = useRef<HTMLElement>(null);
+  const { pathname } = useLocation();
+  const previousPath = useRef(pathname);
+  const visible = useStore((state) => state.consentPromptOpen);
   const accept = useStore((state) => state.acceptStorage);
   const reject = useStore((state) => state.rejectStorage);
+  const customize = useStore((state) => state.reopenConsentPrompt);
   const close = useStore((state) => state.closeConsentPrompt);
-  const sync = useStore((state) => state.syncConsent);
-
-  // Another tab answered: this one shows the same answer.
   useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === CONSENT_STORAGE_KEY || event.key === null) sync();
+    if (pathname !== previousPath.current) {
+      previousPath.current = pathname;
+      close();
+    }
+  }, [pathname, close]);
+  useLayoutEffect(() => {
+    const element = panel.current;
+    const measure = () =>
+      document.documentElement.style.setProperty(
+        '--consent-panel-height',
+        visible && element ? element.getBoundingClientRect().height + 'px' : '0px'
+      );
+    measure();
+    const observer =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : undefined;
+    if (element) observer?.observe(element);
+    window.addEventListener('resize', measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+      document.documentElement.style.setProperty('--consent-panel-height', '0px');
     };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, [sync]);
-
-  // Reopened by the user (there is an answer already): move the focus to the question. The first
-  // question does not take the focus, so it never interrupts what the visitor came to do.
-  const answered = consent !== null;
-  useEffect(() => {
-    if (open && answered) headingRef.current?.focus();
-  }, [open, answered]);
-
-  if (!open) return null;
-
-  // After a choice made on a reopened question, the focus goes back to the control that opened it.
+  }, [visible]);
   function answer(choose: () => void) {
     choose();
-    if (answered) document.getElementById(STORAGE_SETTINGS_ID)?.focus();
+    if (!useStore.getState().consentDialogOpen) {
+      const main = document.querySelector<HTMLElement>('main');
+      main?.setAttribute('tabindex', '-1');
+      main?.focus({ preventScroll: true });
+    }
   }
-
   return (
-    <section aria-labelledby={titleId} className="bg-surface border-b border-line">
-      <div className="max-w-282.5 mx-auto px-4 lg:px-6 py-4 flex flex-col gap-3">
-        <h2
-          id={titleId}
-          ref={headingRef}
-          tabIndex={-1}
-          className="text-fg font-semibold text-base outline-none"
-        >
-          {CONSENT_TITLE}
-        </h2>
-        <p className="text-sm text-fg-muted max-w-3xl">{CONSENT_TEXT}</p>
-        {consent && <p className="text-sm text-fg-subtle">{CONSENT_STATE_TEXT[consent]}</p>}
-        <ConsentDetails />
-        <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={() => answer(accept)} className={BUTTON_CLASS}>
-            {CONSENT_ACCEPT_LABEL}
-          </button>
-          <button type="button" onClick={() => answer(reject)} className={BUTTON_CLASS}>
-            {CONSENT_REJECT_LABEL}
-          </button>
-          {answered && (
-            <button type="button" onClick={() => answer(close)} className={BUTTON_CLASS}>
-              {CONSENT_CLOSE_LABEL}
-            </button>
-          )}
-        </div>
-      </div>
-    </section>
+    <>
+      {visible && (
+        <section ref={panel} className="storage-panel" aria-labelledby={id}>
+          <div className="storage-panel-inner">
+            <div className="storage-panel-copy">
+              <h2 id={id}>{CONSENT_TITLE}</h2>
+              <p>{CONSENT_TEXT}</p>
+            </div>
+            <div className="storage-actions">
+              <button type="button" className="storage-action" onClick={() => answer(accept)}>
+                {CONSENT_ACCEPT_LABEL}
+              </button>
+              <button type="button" className="storage-action" onClick={() => answer(reject)}>
+                {CONSENT_REJECT_LABEL}
+              </button>
+              <button type="button" className="storage-text-button" onClick={customize}>
+                {CONSENT_CUSTOMIZE_LABEL}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+      <ConsentPreferencesDialog />
+    </>
   );
 }

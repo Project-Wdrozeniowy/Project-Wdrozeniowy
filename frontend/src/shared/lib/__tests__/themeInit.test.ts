@@ -1,3 +1,4 @@
+import { seedStorageConsent } from '@/test/storageConsent';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { THEME_STORAGE_KEY, currentTheme } from '@/shared/lib/theme';
@@ -20,7 +21,7 @@ function prefersDark(matches: boolean) {
 
 beforeEach(() => {
   localStorage.clear();
-  localStorage.setItem('orbita.consent', 'granted');
+  seedStorageConsent();
   prefersDark(false);
 });
 
@@ -45,7 +46,7 @@ describe('theme-init.js', () => {
   });
 
   it('still follows the system when storage is blocked', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+    vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
       throw new Error('blocked');
     });
     prefersDark(true);

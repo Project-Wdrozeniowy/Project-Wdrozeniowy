@@ -1,3 +1,4 @@
+import { seedStorageConsent } from '@/test/storageConsent';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ThemeToggle from '@/widgets/header/ui/ThemeToggle';
@@ -5,7 +6,7 @@ import { useStore } from '@/store';
 
 beforeEach(() => {
   localStorage.clear();
-  localStorage.setItem('orbita.consent', 'granted');
+  seedStorageConsent();
   document.documentElement.setAttribute('data-theme', 'light');
   useStore.setState({ theme: 'light' });
 });
