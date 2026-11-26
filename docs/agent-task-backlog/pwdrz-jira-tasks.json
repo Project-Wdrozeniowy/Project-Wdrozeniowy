@@ -23254,13 +23254,14 @@
         }
       },
       "localTracking": {
-        "status": "in_progress",
+        "status": "done",
         "owner": "Codex / Ruslan 82179",
-        "updatedAt": "2026-11-25T22:33:55.661Z",
+        "updatedAt": "2026-11-26T10:20:45.325Z",
         "notes": [
           "Approved implementation plan; branch PWDRZ-185-analytics-publication-drilldown published with upstream at f58ea58c4b4762d1c13dbaeeb67334af55c49233. See pwdrz-185-execution.md.",
           "Completed on tested implementation 30c6a0aad2f78e717274e5c6c01edb88d530f8e9: shareable UTC/category filters, accessible graph/table links, pagination and dashboard URL/scroll restoration. Frontend 1553 tests and all coverage gates; root check 10/10; build/API drift/infra passed; full managed E2E 70/70, exit 0 and cleanup, run 1795642744065-98964270. GitHub CI 10/10 jobs passed. No API/schema/Jira/Figma changes or PR. See pwdrz-185-execution.md.",
-          "Returned after PR E2E run 45712807923 failed dashboard Back scroll (69/70 passed). Trace proved departure 1415 then stored/returned 0. Deterministic layout-versus-passive-cleanup regression reproduced; correction and repeated keyboard/pointer browser verification in progress."
+          "Returned after PR E2E run 45712807923 failed dashboard Back scroll (69/70 passed). Trace proved departure 1415 then stored/returned 0. Deterministic layout-versus-passive-cleanup regression reproduced; correction and repeated keyboard/pointer browser verification in progress.",
+          "Returned CI failure resolved on 1b4724329d5dc1a9caef5c47eec1de98caaf268a: dashboard persists/removes scroll listeners in layout cleanup before Router resets scroll. Integrated develop a641d58, preserving PWDRZ-175 card order and PWDRZ-185 URL state. Frontend 1608/1608 and all coverage gates; root check 10/10; build passed; full local managed E2E 78/78, no retries, exit 0 and cleanup (1795688068488-0e1767f6). GitHub PR checks 9/9 passed, E2E 45799432208 / run 1795688156236-60897dc1. No assertions, tolerances, timeouts, retries or CI configuration changed. See pwdrz-185-execution.md."
         ]
       }
     }

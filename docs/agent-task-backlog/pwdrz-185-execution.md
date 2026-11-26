@@ -219,3 +219,47 @@ in the unrelated dynamic-post router test (5s); this is not a passing gate. Full
 run `1795687783800-72ba7f24` did not reach tests because Docker Desktop was stopped; both start
 and cleanup reported the unavailable engine. Docker Desktop was then started successfully.
 The combined source will be verified afresh without changing retries, assertions or timeouts.
+
+### Integrated local verification
+
+Tested implementation `1b4724329d5dc1a9caef5c47eec1de98caaf268a`, including current develop.
+
+| Check                               | Observed result                                                                                                            |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Focused hook/dashboard/router suite | 69/69 passed, including the layout-cleanup regression and PWDRZ-175 section order                                          |
+| Frontend coverage                   | 1608/1608 tests in 139 files, exit 0; statements 98.40%, branches 94.64%, functions 98.21%, lines 99.07%; all gates passed |
+| Root check                          | 10/10 tasks succeeded, four cached                                                                                         |
+| Frontend production build           | Passed; existing dependency-annotation/chunk-size warnings remain                                                          |
+| Full managed E2E                    | **78/78 passed**, zero retries, exit 0; run `1795688068488-0e1767f6`                                                       |
+| Cleanup                             | Exact run project has no containers or networks; runtime directory absent; image/network removals recorded                 |
+
+The full browser/HTTP suite includes all eight additional scenarios introduced by develop and
+the original failing drill-down path with three extra required keyboard/pointer round trips.
+Evidence: `e2e/artifacts/1795688068488-0e1767f6/{browser-tests.log,result.json,stack-cleanup.log,report/index.html}`;
+ignored root logs `pwdrz185-integrated-{coverage,check,build,stack}.log`.
+After Docker became available, the earlier start-failure project was also checked: no containers,
+networks or runtime directory remain. API/generated binding files, dependencies and E2E launcher
+are unchanged by the integration; the 102-file API check and 3/3 infrastructure checks remain valid.
+
+Targeted completion review covered the current ticket/branch, dashboard scroll/composition,
+adjacent drill-down source/tests and guide/instruction references. No newly expired marker,
+unticketed provisional mechanism or downstream task established as newly unblocked.
+Other owners' functionality is preserved from develop. No Jira/Figma update, owner message,
+assertion/tolerance/timeout change, retry or CI configuration change.
+
+### Integrated GitHub verification
+
+All **9/9 applicable PR jobs passed** on implementation `1b4724329d5dc1a9caef5c47eec1de98caaf268a`:
+
+| Workflow                                                                                              | Confirmed result                                                                       |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [Frontend Build](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45799431816) | Build Frontend passed                                                                  |
+| [Gateway Build](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45799432055)  | Build Gateway passed                                                                   |
+| [Lint](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45799432080)           | Both frontend and gateway lint/format jobs passed                                      |
+| [Tests](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45799432326)          | All three service coverage jobs and Workspace Tooling passed                           |
+| [E2E](https://github.com/Project-Wdrozeniowy/Project-Wdrozeniowy/actions/runs/45799432208)            | E2E (Chromium) passed, managed run `1795688156236-60897dc1`, exit 0, cleanup completed |
+
+Backend Build is path-filtered out for this frontend change; it is not counted as a passed job.
+Backend coverage ran and passed within Tests. PR #126 is mergeable after integrating develop;
+no merge is performed. The completion commit changes only this record and PWDRZ-185 local tracking;
+the results above refer to the tested implementation SHA, not that documentation-only commit.
